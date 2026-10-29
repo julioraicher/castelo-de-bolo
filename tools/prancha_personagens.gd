@@ -41,6 +41,10 @@ var MUNDOS := [
 	]},
 ]
 
+## Quais mundos entram na prancha (índice em MUNDOS) e a escala da cabeça de cada
+## fileira. Passe na linha de comando: -- DIR 0:1.0,0:0.85
+var fileiras := [[0, 1.0], [1, 1.0], [2, 1.0]]
+
 var dir := "user://prancha"
 var cena: Node3D
 var cam: Camera3D
@@ -49,6 +53,10 @@ func _init() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 0:
 		dir = args[0]
+	if args.size() > 1:
+		fileiras = []
+		for f in args[1].split(","):
+			fileiras.append([int(f.get_slice(":", 0)), float(f.get_slice(":", 1))])
 	DirAccess.make_dir_recursive_absolute(dir)
 	_montar()
 
@@ -58,24 +66,25 @@ func _montar() -> void:
 	root.add_child(cena)
 	_ambiente()
 	var angulos := [0.0, -PI * 0.3, PI]
-	for w in MUNDOS.size():
-		var classes: Array = MUNDOS[w].classes
+	for w in fileiras.size():
+		var classes: Array = MUNDOS[fileiras[w][0]].classes
+		var cabeca: float = fileiras[w][1]
 		# Fileira de close: cada classe 3 vezes (frente, 3/4, costas).
 		for c in classes.size():
 			for v in 3:
-				var b := _boneco(classes[c], AZUL)
+				var b := _boneco(classes[c], AZUL, cabeca)
 				b.position = Vector3(w * 100 + (c - 1.5) * 4.1 + (v - 1) * 1.3, 0, 0)
 				b.rotation.y = angulos[v]
 		# Grupo azul x vermelho para a câmera do jogo.
 		for c in classes.size():
 			for t in 2:
-				var b := _boneco(classes[c], AZUL if t == 0 else VERMELHO)
+				var b := _boneco(classes[c], AZUL if t == 0 else VERMELHO, cabeca)
 				b.position = Vector3(1000 + w * 100 + (c - 1.5) * 3.2, 0, (t - 0.5) * 4.0)
 				b.rotation.y = PI if t == 1 else 0.0
 	cam = Camera3D.new()
 	cena.add_child(cam)
 	await _quadros(8)
-	for w in MUNDOS.size():
+	for w in fileiras.size():
 		cam.fov = 30
 		cam.position = Vector3(w * 100, 2.2, 20.5)
 		cam.look_at(Vector3(w * 100, 1.1, 0))
@@ -134,7 +143,7 @@ func _ambiente() -> void:
 		chao.material_override = _plano(Color(0.02, 0.022, 0.045))
 		cena.add_child(chao)
 
-func _boneco(info: Dictionary, time: Color) -> Node3D:
+func _boneco(info: Dictionary, time: Color, cabeca := 1.0) -> Node3D:
 	var n: Node3D = load("res://assets/characters/%s.glb" % info.glb).instantiate()
 	cena.add_child(n)
 	var mat := ShaderMaterial.new()
@@ -156,6 +165,7 @@ func _boneco(info: Dictionary, time: Color) -> Node3D:
 	ap.play(info.anim)
 	ap.seek(0.3, true)
 	ap.pause()
+	sk.set_bone_pose_scale(sk.find_bone("head"), Vector3.ONE * cabeca)
 	call(info.pecas, sk, time)
 	return n
 
@@ -164,8 +174,8 @@ func _boneco(info: Dictionary, time: Color) -> Node3D:
 func _samurai(sk: Skeleton3D, time: Color) -> void:
 	var cab := _osso(sk, "head")
 	# Kabuto: cúpula achatada + aba + chifres em lua crescente (neon)
-	_peca(cab, _esfera(0.78, 0.5), Vector3(0, 0.7, -0.02), Vector3.ZERO, Vector3(1, 0.75, 1), _plano(Color(0.05, 0.05, 0.09)))
-	_peca(cab, _cilindro(0.66, 0.7, 0.08), Vector3(0, 0.55, -0.05), Vector3(-8, 0, 0), Vector3.ONE, _plano(time))
+	_peca(cab, _esfera(0.78, 0.5), Vector3(0, 0.7, -0.02), Vector3.ZERO, Vector3(1, 0.75, 1), _plano(time.darkened(0.1)))
+	_peca(cab, _cilindro(0.66, 0.7, 0.08), Vector3(0, 0.55, -0.05), Vector3(-8, 0, 0), Vector3.ONE, _plano(Color(0.05, 0.05, 0.09)))
 	for s in [-1, 1]:
 		_peca(cab, _cone(0.1, 0.7), Vector3(0.28 * s, 1.0, 0.25), Vector3(-25, 0, -35 * s), Vector3.ONE, _neon(OURO))
 	# Ombreiras quadradas (sode)
@@ -181,9 +191,9 @@ func _ninja(sk: Skeleton3D, time: Color) -> void:
 	var cab := _osso(sk, "head")
 	# Máscara sobre nariz e boca + faixa na testa com fitas soltas
 	_peca(cab, _esfera(0.5, 0.3), Vector3(0, 0.38, 0.12), Vector3.ZERO, Vector3(1.0, 0.55, 0.95), _plano(Color(0.07, 0.07, 0.12)))
-	_peca(cab, _cilindro(0.56, 0.56, 0.09), Vector3(0, 0.78, 0.0), Vector3(-6, 0, 0), Vector3.ONE, _neon(MAGENTA, 1.6))
+	_peca(cab, _cilindro(0.56, 0.56, 0.09), Vector3(0, 0.78, 0.0), Vector3(-6, 0, 0), Vector3.ONE, _neon(time.lightened(0.25), 1.6))
 	for s in [-1, 1]:
-		_peca(cab, _caixa(Vector3(0.08, 0.5, 0.03)), Vector3(0.12 * s, 0.55, -0.6), Vector3(55, 0, 15 * s), Vector3.ONE, _neon(MAGENTA, 1.6))
+		_peca(cab, _caixa(Vector3(0.08, 0.5, 0.03)), Vector3(0.12 * s, 0.55, -0.6), Vector3(55, 0, 15 * s), Vector3.ONE, _neon(time.lightened(0.25), 1.6))
 	# Shuriken na mão e duas nas costas
 	var mao := _osso(sk, "handslot.r")
 	_peca(mao, _shuriken(), Vector3(0, 0.15, 0.1), Vector3(90, 0, 0), Vector3.ONE * 1.3, _neon(CIANO, 2.0))
@@ -194,7 +204,7 @@ func _ninja(sk: Skeleton3D, time: Color) -> void:
 func _monge(sk: Skeleton3D, time: Color) -> void:
 	var cab := _osso(sk, "head")
 	# Kasa: chapéu de palha em cone largo e baixo (silhueta inconfundível de cima)
-	_peca(cab, _cone(1.15, 0.45), Vector3(0, 1.05, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.62, 0.46, 0.24)))
+	_peca(cab, _cone(0.98, 0.4), Vector3(0, 1.02, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.62, 0.46, 0.24)))
 	_peca(cab, _cilindro(0.5, 0.5, 0.06), Vector3(0, 0.86, 0), Vector3.ZERO, Vector3.ONE, _plano(time.darkened(0.2)))
 	# Colar de contas no peito
 	var peito := _osso(sk, "chest")
@@ -211,11 +221,17 @@ func _armadilheiro(sk: Skeleton3D, time: Color) -> void:
 	for s in [-1, 1]:
 		_peca(cab, _cilindro(0.13, 0.13, 0.12), Vector3(0.2 * s, 0.62, 0.45), Vector3(90, 0, 0), Vector3.ONE, _neon(FANTASMA, 1.8))
 	_peca(cab, _cilindro(0.58, 0.6, 0.12), Vector3(0, 0.66, 0), Vector3.ZERO, Vector3.ONE, _plano(time.darkened(0.3)))
-	# Mochila de ferramentas com estrepes espetados
+	# Cesto de palha nas costas, cheio de estrepes, com lanterna verde pendurada
 	var peito := _osso(sk, "chest")
-	_peca(peito, _caixa(Vector3(0.75, 0.8, 0.4)), Vector3(0, 0.4, -0.5), Vector3.ZERO, Vector3.ONE, _plano(Color(0.3, 0.22, 0.16)))
-	for i in 3:
-		_peca(peito, _cone(0.07, 0.35), Vector3(-0.25 + 0.25 * i, 0.95, -0.5), Vector3(0, 0, (i - 1) * 20), Vector3.ONE, _plano(Color(0.55, 0.6, 0.7)))
+	_peca(peito, _cilindro(0.42, 0.3, 0.8), Vector3(0, 0.45, -0.55), Vector3(-8, 0, 0), Vector3.ONE, _plano(Color(0.6, 0.45, 0.22)))
+	for y in [0.2, 0.45, 0.7]:
+		_peca(peito, _cilindro(0.39 + y * 0.05, 0.37 + y * 0.05, 0.05), Vector3(0, y + 0.02, -0.55), Vector3(-8, 0, 0), Vector3.ONE, _plano(Color(0.38, 0.26, 0.12)))
+	for i in 5:
+		var a := TAU * i / 5.0
+		_peca(peito, _cone(0.06, 0.4), Vector3(cos(a) * 0.22, 0.98, -0.6 + sin(a) * 0.22), Vector3(sin(a) * 25, 0, -cos(a) * 25), Vector3.ONE, _plano(Color(0.6, 0.65, 0.75)))
+	_peca(peito, _cilindro(0.015, 0.015, 0.25), Vector3(0.45, 0.6, -0.5), Vector3.ZERO, Vector3.ONE, _plano(Color(0.1, 0.1, 0.12)))
+	_peca(peito, _caixa(Vector3(0.18, 0.24, 0.18)), Vector3(0.45, 0.38, -0.5), Vector3.ZERO, Vector3.ONE, _plano(Color(0.1, 0.1, 0.12)))
+	_peca(peito, _esfera(0.09, 0.1), Vector3(0.45, 0.38, -0.5), Vector3.ZERO, Vector3.ONE, _neon(FANTASMA, 3.0))
 	# Mina na mão: disco escuro com luz verde no centro
 	var mao := _osso(sk, "handslot.r")
 	_peca(mao, _cilindro(0.3, 0.33, 0.12), Vector3(0, 0.1, 0.15), Vector3(90, 0, 0), Vector3.ONE, _plano(Color(0.12, 0.13, 0.18)))

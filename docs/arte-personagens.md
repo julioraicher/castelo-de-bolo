@@ -66,3 +66,4 @@ conferir tris, draw calls e cor do time.
 | 2026-10-29 | Prancha 1 (caminho A+B): Samurai (kabuto com chifres, katana neon), Ninja (faixa magenta, shuriken), Monge (kasa de palha, contas, chi verde), Armadilheiro (óculos, mochila com estrepes, mina). Roupa toda na cor do time. Aguardando pitaco. |
 | 2026-10-29 | Prancha 2: mesmas 4 funções em 3 mundos (A Ninja, B Festival Infernal: Guitarrista/Pirotécnico/Vocalista/Roadie, C Cavaleiros Malditos: Cavaleiro maldito/Caçador de besta/Necromante/Ferreiro). Gerada por `tools/prancha_personagens.gd` (lista `MUNDOS`). Aguardando escolha do mundo. |
 | 2026-10-29 | Julio escolheu o mundo **A (Ninja)**. Antes de aplicar no jogo: uma rodada de pitacos no visual. |
+| 2026-10-29 | Prancha 3 (Ninja v2): kabuto na cor do time, faixa do ninja em neon do time, kasa 15% menor, cesto com estrepes + lanterna verde. Comparando cabeça 1,0 x 0,85 (Julio acha a cabeça grande). |
