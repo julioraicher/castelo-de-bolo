@@ -11,8 +11,8 @@ mais devagar anda quem tentar levá-la.
 
 ## Jogar
 
-- **No navegador:** link em *Settings > Pages* deste repositório.
-- **Windows/Linux:** baixe em *Releases > Última versão*.
+- **No navegador:** <https://julioraicher.github.io/castelo-de-bolo/>
+- **Windows/Linux:** [Releases > Última versão](https://github.com/julioraicher/castelo-de-bolo/releases/tag/ultima-versao)
 - **No editor:** abra o `project.godot` no Godot 4.7 e aperte F5.
 
 | Tecla | Ação |
