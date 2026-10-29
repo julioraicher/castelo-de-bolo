@@ -3,6 +3,32 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 9 (2026-10-29), frente Cenário: mapa atual com cenário ninja
+- Julio escolheu os climas C (Floresta Oni) e B (Templo ao Luar), nessa ordem.
+  Viraram os 2 temas do jogo (`config/temas/oni.tres` padrão, `luar.tres`);
+  Medieval e Sinistro saíram da lista (arquivos continuam no repo).
+- Mapa `config/mapas/vale_ninja.tres`: mesmas posições de jogo do Vale (pedra no
+  meio da estrada, bosques, castelos), mais torii nos portões, estátuas oni /
+  komainu, varal de lanternas no centro, lanternas de pedra, santuários, pagodes,
+  ruínas, rochas, tronco caído, lagos e cercas de bambu.
+- Modelos por código: `tools/gerar_cenario_ninja.gd` gera `assets/ninja/{oni,luar}/*.scn`
+  (castelo japonês com telhados na cor do time, torres baixas no portão para não
+  esconder a briga, muros com telhadinho, estandartes nobori), os 2 temas e o mapa.
+  Cada modelo é 1 malha com 2 materiais (fosco + brilho), juntado em MultiMesh.
+- Chão rico: `ThemeConfig.decor_campo` / `decor_estrada` espalham capim, pedrinhas,
+  folhas/pétalas, cogumelos brilhantes/flores, brotos, lanternas de chão e lajotas
+  (semente fixa, sem colisão, sem sombra). `particulas`: fogo-fantasma subindo
+  (Oni) ou pétalas caindo (Luar); some na qualidade Baixa/Mínima.
+- `ThemeConfig.flag_height` (altura da bandeira na torre; padrão 7 mantém o antigo).
+- Flags de print: `--tema=N` e `--vista=mapa|alto` (câmera parada, sem HUD).
+- Teste: 5 min simulados nos 2 temas sem erro.
+- **O que testar**:
+  1. Jogue uma partida no tema padrão (Floresta Oni). Dá para ver bem os bonecos
+     e as brigas no portão? Alguma árvore/torre atrapalha a visão?
+  2. Esc > Configurações > Tema do mapa: troque para Templo ao Luar e compare.
+  3. FPS: o chão cheio de enfeites pesou? (se pesar, a qualidade Baixa tira as partículas)
+  4. Bots se enroscam em alguma peça nova (pagode, ruína, rochas, estátuas)?
+
 ## Rodada 8 (2026-10-29), frente Visual dos personagens: mundo ninja no jogo
 - Visual: `scripts/actors/ninja_visual.gd` monta as peças de cada estilo (kabuto,
   máscara oni, kasa, eboshi, orelhas de raposa...) numa malha só presa aos ossos

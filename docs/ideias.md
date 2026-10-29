@@ -5,9 +5,9 @@ Lista viva. Qualquer frente anota aqui; o Julio escolhe o que sobe de nível.
 a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 
 ## A — próxima
-- **Cenário ninja** (frente Cenário): 3 climas em pitaco em
-  `cenario/01-tres-climas.png` (arquivos do projeto) (A Vila Neon, B Templo ao Luar,
-  C Floresta Oni). Sugestão: castelos em A, meio do mapa em C.
+- **Mapa novo**: 4 ideias com minimapa em `cenario/03-ideias-de-mapa.png`
+  (arquivos do projeto); o Julio escolhe uma e o cenário vai sendo encaixado nela.
+- **Peças novas de cenário**: catálogo numerado em `cenario/04-catalogo-pecas.png`.
 - **Capturas raras**: bots quase não levam a máscara até o fim (frente Jogabilidade).
 - **Ajuste dos poderes novos** depois do teste do Julio (dano, raio, recarga).
 

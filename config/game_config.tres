@@ -15,10 +15,10 @@
 [ext_resource type="Resource" path="res://config/classes/kitsune.tres" id="of_kitsune"]
 [ext_resource type="Resource" path="res://config/classes/mestre_polvora.tres" id="of_mestre_polvora"]
 [ext_resource type="Resource" path="res://config/classes/carpinteiro.tres" id="of_carpinteiro"]
-[ext_resource type="Resource" path="res://config/mapas/vale.tres" id="6_c8e20"]
+[ext_resource type="Resource" path="res://config/mapas/vale_ninja.tres" id="6_c8e20"]
 [ext_resource type="Script" path="res://scripts/data/theme_config.gd" id="8_txtu1"]
-[ext_resource type="Resource" path="res://config/temas/medieval.tres" id="9_f5mmm"]
-[ext_resource type="Resource" path="res://config/temas/sinistro.tres" id="10_wo1y8"]
+[ext_resource type="Resource" path="res://config/temas/oni.tres" id="9_f5mmm"]
+[ext_resource type="Resource" path="res://config/temas/luar.tres" id="10_wo1y8"]
 
 [resource]
 script = ExtResource("1")

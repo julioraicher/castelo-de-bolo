@@ -27,12 +27,15 @@ var _time := 0.0
 #   --shots=<pasta>     salva prints em alguns momentos e fecha o jogo
 #   --variacoes         bots começam com todas as variações (teste visual/poderes)
 #   --poderes           medidor de todo mundo enche a cada 4 s (vitrine de poderes)
+#   --tema=N            usa o tema N de GameConfig.themes (prints de cada tema)
+#   --vista=mapa|alto   câmera parada vendo o mapa todo / o castelo de cima (prints)
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
 var _variacoes := false
 var _poderes := false
 var _poderes_t := 2.0
 var _shots_dir := ""
+var _vista := ""
 var _shot_times: Array[float] = [4.0, 15.0, 30.0, 50.0, 75.0]
 
 const BOT_ROLES := [BotBrain.Role.ATTACK, BotBrain.Role.DEFEND, BotBrain.Role.ATTACK, BotBrain.Role.CAKE,
@@ -50,6 +53,10 @@ func _ready() -> void:
 			_poderes = true
 		elif arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
+		elif arg.begins_with("--vista="):
+			_vista = arg.trim_prefix("--vista=")
+		elif arg.begins_with("--tema="):
+			Settings.theme = int(arg.trim_prefix("--tema="))
 	arena = Arena.new()
 	arena.name = "Arena"
 	add_child(arena)
@@ -117,11 +124,25 @@ func _ready() -> void:
 	add_child(camera)
 	camera.target = player
 	camera.snap()
+	if _vista != "":
+		camera.set_process(false)
+		camera.set_physics_process(false)
+		camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+		if _vista == "mapa":
+			camera.fov = 50
+			camera.position = Vector3(0, 95, 62)
+			camera.look_at(Vector3(0, 0, 2))
+		else:
+			camera.fov = 45
+			camera.position = Vector3(-22, 22, 26)
+			camera.look_at(Vector3(-40, 2, 0))
 
 	hud = Hud.new()
 	add_child(hud)
 	var auto_q := AutoQuality.new()
 	auto_q.hud = hud
+	if _vista != "":
+		hud.visible = false
 	add_child(auto_q)
 	var menus := Menus.new()
 	add_child(menus)

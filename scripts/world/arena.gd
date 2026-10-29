@@ -38,6 +38,8 @@ func build() -> void:
 		_build_castle(team)
 	_build_middle()
 	_build_borders()
+	_build_decor()
+	_build_particles()
 	_bake_navigation()
 	_batch_static_meshes()
 
@@ -122,6 +124,8 @@ func _build_environment() -> void:
 ## as sombras: com 4 divisões (PSSM) cada objeto é desenhado até 4 vezes a
 ## mais no mapa de sombra.
 func _apply_quality() -> void:
+	if _particles:
+		_particles.visible = Settings.quality >= 2
 	match Settings.quality:
 		0, 1:  # Mínima, Baixa (a diferença está na resolução 3D, em Settings)
 			_sun.shadow_enabled = false
@@ -213,7 +217,7 @@ func _build_castle(team: int) -> void:
 		var p := to_world(team, c.x, c.y)
 		_model_path(theme.model_path(theme.tower_model, team), p, theme.tower_scale, face)
 		_cylinder_collider(p, m.tower_collider_radius, 8.0)
-		_model_path(theme.model_path(theme.flag_model, team), p + Vector3(0, 7.0, 0), theme.flag_scale, face)
+		_model_path(theme.model_path(theme.flag_model, team), p + Vector3(0, theme.flag_height, 0), theme.flag_scale, face)
 
 	# Objetos do pátio (barris, caixas, tenda...).
 	for prop in m.courtyard_props:
@@ -312,6 +316,123 @@ func _build_borders() -> void:
 			var p := Vector3(xs * (hw + rng.randf_range(5, 10)), 0, z + rng.randf_range(-2, 2))
 			_model_path(theme.model_path(mountains[rng.randi() % mountains.size()]), p, rng.randf_range(4.0, 6.0), rng.randf() * TAU)
 		z += map.border_spacing * 9.0 / 7.0
+
+
+# --- Detalhes do chão e partículas ------------------------------------------
+
+var _particles: CPUParticles3D
+
+
+## Espalha os enfeites do tema (capim, pedrinhas, folhas, lajotas...). Sem
+## colisão e sem sombra; um MultiMesh por modelo. Semente fixa: o mapa sai
+## igual em toda partida.
+func _build_decor() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	var hw := map.half_width
+	var hd := map.half_depth
+	var cd := map.castle_distance
+	var road := map.road_width / 2.0
+	var blockers := []  # [Vector3, raio] dos objetos do meio, para não nascer capim dentro de pedra
+	for prop in map.middle_props:
+		for p in prop.positions():
+			blockers.append([p, maxf(prop.collider_radius, 1.0) + 0.5])
+	var by_model := {}  # caminho -> Array[Transform3D]
+	for zi in 2:
+		var zona: Dictionary = theme.decor_estrada if zi == 1 else theme.decor_campo
+		var on_road := zi == 1
+		for model: String in zona:
+			var list: Array = by_model.get(model, [])
+			var n: int = zona[model]
+			var tries := 0
+			while n > 0 and tries < 20000:
+				tries += 1
+				var p: Vector3
+				if on_road:
+					p = Vector3(rng.randf_range(-cd + 12, cd - 12), 0, rng.randf_range(-road + 0.4, road - 0.4))
+				else:
+					p = Vector3(rng.randf_range(-hw + 1, hw - 1), 0, rng.randf_range(-hd + 1, hd - 1))
+					if absf(p.z) < road + 0.8 and absf(p.x) < cd - 8:
+						continue
+					if absf(p.x) > cd - map.wall_front - 1.5 and absf(p.x) < cd - map.wall_back + 1.5 and absf(p.z) < map.wall_half_width + 1.5:
+						continue
+					var hit := false
+					for b in blockers:
+						if Vector2(p.x - b[0].x, p.z - b[0].z).length() < b[1]:
+							hit = true
+							break
+					if hit:
+						continue
+				var basis := Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * rng.randf_range(0.75, 1.3))
+				list.append(Transform3D(basis, p))
+				n -= 1
+			by_model[model] = list
+	for model: String in by_model:
+		var scene: PackedScene = load(theme.models_dir.path_join(model))
+		var inst := scene.instantiate()
+		var src: MeshInstance3D = inst if inst is MeshInstance3D else inst.find_children("*", "MeshInstance3D", true, false)[0]
+		var xs: Array = by_model[model]
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = src.mesh
+		mm.instance_count = xs.size()
+		for i in xs.size():
+			mm.set_instance_transform(i, xs[i] * src.transform)
+		var mmi := MultiMeshInstance3D.new()
+		mmi.name = "Enfeite_" + model.get_basename()
+		mmi.multimesh = mm
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(mmi)
+		inst.free()
+
+
+## Pétalas caindo (Templo ao Luar) ou fogo-fantasma subindo (Floresta Oni).
+func _build_particles() -> void:
+	if theme.particulas == "":
+		return
+	var p := CPUParticles3D.new()
+	p.name = "ParticulasDoAr"
+	p.amount = 220
+	p.lifetime = 9.0
+	p.preprocess = 9.0
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	p.emission_box_extents = Vector3(map.half_width, 3.0, map.half_depth)
+	p.position.y = 4.0
+	var quad := QuadMesh.new()
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	mat.billboard_keep_scale = true
+	mat.vertex_color_use_as_albedo = true
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	quad.material = mat
+	p.mesh = quad
+	p.direction = Vector3(1, 0, 0.3)
+	p.spread = 30.0
+	if theme.particulas == "petalas":
+		quad.size = Vector2(0.16, 0.11)
+		p.gravity = Vector3(0, -0.35, 0)
+		p.initial_velocity_min = 0.4
+		p.initial_velocity_max = 1.0
+		p.angle_min = 0.0
+		p.angle_max = 360.0
+		p.angular_velocity_min = -90.0
+		p.angular_velocity_max = 90.0
+		p.color = Color(1.0, 0.78, 0.88, 0.95)
+	else:
+		quad.size = Vector2(0.14, 0.14)
+		p.gravity = Vector3(0, 0.12, 0)
+		p.initial_velocity_min = 0.1
+		p.initial_velocity_max = 0.4
+		var g := Gradient.new()
+		g.set_color(0, Color(0.4, 1.6, 0.9, 0.0))
+		g.add_point(0.2, Color(0.4, 1.6, 0.9, 1.0))
+		g.add_point(0.8, Color(0.8, 0.5, 1.8, 0.9))
+		g.set_color(g.get_point_count() - 1, Color(0.8, 0.5, 1.8, 0.0))
+		p.color_ramp = g
+	add_child(p)
+	_particles = p
+	_particles.visible = Settings.quality >= 2
 
 
 # --- Utilitários --------------------------------------------------------------

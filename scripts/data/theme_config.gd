@@ -46,6 +46,8 @@ extends Resource
 @export var tower_scale := 3.2
 @export var flag_model := "flag_{cor}.gltf"
 @export var flag_scale := 4.0
+## Altura da bandeira em cima da torre.
+@export var flag_height := 7.0
 @export var wall_model := "wall_straight.gltf"
 @export var wall_scale := 3.0
 ## Comprimento de um módulo de muralha já escalado (2 m x escala 3).
@@ -53,6 +55,18 @@ extends Resource
 ## Paisagem fora da arena (só decoração, sem colisão).
 @export var border_trees: PackedStringArray = ["trees_A_large.gltf", "trees_B_large.gltf", "trees_A_medium.gltf", "hills_A_trees.gltf"]
 @export var border_mountains: PackedStringArray = ["mountain_A_grass_trees.gltf", "mountain_B_grass_trees.gltf"]
+
+@export_group("Detalhes do chão")
+## Enfeites espalhados pelo campo, sem colisão nem sombra: {"capim.scn": 400}.
+## Posição sorteada com semente fixa (o mapa é sempre igual), fora da estrada e
+## dos castelos. Cada modelo vira um MultiMesh: 1 chamada de desenho por tipo.
+@export var decor_campo: Dictionary = {}
+## Enfeites sobre a estrada (lajotas, folhas caídas...).
+@export var decor_estrada: Dictionary = {}
+## Partículas no ar pelo mapa: "" (nenhuma), "petalas" ou "fantasmas".
+@export var particulas := ""
+
+@export_group("Modelos")
 ## Troca modelos dos objetos do mapa neste tema: {"trees_A_large.gltf": "rock_single_A.gltf"}.
 @export var model_swaps: Dictionary = {}
 
