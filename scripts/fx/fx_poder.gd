@@ -471,10 +471,11 @@ static func _detritos(g: Node, pos: Vector3, cor: Color, qtd: int) -> void:
 	p.angular_velocity_max = 400.0
 	p.scale_amount_min = 0.5
 	p.scale_amount_max = 1.3
-	var b := BoxMesh.new()
-	b.size = Vector3(0.22, 0.18, 0.2)
-	b.material = Fx.lit(cor)
-	p.mesh = b
+	p.mesh = Fx.cached("detrito" + cor.to_html(), func() -> Mesh:
+		var b := BoxMesh.new()
+		b.size = Vector3(0.22, 0.18, 0.2)
+		b.material = Fx.lit(cor)
+		return b)
 	g.add_child(p)
 	p.global_position = pos + Vector3(0, 0.2, 0)
 	p.emitting = true
@@ -496,13 +497,14 @@ static func _motas(g: Node, pos: Vector3, cor: Color, qtd: int) -> void:
 	p.initial_velocity_min = 1.5
 	p.initial_velocity_max = 3.5
 	p.gravity = Vector3.ZERO
-	var s := SphereMesh.new()
-	s.radius = 0.07
-	s.height = 0.14
-	s.radial_segments = 4
-	s.rings = 2
-	s.material = _mat(Color(cor * 1.8, 1.0))
-	p.mesh = s
+	p.mesh = Fx.cached("mota" + cor.to_html(), func() -> Mesh:
+		var s := SphereMesh.new()
+		s.radius = 0.07
+		s.height = 0.14
+		s.radial_segments = 4
+		s.rings = 2
+		s.material = _mat(Color(cor * 1.8, 1.0))
+		return s)
 	g.add_child(p)
 	p.global_position = pos + Vector3(0, 0.6, 0)
 	p.emitting = true
@@ -525,13 +527,14 @@ static func _poeira(g: Node, pos: Vector3, cor: Color, qtd: int) -> void:
 	p.damping_min = 6.0
 	p.damping_max = 8.0
 	p.gravity = Vector3.ZERO
-	var s := SphereMesh.new()
-	s.radius = 0.25
-	s.height = 0.4
-	s.radial_segments = 6
-	s.rings = 3
-	s.material = Fx.unshaded(Color(cor, 0.5), true)
-	p.mesh = s
+	p.mesh = Fx.cached("poeira" + cor.to_html(), func() -> Mesh:
+		var s := SphereMesh.new()
+		s.radius = 0.25
+		s.height = 0.4
+		s.radial_segments = 6
+		s.rings = 3
+		s.material = Fx.unshaded(Color(cor, 0.5), true)
+		return s)
 	g.add_child(p)
 	p.global_position = pos + Vector3(0, 0.3, 0)
 	p.emitting = true

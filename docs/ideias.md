@@ -20,6 +20,9 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 - **Ajuste dos poderes novos** depois do teste do Julio (dano, raio, recarga).
 
 ## B — depois
+- **Bonecos mais leves** (frente Visual, medido na Rodada 19): cada boneco tem
+  ~11 mil triângulos com o contorno (16 = ~180 mil por quadro). LOD simples
+  (versão de menos polígonos de longe) e contorno desligado na qualidade Mínima.
 - **Hora do Caos** (avaliado na Rodada 12, Jogabilidade): relógio de partida
   (ex.: 8 min) e, nos 2 últimos, chi enche 2x, espíritos caem em dobro e a
   música acelera. Barato (só regras + HUD) e resolve partidas que não terminam

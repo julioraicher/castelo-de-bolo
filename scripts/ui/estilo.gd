@@ -123,6 +123,8 @@ static func barra(color: Color, tamanho: Vector2) -> ProgressBar:
 
 static func cor_barra(b: ProgressBar, color: Color) -> void:
 	var fg: StyleBoxFlat = b.get_theme_stylebox("fill")
+	if fg.bg_color == color:
+		return  # mudar o StyleBox redesenha a barra: só quando a cor muda
 	fg.bg_color = color
 	fg.shadow_color = Color(color, 0.5)
 

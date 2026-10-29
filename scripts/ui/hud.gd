@@ -8,6 +8,7 @@ var _placar: Array[Label] = []
 var _pips: Array = [[], []]  # Icone losango por time
 var _chips: Array[PanelContainer] = []
 var _chip_estado: Array[Label] = []
+var _chip_dono: Array[Label] = []
 var _peso: Array[ProgressBar] = []
 var _retrato: PanelContainer
 var _icone_papel: Icone
@@ -181,6 +182,7 @@ func _chip(team: int) -> PanelContainer:
 	var dono := Estilo.rotulo("", 12, Estilo.TEXTO_FRACO, Estilo.FORTE, 3)
 	dono.name = "Dono"
 	v.add_child(dono)
+	_chip_dono.append(dono)
 	var estado := Estilo.rotulo("", 18, Estilo.TEXTO, Estilo.FORTE)
 	v.add_child(estado)
 	_chip_estado.append(estado)
@@ -321,7 +323,7 @@ func update_state(game: Game) -> void:
 				pip.queue_redraw()
 		var p: Princess = game.princesses[team]
 		var minha := team == _meu_time
-		var dono: Label = _chips[team].find_child("Dono", true, false)
+		var dono := _chip_dono[team]
 		dono.text = "SUA MÁSCARA" if minha else "MÁSCARA INIMIGA"
 		var txt := ""
 		var cor := Estilo.TEXTO
@@ -336,15 +338,16 @@ func update_state(game: Game) -> void:
 				txt = "caída no chão"
 				cor = Estilo.OURO
 		_chip_estado[team].text = txt
-		_chip_estado[team].label_settings.font_color = cor
+		_cor_texto(_chip_estado[team], cor)
 		_chips[team].modulate = Color(1, 1, 1).lerp(Color(1.5, 1.3, 1.3), pulso) if p.state == Princess.State.CARRIED else Color.WHITE
 		_peso[team].value = p.fatness * 100.0
 
 	# Cartão do jogador.
 	var time_cor := Config.team_color(u.team)
 	var disco: StyleBoxFlat = _retrato.get_theme_stylebox("panel")
-	disco.bg_color = u.stats.hat_color.darkened(0.55)
-	disco.border_color = time_cor.lightened(0.3)
+	if disco.bg_color != u.stats.hat_color.darkened(0.55):  # mexer no StyleBox redesenha o painel
+		disco.bg_color = u.stats.hat_color.darkened(0.55)
+		disco.border_color = time_cor.lightened(0.3)
 	_icone_papel.mudar(Icone.do_papel(u.stats), u.stats.hat_color.lightened(0.35))
 	_class_label.text = u.stats.display_name if u.alive else "Renascendo..."
 	var ratio := u.hp_ratio()
@@ -358,21 +361,27 @@ func update_state(game: Game) -> void:
 		_power_bar.modulate = Color(1, 1, 1).lerp(Color(1.7, 1.5, 1.7), pulso)
 		_power_key.visible = true
 		_power_label.text = u.stats.power_name + "!"
-		_power_label.label_settings.font_color = Estilo.FANTASMA
+		_cor_texto(_power_label, Estilo.FANTASMA)
 	else:
 		_power_bar.modulate = Color(1, 1, 1, 0.85)
 		_power_key.visible = false
 		_power_label.text = "CHI %d%%" % int(u.power) if tem_poder else ""
-		_power_label.label_settings.font_color = Color(1, 0.8, 0.94)
+		_cor_texto(_power_label, Color(1, 0.8, 0.94))
 	if u.carried_princess:
 		_status_label.text = "CARREGANDO A MÁSCARA"
-		_status_label.label_settings.font_color = Estilo.OURO
+		_cor_texto(_status_label, Estilo.OURO)
 	elif u.has_cake:
 		_status_label.text = "levando um espírito"
-		_status_label.label_settings.font_color = Estilo.FANTASMA
+		_cor_texto(_status_label, Estilo.FANTASMA)
 	else:
 		_status_label.text = ""
 	_status_label.visible = _status_label.text != ""
+
+
+## Trocar a cor do LabelSettings refaz o texto do Label; só troca se mudou.
+func _cor_texto(l: Label, cor: Color) -> void:
+	if l.label_settings.font_color != cor:
+		l.label_settings.font_color = cor
 
 
 ## Dica com tecla: o primeiro "[X]" do texto vira uma tecla desenhada.

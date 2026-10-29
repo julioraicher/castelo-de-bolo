@@ -3,6 +3,35 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 19 (2026-10-29), frente Jogabilidade: medir e aliviar o desempenho
+- Pedido do Julio: deixar o jogo mais leve. Primeiro medir: flag nova
+  `--perf=N` (qualidade N, sem a automática) imprime a cada 5 s FPS, ms de CPU
+  e de física por quadro, draw calls, triângulos, objetos e nós.
+- O que a medição mostrou (Rio, luta com poderes, renderizador do navegador):
+  - Lógica do jogo é barata: física ~4 ms por quadro com 16 bonecos.
+  - Quem pesa é desenhar: na Média ~650-870 mil triângulos e 350-560 draw
+    calls por quadro; na Mínima ~285 mil e ~235. A **sombra** é quase metade do
+    custo (esconder o sol: 730 mil → 380 mil triângulos); os 16 bonecos são
+    ~180 mil triângulos e ~95 draw calls (~11 mil por boneco com o contorno).
+  - Testei sombra de 1 fatia na Média: não mudou nada mensurável, então voltei.
+- Otimizações (sem mudar o que se vê):
+  - HUD atualiza a 20 Hz em vez de 60 e só mexe em cor de texto/StyleBox
+    quando a cor muda (antes refazia o texto e redesenhava painéis todo quadro;
+    também saiu um `find_child` por quadro).
+  - Partículas (faíscas, detritos, motas, poeira) reaproveitam malha e
+    material por cor (`Fx.cached`) em vez de criar novos a cada golpe.
+  - Shaders dos efeitos são "esquentados" no começo da partida
+    (`Fx.prewarm`, embaixo do chão). No navegador, cada material novo compilava
+    na primeira vez que aparecia: era o engasgo no primeiro golpe/poder.
+  - A bolha de escudo usa um Shader só para todos (antes cada boneco compilava o seu).
+- Próximo passo com ganho grande (frente Visual, anotado em docs/ideias.md):
+  versão simplificada (LOD) dos bonecos e contorno desligado na Mínima.
+- Teste: 5 min simulados no Rio (com `--poderes`) e no Vale sem erro.
+- **O que testar**:
+  1. O engasgo no primeiro golpe/primeiro poder da partida sumiu?
+  2. FPS no navegador e no .exe comparado a antes (Esc > Configurações > Mostrar FPS).
+  3. Placar, vida e Chi continuam atualizando certinho?
+
 ## Rodada 18 (2026-10-29), frente Visual: bots andam pela vila do Rio
 - Problema (medido pela Jogabilidade): no Rio os bots acionavam o "desempacar"
   ~440 vezes em 5 min, contra 16 no Vale. Causa no mapa, não na IA: o navmesh

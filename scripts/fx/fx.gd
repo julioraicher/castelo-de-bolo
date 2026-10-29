@@ -4,6 +4,35 @@ extends RefCounted
 ## faíscas de impacto, anel de cura, rastro de golpe. Funções estáticas: Fx.damage_number(...).
 
 static var _sector_cache := {}  # "raio_arco" -> ArrayMesh do rastro de golpe
+static var _cache := {}  # malhas de partícula já prontas (com material), por tipo + cor
+
+
+## Recurso reaproveitado: cria uma vez com maker e devolve o mesmo nas próximas.
+## Partículas não animam o material, então todas as do mesmo tipo e cor podem
+## dividir malha e material (menos alocação e nenhum shader novo no meio da luta).
+static func cached(key: String, maker: Callable) -> Resource:
+	if not _cache.has(key):
+		_cache[key] = maker.call()
+	return _cache[key]
+
+
+## Esquenta os shaders dos efeitos: desenha cada tipo uma vez, escondido
+## embaixo do chão, no começo da partida. No navegador (WebGL) cada material
+## novo compila um shader na primeira vez que aparece, e isso travava o jogo
+## por um instante no primeiro golpe, no primeiro poder etc.
+static func prewarm(parent: Node, pos: Vector3) -> void:
+	var p := pos + Vector3(0, -6.0, 0)
+	burst(parent, p, Color(1, 0.85, 0.5), 2, 1.0)
+	ring(parent, p, Color(1, 1, 1, 0.5), 1.0)
+	slash(parent, p, Vector3.FORWARD, 2.0, 120.0, Color.WHITE)
+	pillar(parent, p, Color(1, 0.9, 0.5), 1.0)
+	beam(parent, p, p + Vector3(1, 0, 0), Color(0.6, 1, 1))
+	var bolha := MeshInstance3D.new()
+	bolha.mesh = SphereMesh.new()
+	bolha.material_override = bubble(Color(1, 0.85, 0.4))
+	parent.add_child(bolha)
+	bolha.global_position = p
+	parent.get_tree().create_timer(0.5).timeout.connect(bolha.queue_free)
 
 
 static func damage_number(parent: Node, pos: Vector3, text: String, color: Color) -> void:
@@ -43,19 +72,20 @@ static func burst(parent: Node, pos: Vector3, color: Color, amount := 14, speed 
 	p.gravity = Vector3(0, -14, 0)
 	p.scale_amount_min = 0.6
 	p.scale_amount_max = 1.2
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.09
-	mesh.height = 0.18
-	mesh.radial_segments = 6
-	mesh.rings = 3
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mat.emission_enabled = true
-	mat.emission = color
-	mat.emission_energy_multiplier = 1.5
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mesh.material = mat
-	p.mesh = mesh
+	p.mesh = cached("burst" + color.to_html(), func() -> Mesh:
+		var mesh := SphereMesh.new()
+		mesh.radius = 0.09
+		mesh.height = 0.18
+		mesh.radial_segments = 6
+		mesh.rings = 3
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = color
+		mat.emission_enabled = true
+		mat.emission = color
+		mat.emission_energy_multiplier = 1.5
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mesh.material = mat
+		return mesh)
 	parent.add_child(p)
 	p.global_position = pos
 	p.emitting = true
@@ -175,9 +205,19 @@ static func pillar(parent: Node, pos: Vector3, color: Color, radius: float) -> v
 
 ## Bolha de escudo: brilha na borda e é quase invisível no meio (efeito
 ## Fresnel: quanto mais rasante o olhar, 1 − N·V maior).
+static var _bubble_shader: Shader
+
 static func bubble(color: Color) -> ShaderMaterial:
-	var sh := Shader.new()
-	sh.code = """
+	if _bubble_shader == null:  # um Shader só para todos: compila uma vez
+		_bubble_shader = Shader.new()
+		_bubble_shader.code = _BUBBLE_CODE
+	var mat := ShaderMaterial.new()
+	mat.shader = _bubble_shader
+	mat.set_shader_parameter("tint", color)
+	return mat
+
+
+const _BUBBLE_CODE := """
 shader_type spatial;
 render_mode unshaded, blend_add, depth_draw_never, cull_back, shadows_disabled;
 uniform vec4 tint : source_color;
@@ -187,10 +227,6 @@ void fragment() {
 	ALPHA = clamp(0.08 + rim * 0.9, 0.0, 1.0);
 }
 """
-	var mat := ShaderMaterial.new()
-	mat.shader = sh
-	mat.set_shader_parameter("tint", color)
-	return mat
 
 
 static func unshaded(color: Color, transparent := false) -> StandardMaterial3D:

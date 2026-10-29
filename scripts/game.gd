@@ -31,6 +31,8 @@ var _time := 0.0
 #   --mapa=N            usa o mapa N de GameConfig.maps
 #   --vista=mapa|alto   câmera parada vendo o mapa todo / o castelo de cima (prints)
 #   --print-poder       com --shots: os prints saem logo depois de cada poder do jogador
+#   --perf=N            mede o desempenho na qualidade N (0-3): a cada 5 s imprime
+#                       ms de CPU por quadro, draw calls, triângulos e objetos
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
 var _variacoes := false
@@ -39,6 +41,12 @@ var _poderes_t := 2.0
 var _shots_dir := ""
 var _vista := ""
 var _print_poder := false
+var _perf := false
+var _hud_t := 0.0
+var _perf_acc := {}
+var _perf_n := 0
+var _perf_t := 0.0
+var _perf_t0 := 0
 var _shot_times: Array[float] = [4.0, 15.0, 30.0, 50.0, 75.0]
 
 const BOT_ROLES := [BotBrain.Role.ATTACK, BotBrain.Role.DEFEND, BotBrain.Role.ATTACK, BotBrain.Role.CAKE,
@@ -55,6 +63,10 @@ func _ready() -> void:
 			_variacoes = true
 		elif arg == "--poderes":
 			_poderes = true
+		elif arg.begins_with("--perf="):
+			_perf = true
+			Settings.auto_quality = false
+			Settings.quality = int(arg.trim_prefix("--perf="))
 		elif arg == "--print-poder":
 			_print_poder = true
 		elif arg.begins_with("--shots="):
@@ -134,6 +146,7 @@ func _ready() -> void:
 	add_child(camera)
 	camera.target = player
 	camera.snap()
+	Fx.prewarm(self, player.global_position)
 	if _vista != "":
 		camera.set_process(false)
 		camera.set_physics_process(false)
@@ -168,6 +181,38 @@ func _on_started() -> void:
 	Sfx.start_music()
 
 
+func _process(delta: float) -> void:
+	if _perf:
+		_measure(delta)
+
+
+## --perf: média por quadro dos monitores do motor, impressa a cada 10 s.
+func _measure(delta: float) -> void:
+	var keys := {
+		"cpu_ms": Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
+		"fisica_ms": Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0,
+		"draw_calls": Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
+		"tris_mil": Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME) / 1000.0,
+		"objetos": Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME),
+		"nos": Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
+	}
+	for k in keys:
+		_perf_acc[k] = _perf_acc.get(k, 0.0) + keys[k]
+	_perf_n += 1
+	_perf_t += delta
+	if _perf_t >= 5.0:
+		# FPS pelo relógio real (com --fixed-fps o delta é sempre 1/60).
+		var real := (Time.get_ticks_usec() - _perf_t0) / 1e6
+		_perf_t0 = Time.get_ticks_usec()
+		var out := "PERF t=%d fps=%.1f" % [int(_time), _perf_n / real]
+		for k in _perf_acc:
+			out += " %s=%.1f" % [k, _perf_acc[k] / _perf_n]
+		print(out)
+		_perf_acc.clear()
+		_perf_n = 0
+		_perf_t = 0.0
+
+
 func _physics_process(delta: float) -> void:
 	_time += delta
 	if _shots_dir != "" and not _shot_times.is_empty() and _time >= _shot_times[0]:
@@ -186,7 +231,12 @@ func _physics_process(delta: float) -> void:
 			for u in units:
 				u.fill_power()
 	_rules()
-	hud.update_state(self)
+	# O HUD não precisa de 60 atualizações por segundo: 20 Hz bastam ao olho
+	# e cada atualização mexe em vários textos e barras.
+	_hud_t -= delta
+	if _hud_t <= 0.0:
+		_hud_t = 0.05
+		hud.update_state(self)
 
 
 func _log(msg: String) -> void:
