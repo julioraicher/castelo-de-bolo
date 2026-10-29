@@ -32,4 +32,9 @@ chamadas são personagens. Sobra pouco para o cenário. Regras:
 ## Decisões
 
 - 2026-10-29: sem Gemini; referências saem de pranchas feitas aqui.
-- Direção visual: _pendente_ (sendo definida na conversa "Definir identidade visual do jogo").
+- Direção visual: Clãs de Neon com lado sombrio (ver `docs/identidade.md`).
+- 2026-10-29: prancha 1 (`tools/prancha_cenario.gd`): templo-castelo, torre de vigia,
+  muralha, torii, casa, lanterna de papel, lanterna de pedra, letreiro neon,
+  pedestal da Máscara Oni, pinheiro. Todas juntas ~1.700 triângulos; no jogo cada
+  peça vira uma malha só (1 draw call por tipo, MultiMesh nas repetidas).
+  Aguardando o retorno do Julio por número.
