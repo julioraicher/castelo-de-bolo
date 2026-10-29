@@ -65,6 +65,7 @@ var _dodge_cd := 0.0
 var _dodge_t := 0.0
 var _dodge_dir := Vector3.ZERO
 var _knock := Vector3.ZERO      # velocidade do empurrão (separada da caminhada)
+var _launch_vy := 0.0           # impulso para cima pendente (Fúria, explosões, golpe final)
 var _move_vel := Vector3.ZERO   # velocidade da caminhada/esquiva
 var _flash_t := 0.0
 var _respawn_t := 0.0
@@ -387,6 +388,10 @@ func add_power(amount: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	if not alive:
+		# Quem morre no ar cai (sem isso o corpo ficava parado no ar).
+		if not is_on_floor():
+			velocity = Vector3(0, velocity.y - 30.0 * delta, 0)
+			move_and_slide()
 		_respawn_t -= delta
 		if _respawn_t <= 0.0:
 			_respawn()
@@ -442,7 +447,11 @@ func _physics_process(delta: float) -> void:
 
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
-	velocity.y = 0.0 if is_on_floor() else velocity.y - 30.0 * delta
+	if _launch_vy > 0.0:
+		velocity.y = _launch_vy  # lançado: sobe com v0 e cai com g = 30 m/s²
+		_launch_vy = 0.0
+	else:
+		velocity.y = 0.0 if is_on_floor() else velocity.y - 30.0 * delta
 	move_and_slide()
 	global_position = game.arena.clamp_to_arena(global_position)
 
@@ -546,11 +555,16 @@ func _attack() -> void:
 				if to.length() > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > stats.attack_arc_deg / 2.0:
 					continue
 				other.take_damage(stats.damage * mult * damage_mult(), self, to.normalized(), mult, true)
+				if finisher:
+					other.launch(3.5)  # golpe final tira o alvo do chão
 				hit_any = true
 			if hit_any:
 				hitstop(Config.cfg.hitstop_time * (1.6 if finisher else 1.0))
 				if is_player:
 					game.camera.add_trauma(0.4 if finisher else 0.25)
+					game.camera.kick(dir, 0.6 if finisher else 0.3)
+					if finisher:
+						game.camera.punch_fov(2.5)
 		"ranged":
 			_shoot_arrow(1.0, 1.0)
 		"healer":
@@ -599,6 +613,13 @@ func fill_power() -> void:
 	power = 0.0
 	_power_active_t = 0.0
 	add_power(POWER_MAX)
+
+
+## Joga para cima com velocidade vy (m/s). Altura máxima h = vy²/2g: com
+## g = 30, vy = 7 sobe ~0,8 m e fica ~0,47 s no ar.
+func launch(vy: float) -> void:
+	if alive and _dodge_t <= 0.0:
+		_launch_vy = maxf(_launch_vy, vy)
 
 
 ## Congela animação e movimento por t segundos (hitstop).
@@ -775,6 +796,7 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		hitstop(Config.cfg.hitstop_time * (1.6 if knock_mult > 1.0 else 1.0))
 	if is_player:
 		game.camera.add_trauma(0.2 if blocked else 0.45)
+		game.camera.kick(dir, 0.15 if blocked else 0.35)
 	_update_hp_bar()
 	if hp <= 0.0:
 		_die(attacker)
@@ -843,7 +865,14 @@ func _use_power() -> void:
 	_cancel_skill()
 	Sfx.play("power", global_position, 0.03)
 	if is_player:
+		# "Super flash": clarão na cor do papel, zoom e o tempo quase para.
 		game.camera.add_trauma(0.35)
+		game.camera.punch_fov(4.0)
+		game.hud.flash(Color(stats.hat_color.lightened(0.4), 0.22), 0.3)
+		game.slowmo(0.3, 0.14)
+		game.on_player_power()
+	else:
+		game.camera.shake_at(global_position, 0.2)
 	match stats.power:
 		"redemoinho":
 			_spin_t = stats.power_duration
@@ -881,13 +910,21 @@ func _use_power() -> void:
 			_play_once("2H_Melee_Attack_Chop", 0.45)
 			Fx.cracks(game, global_position, Color(1.0, 0.12, 0.08), stats.power_radius)
 			Fx.burst(game, global_position + Vector3(0, 0.5, 0), Color(1.0, 0.3, 0.1), 30, 10.0)
+			game.camera.shake_at(global_position, 0.6)
+			var hit_any := false
 			for other in game.units:
 				if not other.alive or other.team == team:
 					continue
 				var d := other.global_position - global_position
+				if absf(d.y) > 1.8:
+					continue
 				d.y = 0
 				if d.length() <= stats.power_radius:
-					other.take_damage(stats.power_value, self, d.normalized() if d.length() > 0.1 else _facing(), 1.6)
+					other.take_damage(stats.power_value, self, d.normalized() if d.length() > 0.1 else _facing(), 1.6, true)
+					other.launch(7.0)  # a onda de choque arremessa
+					hit_any = true
+			if hit_any:
+				hitstop(Config.cfg.hitstop_time * 1.5)
 		"corte_relampago":
 			_corte_relampago()
 		"leque":

@@ -24,6 +24,7 @@ var _hint_key: PanelContainer
 var _hint_b: Label
 var _big: Label
 var _fps: Label
+var _flash: ColorRect
 var _end_panel: Control
 var _end_title: Label
 var _end_score: Label
@@ -67,7 +68,21 @@ func _ready() -> void:
 	_big.modulate.a = 0.0
 	root.add_child(_big)
 
+	# Clarão da tela inteira (poder do jogador). Só um ColorRect: custo ~zero.
+	_flash = ColorRect.new()
+	_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_flash.color = Color(1, 1, 1, 0)
+	root.add_child(_flash)
+
 	_build_fim(root)
+
+
+## Clarão rápido na tela (cor com alfa inicial), some em dur segundos.
+func flash(color: Color, dur := 0.25) -> void:
+	_flash.color = color
+	var tw := _flash.create_tween()
+	tw.tween_property(_flash, "color:a", 0.0, dur).set_ease(Tween.EASE_OUT)
 
 
 # --- Montagem -------------------------------------------------------------------

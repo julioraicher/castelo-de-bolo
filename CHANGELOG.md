@@ -3,6 +3,34 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 12 (2026-10-29), frente Jogabilidade: porradaria com mais peso
+- Pedido do Julio: "porradaria insana", mantendo dash e ritmo. Sem partícula
+  nova pesada: tudo é câmera, tempo e física (custo quase zero na Intel UHD).
+- **Lançar no ar** (`Unit.launch(vy)`): Fúria do Ronin (7 m/s), bomba (até 5,
+  cai com a distância), mina (6) e golpe final do combo (3,5) tiram o alvo do
+  chão. h = vy²/2g com g = 30: a Fúria sobe ~0,8 m. Quem morre no ar agora cai.
+- **Fúria** agora dá hit-stop nos atingidos e no Ronin, e ignora quem está em
+  outro andar (muralha/ponte), como os golpes normais.
+- **Câmera** (`camera_rig.gd`): coice direcional com mola amortecida
+  (x'' = −ω²x − 2ζωx', ζ = 0,45) nos golpes do jogador e quando ele apanha;
+  soco de zoom (FOV) no golpe final, no poder e no abate; `shake_at()` faz
+  explosões e poderes de bots perto tremerem a tela, caindo com 1/(1+(d/8)²).
+  A mola integra em passos de 8 ms: com FPS baixo ela explodia (ω·dt > 2).
+- **Poder do jogador**: clarão na cor do papel, zoom e 0,14 s em câmera lenta
+  (`Game.slowmo`, usa tempo real e volta sozinho). **Abate do jogador**:
+  espírito sobe, tranco e 0,12 s de câmera lenta.
+- Desligar "Tremor de câmera" nas Configurações desliga coice e zoom também.
+- Flag de print `--print-poder` (com `--shots`): prints logo após cada poder.
+- Ideias avaliadas (Hora do Caos, gatilhos de poder) foram para `docs/ideias.md` (B).
+- Teste: 5 min simulados no Rio e no Vale (com e sem `--poderes`) sem erro.
+- **O que testar**:
+  1. Use o Q com algumas classes: o "congela e explode" do poder ficou bom ou
+     enjoa? (dá para encurtar ou tirar a câmera lenta)
+  2. Pegue o Ronin Oni e use a Fúria no meio do grupo: os inimigos voam?
+  3. Bata o combo de 3 golpes: o último joga o alvo para cima e a tela dá tranco?
+  4. Leve uma bomba ou pise numa mina: o tremor perto de explosões incomoda?
+  5. No PC fraco, notou queda de FPS nos momentos de poder?
+
 ## Rodada 11 (2026-10-29), frente Visual: interface no estilo Clãs de Neon
 - Pedido do Julio: textos, fontes e visual das informações na tela.
 - Fontes livres (OFL) em `assets/fonts/`: **Shojumaru** (pincel japonês) nos

@@ -30,6 +30,7 @@ var _time := 0.0
 #   --tema=N            usa o tema N de GameConfig.themes (prints de cada tema)
 #   --mapa=N            usa o mapa N de GameConfig.maps
 #   --vista=mapa|alto   câmera parada vendo o mapa todo / o castelo de cima (prints)
+#   --print-poder       com --shots: os prints saem logo depois de cada poder do jogador
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
 var _variacoes := false
@@ -37,6 +38,7 @@ var _poderes := false
 var _poderes_t := 2.0
 var _shots_dir := ""
 var _vista := ""
+var _print_poder := false
 var _shot_times: Array[float] = [4.0, 15.0, 30.0, 50.0, 75.0]
 
 const BOT_ROLES := [BotBrain.Role.ATTACK, BotBrain.Role.DEFEND, BotBrain.Role.ATTACK, BotBrain.Role.CAKE,
@@ -44,6 +46,7 @@ const BOT_ROLES := [BotBrain.Role.ATTACK, BotBrain.Role.DEFEND, BotBrain.Role.AT
 
 
 func _ready() -> void:
+	Engine.time_scale = 1.0  # reinício no meio de uma câmera lenta
 	randomize()
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--autoplay":
@@ -52,6 +55,8 @@ func _ready() -> void:
 			_variacoes = true
 		elif arg == "--poderes":
 			_poderes = true
+		elif arg == "--print-poder":
+			_print_poder = true
 		elif arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
 		elif arg.begins_with("--vista="):
@@ -60,6 +65,8 @@ func _ready() -> void:
 			Settings.mapa = int(arg.trim_prefix("--mapa="))
 		elif arg.begins_with("--tema="):
 			Settings.theme = int(arg.trim_prefix("--tema="))
+	if _print_poder:
+		_shot_times = [1e9, 1e9, 1e9, 1e9, 1e9, 1e9]  # quem marca a hora é o poder
 	arena = Arena.new()
 	arena.name = "Arena"
 	add_child(arena)
@@ -303,6 +310,8 @@ func _score_point(u: Unit) -> void:
 	hud.show_big("PONTO DO %s!" % Config.TEAM_NAMES[u.team].to_upper(), Config.team_color(u.team).lightened(0.4))
 	if score[u.team] >= Config.cfg.score_to_win:
 		game_over = true
+		_slowmo_id += 1
+		Engine.time_scale = 1.0
 		hud.update_state(self)
 		hud.show_end(mine)
 		Sfx.play_ui("win" if mine else "lose")
@@ -411,7 +420,33 @@ func _on_unit_died(u: Unit, killer: Unit) -> void:
 	if u == player:
 		hud.show_big("Você caiu! Voltando como recruta...", Color(1, 0.6, 0.6), 1.8)
 	elif killer == player:
+		# Abate do jogador: o espírito sobe, a tela dá um tranco e o tempo engasga.
 		Fx.burst(self, u.global_position + Vector3(0, 1, 0), Color(1, 0.9, 0.3), 16, 7.0)
+		Fx.burst(self, u.global_position + Vector3(0, 1.6, 0), Color(0.4, 1.0, 1.0), 8, 4.0)
+		camera.add_trauma(0.3)
+		camera.punch_fov(3.0)
+		slowmo(0.35, 0.12)
+
+
+## Chamado quando o jogador usa o poder (para o print do --print-poder).
+func on_player_power() -> void:
+	if _print_poder and _shots_dir != "" and not _shot_times.is_empty():
+		_shot_times[0] = _time + 0.15
+
+
+var _slowmo_id := 0
+
+## Câmera lenta curta: o jogo inteiro roda a "scale" da velocidade por
+## real_time segundos de tempo real (não do tempo do jogo).
+func slowmo(scale: float, real_time: float) -> void:
+	if game_over:
+		return
+	_slowmo_id += 1
+	var id := _slowmo_id
+	Engine.time_scale = minf(Engine.time_scale, scale)
+	await get_tree().create_timer(real_time, true, false, true).timeout
+	if id == _slowmo_id:
+		Engine.time_scale = 1.0
 
 
 func _on_princess_changed(p: Princess) -> void:

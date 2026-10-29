@@ -162,6 +162,7 @@ func _explode(at: Vector3) -> void:
 	Fx.burst(_game, at + Vector3(0, 0.4, 0), Color(0.6, 0.6, 0.7), 10, 3.0)
 	Fx.ring(_game, at, Color(1.0, 0.55, 0.15, 0.9), r)
 	Sfx.play("hit", at, 0.15)
+	_game.camera.shake_at(at, 0.45)
 	for u in _game.units:
 		if not u.alive or u.team == owner_unit.team:
 			continue
@@ -172,3 +173,4 @@ func _explode(at: Vector3) -> void:
 		if d.length() <= r:
 			var f := 1.0 - 0.5 * d.length() / r
 			u.take_damage(damage * f, owner_unit, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, f)
+			u.launch(5.0 * f)
