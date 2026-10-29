@@ -22,6 +22,11 @@ conversa saber o que mudou sem reler o histórico.
 - Teste: 5 min simulados sem erro; até 6 estrepes simultâneas, itens sendo pegos.
 - Hora do Caos ficou para depois (precisa de relógio de partida).
 
+## 2026-10-29, frente Identidade: mundo ninja e variações
+- Mundo escolhido: Clãs de Neon (ninja). Cabeça menor, um pouco mais realista.
+- `docs/design-jogo.md`: 3 variações por papel com 2 poderes cada; o time
+  escolhe qual oficina construir (poucos terrenos por castelo).
+
 ## 2026-10-29, frente Identidade: direção v1 depois do quiz 2
 - `docs/identidade.md`: direção v1 = Clãs de Neon com lado sombrio; Máscara Oni
   + espíritos substituem princesa + bolo; Brawl Stars 1:3; noite neon; bloco de estilo.
