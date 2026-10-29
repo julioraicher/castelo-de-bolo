@@ -68,6 +68,7 @@ func _ready() -> void:
 			var cls: ClassStats = cfg.villager if is_player else start_classes[i % start_classes.size()]
 			u.setup(self, team, is_player, cls)
 			u.global_position = arena.random_spawn(team)
+			u.reset_physics_interpolation()
 			u.died.connect(_on_unit_died)
 			if is_player:
 				player = u

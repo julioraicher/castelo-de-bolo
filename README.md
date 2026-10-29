@@ -37,7 +37,7 @@ motor do jogo e os modelos 3D (algumas dezenas de MB) uma vez. Depois fica em ca
 ## Para quem vai mexer no código
 
 Leia o [GUIA.md](GUIA.md): mapa dos arquivos, onde mudar cada coisa e a física
-por trás.
+por trás. O que está feito e o que vem depois fica no [ROADMAP.md](ROADMAP.md).
 
 ## Créditos
 

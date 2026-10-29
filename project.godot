@@ -35,6 +35,9 @@ window/stretch/aspect="expand"
 
 3d/physics_engine="Jolt Physics"
 common/physics_ticks_per_second=60
+; Suaviza o movimento entre passos de física (60/s) quando a tela roda em
+; outra taxa (75, 144 Hz ou quadros irregulares no navegador).
+common/physics_interpolation=true
 
 [rendering]
 

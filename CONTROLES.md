@@ -21,7 +21,7 @@ Os mesmos controles aparecem no jogo: na tela inicial e em **Esc > Controles**.
 | Opção | O que faz |
 |---|---|
 | Volume da música / dos efeitos | 0 a 100% (no zero, muta) |
-| Dificuldade dos inimigos | Fácil: bots vermelhos reagem ~2x mais devagar e batem 30% menos. Difícil: reagem ~2x mais rápido e batem 20% mais |
+| Dificuldade dos inimigos | Fácil: bots vermelhos reagem ~2x mais devagar e batem 30% menos. Difícil: reagem ~30% mais rápido e batem 5% mais |
 | Qualidade gráfica | Alta: sombras completas e antisserrilhado. Média (padrão no navegador): sombras mais leves. Baixa: sem sombras e 3D em 75% da resolução. Se o jogo travar, baixe aqui |
 | Mostrar FPS | mostra quadros por segundo no canto superior esquerdo (60 é o ideal) |
 | Tela cheia | só na versão .exe/Linux (no navegador use F11) |

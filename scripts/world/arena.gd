@@ -33,6 +33,7 @@ func build() -> void:
 	_build_middle()
 	_build_borders()
 	_bake_navigation()
+	_batch_static_meshes()
 
 
 ## Converte coordenadas locais do castelo de `team` para o mundo.
@@ -61,6 +62,7 @@ func clamp_to_arena(p: Vector3) -> Vector3:
 # --- Ambiente -----------------------------------------------------------------
 
 var _sun: DirectionalLight3D
+var _static_models: Array[Node3D] = []
 var _env: Environment
 
 
@@ -306,7 +308,40 @@ func _model(file: String, pos: Vector3, scale_factor: float, rot_y := 0.0) -> No
 	node.scale = Vector3.ONE * scale_factor
 	node.rotation.y = rot_y
 	add_child(node)
+	_static_models.append(node)
 	return node
+
+
+## Junta cópias da mesma malha (árvores, pedras, muros...) num MultiMesh:
+## uma chamada de desenho por tipo de malha em vez de uma por cópia. No
+## navegador (WebGL) é o custo de cada chamada que mais pesa, não o número
+## de triângulos.
+func _batch_static_meshes() -> void:
+	var groups := {}  # Mesh -> Array[MeshInstance3D]
+	for root in _static_models:
+		if root.find_children("*", "AnimationPlayer", true, false).size() > 0:
+			continue
+		for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
+			if mi.mesh == null or mi.skin != null or mi.material_override != null:
+				continue
+			if not groups.has(mi.mesh):
+				groups[mi.mesh] = []
+			groups[mi.mesh].append(mi)
+	for mesh: Mesh in groups:
+		var list: Array = groups[mesh]
+		if list.size() < 2:
+			continue
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = mesh
+		mm.instance_count = list.size()
+		for i in list.size():
+			mm.set_instance_transform(i, list[i].global_transform)
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		add_child(mmi)
+		for mi: MeshInstance3D in list:
+			mi.queue_free()
 
 
 func _box_collider(center: Vector3, size: Vector3) -> void:

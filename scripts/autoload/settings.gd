@@ -30,12 +30,12 @@ func _ready() -> void:
 
 ## Multiplicador do tempo de reação dos bots INIMIGOS (maior = mais lentos).
 func bot_reaction_mult() -> float:
-	return [1.9, 1.0, 0.55][difficulty]
+	return [1.9, 1.0, 0.75][difficulty]
 
 
 ## Dano causado pelos bots inimigos, relativo ao normal.
 func bot_damage_mult() -> float:
-	return [0.7, 1.0, 1.2][difficulty]
+	return [0.7, 1.0, 1.05][difficulty]
 
 
 func apply() -> void:

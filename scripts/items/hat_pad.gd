@@ -34,6 +34,7 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 	label.position.y = 2.6
 	label.modulate = stats.hat_color.lightened(0.3)
 	add_child(label)
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # chapéu animado em _process
 	_hat = _make_hat(stats.id, stats.hat_color)
 	_hat.position.y = 1.2
 	add_child(_hat)

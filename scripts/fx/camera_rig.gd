@@ -16,6 +16,9 @@ func _ready() -> void:
 	far = 300.0
 	_noise.frequency = 2.0
 	current = true
+	# A câmera se move em _process (a cada quadro da tela), então não deve ser
+	# interpolada; ela segue a posição INTERPOLADA do alvo (ver _target_pos).
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 
 
 func snap() -> void:
@@ -37,9 +40,10 @@ func _process(delta: float) -> void:
 	_t += delta
 	var cfg := Config.cfg
 	# Adianta um pouco o foco na direção do mouse para ver mais à frente.
-	var lead := (mouse_ground_point() - target.global_position)
+	var target_pos := target.get_global_transform_interpolated().origin
+	var lead := (mouse_ground_point() - target_pos)
 	lead.y = 0
-	var desired := target.global_position + lead.limit_length(12.0) / 12.0 * cfg.camera_lead
+	var desired := target_pos + lead.limit_length(12.0) / 12.0 * cfg.camera_lead
 	# Suavização independente de FPS: 1 - e^(-k·dt).
 	_focus = _focus.lerp(desired, 1.0 - exp(-cfg.camera_smooth * delta))
 	var shake := _trauma * _trauma

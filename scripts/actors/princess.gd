@@ -110,7 +110,7 @@ func _make_crown() -> Node3D:
 	return crown
 
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	match state:
 		State.CARRIED:
 			if carrier == null or not carrier.alive:
@@ -134,6 +134,8 @@ func can_be_taken() -> bool:
 func pick_up(unit: Unit) -> void:
 	carrier = unit
 	state = State.CARRIED
+	global_position = unit.global_position + Vector3(0, 2.2, 0)
+	reset_physics_interpolation()  # teleporte: não "deslizar" do pedestal até o carregador
 	_beacon.visible = true
 	_play("Sit_Floor_Idle")
 	state_changed.emit(self)
@@ -145,6 +147,7 @@ func drop(at: Vector3) -> void:
 	_drop_t = Config.cfg.princess_return_time
 	rescue_progress = 0.0
 	global_position = _game.arena.clamp_to_arena(Vector3(at.x, 0, at.z))
+	reset_physics_interpolation()
 	_visual.rotation.y = 0
 	_beacon.visible = true
 	_play("Idle")
@@ -152,7 +155,7 @@ func drop(at: Vector3) -> void:
 
 
 func rescue(delta: float) -> void:
-	rescue_progress += delta * 1.5  # compensa o decaimento em _process
+	rescue_progress += delta * 1.5  # compensa o decaimento em _physics_process
 	if rescue_progress >= RESCUE_TIME:
 		return_home()
 
@@ -164,6 +167,7 @@ func return_home() -> void:
 	carrier = null
 	state = State.HOME
 	global_position = home
+	reset_physics_interpolation()
 	_beacon.visible = false
 	_play("Idle")
 	Fx.ring(_game, home, Config.team_color(team), 3.0)

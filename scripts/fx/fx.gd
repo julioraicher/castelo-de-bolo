@@ -17,6 +17,7 @@ static func damage_number(parent: Node, pos: Vector3, text: String, color: Color
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
 	label.fixed_size = false
+	label.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
 	parent.add_child(label)
 	label.global_position = pos + Vector3(randf_range(-0.4, 0.4), 2.6, 0)
 	var tw := label.create_tween().set_parallel()
@@ -64,6 +65,7 @@ static func ring(parent: Node, pos: Vector3, color: Color, radius: float) -> voi
 	torus.inner_radius = 0.85
 	torus.outer_radius = 1.0
 	mi.mesh = torus
+	mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA

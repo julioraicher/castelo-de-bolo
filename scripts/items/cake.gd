@@ -40,6 +40,7 @@ var _t := randf() * TAU
 
 
 func _ready() -> void:
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado em _process
 	_visual = make_visual(1.0)
 	add_child(_visual)
 	var glow := MeshInstance3D.new()

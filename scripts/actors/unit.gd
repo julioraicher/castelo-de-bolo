@@ -323,6 +323,7 @@ func _respawn() -> void:
 	alive = true
 	collision_layer = Config.LAYER_UNITS
 	global_position = game.arena.random_spawn(team)
+	reset_physics_interpolation()  # teleporte: sem rastro interpolado até o castelo
 	velocity = Vector3.ZERO
 	_knock = Vector3.ZERO
 	_move_vel = Vector3.ZERO
