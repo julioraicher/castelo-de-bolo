@@ -69,6 +69,24 @@ Rodadas: Julio joga e manda feedback (áudio transcrito). Responder com lista
 curta do que entendeu, fazer tudo, publicar, adicionar entrada no CHANGELOG.md.
 Conversas curtas: a cada poucas rodadas, nova conversa a partir deste arquivo.
 
+## Frentes de trabalho (conversas em paralelo)
+
+Cada frente tem sua conversa e mexe só nas suas pastas:
+
+| Frente | Pastas |
+|---|---|
+| Visual dos personagens (conceitos no Gemini → modelo 3D) | `config/classes/`, `assets/characters/` |
+| Cenário (temas, mapas, construções) | `config/temas/`, `config/mapas/`, `assets/medieval/` e novas pastas de cenário |
+| Jogabilidade, polimento e desempenho | `scripts/`, `config/game_config.tres`, `project.godot` |
+
+- Precisa mudar código ou pasta de outra frente? Faça a menor mudança possível
+  e avise no CHANGELOG. Campo novo num `.tres` = campo novo no esquema em
+  `scripts/data/`, com valor padrão que não quebre os arquivos existentes.
+- Sempre `git pull --rebase origin main` antes de `git push`; nunca force push.
+- Cada frente registra suas mudanças no CHANGELOG.md, com a frente no título.
+- Imagens do Gemini servem de referência de estilo, não entram no jogo. Viram
+  modelo 3D (pack CC0, imagem→3D, rig no Mixamo) e só então são importadas.
+
 ## Preferências do Julio
 
 - Manter o dash/esquiva como está.
