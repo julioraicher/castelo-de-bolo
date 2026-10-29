@@ -3,6 +3,33 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 11 (2026-10-29), frente Visual: interface no estilo Clãs de Neon
+- Pedido do Julio: textos, fontes e visual das informações na tela.
+- Fontes livres (OFL) em `assets/fonts/`: **Shojumaru** (pincel japonês) nos
+  títulos e mensagens grandes; **Chakra Petch** (painel neon) no resto, também
+  nos números de dano e nomes dos pedestais/oficinas. Fonte padrão do projeto
+  em `project.godot` (`gui/theme/custom_font`).
+- `scripts/ui/estilo.gd` (`Estilo`): cores (noite, ciano, magenta, ouro,
+  fogo-fantasma), painéis com borda neon e corte inclinado, tecla desenhada,
+  barras e o `Theme` dos menus. `scripts/ui/icone.gd` (`Icone`): ícones por
+  código (máscara oni, espírito, katana, shuriken, chi, martelo, losango).
+- HUD: placar em placas dos times com losangos de pontos; cartões das duas
+  máscaras com frase por situação ("ROUBADA!" pisca em vermelho, "com o seu
+  time!" em ciano) e peso em espíritos; cartão do jogador com retrato do papel
+  (cor do chapéu), vida com números (fica vermelha abaixo de 30%), Chi com
+  tecla [Q] quando cheio; dicas com a tecla desenhada; mensagens grandes
+  entram com "soco"; tela de fim com placar.
+- Menus: tela inicial com título neon, 3 cartões de dica e controles com
+  teclas desenhadas; pausa com abas, botões e listas no mesmo estilo.
+  Textos atualizados para as classes ninja.
+- Outras frentes: só a fonte nos `Label3D` de `fx.gd`, `hat_pad.gd`, `oficina.gd`.
+- Teste: 5 min simulados sem erro; pacote exportado roda sem erro de fonte.
+- **O que testar**:
+  1. Dá para ler tudo rápido no meio da briga (placar, estado das máscaras, vida)?
+  2. A fonte de pincel nos títulos agrada? E a de texto?
+  3. Tela inicial e Esc: os botões e as listas ficaram claros?
+  4. Algo grande demais, pequeno demais ou cobrindo a ação?
+
 ## Rodada 10 (2026-10-29), frente Cenário: mapa Rio das Lanternas com altura
 - Julio escolheu a ideia 1 (Rio das Lanternas) misturada com a Vila Neon, com
   mais cobertura no meio e mais altura. Mapa novo `config/mapas/rio_lanternas.tres`

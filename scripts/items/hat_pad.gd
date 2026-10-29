@@ -27,6 +27,7 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 	add_child(base)
 	var label := Label3D.new()
 	label.text = stats.display_name
+	label.font = Estilo.FORTE
 	label.font_size = 48
 	label.pixel_size = 0.012
 	label.outline_size = 10
