@@ -10,6 +10,7 @@ display_name = "Aldeão"
 visible_meshes = PackedStringArray("Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight", "Barbarian_Cape", "Mug")
 cape_mesh = "Barbarian_Cape"
 hat_color = Color(0.8, 0.7, 0.5, 1)
+hat_style = "elmo"
 max_hp = 60.0
 move_speed = 7.0
 attack_kind = "melee"

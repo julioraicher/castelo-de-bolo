@@ -18,7 +18,10 @@ Aqui só entram correções, sensação de jogo (*game feel*), equilíbrio e des
 - [x] Qualidade gráfica, contador de FPS, interpolação de física, MultiMesh
 - [x] Dificuldade Difícil suavizada
 - [ ] Jogo liso no navegador do Julio (medir FPS com Esc > Mostrar FPS)
-- [ ] Juntar as partes de cada personagem numa malha só (menos chamadas de desenho)
+- [x] Juntar as partes de cada personagem numa malha só (menos chamadas de desenho)
+- [x] Temas, mapa e classes em arquivos de dados (re-skin sem código)
+- [x] Qualidade automática
+- [ ] Tema "Sinistro" com modelos próprios (ex.: pack CC0 KayKit Halloween)
 - [ ] Revisão de equilíbrio depois de algumas partidas
 
 ## Fase 2: o "jogo de semanas" (mecânicas do estilo Fat Princess)

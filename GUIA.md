@@ -36,8 +36,10 @@ Foi assim que o jogo foi testado e balanceado.
 
 ```
 config/
-  game_config.tres        regras da partida (placar, bolo, respawn, câmera, bots)
-  classes/*.tres          uma ficha por classe (vida, dano, velocidade, animações)
+  game_config.tres        regras da partida, lista de classes, temas e mapa
+  classes/*.tres          uma ficha por classe (vida, dano, velocidade, chapéu, animações)
+  temas/*.tres            clima visual: luz, céu, neblina, chão, modelos
+  mapas/*.tres            forma do mapa: castelo, torres, pedestais, objetos
 scenes/main.tscn          cena principal (só o nó "Jogo" com game.gd)
 scripts/
   game.gd                 regras: pegar princesa/bolo/chapéu, pontuar, vitória
@@ -81,8 +83,10 @@ online, no futuro, é trocar só o cérebro.
 | Câmera mais longe | `config/game_config.tres` | `camera_offset` |
 | Trocar teclas | `scripts/autoload/config.gd` | `_setup_input()` e o texto em `CONTROLS` (aparece no menu e no [CONTROLES.md](CONTROLES.md)) |
 | Nova opção de configuração | `scripts/autoload/settings.gd` + `scripts/ui/menus.gd` | variável + linha em `_settings_form()` |
-| Mapa diferente | `scripts/world/arena.gd` | `_build_middle()` e `_build_castle()` |
-| Classe nova | copie um `.tres` em `config/classes/`, mude os campos, adicione em `GameConfig.hat_classes()` e uma posição em `Arena.hat_spots` |
+| Mapa diferente | `config/mapas/vale.tres` | tamanho, muralhas, torres e `middle_props` |
+| Classe nova (ex.: Espadachim) | copie `config/classes/guerreiro.tres`, mude nome, `visible_meshes` (ex.: `2H_Sword`), números e `hat_style`; adicione em `game_config.tres > hat_class_list` e um ponto em `mapas/vale.tres > hat_spots` |
+| Clima novo (ex.: sinistro, neve) | copie `config/temas/sinistro.tres`, mude cores/modelos e adicione em `game_config.tres > themes` |
+| Outro tipo de castelo | `config/temas/*.tres > Modelos` (quais modelos) e `config/mapas/vale.tres > Castelo` (posições) |
 | Novo som | `tools/gerar_sons.py` + nome em `Sfx.SOUNDS` |
 
 Dica: os `.tres` abrem no **Inspector** do Godot com campos agrupados

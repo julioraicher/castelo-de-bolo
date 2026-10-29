@@ -158,6 +158,19 @@ func _settings_form() -> GridContainer:
 		Settings.apply())
 	grid.add_child(diff)
 
+	if Config.cfg.themes.size() > 1:
+		grid.add_child(_text("Tema do mapa", 19, Color.WHITE, false))
+		var th := OptionButton.new()
+		for t in Config.cfg.themes:
+			th.add_item(t.display_name)
+		th.selected = Settings.theme
+		th.item_selected.connect(func(i: int):
+			Settings.theme = i
+			Settings.save()
+			get_tree().paused = false
+			get_tree().reload_current_scene())  # o mapa é montado de novo com o tema
+		grid.add_child(th)
+
 	grid.add_child(_text("Qualidade gráfica", 19, Color.WHITE, false))
 	var qual := OptionButton.new()
 	for q in Settings.QUALITIES:
@@ -166,7 +179,12 @@ func _settings_form() -> GridContainer:
 	qual.item_selected.connect(func(i: int):
 		Settings.quality = i
 		Settings.apply())
+	Settings.changed.connect(func(): qual.selected = Settings.quality)  # AutoQuality pode mudar
 	grid.add_child(qual)
+	grid.add_child(_text("Qualidade automática", 19, Color.WHITE, false))
+	grid.add_child(_check(Settings.auto_quality, func(on: bool):
+		Settings.auto_quality = on
+		Settings.apply()))
 	grid.add_child(_text("Mostrar FPS", 19, Color.WHITE, false))
 	grid.add_child(_check(Settings.show_fps, func(on: bool):
 		Settings.show_fps = on

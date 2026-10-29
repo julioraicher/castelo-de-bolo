@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ThemeConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/theme_config.gd" id="1_gwl2o"]
+
+[resource]
+script = ExtResource("1_gwl2o")
+team_model_suffix = PackedStringArray("blue", "red")
+border_trees = PackedStringArray("trees_A_large.gltf", "trees_B_large.gltf", "trees_A_medium.gltf", "hills_A_trees.gltf")
+border_mountains = PackedStringArray("mountain_A_grass_trees.gltf", "mountain_B_grass_trees.gltf")

@@ -10,6 +10,7 @@ display_name = "Arqueiro"
 visible_meshes = PackedStringArray("Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head_Hooded", "Rogue_LegLeft", "Rogue_LegRight", "Rogue_Cape", "1H_Crossbow")
 cape_mesh = "Rogue_Cape"
 hat_color = Color(0.2, 0.6, 0.3, 1)
+hat_style = "capuz"
 max_hp = 80.0
 move_speed = 6.6
 attack_kind = "ranged"

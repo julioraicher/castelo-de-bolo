@@ -10,6 +10,7 @@ display_name = "Clérigo"
 visible_meshes = PackedStringArray("Mage_ArmLeft", "Mage_ArmRight", "Mage_Body", "Mage_Head", "Mage_LegLeft", "Mage_LegRight", "Mage_Hat", "Mage_Cape", "2H_Staff")
 cape_mesh = "Mage_Cape"
 hat_color = Color(0.45, 0.35, 0.85, 1)
+hat_style = "chapeu_pontudo"
 max_hp = 90.0
 move_speed = 6.4
 attack_kind = "healer"

@@ -21,10 +21,18 @@ extends Resource
 @export var hat_respawn_time := 6.0
 
 @export_group("Classes")
+## Classe de quem nasce/renasce sem chapéu.
 @export var villager: ClassStats
-@export var warrior: ClassStats
-@export var archer: ClassStats
-@export var cleric: ClassStats
+## Chapéus do pátio, na ordem de MapLayout.hat_spots. Classe nova: copie um
+## .tres de config/classes/, mude os campos e adicione nesta lista.
+@export var hat_class_list: Array[ClassStats] = []
+## Classes com que os bots começam a partida (em ciclo).
+@export var bot_start_classes: Array[ClassStats] = []
+
+@export_group("Mundo")
+## Temas disponíveis (Esc > Configurações > Tema). O primeiro é o padrão.
+@export var themes: Array[ThemeConfig] = []
+@export var map: MapLayout
 
 @export_group("Câmera")
 @export var camera_offset := Vector3(0, 21, 19)
@@ -40,4 +48,4 @@ extends Resource
 
 
 func hat_classes() -> Array[ClassStats]:
-	return [warrior, archer, cleric]
+	return hat_class_list

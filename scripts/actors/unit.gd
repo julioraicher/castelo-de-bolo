@@ -153,7 +153,7 @@ func start_equip(new_stats: ClassStats, from_world: Vector3) -> void:
 	_cancel_equip()
 	_equip_stats = new_stats
 	_equip_t = EQUIP_TIME
-	_equip_hat = HatPad.make_hat(new_stats.id, new_stats.hat_color)
+	_equip_hat = HatPad.make_hat(new_stats.hat_style, new_stats.hat_color)
 	_equip_hat.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
 	add_child(_equip_hat)
 	_equip_hat.global_position = from_world

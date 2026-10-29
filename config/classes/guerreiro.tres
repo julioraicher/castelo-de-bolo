@@ -10,6 +10,7 @@ display_name = "Guerreiro"
 visible_meshes = PackedStringArray("Knight_ArmLeft", "Knight_ArmRight", "Knight_Body", "Knight_Head", "Knight_LegLeft", "Knight_LegRight", "Knight_Helmet", "Knight_Cape", "1H_Sword", "Round_Shield")
 cape_mesh = "Knight_Cape"
 hat_color = Color(0.75, 0.78, 0.85, 1)
+hat_style = "elmo"
 max_hp = 140.0
 move_speed = 6.2
 attack_kind = "melee"

@@ -16,6 +16,8 @@ extends Resource
 @export var cape_mesh := ""
 ## Cor do chapéu exibido no pedestal do castelo.
 @export var hat_color := Color.WHITE
+## Formato do chapéu do pedestal (HatPad.make_hat).
+@export_enum("elmo", "capuz", "chapeu_pontudo") var hat_style := "elmo"
 
 @export_group("Atributos")
 @export var max_hp := 60.0

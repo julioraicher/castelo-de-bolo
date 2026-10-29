@@ -58,7 +58,7 @@ func _ready() -> void:
 			hat_pads.append(pad)
 
 	var cfg := Config.cfg
-	var start_classes: Array[ClassStats] = [cfg.warrior, cfg.archer, cfg.cleric, cfg.villager]
+	var start_classes: Array[ClassStats] = cfg.bot_start_classes if not cfg.bot_start_classes.is_empty() else [cfg.villager]
 	for team in 2:
 		for i in cfg.units_per_team:
 			var u := Unit.new()
@@ -96,6 +96,9 @@ func _ready() -> void:
 
 	hud = Hud.new()
 	add_child(hud)
+	var auto_q := AutoQuality.new()
+	auto_q.hud = hud
+	add_child(auto_q)
 	var menus := Menus.new()
 	add_child(menus)
 	menus.started.connect(_on_started)

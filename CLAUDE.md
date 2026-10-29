@@ -1,7 +1,8 @@
 # CLAUDE.md
 
 Contexto enxuto para o Claude trabalhar neste repo sem reler conversas antigas.
-Detalhes para humanos: GUIA.md. Plano e estado: ROADMAP.md. Regras do jogo: CONTROLES.md.
+Detalhes para humanos: GUIA.md. Plano: ROADMAP.md. O que mudou em cada rodada:
+CHANGELOG.md (leia a entrada mais nova). Regras do jogo: CONTROLES.md.
 
 ## O que é
 
@@ -32,7 +33,16 @@ e Windows/Linux (release `ultima-versao`). Push direto na `main` é o fluxo comb
 - `scripts/game.gd`: monta tudo e aplica as regras por distância em `_rules()`.
 - `scripts/actors/unit.gd`: corpo do soldado. **Cérebro decide, corpo executa**:
   `PlayerBrain`/`BotBrain` só preenchem `move_intent`, `aim_dir`, `wants_*`.
-- Dados em `.tres` (`config/`), esquema em `scripts/data/*.gd`.
+- **Tudo que é conteúdo é dado** (`config/*.tres`, esquema em `scripts/data/*.gd`):
+  - `game_config.tres`: regras, lista de classes do pátio, temas, mapa.
+  - `classes/*.tres` (`ClassStats`): modelo, partes visíveis, chapéu, números.
+    Classe nova = copiar um .tres e pôr em `hat_class_list`. Sem código.
+  - `temas/*.tres` (`ThemeConfig`): luz, céu, neblina, chão, modelos (`{cor}`
+    vira blue/red), `model_swaps`. Tema novo = copiar e pôr em `themes`.
+  - `mapas/*.tres` (`MapLayout` + `MapProp`): arena, castelo, objetos.
+  - `scripts/world/arena.gd` só monta o que esses arquivos descrevem.
+  - Para gerar/alterar .tres com sub-recursos, prefira um script `-s` com
+    `ResourceSaver.save()` a editar o texto à mão.
 - Autoloads: `Config` (teclas, constantes, `CONTROLS`), `Settings` (preferências
   em `user://configuracoes.cfg`), `Sfx`.
 - UI feita por código: `scripts/ui/hud.gd`, `scripts/ui/menus.gd`.
@@ -49,6 +59,15 @@ e Windows/Linux (release `ultima-versao`). Push direto na `main` é o fluxo comb
   nós animados em `_process`/tween usam `PHYSICS_INTERPOLATION_MODE_OFF`.
 - Música: loop vem do `.import` (`loop_mode=2`); canais em `default_bus_layout.tres`.
 - Inferência `:=` falha com valores sem tipo (ex.: `surface_get_format`): tipar.
+- Desempenho: o PC/navegador do Julio rendeu 9-12 FPS (provável WebGL sem GPU).
+  Existe `AutoQuality` (baixa qualidade sozinho). xvfb aqui também é software:
+  bom para comparar, não para medir FPS real.
+
+## Fluxo de trabalho
+
+Rodadas: Julio joga e manda feedback (áudio transcrito). Responder com lista
+curta do que entendeu, fazer tudo, publicar, adicionar entrada no CHANGELOG.md.
+Conversas curtas: a cada poucas rodadas, nova conversa a partir deste arquivo.
 
 ## Preferências do Julio
 

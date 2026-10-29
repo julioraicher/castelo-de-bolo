@@ -1,0 +1,80 @@
+[gd_resource type="Resource" script_class="MapLayout" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/map_prop.gd" id="1_mupbb"]
+[ext_resource type="Script" path="res://scripts/data/map_layout.gd" id="2_iybg6"]
+
+[sub_resource type="Resource" id="Resource_tc3x3"]
+script = ExtResource("1_mupbb")
+model = "barrel.gltf"
+position = Vector3(-10.5, 0, 10.5)
+rotation_deg = 17.0
+
+[sub_resource type="Resource" id="Resource_mmw23"]
+script = ExtResource("1_mupbb")
+model = "barrel.gltf"
+position = Vector3(-9.5, 0, 11.2)
+rotation_deg = 69.0
+
+[sub_resource type="Resource" id="Resource_njvy1"]
+script = ExtResource("1_mupbb")
+model = "crate_A_big.gltf"
+position = Vector3(-10.8, 0, -10.5)
+rotation_deg = 29.0
+
+[sub_resource type="Resource" id="Resource_86wjx"]
+script = ExtResource("1_mupbb")
+model = "tent.gltf"
+position = Vector3(7.5, 0, -10.8)
+scale = 3.5
+rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_0cnh7"]
+script = ExtResource("1_mupbb")
+model = "rock_single_C.gltf"
+position = Vector3(16, 0, 0)
+scale = 11.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.7
+collider_height = 3.0
+mirror_x = true
+
+[sub_resource type="Resource" id="Resource_2i3hf"]
+script = ExtResource("1_mupbb")
+model = "trees_A_large.gltf"
+position = Vector3(26, 0, 19)
+scale = 3.4
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 2.6
+collider_height = 4.0
+mirror_x = true
+mirror_z = true
+
+[sub_resource type="Resource" id="Resource_qa8ue"]
+script = ExtResource("1_mupbb")
+position = Vector3(8, 0, 12)
+scale = 9.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+mirror_x = true
+mirror_z = true
+
+[sub_resource type="Resource" id="Resource_miye8"]
+script = ExtResource("1_mupbb")
+model = "trees_B_large.gltf"
+position = Vector3(0, 0, 24)
+scale = 3.6
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 2.8
+collider_height = 4.0
+mirror_z = true
+
+[resource]
+script = ExtResource("2_iybg6")
+tower_spots = PackedVector2Array(-13, -13, -13, 13, 11, -13, 11, 13, 11, -5.5, 11, 5.5)
+hat_spots = PackedVector2Array(5, -8.5, 5, 8.5, -3, -8.5)
+courtyard_props = Array[ExtResource("1_mupbb")]([SubResource("Resource_tc3x3"), SubResource("Resource_mmw23"), SubResource("Resource_njvy1"), SubResource("Resource_86wjx")])
+middle_props = Array[ExtResource("1_mupbb")]([SubResource("Resource_0cnh7"), SubResource("Resource_2i3hf"), SubResource("Resource_qa8ue"), SubResource("Resource_miye8")])

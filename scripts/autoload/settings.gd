@@ -7,8 +7,8 @@ signal changed
 
 const PATH := "user://configuracoes.cfg"
 const DIFFICULTIES := ["Fácil", "Normal", "Difícil"]
-const QUALITIES := ["Baixa", "Média", "Alta"]
-const KEYS := ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty", "quality", "show_fps"]
+const QUALITIES := ["Mínima", "Baixa", "Média", "Alta"]
+const KEYS := ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty", "quality", "show_fps", "theme", "auto_quality"]
 
 var music_volume := 0.8      # 0..1
 var sfx_volume := 0.9        # 0..1
@@ -17,8 +17,11 @@ var camera_shake := true
 var damage_numbers := true
 var difficulty := 1          # índice em DIFFICULTIES
 ## Índice em QUALITIES. No navegador começa em Média (WebGL é mais lento).
-var quality := 1 if OS.get_name() == "Web" else 2
+var quality := 2 if OS.get_name() == "Web" else 3
+## Baixa a qualidade sozinho se o FPS ficar baixo no começo da partida (AutoQuality).
+var auto_quality := true
 var show_fps := false
+var theme := 0               # índice em GameConfig.themes
 
 
 func _ready() -> void:
@@ -84,6 +87,7 @@ func _apply_quality_viewport() -> void:
 	if not is_inside_tree():
 		return
 	var vp := get_viewport()
-	vp.msaa_3d = Viewport.MSAA_2X if quality == 2 else Viewport.MSAA_DISABLED
-	# Renderiza o 3D em 75% da resolução e amplia: ~44% menos pixels para pintar.
-	vp.scaling_3d_scale = 0.75 if quality == 0 else 1.0
+	vp.msaa_3d = Viewport.MSAA_2X if quality == 3 else Viewport.MSAA_DISABLED
+	# Renderiza o 3D numa resolução menor e amplia. Pixels pintados ∝ escala²:
+	# 0,75 -> 56% dos pixels; 0,5 -> 25%. Ajuda muito quando a GPU é o gargalo.
+	vp.scaling_3d_scale = [0.5, 0.75, 1.0, 1.0][quality]

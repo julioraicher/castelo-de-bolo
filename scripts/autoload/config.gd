@@ -1,11 +1,10 @@
 extends Node
 ## Autoload "Config": acessível de qualquer script como `Config.cfg`.
-## Também registra os controles (InputMap) e as cores dos times.
+## Também registra os controles (InputMap) e dá o tema e as cores dos times.
 
 const TEAM_BLUE := 0
 const TEAM_RED := 1
 const TEAM_NAMES := ["Azul", "Vermelho"]
-const TEAM_COLORS := [Color(0.22, 0.45, 1.0), Color(1.0, 0.25, 0.25)]
 
 ## Camadas de física (veja Projeto > Configurações > Nomes de camadas).
 const LAYER_WORLD := 1
@@ -33,8 +32,13 @@ func _ready() -> void:
 	_setup_input()
 
 
+## Tema escolhido em Esc > Configurações (lista em game_config.tres > Mundo).
+func theme() -> ThemeConfig:
+	return cfg.themes[clampi(Settings.theme, 0, cfg.themes.size() - 1)]
+
+
 func team_color(team: int) -> Color:
-	return TEAM_COLORS[team]
+	return theme().team_colors[team]
 
 
 func _setup_input() -> void:

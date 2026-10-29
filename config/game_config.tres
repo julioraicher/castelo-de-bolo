@@ -1,14 +1,20 @@
-[gd_resource type="Resource" script_class="GameConfig" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="GameConfig" format=3]
 
 [ext_resource type="Script" path="res://scripts/data/game_config.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="1_3yous"]
 [ext_resource type="Resource" path="res://config/classes/aldeao.tres" id="2"]
 [ext_resource type="Resource" path="res://config/classes/guerreiro.tres" id="3"]
 [ext_resource type="Resource" path="res://config/classes/arqueiro.tres" id="4"]
 [ext_resource type="Resource" path="res://config/classes/clerigo.tres" id="5"]
+[ext_resource type="Resource" path="res://config/mapas/vale.tres" id="6_c8e20"]
+[ext_resource type="Script" path="res://scripts/data/theme_config.gd" id="8_txtu1"]
+[ext_resource type="Resource" path="res://config/temas/medieval.tres" id="9_f5mmm"]
+[ext_resource type="Resource" path="res://config/temas/sinistro.tres" id="10_wo1y8"]
 
 [resource]
 script = ExtResource("1")
 villager = ExtResource("2")
-warrior = ExtResource("3")
-archer = ExtResource("4")
-cleric = ExtResource("5")
+hat_class_list = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource("4"), ExtResource("5")])
+bot_start_classes = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("2")])
+themes = Array[ExtResource("8_txtu1")]([ExtResource("9_f5mmm"), ExtResource("10_wo1y8")])
+map = ExtResource("6_c8e20")

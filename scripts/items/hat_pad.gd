@@ -35,7 +35,7 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 	label.modulate = stats.hat_color.lightened(0.3)
 	add_child(label)
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # chapéu animado em _process
-	_hat = make_hat(stats.id, stats.hat_color)
+	_hat = make_hat(stats.hat_style, stats.hat_color)
 	_hat.position.y = 1.2
 	add_child(_hat)
 
@@ -66,11 +66,11 @@ func take() -> ClassStats:
 
 
 ## Chapéus montados com formas simples: elmo, capuz e chapéu de clérigo.
-static func make_hat(id: StringName, color: Color) -> Node3D:
+static func make_hat(style: String, color: Color) -> Node3D:
 	var root := Node3D.new()
 	var mat := Fx.lit(color, 0.4)
-	match id:
-		&"guerreiro":
+	match style:
+		"elmo":
 			mat.metallic = 0.7
 			var dome := MeshInstance3D.new()
 			var sp := SphereMesh.new()
@@ -90,7 +90,7 @@ static func make_hat(id: StringName, color: Color) -> Node3D:
 			plume.position = Vector3(0, 0.55, -0.1)
 			plume.rotation_degrees.x = -25
 			root.add_child(plume)
-		&"arqueiro":
+		"capuz":
 			var hood := MeshInstance3D.new()
 			var cone := CylinderMesh.new()
 			cone.top_radius = 0.0
