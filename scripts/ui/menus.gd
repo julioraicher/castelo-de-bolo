@@ -13,6 +13,7 @@ const GOLD := Color(1.0, 0.85, 0.35)
 var _start_panel: Control
 var _pause_panel: Control
 var _tabs: TabContainer
+var _started := false  # fica falso no modo teste (--autoplay), que não deve pausar sozinho
 
 
 func _ready() -> void:
@@ -36,6 +37,10 @@ func is_open() -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("fullscreen"):
+		Settings.toggle_fullscreen()
+		get_viewport().set_input_as_handled()
+		return
 	if _start_panel.visible:
 		if event.is_action_pressed("ui_accept"):
 			_begin()
@@ -45,9 +50,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+## Se o jogo perder o foco (outro app, aviso do Windows, saiu da tela cheia),
+## pausa na hora: ninguém morre enquanto você está fora.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and not is_open() and _started and not get_tree().paused:
+		_toggle_pause()
+
+
 func _begin() -> void:
 	_start_panel.visible = false
 	get_tree().paused = false
+	_started = true
 	started.emit()
 
 
@@ -190,11 +203,9 @@ func _settings_form() -> GridContainer:
 		Settings.show_fps = on
 		Settings.apply()))
 
-	if OS.get_name() != "Web":
-		grid.add_child(_text("Tela cheia", 19, Color.WHITE, false))
-		grid.add_child(_check(Settings.fullscreen, func(on: bool):
-			Settings.fullscreen = on
-			Settings.apply()))
+	grid.add_child(_text("Tela cheia  (F)", 19, Color.WHITE, false))
+	grid.add_child(_check(DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN, func(on: bool):
+		Settings.set_fullscreen(on)))
 	grid.add_child(_text("Tremor da câmera", 19, Color.WHITE, false))
 	grid.add_child(_check(Settings.camera_shake, func(on: bool):
 		Settings.camera_shake = on

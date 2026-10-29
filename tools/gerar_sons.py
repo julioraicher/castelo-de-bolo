@@ -122,7 +122,27 @@ def main():
     lead = seq([midi(m) if m else None for m in melody * 2], beat, lambda f, s: pluck(f, s, 0.997))
     low = seq([midi(m) if m else None for m in bass * 2], beat * 2, lambda f, s: [x * 0.8 for x in pluck(f, s, 0.998)])
     save("music", mix(lead, low), 0.55)
+    combate()
     print("Sons gerados em", os.path.abspath(OUT))
+
+
+def combate():
+    """Sons da Rodada A (bloqueio e poderes). Semente própria: não muda os outros."""
+    random.seed(7)
+    # Bloqueio: "clang" de metal = parciais inarmônicas (razões de uma placa
+    # vibrando, 1 : 2,76 : 5,40) com decaimento exponencial + estalo de ruído.
+    total = n(0.4)
+    clang = [sum(a * math.sin(2 * math.pi * 520 * r * i / SR) * math.exp(-i / SR * d)
+                 for r, a, d in ((1.0, 1.0, 9), (2.76, 0.6, 14), (5.40, 0.35, 22)))
+             for i in range(total)]
+    save("block", mix(clang, noise(0.04, cutoff=lambda x: 0.9)), 0.8)
+    # Poder: whoosh subindo + estrondo grave + acorde maior.
+    whoosh = noise(0.45, cutoff=lambda x: 0.03 + 0.5 * x, release_pow=0.7)
+    boom = tone(lambda x: 90 - 50 * x, 0.5, release_pow=2.5)
+    chord = mix(*(tone(midi(m), 0.6, square, 1.2, vib=0.01) for m in (60, 64, 67, 72)))
+    save("power", mix(whoosh, boom, [0.0] * n(0.12) + [x * 0.35 for x in chord]), 0.75)
+    # Medidor cheio: arpejo brilhante subindo.
+    save("power_ready", seq([midi(m) for m in (79, 83, 86, 91)], 0.06, lambda f, s: tone(f, s, release_pow=1.2)), 0.45)
 
 
 if __name__ == "__main__":

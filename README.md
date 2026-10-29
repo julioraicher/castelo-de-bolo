@@ -20,11 +20,13 @@ mais devagar anda quem tentar levá-la.
 | WASD | andar |
 | Mouse | mirar |
 | Clique esquerdo | atacar |
-| Clique direito / Q | curar (clérigo) |
+| Clique direito (segurar) | bloquear / tiro carregado / curar |
+| Q | poder especial (medidor de Glacê cheio) |
 | Espaço / Shift | esquivar |
 | E | pegar chapéu, pegar/soltar princesa |
 | Esc / P | pausar: controles e configurações |
 | R | reiniciar |
+| F / F11 | tela cheia |
 
 Detalhes, regras e dicas em [CONTROLES.md](CONTROLES.md). Volume, dificuldade,
 tela cheia e tremor de câmera ficam no menu **Esc > Configurações** e são

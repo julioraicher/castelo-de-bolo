@@ -179,6 +179,7 @@ func _rules() -> void:
 		if u.has_cake and own_p.state == Princess.State.HOME and pos.distance_to(own_p.global_position) < 4.0:
 			if own_p.feed():
 				u.has_cake = false
+				u.add_power(Config.cfg.power_per_cake)
 				if u.is_player:
 					hud.show_big("Nhac! Princesa mais pesada", Color(1, 0.6, 0.8), 1.2)
 
@@ -219,6 +220,7 @@ func _score_point(u: Unit) -> void:
 	_log("PONTO %s (t=%.0fs)" % [Config.TEAM_NAMES[u.team], _time])
 	var p := u.carried_princess
 	u.carried_princess = null
+	u.add_power(Config.cfg.power_per_capture)
 	p.return_home()
 	score[u.team] += 1
 	Sfx.play_ui("score")
@@ -274,10 +276,11 @@ func nearest_cake(from: Vector3) -> Cake:
 	return best
 
 
-func spawn_projectile(shooter: Unit, origin: Vector3, dir: Vector3, kind: String) -> void:
+func spawn_projectile(shooter: Unit, origin: Vector3, dir: Vector3, kind: String) -> Projectile:
 	var p := Projectile.new()
 	p.setup(self, shooter, origin, dir, kind)
 	add_child(p)
+	return p
 
 
 # --- Eventos ------------------------------------------------------------------

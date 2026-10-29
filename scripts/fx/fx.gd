@@ -1,7 +1,9 @@
 class_name Fx
 extends RefCounted
 ## Efeitos visuais pequenos e reutilizáveis ("game feel"): números de dano,
-## faíscas de impacto, anel de cura. Funções estáticas: Fx.damage_number(...).
+## faíscas de impacto, anel de cura, rastro de golpe. Funções estáticas: Fx.damage_number(...).
+
+static var _sector_cache := {}  # "raio_arco" -> ArrayMesh do rastro de golpe
 
 
 static func damage_number(parent: Node, pos: Vector3, text: String, color: Color) -> void:
@@ -78,6 +80,116 @@ static func ring(parent: Node, pos: Vector3, color: Color, radius: float) -> voi
 	tw.tween_property(mi, "scale", Vector3.ONE * radius, 0.4).set_ease(Tween.EASE_OUT)
 	tw.tween_property(mat, "albedo_color:a", 0.0, 0.45)
 	tw.chain().tween_callback(mi.queue_free)
+
+
+## Rastro de um golpe: um setor de anel na direção dir, que some em 0,16 s.
+## tilt inclina o corte (graus, em volta da direção do golpe); strong = maior.
+static func slash(parent: Node, pos: Vector3, dir: Vector3, radius: float, arc_deg: float, color: Color, tilt := 0.0, strong := false) -> void:
+	var mi := MeshInstance3D.new()
+	mi.mesh = _sector(radius, arc_deg)
+	mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.vertex_color_use_as_albedo = true
+	mat.no_depth_test = true  # o rastro fica por cima dos bonecos
+	mat.render_priority = 2
+	mat.albedo_color = Color(color, 0.95 if strong else 0.8)
+	mi.material_override = mat
+	parent.add_child(mi)
+	mi.global_position = pos
+	mi.rotation = Vector3(0, atan2(dir.x, dir.z), deg_to_rad(tilt))
+	if tilt < 0.0:
+		mi.scale.x = -1.0  # espelha: o rastro vem do outro lado
+	var s0 := 0.8 if strong else 0.85
+	var s1 := 1.12 if strong else 1.02
+	mi.scale = Vector3(signf(mi.scale.x) * s0, 1, s0)
+	var tw := mi.create_tween().set_parallel()
+	tw.tween_property(mi, "scale", Vector3(signf(mi.scale.x) * s1, 1, s1), 0.16).set_ease(Tween.EASE_OUT)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.2 if strong else 0.16).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(mi.queue_free)
+
+
+static func _sector(radius: float, arc_deg: float) -> ArrayMesh:
+	var key := "%d_%d" % [roundi(radius * 10.0), roundi(arc_deg)]
+	if _sector_cache.has(key):
+		return _sector_cache[key]
+	var segs := 20 if arc_deg < 200.0 else 32
+	var verts := PackedVector3Array()
+	var cols := PackedColorArray()
+	var idx := PackedInt32Array()
+	var half := deg_to_rad(arc_deg) * 0.5
+	for i in segs + 1:
+		var u := float(i) / segs
+		var a := -half + 2.0 * half * u
+		var d := Vector3(sin(a), 0, cos(a))
+		# Mais forte na ponta da frente do corte e na borda de fora.
+		var lead := 0.25 + 0.75 * u * u if arc_deg < 359.0 else 0.8
+		verts.append(d * radius * 0.35)
+		cols.append(Color(1, 1, 1, 0.0))
+		verts.append(d * radius)
+		cols.append(Color(1, 1, 1, lead))
+		if i < segs:
+			var k := i * 2
+			idx.append_array([k, k + 1, k + 2, k + 1, k + 3, k + 2])
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_COLOR] = cols
+	arrays[Mesh.ARRAY_INDEX] = idx
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	_sector_cache[key] = mesh
+	return mesh
+
+
+## Coluna de luz que sobe e some (Bênção do Clérigo), com anel no chão.
+static func pillar(parent: Node, pos: Vector3, color: Color, radius: float) -> void:
+	ring(parent, pos, Color(color, 0.9), radius)
+	var mi := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 1.2
+	cyl.bottom_radius = 1.6
+	cyl.height = 9.0
+	cyl.cap_top = false
+	cyl.cap_bottom = false
+	mi.mesh = cyl
+	mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat := unshaded(Color(color, 0.55), true)
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mi.material_override = mat
+	parent.add_child(mi)
+	mi.global_position = pos + Vector3(0, 4.5, 0)
+	mi.scale = Vector3(0.2, 1, 0.2)
+	var tw := mi.create_tween().set_parallel()
+	tw.tween_property(mi, "scale", Vector3(1.4, 1, 1.4), 0.5).set_ease(Tween.EASE_OUT)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.7).set_delay(0.15)
+	tw.chain().tween_callback(mi.queue_free)
+	burst(parent, pos + Vector3(0, 1.5, 0), color, 24, 9.0)
+
+
+## Bolha de escudo: brilha na borda e é quase invisível no meio (efeito
+## Fresnel: quanto mais rasante o olhar, 1 − N·V maior).
+static func bubble(color: Color) -> ShaderMaterial:
+	var sh := Shader.new()
+	sh.code = """
+shader_type spatial;
+render_mode unshaded, blend_add, depth_draw_never, cull_back, shadows_disabled;
+uniform vec4 tint : source_color;
+void fragment() {
+	float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 2.5);
+	ALBEDO = tint.rgb;
+	ALPHA = clamp(0.08 + rim * 0.9, 0.0, 1.0);
+}
+"""
+	var mat := ShaderMaterial.new()
+	mat.shader = sh
+	mat.set_shader_parameter("tint", color)
+	return mat
 
 
 static func unshaded(color: Color, transparent := false) -> StandardMaterial3D:

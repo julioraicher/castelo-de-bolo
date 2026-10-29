@@ -1,15 +1,20 @@
 class_name Projectile
 extends Node3D
-## Flecha ou magia. Move em linha reta (integração explícita: x += v·dt) e
-## testa colisão com inimigos (distância) e com o cenário (raio entre a
-## posição antiga e a nova, para não "atravessar" paredes em alta velocidade).
+## Flecha ou magia. Integração explícita (v += g·dt; x += v·dt) e teste de
+## colisão com inimigos (distância) e com o cenário (raio entre a posição
+## antiga e a nova, para não "atravessar" paredes em alta velocidade).
+## A flecha faz parábola: sai com a componente vertical que a faz cruzar a
+## altura do peito do alvo exatamente na distância mirada.
 
 const LIFETIME := 1.4
 const HIT_RADIUS := 0.85
+const GRAVITY := 12.0  # m/s² (menor que 9,8·escala real: arco legível sem ficar lento)
+const TARGET_HEIGHT := 1.1  # altura do peito
 
 var owner_unit: Unit
 var velocity := Vector3.ZERO
 var damage := 10.0
+var gravity := 0.0
 var _life := LIFETIME
 var _game: Game
 
@@ -48,19 +53,37 @@ func _ready() -> void:
 	look_at(global_position + velocity, Vector3.UP)
 
 
+## Balística: com velocidade horizontal v e distância d, o tempo de voo é
+## t = d/v. Para cair Δh = h0 − h_alvo nesse tempo sob gravidade g:
+## vy0 = g·t/2 − Δh/t.
+func aim_ballistic(distance: float) -> void:
+	gravity = GRAVITY
+	var vh := Vector3(velocity.x, 0, velocity.z).length()
+	var t := distance / maxf(vh, 0.1)
+	velocity.y = GRAVITY * t * 0.5 - (position.y - TARGET_HEIGHT) / t
+	_life = maxf(_life, t * 1.6)
+
+
 func _physics_process(delta: float) -> void:
 	_life -= delta
 	if _life <= 0.0:
 		queue_free()
 		return
 	var from := global_position
+	velocity.y -= gravity * delta
 	var to := from + velocity * delta
+	if to.y <= 0.05:
+		Fx.burst(_game, Vector3(to.x, 0.1, to.z), Color(0.8, 0.7, 0.5), 5, 2.5)
+		queue_free()
+		return
 	var query := PhysicsRayQueryParameters3D.create(from, to, Config.LAYER_WORLD)
 	if not get_world_3d().direct_space_state.intersect_ray(query).is_empty():
 		Fx.burst(_game, to, Color(0.8, 0.7, 0.5), 6, 3.0)
 		queue_free()
 		return
 	global_position = to
+	if gravity > 0.0:
+		look_at(to + velocity, Vector3.UP)
 	for u in _game.units:
 		if u.alive and u.team != owner_unit.team:
 			var d := u.global_position + Vector3(0, 1.1, 0) - global_position

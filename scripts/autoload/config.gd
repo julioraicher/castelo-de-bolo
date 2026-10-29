@@ -18,10 +18,12 @@ const CONTROLS := [
 	["W A S D", "andar"],
 	["Mouse", "mirar"],
 	["Clique esquerdo", "atacar"],
-	["Clique direito ou Q", "curar aliados (só Clérigo)"],
+	["Clique direito (segurar)", "Guerreiro bloqueia · Arqueiro carrega o tiro · Clérigo cura"],
+	["Q", "poder especial (quando o medidor de Glacê enche)"],
 	["Espaço ou Shift", "esquivar (rolamento rápido)"],
 	["E", "pegar chapéu, pegar/soltar a princesa"],
 	["Esc ou P", "pausar, ver controles e configurações"],
+	["F ou F11", "tela cheia"],
 	["R", "reiniciar a partida"],
 ]
 
@@ -51,10 +53,11 @@ func _setup_input() -> void:
 	_bind_keys("interact", [KEY_E])
 	_bind_keys("dodge", [KEY_SPACE, KEY_SHIFT])
 	_bind_keys("restart", [KEY_R])
-	_bind_keys("special", [KEY_Q])
+	_bind_keys("power", [KEY_Q])
 	_bind_keys("pause", [KEY_ESCAPE, KEY_P])
+	_bind_keys("fullscreen", [KEY_F, KEY_F11])
 	_bind_mouse("attack", MOUSE_BUTTON_LEFT)
-	_bind_mouse("special", MOUSE_BUTTON_RIGHT)
+	_bind_mouse("skill", MOUSE_BUTTON_RIGHT)
 
 
 func _bind_keys(action: StringName, keys: Array) -> void:

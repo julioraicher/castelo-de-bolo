@@ -3,7 +3,7 @@ extends Node
 ## Uso: Sfx.play("hit", posicao_3d)  ou  Sfx.play_ui("score").
 ## Os sons ficam em res://assets/audio/<nome>.wav (gerados por tools/gerar_sons.py).
 
-const SOUNDS := ["swing", "hit", "shoot", "magic", "heal", "pickup", "hat", "eat", "death", "score", "alarm", "dodge", "win", "lose"]
+const SOUNDS := ["swing", "hit", "shoot", "magic", "heal", "pickup", "hat", "eat", "death", "score", "alarm", "dodge", "win", "lose", "block", "power", "power_ready"]
 const POOL_SIZE := 24
 
 var _streams := {}

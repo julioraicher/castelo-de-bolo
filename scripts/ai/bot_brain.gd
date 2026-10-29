@@ -150,9 +150,11 @@ func _steer(delta: float) -> void:
 
 func _combat() -> void:
 	unit.wants_attack = false
-	unit.wants_special = false
-	if unit.stats.attack_kind == "healer" and _needs_heal():
-		unit.wants_special = true
+	unit.wants_skill = false
+	if unit.stats.skill == "cura" and _needs_heal():
+		unit.wants_skill = true
+	if unit.power_ready():
+		unit.wants_power = _should_use_power()
 	if _target == null or not _target.alive or unit.carried_princess:
 		if unit.move_intent.length() > 0.1:
 			unit.aim_dir = unit.move_intent.normalized()
@@ -160,14 +162,59 @@ func _combat() -> void:
 	var to := _target.global_position - unit.global_position
 	to.y = 0
 	var dist := to.length()
+	var lead := Vector3.ZERO
 	if unit.stats.attack_kind != "melee":
 		# Mira um pouco à frente do alvo (tempo de voo do projétil) + erro humano.
 		var flight := dist / unit.stats.projectile_speed
-		to += _target.velocity * flight * 0.8
+		lead = _target.velocity * flight * 0.8
+		lead.y = 0
+		to += lead
 		to = to.rotated(Vector3.UP, randf_range(-0.08, 0.08))
 	unit.aim_dir = to.normalized()
+	unit.aim_point = _target.global_position + lead
+	# Arqueiro de longe: segura o botão direito até a carga máxima e solta.
+	if unit.stats.skill == "tiro_carregado" and dist > 12.0 and dist <= unit.stats.attack_range:
+		unit.wants_skill = unit.charge_ratio() < 1.0
+		return
 	if dist <= unit.stats.attack_range + 0.3:
 		unit.wants_attack = true
+
+
+## Quando vale gastar o medidor cheio. Os números aqui são o "bom senso" do bot.
+func _should_use_power() -> bool:
+	var me := unit.global_position
+	var r := unit.stats.power_radius
+	match unit.stats.power:
+		"redemoinho":
+			return _count(1 - unit.team, me, r + 0.3) >= 1
+		"chuva_de_flechas":
+			if _target == null or not _target.alive or me.distance_to(_target.global_position) > unit.stats.attack_range * 1.4:
+				return false
+			unit.aim_point = _target.global_position
+			return _count(1 - unit.team, _target.global_position, r) >= 2 or _target.carried_princess != null
+		"bencao":
+			var hurt := 0
+			for u in game.units:
+				if u.alive and u.team == unit.team and u.hp_ratio() < 0.7 and u.global_position.distance_to(me) <= r:
+					hurt += 1
+			return hurt >= 3 or unit.hp_ratio() < 0.35
+		"corrida":
+			if unit.carried_princess:
+				return true
+			for u in game.units:
+				if u.alive and u.team == unit.team and u.carried_princess and u.global_position.distance_to(me) <= r:
+					return true
+			var mine := game.princesses[unit.team]
+			return mine.state == Princess.State.CARRIED and mine.carrier and me.distance_to(mine.carrier.global_position) < 25.0
+	return false
+
+
+func _count(team: int, at: Vector3, radius: float) -> int:
+	var n := 0
+	for u in game.units:
+		if u.alive and u.team == team and u.global_position.distance_to(at) <= radius:
+			n += 1
+	return n
 
 
 func _needs_heal() -> bool:

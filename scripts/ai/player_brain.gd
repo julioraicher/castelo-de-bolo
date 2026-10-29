@@ -1,8 +1,8 @@
 class_name PlayerBrain
 extends Node
 ## Converte teclado + mouse em intenções para a Unit do jogador.
-## WASD anda, o mouse mira, clique esquerdo ataca, direito (ou Q) usa o
-## especial, Espaço esquiva, E interage.
+## WASD anda, o mouse mira, clique esquerdo ataca, direito usa a habilidade
+## da classe (segurar), Q solta o poder, Espaço esquiva, E interage.
 
 var unit: Unit
 var game: Game
@@ -18,8 +18,11 @@ func tick(_delta: float) -> void:
 	to.y = 0
 	if to.length() > 0.2:
 		unit.aim_dir = to.normalized()
+	unit.aim_point = aim_point
 	unit.wants_attack = Input.is_action_pressed("attack")
-	unit.wants_special = Input.is_action_pressed("special")
+	unit.wants_skill = Input.is_action_pressed("skill")
+	if Input.is_action_just_pressed("power"):
+		unit.wants_power = true
 	if Input.is_action_just_pressed("dodge"):
 		unit.wants_dodge = true
 	interact_pressed = Input.is_action_just_pressed("interact")

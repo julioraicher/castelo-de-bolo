@@ -9,6 +9,8 @@ var _princess_info: Array[Label] = []
 var _fat_bars: Array[ProgressBar] = []
 var _class_label: Label
 var _hp_bar: ProgressBar
+var _power_bar: ProgressBar
+var _power_label: Label
 var _hint: Label
 var _big: Label
 var _help: Label
@@ -61,13 +63,19 @@ func _ready() -> void:
 	# Jogador (canto inferior esquerdo).
 	var me := VBoxContainer.new()
 	me.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	me.position = Vector2(24, -110)
+	me.position = Vector2(24, -150)
 	root.add_child(me)
 	_class_label = _label("Aldeão", 28, Color.WHITE)
 	me.add_child(_class_label)
 	_hp_bar = _bar(Config.team_color(0).lightened(0.2))
 	_hp_bar.custom_minimum_size = Vector2(280, 22)
 	me.add_child(_hp_bar)
+	# Medidor de Glacê: enche lutando; cheio libera o poder no Q.
+	_power_bar = _bar(Color(1, 0.62, 0.85))
+	_power_bar.custom_minimum_size = Vector2(280, 12)
+	me.add_child(_power_bar)
+	_power_label = _label("", 17, Color(1, 0.8, 0.92))
+	me.add_child(_power_label)
 
 	# Dica de interação (centro inferior).
 	_hint = _label("", 24, Color(1, 0.95, 0.6))
@@ -128,6 +136,14 @@ func update_state(game: Game) -> void:
 	var u := game.player
 	_class_label.text = u.stats.display_name if u.alive else "Renascendo..."
 	_hp_bar.value = u.hp_ratio() * 100.0
+	_power_bar.value = u.power
+	if u.power_ready():
+		var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.012)
+		_power_bar.modulate = Color(1, 1, 1).lerp(Color(1.6, 1.4, 1.6), pulse)
+		_power_label.text = "[Q] %s!" % u.stats.power_name
+	else:
+		_power_bar.modulate = Color(1, 1, 1, 0.85)
+		_power_label.text = "Glacê %d%%" % int(u.power) if u.stats.power != "nenhum" else ""
 	if u.has_cake:
 		_class_label.text += "  · levando bolo"
 	if u.carried_princess:

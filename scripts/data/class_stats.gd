@@ -32,6 +32,38 @@ extends Resource
 ## Velocidade do empurrão no alvo (m/s). Distância empurrada = v²/80 (8 -> 0,8 m).
 @export var knockback := 6.0
 @export var projectile_speed := 30.0
+@export_group("Combo")
+## Animações do combo corpo a corpo, em ordem (golpes seguidos em até
+## COMBO_WINDOW s). Vazio = sempre anim_attack.
+@export var combo_anims: PackedStringArray = []
+## O último golpe do combo multiplica dano e empurrão por este valor.
+@export var combo_finisher_mult := 1.4
+
+@export_group("Botão direito")
+## cura = cura aliados em volta; bloqueio = segure para defender pela frente;
+## tiro_carregado = segure para carregar e solte para atirar.
+@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado") var skill := "nenhum"
+## Fração do dano bloqueada (golpes de até 60° da frente).
+@export_range(0.0, 1.0) var block_reduction := 0.7
+## Segundos para carga máxima do tiro.
+@export var charge_time := 1.0
+## Dano na carga máxima (multiplicador). A velocidade da flecha sobe até 1,5x.
+@export var charge_damage_mult := 2.0
+
+@export_group("Poder (Q)")
+## Poder especial, liberado quando o medidor de Glacê enche.
+@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "corrida") var power := "nenhum"
+@export var power_name := ""
+## Raio de efeito (m).
+@export var power_radius := 3.0
+## redemoinho/chuva_de_flechas: dano por pulso; bencao: fração da vida curada;
+## corrida: multiplicador de velocidade.
+@export var power_value := 10.0
+## Duração (s) do efeito.
+@export var power_duration := 2.0
+## bencao: escudo que absorve dano, por aliado.
+@export var power_shield := 0.0
+
 @export_group("Cura (clérigo)")
 @export var heal_amount := 0.0
 @export var heal_radius := 0.0

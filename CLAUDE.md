@@ -59,6 +59,10 @@ e Windows/Linux (release `ultima-versao`). Push direto na `main` é o fluxo comb
   nós animados em `_process`/tween usam `PHYSICS_INTERPOLATION_MODE_OFF`.
 - Música: loop vem do `.import` (`loop_mode=2`); canais em `default_bus_layout.tres`.
 - Inferência `:=` falha com valores sem tipo (ex.: `surface_get_format`): tipar.
+- Script de diagnóstico `-s`: não citar `Unit`/classes do jogo nem autoloads
+  (`Config`) por nome: compila antes dos autoloads e quebra o `Unit`. Use
+  variáveis sem tipo e `root.get_node("/root/Config")`.
+- Animação só do tronco: `Unit._play_upper(anim)` (cópia filtrada, criada sob demanda).
 - Desempenho: o PC/navegador do Julio rendeu 9-12 FPS (provável WebGL sem GPU).
   Existe `AutoQuality` (baixa qualidade sozinho). xvfb aqui também é software:
   bom para comparar, não para medir FPS real.

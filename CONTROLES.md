@@ -8,12 +8,14 @@ Os mesmos controles aparecem no jogo: na tela inicial e em **Esc > Controles**.
 |---|---|
 | **W A S D** | andar |
 | **Mouse** | mirar (o personagem olha para o cursor) |
-| **Clique esquerdo** | atacar (segure para atacar sem parar) |
-| **Clique direito** ou **Q** | curar aliados ao seu redor (só Clérigo) |
+| **Clique esquerdo** | atacar (segure para atacar sem parar). Guerreiro e Aldeão fazem combo de 3 golpes: o 3º é mais forte |
+| **Clique direito** (segurar) | Guerreiro: bloqueia golpes pela frente · Arqueiro: carrega o tiro, solte para atirar · Clérigo: cura aliados em volta |
+| **Q** | poder especial, quando o medidor de Glacê (barra rosa) enche |
 | **Espaço** ou **Shift** | esquivar: rolamento rápido, com recarga |
 | **E** | pegar um chapéu (perto do pedestal); pegar ou soltar a princesa |
 | **Esc** ou **P** | pausar e abrir Controles / Configurações |
 | **R** | reiniciar a partida |
+| **F** ou **F11** | tela cheia (liga/desliga) |
 | **Enter** | começar (na tela inicial) |
 
 ## Configurações (Esc > Configurações)
@@ -26,7 +28,7 @@ Os mesmos controles aparecem no jogo: na tela inicial e em **Esc > Controles**.
 | Qualidade automática | se o FPS ficar abaixo de 40 no começo, o jogo baixa a qualidade sozinho |
 | Tema do mapa | Medieval ou Sinistro (noite); o mapa recomeça |
 | Mostrar FPS | mostra quadros por segundo no canto superior esquerdo (60 é o ideal) |
-| Tela cheia | só na versão .exe/Linux (no navegador use F11) |
+| Tela cheia | também pela tecla F. No navegador, em tela cheia, segure Esc ou aperte F para sair |
 | Tremor da câmera | liga/desliga o "chacoalhar" nos impactos |
 | Números de dano | liga/desliga os números que sobem dos golpes |
 
@@ -42,9 +44,12 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
    1,5 s para devolvê-la. Se ninguém mexer, ela volta sozinha depois de 15 s.
 4. **Chapéus** ficam no pátio do castelo: chegue perto e aperte **E**. O
    personagem pega o chapéu e põe na cabeça (dá para andar enquanto isso).
-   - Guerreiro: muita vida, golpe em área.
-   - Arqueiro: ataque à distância.
-   - Clérigo: cura aliados (clique direito) e ataca com magia.
+   - Guerreiro: muita vida, combo de 3 golpes, bloqueia (clique direito). Poder: Redemoinho.
+   - Arqueiro: ataque à distância, tiro carregado (clique direito). Poder: Chuva de flechas.
+   - Clérigo: cura aliados (clique direito) e ataca com magia. Poder: Bênção (cura + escudo).
+   - Aldeão: rápido, socos em combo. Poder: Corrida do bolo (aliados correm mais).
+   - O medidor de Glacê enche batendo, apanhando, abatendo, entregando bolo e
+     capturando a princesa. Cheio, aperte Q.
 5. **Bolo** aparece no meio do mapa. Levar bolo até a **sua** princesa a
    engorda: cada bolo deixa quem a carrega mais lento.
 6. Morreu? Volta em alguns segundos como aldeão no seu castelo.

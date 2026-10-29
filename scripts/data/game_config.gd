@@ -17,6 +17,24 @@ extends Resource
 @export var cake_spawn_interval := 5.0
 @export var max_cakes := 6
 
+@export_group("Poder (medidor de Glacê, 0 a 100)")
+## Fontes do medidor: dG/dt = a·(dano causado) + b·(dano sofrido) + eventos − G/τ.
+@export var power_per_damage := 0.3
+@export var power_per_damage_taken := 0.15
+@export var power_per_kill := 15.0
+@export var power_per_cake := 25.0
+@export var power_per_capture := 40.0
+## Depois de tantos segundos sem lutar, o medidor (se não estiver cheio) vaza
+## com constante de tempo τ: G(t) = G0·e^(−t/τ).
+@export var power_leak_delay := 10.0
+@export var power_leak_tau := 60.0
+## Fração do medidor mantida ao morrer.
+@export_range(0.0, 1.0) var power_keep_on_death := 0.5
+
+@export_group("Sensação do combate")
+## Congelamento de atacante e alvo num golpe corpo a corpo (s).
+@export var hitstop_time := 0.06
+
 @export_group("Chapéus")
 @export var hat_respawn_time := 6.0
 

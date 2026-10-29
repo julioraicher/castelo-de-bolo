@@ -3,6 +3,24 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 6 (2026-10-29), frente Jogabilidade: combate e poderes
+- Combate com peso: hitstop de 60 ms no impacto (atacante e alvo congelam),
+  golpe só no tronco (dá para bater correndo), rastro do golpe, reação
+  Hit_A/Hit_B e morte Death_A/Death_B ao acaso.
+- Combo de 3 golpes (Guerreiro: diagonal, horizontal, de cima; Aldeão: soco,
+  soco, chute). O 3º dá 1,4x dano e empurrão, rastro dourado e hitstop maior.
+- Botão direito (segurar): Guerreiro bloqueia 70% pela frente; Arqueiro
+  carrega o tiro (até 1,6x dano, 1,5x velocidade, linha de mira); Clérigo cura.
+- Flechas em parábola: caem na distância do mouse (6 m até 1,4x o alcance).
+- Medidor de Glacê (0 a 100, no HUD) e poder no Q: Redemoinho, Chuva de
+  flechas, Bênção (cura 40% + escudo 25), Corrida do bolo (+40% velocidade).
+  Números em `game_config.tres` (fontes do medidor) e nos `.tres` das classes.
+- Bots usam o tiro carregado e os poderes (`BotBrain._should_use_power`).
+- Tela cheia: tecla F ou F11 (também no navegador); no navegador o Esc fica
+  travado em tela cheia (Keyboard Lock); o jogo pausa sozinho ao perder o foco.
+- Sons novos: bloqueio, poder, medidor cheio (`tools/gerar_sons.py`, `combate()`).
+- Mexeu em `config/classes/*.tres` (só números de jogabilidade: combo, skill, power).
+
 ## Rodada 5 (2026-10-29): reorganização para mudanças fáceis
 - Temas em `config/temas/` (luz, céu, neblina, chão, modelos, cores dos times).
   Novo tema de exemplo "Sinistro (noite)". Troca em Esc > Configurações > Tema.

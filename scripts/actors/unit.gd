@@ -7,7 +7,8 @@ extends CharacterBody3D
 ## O cérebro preenche, a cada quadro físico:
 ##   move_intent  -> direção desejada (Vector3 no plano XZ, comprimento 0..1)
 ##   aim_dir      -> para onde mirar
-##   wants_attack / wants_special / wants_dodge
+##   aim_point    -> ponto do chão mirado (poderes de área)
+##   wants_attack / wants_skill (segurado) / wants_power / wants_dodge
 
 signal died(unit: Unit, killer: Unit)
 signal class_changed(unit: Unit)
@@ -18,10 +19,14 @@ const DODGE_TIME := 0.24
 const DODGE_COOLDOWN := 0.9
 const KNOCK_DECAY := 40.0  # m/s² de "freada" do empurrão: distância = v²/(2·KNOCK_DECAY)
 const EQUIP_TIME := 0.75  # s para pegar o chapéu e pôr na cabeça (andando)
+const COMBO_WINDOW := 0.5  # s depois do fim da recarga para o próximo golpe contar no combo
+const POWER_MAX := 100.0
+const SPIN_TICK := 0.25  # s entre pulsos de dano do Redemoinho
+const BLOCK_COS := 0.5  # cos(60°): bloqueio cobre golpes até 60° da frente
 ## Ossos do tronco: a animação de pôr o chapéu toca só neles, então as pernas
 ## continuam correndo com a animação normal.
 const UPPER_BONES := ["spine", "chest", "upperarm.l", "lowerarm.l", "wrist.l", "hand.l", "handslot.l", "upperarm.r", "lowerarm.r", "wrist.r", "hand.r", "handslot.r", "head"]
-const LOOPING_ANIMS := ["Idle", "Running_A", "Running_B", "Walking_A", "Walking_B", "Sit_Floor_Idle", "Cheer", "2H_Melee_Idle", "Spellcasting", "1H_Ranged_Aiming"]
+const LOOPING_ANIMS := ["Idle", "Running_A", "Running_B", "Walking_A", "Walking_B", "Sit_Floor_Idle", "Cheer", "2H_Melee_Idle", "Spellcasting", "1H_Ranged_Aiming", "2H_Melee_Attack_Spinning"]
 
 var game: Game
 var team := 0
@@ -37,9 +42,14 @@ var has_cake := false
 # Intenções preenchidas pelo cérebro.
 var move_intent := Vector3.ZERO
 var aim_dir := Vector3.FORWARD
+var aim_point := Vector3.ZERO
 var wants_attack := false
-var wants_special := false
+var wants_skill := false
+var wants_power := false
 var wants_dodge := false
+
+## Medidor de Glacê (0 a POWER_MAX). Cheio = poder do Q liberado.
+var power := 0.0
 
 var nav_agent: NavigationAgent3D
 
@@ -68,9 +78,28 @@ var _equip_stats: ClassStats
 var _equip_hat: Node3D
 var _upper: AnimationPlayer  # segundo player, só para os ossos do tronco
 
+var _attack_t := 0.0     # pose de ataque (vira para a mira, anda um pouco mais devagar)
+var _combo_i := 0
+var _combo_t := 0.0
+var _hitstop_t := 0.0
+var _blocking := false
+var _charge_t := 0.0
+var _aim_line: MeshInstance3D
+var _power_idle := 0.0
+var _power_active_t := 0.0  # enquanto o próprio poder age, ele não recarrega o medidor
+var _spin_t := 0.0
+var _spin_tick := 0.0
+var _shield := 0.0
+var _shield_t := 0.0
+var _shield_mesh: MeshInstance3D
+var _boost_t := 0.0
+var _boost_mult := 1.0
+var _boost_fx_t := 0.0
+
 static var _flash_mat: StandardMaterial3D
 static var _merged_body := {}  # caminho do .tres da classe -> ArrayMesh do corpo
 static var _upper_libs := {}  # caminho do modelo -> AnimationLibrary filtrada
+static var _shield_res: Array = []  # [malha, material] compartilhados da bolha de escudo
 
 
 func setup(p_game: Game, p_team: int, p_is_player: bool, start_class: ClassStats) -> void:
@@ -162,8 +191,9 @@ func start_equip(new_stats: ClassStats, from_world: Vector3) -> void:
 	tw.tween_property(_equip_hat, "position", Vector3(0, 3.4, 0), EQUIP_TIME * 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.parallel().tween_property(_equip_hat, "rotation:y", TAU, EQUIP_TIME * 0.6)
 	tw.tween_property(_equip_hat, "position", Vector3(0, 2.3, 0), EQUIP_TIME * 0.4).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	if _upper and _upper.has_animation("tronco/Spellcast_Raise"):
-		_upper.play("tronco/Spellcast_Raise", 0.1, _upper.get_animation("tronco/Spellcast_Raise").length / EQUIP_TIME)
+	var raise := _upper_anim("Spellcast_Raise")
+	if raise != "":
+		_upper.play(raise, 0.1, _upper.get_animation(raise).length / EQUIP_TIME)
 	Sfx.play("pickup", global_position)
 
 
@@ -194,22 +224,45 @@ func _setup_upper_player() -> void:
 	var lib: AnimationLibrary = _upper_libs.get(key)
 	if lib == null:
 		lib = AnimationLibrary.new()
-		for anim_name in ["Spellcast_Raise"]:
-			if not _anim.has_animation(anim_name):
-				continue
-			var a := _anim.get_animation(anim_name).duplicate() as Animation
-			a.loop_mode = Animation.LOOP_NONE
-			for t in range(a.get_track_count() - 1, -1, -1):
-				var bone := str(a.track_get_path(t).get_concatenated_subnames())
-				if not UPPER_BONES.has(bone):
-					a.remove_track(t)
-			lib.add_animation(anim_name, a)
 		_upper_libs[key] = lib
 	_upper = AnimationPlayer.new()
 	_upper.name = "TroncoPlayer"
 	_anim.get_parent().add_child(_upper)
 	_upper.root_node = _upper.get_path_to(_anim.get_node(_anim.root_node))
 	_upper.add_animation_library("tronco", lib)
+
+
+## Nome "tronco/<anim>" da cópia filtrada (criada na primeira vez que é pedida).
+func _upper_anim(anim_name: String, loop := false) -> String:
+	if _upper == null or not _anim.has_animation(anim_name):
+		return ""
+	var lib := _upper.get_animation_library("tronco")
+	if not lib.has_animation(anim_name):
+		var a := _anim.get_animation(anim_name).duplicate() as Animation
+		a.loop_mode = Animation.LOOP_LINEAR if loop else Animation.LOOP_NONE
+		for t in range(a.get_track_count() - 1, -1, -1):
+			var bone := str(a.track_get_path(t).get_concatenated_subnames())
+			if not UPPER_BONES.has(bone):
+				a.remove_track(t)
+		lib.add_animation(anim_name, a)
+	return "tronco/" + anim_name
+
+
+## Toca uma animação só no tronco: as pernas continuam correndo.
+func _play_upper(anim_name: String, speed := 1.0, loop := false) -> void:
+	var key := _upper_anim(anim_name, loop)
+	if key == "":
+		return
+	if loop and _upper.is_playing() and _upper.current_animation == key:
+		return
+	_upper.play(key, 0.05, speed)
+	if not loop:
+		_upper.seek(0.0, true)
+
+
+func _stop_upper(anim_name: String) -> void:
+	if _upper and _upper.current_animation == "tronco/" + anim_name:
+		_upper.stop()
 
 
 # --- Desempenho ---------------------------------------------------------------
@@ -287,7 +340,31 @@ func current_speed() -> float:
 	var s := stats.move_speed
 	if carried_princess:
 		s *= stats.carry_speed_mult * (1.0 - carried_princess.fatness * Config.cfg.fat_slowdown)
+	if _boost_t > 0.0:
+		s *= _boost_mult
 	return s
+
+
+func power_ready() -> bool:
+	return power >= POWER_MAX and stats.power != "nenhum"
+
+
+## Carga do tiro (0 a 1).
+func charge_ratio() -> float:
+	return clampf(_charge_t / maxf(stats.charge_time, 0.01), 0.0, 1.0)
+
+
+## Soma ao medidor de Glacê. Enquanto o próprio poder age, nada entra
+## (senão o Redemoinho se recarregaria sozinho).
+func add_power(amount: float) -> void:
+	if amount <= 0.0 or _power_active_t > 0.0 or not alive:
+		return
+	var was_ready := power >= POWER_MAX
+	power = minf(power + amount, POWER_MAX)
+	_power_idle = 0.0
+	if is_player and not was_ready and power >= POWER_MAX and stats.power != "nenhum":
+		Sfx.play_ui("power_ready")
+		game.hud.show_big("Glacê cheio! [Q] %s" % stats.power_name, Color(1, 0.75, 0.9), 1.4)
 
 
 # --- Loop principal -----------------------------------------------------------
@@ -299,6 +376,14 @@ func _physics_process(delta: float) -> void:
 			_respawn()
 		return
 
+	# Hitstop: no impacto de um golpe, atacante e alvo congelam por ~60 ms.
+	# É o Δt do contato (J = F·Δt) ficando visível; o empurrão sai depois.
+	if _hitstop_t > 0.0:
+		_hitstop_t -= delta
+		if _hitstop_t <= 0.0:
+			_set_anim_speed(1.0)
+		return
+
 	if brain and brain.has_method("tick"):
 		brain.tick(delta)
 
@@ -306,8 +391,13 @@ func _physics_process(delta: float) -> void:
 	_heal_cd = maxf(_heal_cd - delta, 0.0)
 	_dodge_cd = maxf(_dodge_cd - delta, 0.0)
 	_anim_lock = maxf(_anim_lock - delta, 0.0)
+	_attack_t = maxf(_attack_t - delta, 0.0)
+	_combo_t = maxf(_combo_t - delta, 0.0)
+	_power_active_t = maxf(_power_active_t - delta, 0.0)
+	_tick_power(delta)
+	_tick_buffs(delta)
 
-	if wants_dodge and _dodge_cd <= 0.0 and not carried_princess:
+	if wants_dodge and _dodge_cd <= 0.0 and not carried_princess and _spin_t <= 0.0:
 		_start_dodge()
 	wants_dodge = false
 
@@ -316,8 +406,16 @@ func _physics_process(delta: float) -> void:
 		_move_vel = _dodge_dir * DODGE_SPEED
 	else:
 		var speed := current_speed()
-		if _anim_lock > 0.0:
-			speed *= 0.55  # anda mais devagar enquanto ataca
+		if _spin_t > 0.0:
+			speed *= 0.75
+		elif _anim_lock > 0.0:
+			speed *= 0.55  # levando golpe
+		elif _blocking:
+			speed *= 0.5
+		elif _charge_t > 0.0:
+			speed *= 0.6
+		elif _attack_t > 0.0:
+			speed *= 0.8  # o golpe sai do tronco: dá para bater correndo
 		var target := move_intent.limit_length(1.0) * speed + _separation() * 3.0
 		_move_vel = _move_vel.move_toward(target, ACCEL * delta)
 	# O empurrão entra só na velocidade final. Antes ele era somado à própria
@@ -337,10 +435,13 @@ func _physics_process(delta: float) -> void:
 		_equip_t -= delta
 		if _equip_t <= 0.0:
 			_finish_equip()
-	if wants_attack and _attack_cd <= 0.0 and not carried_princess and _dodge_t <= 0.0 and _equip_t <= 0.0:
+	var free_hands := not carried_princess and _dodge_t <= 0.0 and _equip_t <= 0.0 and _spin_t <= 0.0
+	_update_skill(delta, free_hands)
+	if wants_power:
+		wants_power = false
+		_use_power()
+	if wants_attack and _attack_cd <= 0.0 and free_hands and not _blocking and _charge_t <= 0.0:
 		_attack()
-	if wants_special and stats.attack_kind == "healer" and _heal_cd <= 0.0 and not carried_princess:
-		_heal()
 	_animate(horizontal)
 	_update_flash(delta)
 	_cake_visual.visible = has_cake
@@ -352,7 +453,7 @@ func _face(delta: float) -> void:
 	var look := Vector3.ZERO
 	if _dodge_t > 0.0:
 		look = _dodge_dir
-	elif is_player or _anim_lock > 0.0 or wants_attack:
+	elif is_player or _anim_lock > 0.0 or _attack_t > 0.0 or _blocking or _charge_t > 0.0 or wants_attack:
 		look = aim_dir
 	elif move_intent.length() > 0.1:
 		look = move_intent
@@ -381,17 +482,40 @@ func _start_dodge() -> void:
 	_dodge_dir = move_intent.normalized() if move_intent.length() > 0.1 else aim_dir.normalized()
 	_dodge_t = DODGE_TIME
 	_dodge_cd = DODGE_COOLDOWN
+	_cancel_skill()
+	if _upper:
+		_upper.stop()
 	_play_once("Dodge_Forward", DODGE_TIME + 0.1)
 	Sfx.play("dodge", global_position)
 
 
 func _attack() -> void:
 	_attack_cd = stats.attack_cooldown
-	_play_once(stats.anim_attack, 0.4)
+	var anim := stats.anim_attack
+	var mult := 1.0
+	var finisher := false
+	var combo := stats.combo_anims
+	if combo.size() > 0:
+		_combo_i = (_combo_i + 1) % combo.size() if _combo_t > 0.0 else 0
+		anim = combo[_combo_i]
+		finisher = _combo_i == combo.size() - 1
+		if finisher:
+			mult = stats.combo_finisher_mult
+			_attack_cd *= 1.2
+		else:
+			_attack_cd *= 0.85
+		_combo_t = _attack_cd + COMBO_WINDOW
+	_attack_t = minf(_attack_cd, 0.45)
+	_play_upper(anim, 1.35)
 	var dir := aim_dir.normalized()
 	match stats.attack_kind:
 		"melee":
-			Sfx.play("swing", global_position)
+			Sfx.play("swing", global_position, 0.12)
+			# Golpes alternam a inclinação do corte; o último é maior e dourado.
+			var tilt := 0.0 if combo.size() == 0 else (22.0 if _combo_i % 2 == 0 else -22.0)
+			var col := Color(1.0, 0.78, 0.25) if finisher else Color(1, 1, 1)
+			var reach := stats.attack_range + (0.9 if finisher else 0.3)
+			Fx.slash(game, global_position + Vector3(0, 1.0, 0), dir, reach, stats.attack_arc_deg + (30.0 if finisher else 0.0), col, tilt, finisher)
 			var hit_any := false
 			for other in game.units:
 				if not other.alive or other.team == team:
@@ -402,60 +526,198 @@ func _attack() -> void:
 					continue
 				if to.length() > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > stats.attack_arc_deg / 2.0:
 					continue
-				other.take_damage(stats.damage, self, to.normalized())
+				other.take_damage(stats.damage * mult, self, to.normalized(), mult, true)
 				hit_any = true
-			if hit_any and is_player:
-				game.camera.add_trauma(0.25)
+			if hit_any:
+				hitstop(Config.cfg.hitstop_time * (1.6 if finisher else 1.0))
+				if is_player:
+					game.camera.add_trauma(0.4 if finisher else 0.25)
 		"ranged":
-			Sfx.play("shoot", global_position)
-			game.spawn_projectile(self, global_position + Vector3(0, 1.4, 0) + dir * 0.9, dir, "arrow")
+			_shoot_arrow(1.0, 1.0)
 		"healer":
 			Sfx.play("magic", global_position)
 			game.spawn_projectile(self, global_position + Vector3(0, 1.6, 0) + dir * 0.9, dir, "magic")
 
 
+func _shoot_arrow(dmg_mult: float, speed_mult: float) -> void:
+	var dir := aim_dir.normalized()
+	var to := aim_point - global_position
+	to.y = 0
+	Sfx.play("shoot", global_position)
+	var p := game.spawn_projectile(self, global_position + Vector3(0, 1.4, 0) + dir * 0.9, dir, "arrow")
+	p.damage *= dmg_mult
+	p.velocity *= speed_mult
+	p.aim_ballistic(clampf(to.length(), 6.0, stats.attack_range * 1.4 * speed_mult))
+
+
+## Congela animação e movimento por t segundos (hitstop).
+func hitstop(t: float) -> void:
+	_hitstop_t = maxf(_hitstop_t, t)
+	_set_anim_speed(0.0)
+
+
+func _set_anim_speed(s: float) -> void:
+	if _anim:
+		_anim.speed_scale = s
+	if _upper:
+		_upper.speed_scale = s
+
+
+# --- Botão direito: cura, bloqueio ou tiro carregado ---------------------------
+
+func _update_skill(delta: float, free_hands: bool) -> void:
+	var held := wants_skill and free_hands
+	match stats.skill:
+		"cura":
+			if held and _heal_cd <= 0.0:
+				_heal()
+		"bloqueio":
+			if held != _blocking:
+				_blocking = held
+				if held:
+					_play_upper("Blocking", 1.0, true)
+				else:
+					_stop_upper("Blocking")
+		"tiro_carregado":
+			if held and _attack_cd <= 0.0:
+				if _charge_t <= 0.0:
+					_play_upper("1H_Ranged_Aiming", 1.0, true)
+				_charge_t = minf(_charge_t + delta, stats.charge_time)
+				_show_aim_line()
+			elif _charge_t > 0.0:
+				if not wants_skill and free_hands:
+					_fire_charged()
+				else:
+					_cancel_skill()
+
+
+func _fire_charged() -> void:
+	var c := charge_ratio()
+	_cancel_skill()
+	_attack_cd = stats.attack_cooldown
+	_attack_t = 0.3
+	_play_upper("1H_Ranged_Shoot", 1.4)
+	_shoot_arrow(1.0 + (stats.charge_damage_mult - 1.0) * c, 1.0 + 0.5 * c)
+	if c >= 1.0:
+		Fx.burst(game, global_position + Vector3(0, 1.4, 0) + aim_dir * 1.2, Color(1, 0.85, 0.4), 10, 6.0)
+		if is_player:
+			game.camera.add_trauma(0.15)
+
+
+func _cancel_skill() -> void:
+	if _blocking:
+		_blocking = false
+		_stop_upper("Blocking")
+	if _charge_t > 0.0:
+		_charge_t = 0.0
+		_stop_upper("1H_Ranged_Aiming")
+	if _aim_line:
+		_aim_line.visible = false
+
+
+## Linha de mira do tiro carregado: cresce até o alcance e fica dourada na carga máxima.
+func _show_aim_line() -> void:
+	if not is_player:
+		return
+	if _aim_line == null:
+		_aim_line = MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = Vector3(0.12, 0.02, 1.0)
+		_aim_line.mesh = box
+		_aim_line.material_override = Fx.unshaded(Color(1, 1, 1, 0.6), true)
+		_aim_line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_visual.add_child(_aim_line)
+	var c := charge_ratio()
+	var to := aim_point - global_position
+	to.y = 0
+	var length := clampf(to.length(), 6.0, stats.attack_range * 1.4 * (1.0 + 0.5 * c))
+	_aim_line.visible = true
+	_aim_line.scale = Vector3(1.0 + c, 1, length)
+	_aim_line.position = Vector3(0, 0.15, length * 0.5)
+	var mat := _aim_line.material_override as StandardMaterial3D
+	mat.albedo_color = Color(1, 1, 1, 0.35).lerp(Color(1, 0.8, 0.25, 0.9), c)
+
+
 func _heal() -> void:
 	_heal_cd = stats.heal_cooldown
-	_play_once("Spellcast_Raise", 0.5)
+	_play_upper("Spellcast_Raise", 1.3)
 	Sfx.play("heal", global_position)
 	Fx.ring(game, global_position, Color(0.5, 1.0, 0.6, 0.7), stats.heal_radius)
+	var healed := 0.0
 	for other in game.units:
 		if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.heal_radius:
-			other.heal(stats.heal_amount)
+			healed += other.heal(stats.heal_amount)
+	add_power(healed * Config.cfg.power_per_damage)
 
 
-func heal(amount: float) -> void:
-	if hp >= stats.max_hp:
-		return
+## Cura e devolve quanto curou de fato.
+func heal(amount: float) -> float:
+	if hp >= stats.max_hp or not alive:
+		return 0.0
+	var before := hp
 	hp = minf(hp + amount, stats.max_hp)
-	Fx.damage_number(game, global_position, "+%d" % int(amount), Color(0.5, 1, 0.55))
+	Fx.damage_number(game, global_position, "+%d" % int(hp - before), Color(0.5, 1, 0.55))
 	_update_hp_bar()
+	return hp - before
 
 
-func take_damage(amount: float, attacker: Unit, dir: Vector3) -> void:
+## dir = direção do golpe (de quem bate para quem apanha).
+func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0, melee := false) -> void:
 	if not alive or _dodge_t > 0.0:
 		return
 	if attacker and attacker.team != Config.TEAM_BLUE:
 		amount *= Settings.bot_damage_mult()
+	# Bloqueio: vale para golpes que chegam pela frente (até 60° do rosto).
+	var blocked := _blocking and _facing().dot(-dir) > BLOCK_COS
+	if blocked:
+		amount *= 1.0 - stats.block_reduction
+		knock_mult *= 0.3
+	if _shield > 0.0:
+		var absorbed := minf(_shield, amount)
+		_shield -= absorbed
+		amount -= absorbed
 	hp -= amount
-	_knock = dir * (attacker.stats.knockback if attacker else 4.0)
+	if attacker:
+		attacker.add_power(amount * Config.cfg.power_per_damage)
+	add_power(amount * Config.cfg.power_per_damage_taken)
+	_knock = dir * (attacker.stats.knockback if attacker else 4.0) * knock_mult
 	_flash_t = 0.1
-	Fx.damage_number(game, global_position, str(int(amount)), Color(1, 0.9, 0.3) if attacker and attacker.is_player else Color(1, 1, 1))
-	Fx.burst(game, global_position + Vector3(0, 1.2, 0), Color(1, 0.85, 0.5), 8, 5.0)
-	Sfx.play("hit", global_position)
+	var col := Color(1, 0.9, 0.3) if attacker and attacker.is_player else Color(1, 1, 1)
+	if blocked:
+		col = Color(0.6, 0.8, 1.0)
+	Fx.damage_number(game, global_position, str(int(amount)), col)
+	if blocked:
+		Fx.burst(game, global_position + Vector3(0, 1.3, 0) - dir * 0.6, Color(0.8, 0.9, 1.0), 10, 6.0)
+		Sfx.play("block", global_position, 0.1)
+		_play_upper("Block_Hit", 1.5)
+	else:
+		Fx.burst(game, global_position + Vector3(0, 1.2, 0), Color(1, 0.85, 0.5), 8 if knock_mult <= 1.0 else 14, 5.0 * maxf(knock_mult, 1.0))
+		Sfx.play("hit", global_position)
+	if melee:
+		hitstop(Config.cfg.hitstop_time * (1.6 if knock_mult > 1.0 else 1.0))
 	if is_player:
-		game.camera.add_trauma(0.45)
+		game.camera.add_trauma(0.2 if blocked else 0.45)
 	_update_hp_bar()
 	if hp <= 0.0:
 		_die(attacker)
-	elif _anim_lock <= 0.0:
-		_play_once("Hit_A", 0.25)
+	elif _anim_lock <= 0.0 and not blocked and _spin_t <= 0.0:
+		_play_once("Hit_A" if randf() < 0.5 else "Hit_B", 0.25)
+
+
+func _facing() -> Vector3:
+	return Vector3(sin(_visual.rotation.y), 0, cos(_visual.rotation.y))
 
 
 func _die(killer: Unit) -> void:
 	alive = false
 	hp = 0.0
 	_cancel_equip()
+	_cancel_skill()
+	_end_buffs()
+	_hitstop_t = 0.0
+	_set_anim_speed(1.0)
+	if _upper:
+		_upper.stop()
 	if carried_princess:
 		carried_princess.drop(global_position)
 		carried_princess = null
@@ -463,9 +725,12 @@ func _die(killer: Unit) -> void:
 	collision_layer = 0
 	velocity = Vector3.ZERO
 	_hp_root.visible = false
-	_play("Death_A", 0.1)
+	_play("Death_A" if randf() < 0.5 else "Death_B", 0.1)
 	_respawn_t = Config.cfg.respawn_time
 	Sfx.play("death", global_position)
+	if killer and killer != self:
+		killer.add_power(Config.cfg.power_per_kill)
+	power *= Config.cfg.power_keep_on_death
 	died.emit(self, killer)
 
 
@@ -479,6 +744,126 @@ func _respawn() -> void:
 	_move_vel = Vector3.ZERO
 	set_class(Config.cfg.villager)  # quem morre perde o chapéu
 	Fx.ring(game, global_position, Config.team_color(team), 2.0)
+
+
+# --- Poder do Q (medidor de Glacê) --------------------------------------------
+
+## Vazamento do medidor depois de um tempo sem lutar: dG/dt = −G/τ.
+func _tick_power(delta: float) -> void:
+	_power_idle += delta
+	if _power_idle > Config.cfg.power_leak_delay and power < POWER_MAX:
+		power = maxf(power - power / Config.cfg.power_leak_tau * delta, 0.0)
+
+
+func _use_power() -> void:
+	if not power_ready() or _dodge_t > 0.0 or _equip_t > 0.0 or _spin_t > 0.0:
+		return
+	if carried_princess and stats.power != "corrida":
+		return
+	power = 0.0
+	_cancel_skill()
+	Sfx.play("power", global_position, 0.03)
+	if is_player:
+		game.camera.add_trauma(0.35)
+	match stats.power:
+		"redemoinho":
+			_spin_t = stats.power_duration
+			_spin_tick = 0.0
+			_power_active_t = stats.power_duration
+			_play_once("2H_Melee_Attack_Spinning", stats.power_duration)
+			Fx.ring(game, global_position, Color(1, 0.85, 0.4, 0.9), stats.power_radius * 1.4)
+		"chuva_de_flechas":
+			var to := aim_point - global_position
+			to.y = 0
+			var center := global_position + to.limit_length(stats.attack_range * 1.4)
+			center.y = 0.0
+			var rain := ArrowRain.new()
+			game.add_child(rain)
+			rain.setup(game, self, center, stats.power_radius, stats.power_value, stats.power_duration)
+			_power_active_t = ArrowRain.WARN + stats.power_duration
+			_play_upper("1H_Ranged_Shoot", 1.0)
+			Fx.burst(game, global_position + Vector3(0, 2.0, 0), Config.team_color(team).lightened(0.5), 16, 9.0)
+		"bencao":
+			_play_upper("Spellcast_Raise", 1.2)
+			Fx.pillar(game, global_position, Color(1, 0.9, 0.5), stats.power_radius)
+			for other in game.units:
+				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
+					other.heal(other.stats.max_hp * stats.power_value)
+					other.give_shield(stats.power_shield, stats.power_duration)
+		"corrida":
+			_play_upper("Cheer", 1.5)
+			Fx.ring(game, global_position, Color(1, 0.8, 0.3, 0.9), stats.power_radius)
+			for other in game.units:
+				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
+					other.give_boost(stats.power_value, stats.power_duration)
+
+
+func give_shield(amount: float, duration: float) -> void:
+	_shield = maxf(_shield, amount)
+	_shield_t = duration
+	if _shield_mesh == null:
+		if _shield_res.is_empty():
+			var sphere := SphereMesh.new()
+			sphere.radius = 1.25
+			sphere.height = 2.6
+			sphere.radial_segments = 16
+			sphere.rings = 8
+			_shield_res = [sphere, Fx.bubble(Color(1.0, 0.85, 0.4))]
+		_shield_mesh = MeshInstance3D.new()
+		_shield_mesh.mesh = _shield_res[0]
+		_shield_mesh.material_override = _shield_res[1]
+		_shield_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_shield_mesh.position.y = 1.15
+		add_child(_shield_mesh)
+	_shield_mesh.visible = true
+
+
+func give_boost(mult: float, duration: float) -> void:
+	_boost_mult = mult
+	_boost_t = duration
+
+
+## Redemoinho (pulsos de dano em volta), escudo e corrida perdendo o efeito.
+func _tick_buffs(delta: float) -> void:
+	if _spin_t > 0.0:
+		_spin_t -= delta
+		_spin_tick -= delta
+		if _spin_tick <= 0.0:
+			_spin_tick = SPIN_TICK
+			Fx.slash(game, global_position + Vector3(0, 0.9, 0), _facing(), stats.power_radius, 360.0, Color(1, 0.72, 0.2), 0.0, true)
+			Sfx.play("swing", global_position, 0.2)
+			for other in game.units:
+				if not other.alive or other.team == team:
+					continue
+				var to := other.global_position - global_position
+				to.y = 0
+				if to.length() <= stats.power_radius + 0.4:
+					other.take_damage(stats.power_value, self, to.normalized() if to.length() > 0.1 else _facing(), 0.8)
+		if _spin_t <= 0.0:
+			_anim_lock = 0.0
+	if _shield_t > 0.0:
+		_shield_t -= delta
+		if _shield_t <= 0.0 or _shield <= 0.0:
+			_shield = 0.0
+			_shield_t = 0.0
+			if _shield_mesh:
+				_shield_mesh.visible = false
+	if _boost_t > 0.0:
+		_boost_t -= delta
+		_boost_fx_t -= delta
+		if _boost_fx_t <= 0.0 and _move_vel.length() > 2.0:
+			_boost_fx_t = 0.12
+			Fx.burst(game, global_position + Vector3(0, 0.2, 0), Color(1, 0.85, 0.4), 3, 2.0)
+
+
+func _end_buffs() -> void:
+	_spin_t = 0.0
+	_power_active_t = 0.0
+	_boost_t = 0.0
+	_shield = 0.0
+	_shield_t = 0.0
+	if _shield_mesh:
+		_shield_mesh.visible = false
 
 
 # --- Carregar princesa e bolo -------------------------------------------------

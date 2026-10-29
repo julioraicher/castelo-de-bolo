@@ -30,7 +30,35 @@ func _ready() -> void:
 	_ensure_bus("Musica")
 	_ensure_bus("Efeitos")
 	_load()
+	if OS.get_name() == "Web":
+		fullscreen = false  # o navegador só deixa entrar em tela cheia com um clique/tecla
+		_web_setup_escape_lock()
 	apply()
+
+
+## Liga/desliga a tela cheia (tecla F, F11 ou o menu).
+func toggle_fullscreen() -> void:
+	set_fullscreen(DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_FULLSCREEN)
+
+
+func set_fullscreen(on: bool) -> void:
+	fullscreen = on
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if on else DisplayServer.WINDOW_MODE_WINDOWED)
+	save()
+
+
+## No navegador, Esc sempre tirava da tela cheia (e também pausa o jogo). Com a
+## Keyboard Lock API (Chrome, Edge, Opera), em tela cheia o Esc vai para o jogo;
+## para sair, segure Esc ou aperte F.
+func _web_setup_escape_lock() -> void:
+	JavaScriptBridge.eval("""
+		document.addEventListener('fullscreenchange', function () {
+			var kb = navigator.keyboard;
+			if (!kb || !kb.lock) { return; }
+			if (document.fullscreenElement) { kb.lock(['Escape']).catch(function () {}); }
+			else { kb.unlock(); }
+		});
+	""", true)
 
 
 ## Multiplicador do tempo de reação dos bots INIMIGOS (maior = mais lentos).
@@ -48,7 +76,9 @@ func apply() -> void:
 	_set_bus_volume("Efeitos", sfx_volume)
 	_apply_quality_viewport()
 	if OS.get_name() != "Web":
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
+		var want := DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
+		if DisplayServer.window_get_mode() != want:
+			DisplayServer.window_set_mode(want)
 	changed.emit()
 
 
