@@ -44,6 +44,8 @@ var _tris := {}
 
 
 func _init() -> void:
+	if not _gerar_tudo():
+		return
 	for tema in TEMAS:
 		P = TEMAS[tema]
 		_dir = "res://assets/ninja/" + tema
@@ -53,6 +55,11 @@ func _init() -> void:
 	_gerar_mapa()
 	print("triângulos por modelo (oni): ", _tris)
 	quit()
+
+
+## Ferramentas que herdam este script (ex.: prancha_catalogo.gd) devolvem false.
+func _gerar_tudo() -> bool:
+	return true
 
 
 # --- Modelos -----------------------------------------------------------------
@@ -549,21 +556,8 @@ func _prim(mesh: PrimitiveMesh, pos: Vector3, rot_deg: Vector3, esc: Vector3, co
 
 
 func _salvar(nome: String) -> void:
-	var mesh := ArrayMesh.new()
-	var tris := 0
-	for s in 2:
-		if V[s].is_empty():
-			continue
-		var arr := []
-		arr.resize(Mesh.ARRAY_MAX)
-		arr[Mesh.ARRAY_VERTEX] = V[s]
-		arr[Mesh.ARRAY_NORMAL] = N[s]
-		arr[Mesh.ARRAY_COLOR] = C[s]
-		arr[Mesh.ARRAY_INDEX] = I[s]
-		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
-		mesh.surface_set_material(mesh.get_surface_count() - 1, _mat(s == 1))
-		tris += I[s].size() / 3
-	_tris[nome] = tris
+	var mesh := _malha()
+	_tris[nome] = _ultima_tris
 	var root := Node3D.new()
 	root.name = nome
 	var mi := MeshInstance3D.new()
@@ -575,11 +569,33 @@ func _salvar(nome: String) -> void:
 	ps.pack(root)
 	ResourceSaver.save(ps, _dir.path_join(nome + ".scn"))
 	root.free()
+
+
+var _ultima_tris := 0
+
+
+## Fecha a malha com o que foi desenhado até agora e zera o construtor.
+func _malha() -> ArrayMesh:
+	var mesh := ArrayMesh.new()
+	_ultima_tris = 0
+	for s in 2:
+		if V[s].is_empty():
+			continue
+		var arr := []
+		arr.resize(Mesh.ARRAY_MAX)
+		arr[Mesh.ARRAY_VERTEX] = V[s]
+		arr[Mesh.ARRAY_NORMAL] = N[s]
+		arr[Mesh.ARRAY_COLOR] = C[s]
+		arr[Mesh.ARRAY_INDEX] = I[s]
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+		mesh.surface_set_material(mesh.get_surface_count() - 1, _mat(s == 1))
+		_ultima_tris += I[s].size() / 3
 	for s in 2:
 		V[s] = PackedVector3Array()
 		N[s] = PackedVector3Array()
 		C[s] = PackedColorArray()
 		I[s] = PackedInt32Array()
+	return mesh
 
 
 var _mats := {}
