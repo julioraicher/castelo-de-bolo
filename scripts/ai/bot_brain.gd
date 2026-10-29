@@ -8,11 +8,12 @@ extends Node
 ## Prioridades (a primeira que se aplica vence):
 ##  1. Carregando a princesa inimiga -> voltar para casa.
 ##  2. Carregando bolo -> levar para a própria princesa.
-##  3. Aldeão -> pegar um chapéu no castelo.
+##  3. Recruta -> pegar um chapéu no castelo.
 ##  4. Própria princesa sequestrada -> perseguir quem a leva / buscá-la no chão.
-##  5. Inimigo perto -> lutar.
-##  6. Aliado carregando a princesa inimiga -> escoltar.
-##  7. Papel: ATAQUE vai buscar a princesa inimiga, DEFESA guarda o portão,
+##  5. Item no chão bem perto e ninguém colado -> desviar para pegar.
+##  6. Inimigo perto -> lutar.
+##  7. Aliado carregando a princesa inimiga -> escoltar.
+##  8. Papel: ATAQUE vai buscar a princesa inimiga, DEFESA guarda o portão,
 ##     CONFEITEIRO busca bolos.
 
 enum Role { ATTACK, DEFEND, CAKE }
@@ -70,6 +71,12 @@ func _think() -> void:
 	elif my_princess.state == Princess.State.DROPPED and me.distance_to(my_princess.global_position) < 35.0:
 		_goal = my_princess.global_position
 		_target = _nearest_enemy(6.0)
+		return
+
+	# Item no chão a poucos passos: vale o desvio se não tem inimigo colado.
+	var item := game.nearest_pickup(me, 10.0)
+	if item and _nearest_enemy(5.0) == null and (item.kind != "pocao" or unit.hp_ratio() < 0.8):
+		_goal = item.global_position
 		return
 
 	var aggro := Config.cfg.bot_aggro_radius
@@ -155,6 +162,8 @@ func _combat() -> void:
 		unit.wants_skill = true
 	if unit.power_ready():
 		unit.wants_power = _should_use_power()
+	if unit.stats.skill == "armadilha" and _wants_trap():
+		unit.wants_skill = true
 	if _target == null or not _target.alive or unit.carried_princess:
 		if unit.move_intent.length() > 0.1:
 			unit.aim_dir = unit.move_intent.normalized()
@@ -207,6 +216,16 @@ func _should_use_power() -> bool:
 			var mine := game.princesses[unit.team]
 			return mine.state == Princess.State.CARRIED and mine.carrier and me.distance_to(mine.carrier.global_position) < 25.0
 	return false
+
+
+## Construtor: estrepes no caminho de quem vem (inimigo a até 7 m) ou, na
+## defesa, espalhadas perto do portão. O recarga (trap_cooldown) limita o ritmo.
+func _wants_trap() -> bool:
+	if unit.carried_princess:
+		return false
+	if _target and _target.alive and unit.global_position.distance_to(_target.global_position) < 7.0:
+		return true
+	return role == Role.DEFEND and unit.global_position.distance_to(game.arena.gate_spot[unit.team]) < 8.0 and randf() < 0.02
 
 
 func _count(team: int, at: Vector3, radius: float) -> int:

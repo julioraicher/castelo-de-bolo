@@ -8,8 +8,8 @@ Os mesmos controles aparecem no jogo: na tela inicial e em **Esc > Controles**.
 |---|---|
 | **W A S D** | andar |
 | **Mouse** | mirar (o personagem olha para o cursor) |
-| **Clique esquerdo** | atacar (segure para atacar sem parar). Guerreiro e Aldeão fazem combo de 3 golpes: o 3º é mais forte |
-| **Clique direito** (segurar) | Guerreiro: bloqueia golpes pela frente · Arqueiro: carrega o tiro, solte para atirar · Clérigo: cura aliados em volta |
+| **Clique esquerdo** | atacar (segure para atacar sem parar). Guerreiro e Recruta fazem combo de 3 golpes: o 3º é mais forte |
+| **Clique direito** (segurar) | Guerreiro: bloqueia golpes pela frente · Arqueiro: carrega o tiro, solte para atirar · Monge: cura aliados em volta · Construtor: espalha estrepes no chão |
 | **Q** | poder especial, quando o medidor de Glacê (barra rosa) enche |
 | **Espaço** ou **Shift** | esquivar: rolamento rápido, com recarga |
 | **E** | pegar um chapéu (perto do pedestal); pegar ou soltar a princesa |
@@ -46,12 +46,16 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
    personagem pega o chapéu e põe na cabeça (dá para andar enquanto isso).
    - Guerreiro: muita vida, combo de 3 golpes, bloqueia (clique direito). Poder: Redemoinho.
    - Arqueiro: ataque à distância, tiro carregado (clique direito). Poder: Chuva de flechas.
-   - Clérigo: cura aliados (clique direito) e ataca com magia. Poder: Bênção (cura + escudo).
-   - Aldeão: rápido, socos em combo. Poder: Corrida do bolo (aliados correm mais).
+   - Monge: cura aliados (clique direito) e ataca com magia. Poder: Bênção (cura + escudo).
+   - Construtor: machado, espalha estrepes (clique direito: quem pisa leva dano e fica lento; até 3).
+     Poder: Corrida (ele e aliados em volta correm mais).
+   - Recruta (sem chapéu): rápido, socos em combo, sem poder.
    - O medidor de Glacê enche batendo, apanhando, abatendo, entregando bolo e
      capturando a princesa. Cheio, aperte Q.
 5. **Bolo** aparece no meio do mapa. Levar bolo até a **sua** princesa a
    engorda: cada bolo deixa quem a carrega mais lento.
-6. Morreu? Volta em alguns segundos como aldeão no seu castelo.
+6. **Itens no chão** aparecem de vez em quando no meio do mapa: poção
+   (recupera vida), escudo (bolha que absorve dano) e velocidade. Encostou, pegou.
+7. Morreu? Volta em alguns segundos como recruta no seu castelo.
 
 Para mudar teclas ou números, veja o [GUIA.md](GUIA.md).

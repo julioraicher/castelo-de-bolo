@@ -75,6 +75,6 @@ mirror_z = true
 [resource]
 script = ExtResource("2_iybg6")
 tower_spots = PackedVector2Array(-13, -13, -13, 13, 11, -13, 11, 13, 11, -5.5, 11, 5.5)
-hat_spots = PackedVector2Array(5, -8.5, 5, 8.5, -3, -8.5)
+hat_spots = PackedVector2Array(5, -8.5, 5, 8.5, -3, -8.5, -3, 8.5)
 courtyard_props = Array[ExtResource("1_mupbb")]([SubResource("Resource_tc3x3"), SubResource("Resource_mmw23"), SubResource("Resource_njvy1"), SubResource("Resource_86wjx")])
 middle_props = Array[ExtResource("1_mupbb")]([SubResource("Resource_0cnh7"), SubResource("Resource_2i3hf"), SubResource("Resource_qa8ue"), SubResource("Resource_miye8")])

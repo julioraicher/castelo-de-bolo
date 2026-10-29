@@ -31,6 +31,17 @@ extends Resource
 ## Fração do medidor mantida ao morrer.
 @export_range(0.0, 1.0) var power_keep_on_death := 0.5
 
+@export_group("Itens no chão")
+## Um item novo a cada tantos segundos, até o máximo, na área do meio.
+@export var pickup_interval := 15.0
+@export var max_pickups := 3
+## Poção: fração da vida máxima curada.
+@export var pickup_heal := 0.5
+@export var pickup_shield := 40.0
+@export var pickup_shield_time := 8.0
+@export var pickup_speed_mult := 1.35
+@export var pickup_speed_time := 6.0
+
 @export_group("Sensação do combate")
 ## Congelamento de atacante e alvo num golpe corpo a corpo (s).
 @export var hitstop_time := 0.06

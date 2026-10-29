@@ -18,7 +18,7 @@ const CONTROLS := [
 	["W A S D", "andar"],
 	["Mouse", "mirar"],
 	["Clique esquerdo", "atacar"],
-	["Clique direito (segurar)", "Guerreiro bloqueia · Arqueiro carrega o tiro · Clérigo cura"],
+	["Clique direito (segurar)", "Guerreiro bloqueia · Arqueiro carrega o tiro · Monge cura · Construtor arma estrepes"],
 	["Q", "poder especial (quando o medidor de Glacê enche)"],
 	["Espaço ou Shift", "esquivar (rolamento rápido)"],
 	["E", "pegar chapéu, pegar/soltar a princesa"],

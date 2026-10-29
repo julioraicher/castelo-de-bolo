@@ -5,8 +5,8 @@
 
 [resource]
 script = ExtResource("1")
-id = &"clerigo"
-display_name = "Clérigo"
+id = &"monge"
+display_name = "Monge"
 visible_meshes = PackedStringArray("Mage_ArmLeft", "Mage_ArmRight", "Mage_Body", "Mage_Head", "Mage_LegLeft", "Mage_LegRight", "Mage_Hat", "Mage_Cape", "2H_Staff")
 cape_mesh = "Mage_Cape"
 hat_color = Color(0.45, 0.35, 0.85, 1)

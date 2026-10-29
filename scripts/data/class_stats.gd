@@ -4,8 +4,8 @@ extends Resource
 ## Cada classe é um arquivo .tres em res://config/classes/. Abra no Godot e
 ## mude os números pelo Inspector: não precisa programar.
 
-@export var id: StringName = &"aldeao"
-@export var display_name := "Aldeão"
+@export var id: StringName = &"recruta"
+@export var display_name := "Recruta"
 
 @export_group("Visual")
 ## Modelo 3D animado (KayKit). O mesmo modelo traz várias armas e chapéus;
@@ -17,7 +17,7 @@ extends Resource
 ## Cor do chapéu exibido no pedestal do castelo.
 @export var hat_color := Color.WHITE
 ## Formato do chapéu do pedestal (HatPad.make_hat).
-@export_enum("elmo", "capuz", "chapeu_pontudo") var hat_style := "elmo"
+@export_enum("elmo", "capuz", "chapeu_pontudo", "kasa") var hat_style := "elmo"
 
 @export_group("Atributos")
 @export var max_hp := 60.0
@@ -41,14 +41,22 @@ extends Resource
 
 @export_group("Botão direito")
 ## cura = cura aliados em volta; bloqueio = segure para defender pela frente;
-## tiro_carregado = segure para carregar e solte para atirar.
-@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado") var skill := "nenhum"
+## tiro_carregado = segure para carregar e solte para atirar;
+## armadilha = solta estrepes no chão (Construtor).
+@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha") var skill := "nenhum"
 ## Fração do dano bloqueada (golpes de até 60° da frente).
 @export_range(0.0, 1.0) var block_reduction := 0.7
 ## Segundos para carga máxima do tiro.
 @export var charge_time := 1.0
 ## Dano na carga máxima (multiplicador). A velocidade da flecha sobe até 1,5x.
 @export var charge_damage_mult := 2.0
+## Estrepes: dano em quem pisa, lentidão (multiplicador de velocidade) e tempo.
+@export var trap_damage := 15.0
+@export var trap_slow := 0.5
+@export var trap_slow_time := 2.0
+@export var trap_cooldown := 4.0
+## Quantas armadilhas do mesmo dono podem existir ao mesmo tempo.
+@export var trap_max := 3
 
 @export_group("Poder (Q)")
 ## Poder especial, liberado quando o medidor de Glacê enche.

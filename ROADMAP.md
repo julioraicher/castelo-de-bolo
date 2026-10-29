@@ -10,7 +10,7 @@ Objetivo: uma partida curta, sem bugs, gostosa de jogar no navegador e no .exe.
 Aqui só entram correções, sensação de jogo (*game feel*), equilíbrio e desempenho.
 
 - [x] Partida 8 contra 8 com bots, princesas, bolo, chapéus, respawn
-- [x] Guerreiro, Arqueiro, Clérigo e aldeão
+- [x] Guerreiro, Arqueiro, Clérigo e aldeão (hoje Monge e Recruta)
 - [x] Esquiva rápida (dash), aprovada: manter como está
 - [x] Publicação automática (web + Windows + Linux)
 - [x] Tela inicial, pausa, controles e configurações salvas
@@ -29,8 +29,9 @@ Aqui só entram correções, sensação de jogo (*game feel*), equilíbrio e des
 Detalhes em [docs/design-jogo.md](docs/design-jogo.md) (classes, poderes, progressão).
 
 - [ ] Nova identidade v1: Clãs de Neon, Máscara Oni + espíritos no lugar de princesa + bolo ([docs/identidade.md](docs/identidade.md))
-- [ ] Papel Construtor (4º papel) e Clérigo → Monge
-- [ ] Itens no chão (power-ups) e gatilhos de poder (sequência de abates, ao morrer, Hora do Caos)
+- [x] Papel Construtor (4º papel) e Clérigo → Monge (nomes provisórios)
+- [x] Itens no chão: poção, escudo, velocidade
+- [ ] Gatilhos de poder (sequência de abates, ao morrer, Hora do Caos)
 - [ ] Recursos: todos coletam madeira e metal; Construtor coleta mais rápido
 - [ ] Oficinas por papel: sobem de nível e liberam a versão 2 (subclasse à escolha)
 - [ ] Catapulta (carregar, mirar, lançar aliados/pedras)

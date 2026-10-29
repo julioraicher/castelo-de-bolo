@@ -65,7 +65,7 @@ func _ready() -> void:
 	me.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	me.position = Vector2(24, -150)
 	root.add_child(me)
-	_class_label = _label("Aldeão", 28, Color.WHITE)
+	_class_label = _label("Recruta", 28, Color.WHITE)
 	me.add_child(_class_label)
 	_hp_bar = _bar(Config.team_color(0).lightened(0.2))
 	_hp_bar.custom_minimum_size = Vector2(280, 22)
