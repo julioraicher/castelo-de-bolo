@@ -28,53 +28,33 @@ de altura na tela. Abaixo do limite de Nyquist da textura, detalhe vira ruído.
 Logo, o que diferencia uma classe é **silhueta + massa de cor + proporção**,
 não textura. Isso favorece estilos chibi (cabeça grande) e cores chapadas.
 
-## Pipeline (do conceito 2D ao modelo jogável)
+## Fluxo de trabalho (tudo nesta conversa, sem gerador de imagem externo)
 
-1. **Conceito (Gemini).** Julio gera imagens com os prompts abaixo. Primeiro a
-   folha de estilo, depois uma por classe.
-2. **Folha de turnaround.** Para virar 3D, cada personagem precisa de frente,
-   lado e costas em T-pose ou A-pose, fundo liso, sem sombra forte.
-3. **Imagem → 3D.** Três caminhos, do mais barato ao mais livre:
-   - **A. Reaproveitar KayKit.** Mesmo modelo, nova paleta/textura, shader
-     toon (cel shading + contorno), troca de chapéu/arma. Rápido, sem risco.
-   - **B. Kitbash.** Partes novas (cabeças, chapéus, armas, armaduras)
-     encaixadas nos ossos do esqueleto KayKit. Ganha identidade sem refazer
-     animações.
-   - **C. Gerador image-to-3D** (Meshy, Tripo, Hunyuan3D, Rodin). Gera malha
-     e textura a partir do turnaround. Saída costuma ter 20–200 mil tris e
-     topologia ruim: precisa decimar (Blender), refazer UV/textura às vezes,
-     e riggar (auto-rig do próprio gerador ou Mixamo) e redirecionar as
-     animações. Conferir a licença de cada gerador antes de publicar.
-4. **Import no Godot.** `.glb` em `assets/characters/`, novo `.tres` em
-   `config/classes/`. Conferir tris, draw calls e se a cor do time pega.
-5. **Print** no jogo (comando de prints do CLAUDE.md) e comparação com o conceito.
+Editável: se aparecer um jeito mais fácil, troque estas regras aqui.
 
-## Prompts para o Gemini
+1. **Direção.** Julio descreve o que quer (texto curto ou referência de jogo).
+   O tema e o estilo saem da conversa "Definir identidade visual do jogo".
+2. **Modelo por código.** Claude monta ou ajusta o boneco (peças do KayKit,
+   primitivas, shader toon, paleta) e gera **uma prancha** por rodada: todas as
+   classes lado a lado, frente/lado/costas, mais um print dentro do jogo.
+3. **Pitaco.** Julio responde em poucas linhas sobre a prancha ("cabeça maior",
+   "arqueiro mais magro"). Uma imagem por rodada, para gastar poucos tokens.
+4. **Registro.** A decisão entra na tabela abaixo e no `.tres` da classe.
 
-Regra: sempre colar o bloco de estilo inteiro no início e só trocar o pedido.
-Assim as imagens saem coerentes entre si.
+Caminhos para chegar no modelo, do mais barato ao mais livre:
+- **A. Reaproveitar KayKit:** paleta nova, shader toon (cel + contorno),
+  troca de chapéu/arma por dados.
+- **B. Kitbash:** partes novas presas nos ossos do esqueleto KayKit, então as
+  animações continuam servindo.
+- **C. Modelo novo** (Blender ou gerador image-to-3D): decimar para o
+  orçamento, riggar no mesmo esqueleto, conferir a licença.
 
-### Bloco de estilo (preencher quando o estilo for escolhido)
-
-```
-[ESTILO] (a definir)
-```
-
-### Folha de turnaround de um personagem
-
-```
-[ESTILO]
-Character turnaround sheet of a [CLASSE: ex. stubby knight soldier] for a
-top-down 3D action game. Front view, side view and back view side by side,
-same scale, A-pose, full body, flat neutral grey background, even studio
-lighting, no cast shadows, no text. Chibi proportions (head about 1/3 of body
-height), chunky readable silhouette, large simple shapes, flat colors with
-minimal texture. Team-colored parts (tabard, plume, cape) painted in plain
-white so they can be tinted in-engine. Low-poly friendly design.
-```
+Import: `.glb` em `assets/characters/`, `.tres` novo em `config/classes/`,
+conferir tris, draw calls e cor do time.
 
 ## Decisões
 
 | Data | Decisão |
 |---|---|
-| 2026-10-29 | Frente de visual separada; fluxo conceito no Gemini → turnaround → 3D. |
+| 2026-10-29 | Frente de visual separada. |
+| 2026-10-29 | Sem Gemini: referências saem de modelos por código + prancha de prints aqui. Estilo espera a conversa de identidade visual. |
