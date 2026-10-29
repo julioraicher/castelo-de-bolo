@@ -206,3 +206,49 @@ static func lit(color: Color, roughness := 0.6) -> StandardMaterial3D:
 	mat.albedo_color = color
 	mat.roughness = roughness
 	return mat
+
+
+## Raio reto entre dois pontos (Corte Relâmpago, Selo): caixa fina que some.
+static func beam(parent: Node, from: Vector3, to: Vector3, color: Color, width := 0.25, life := 0.35) -> void:
+	var d := to - from
+	if d.length() < 0.05:
+		return
+	var mi := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(width, width * 0.6, d.length())
+	mi.mesh = box
+	mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat := unshaded(Color(color * 2.0, 0.95), true)
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mi.material_override = mat
+	parent.add_child(mi)
+	mi.global_position = from + d * 0.5
+	mi.look_at(to, Vector3.UP if absf(d.normalized().y) < 0.99 else Vector3.RIGHT)
+	var tw := mi.create_tween().set_parallel()
+	tw.tween_property(mi, "scale", Vector3(0.1, 0.1, 1.0), life).set_ease(Tween.EASE_IN)
+	tw.tween_property(mat, "albedo_color:a", 0.0, life)
+	tw.chain().tween_callback(mi.queue_free)
+
+
+## Choque elétrico: zigue-zague de raios curtos entre dois pontos.
+static func zap(parent: Node, from: Vector3, to: Vector3, color: Color, segments := 5) -> void:
+	var prev := from
+	for i in range(1, segments + 1):
+		var p := from.lerp(to, float(i) / segments)
+		if i < segments:
+			p += Vector3(randf_range(-0.5, 0.5), randf_range(-0.3, 0.3), randf_range(-0.5, 0.5))
+		beam(parent, prev, p, color, 0.09, 0.22)
+		prev = p
+
+
+## Rachaduras brilhando no chão, saindo do centro (Fúria do Ronin).
+static func cracks(parent: Node, pos: Vector3, color: Color, radius: float, count := 9) -> void:
+	for i in count:
+		var a := TAU * i / count + randf_range(-0.2, 0.2)
+		var r := radius * randf_range(0.6, 1.0)
+		var mid := pos + Vector3(cos(a), 0, sin(a)) * r * 0.5 + Vector3(randf_range(-0.4, 0.4), 0, randf_range(-0.4, 0.4))
+		var end := pos + Vector3(cos(a), 0, sin(a)) * r
+		for seg in [[pos, mid], [mid, end]]:
+			beam(parent, seg[0] + Vector3(0, 0.06, 0), seg[1] + Vector3(0, 0.06, 0), color, 0.22, 1.1)
+	ring(parent, pos, Color(color, 0.9), radius)

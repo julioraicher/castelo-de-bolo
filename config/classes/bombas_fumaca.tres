@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="ClassStats" format=3]
+
+[ext_resource type="PackedScene" path="res://assets/characters/Rogue.glb" id="1_k5iwi"]
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="2_d3iqb"]
+
+[resource]
+script = ExtResource("2_d3iqb")
+id = &"bombas_fumaca"
+display_name = "Bombas de Fumaça"
+model = ExtResource("1_k5iwi")
+visible_meshes = PackedStringArray("Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head", "Rogue_LegLeft", "Rogue_LegRight")
+hat_color = Color(0.7, 0.7, 0.85, 1)
+hat_style = "capuz"
+estilo_ninja = "_fumaca"
+escala_cabeca = 0.8
+max_hp = 85.0
+move_speed = 6.6
+attack_kind = "ranged"
+damage = 14.0
+attack_range = 12.0
+attack_cooldown = 1.1
+knockback = 7.0
+projectile_speed = 18.0
+projetil = "bomba"
+explosao_raio = 2.3
+combo_anims = PackedStringArray()
+power = "nuvem"
+power_name = "Nuvem de Fumaça"
+power_radius = 4.5
+power_value = 5.0
+power_duration = 5.0
+carry_speed_mult = 0.8
+anim_attack = "Throw"

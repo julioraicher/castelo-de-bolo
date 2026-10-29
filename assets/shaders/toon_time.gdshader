@@ -6,12 +6,15 @@ shader_type spatial;
 uniform sampler2D textura : source_color, filter_linear_mipmap;
 uniform vec4 cor_time : source_color = vec4(0.16, 0.45, 1.0, 1.0);
 uniform bool usar_cor_fixa = false;
+uniform bool usar_cor_vertice = false;  // peças montadas por código (cor no vértice, sRGB)
 uniform vec4 cor_fixa : source_color = vec4(1.0);
 uniform float aro = 0.7;
 
 void fragment() {
 	vec3 c;
-	if (usar_cor_fixa) {
+	if (usar_cor_vertice) {
+		c = pow(COLOR.rgb, vec3(2.2));
+	} else if (usar_cor_fixa) {
 		c = cor_fixa.rgb;
 	} else {
 		vec3 lin = texture(textura, UV).rgb;

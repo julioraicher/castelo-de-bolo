@@ -1,31 +1,32 @@
-[gd_resource type="Resource" script_class="ClassStats" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ClassStats" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="1"]
-[ext_resource type="PackedScene" path="res://assets/characters/Rogue_Hooded.glb" id="2"]
+[ext_resource type="PackedScene" path="res://assets/characters/Rogue_Hooded.glb" id="1_8uvy1"]
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="2_b2vcn"]
 
 [resource]
-script = ExtResource("1")
+script = ExtResource("2_b2vcn")
 id = &"arqueiro"
-display_name = "Arqueiro"
-visible_meshes = PackedStringArray("Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head_Hooded", "Rogue_LegLeft", "Rogue_LegRight", "Rogue_Cape", "1H_Crossbow")
-cape_mesh = "Rogue_Cape"
-hat_color = Color(0.2, 0.6, 0.3, 1)
+display_name = "Ninja de Shuriken"
+model = ExtResource("1_8uvy1")
+visible_meshes = PackedStringArray("Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head_Hooded", "Rogue_LegLeft", "Rogue_LegRight")
+hat_color = Color(0.3, 0.95, 1, 1)
 hat_style = "capuz"
+estilo_ninja = "_ninja"
+escala_cabeca = 0.8
 max_hp = 80.0
-move_speed = 6.6
+move_speed = 6.9
 attack_kind = "ranged"
-damage = 14.0
-attack_range = 17.0
-attack_cooldown = 0.85
-knockback = 4.0
-projectile_speed = 34.0
-carry_speed_mult = 0.75
-anim_attack = "1H_Ranged_Shoot"
+damage = 10.0
+attack_range = 15.0
+attack_cooldown = 0.5
+knockback = 3.0
+projectile_speed = 38.0
+projetil = "shuriken"
+combo_anims = PackedStringArray()
 skill = "tiro_carregado"
-charge_damage_mult = 1.6
-power = "chuva_de_flechas"
-power_name = "Chuva de flechas"
-power_radius = 4.0
+power = "leque"
+power_name = "Leque de Shuriken"
+power_radius = 70.0
 power_value = 14.0
-power_duration = 3.0
-model = ExtResource("2")
+power_duration = 9.0
+anim_attack = "Throw"

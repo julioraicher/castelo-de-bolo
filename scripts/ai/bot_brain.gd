@@ -10,10 +10,11 @@ extends Node
 ##  2. Carregando bolo -> levar para a própria princesa.
 ##  3. Recruta -> pegar um chapéu no castelo.
 ##  4. Própria princesa sequestrada -> perseguir quem a leva / buscá-la no chão.
-##  5. Item no chão bem perto e ninguém colado -> desviar para pegar.
-##  6. Inimigo perto -> lutar.
-##  7. Aliado carregando a princesa inimiga -> escoltar.
-##  8. Papel: ATAQUE vai buscar a princesa inimiga, DEFESA guarda o portão,
+##  5. Construtor com obra pendente no castelo -> construir.
+##  6. Item no chão bem perto e ninguém colado -> desviar para pegar.
+##  7. Inimigo perto -> lutar.
+##  8. Aliado carregando a princesa inimiga -> escoltar.
+##  9. Papel: ATAQUE vai buscar a princesa inimiga, DEFESA guarda o portão,
 ##     CONFEITEIRO busca bolos.
 
 enum Role { ATTACK, DEFEND, CAKE }
@@ -72,6 +73,13 @@ func _think() -> void:
 		_goal = my_princess.global_position
 		_target = _nearest_enemy(6.0)
 		return
+
+	# Construtor: obra pendente no próprio castelo, sem inimigo colado -> construir.
+	if unit.stats.velocidade_obra > 0.0 and _nearest_enemy(6.0) == null:
+		var of := game.nearest_oficina(unit.team, me, 200.0, true)
+		if of and (role != Role.ATTACK or me.distance_to(of.global_position) < 40.0):
+			_goal = of.global_position + (me - of.global_position).normalized() * 1.2
+			return
 
 	# Item no chão a poucos passos: vale o desvio se não tem inimigo colado.
 	var item := game.nearest_pickup(me, 10.0)
@@ -215,6 +223,22 @@ func _should_use_power() -> bool:
 					return true
 			var mine := game.princesses[unit.team]
 			return mine.state == Princess.State.CARRIED and mine.carrier and me.distance_to(mine.carrier.global_position) < 25.0
+		"furia":
+			return _count(1 - unit.team, me, r) >= 2 or (_target != null and me.distance_to(_target.global_position) < 3.0)
+		"corte_relampago":
+			# Atravessa na direção do alvo se ele estiver no alcance do corte.
+			return _target != null and _target.alive and me.distance_to(_target.global_position) < r * 0.9
+		"leque":
+			return _target != null and _target.alive and me.distance_to(_target.global_position) < unit.stats.attack_range
+		"nuvem", "selo", "coluna_fogo":
+			if _target == null or not _target.alive or me.distance_to(_target.global_position) > unit.stats.attack_range:
+				return false
+			unit.aim_point = _target.global_position
+			return _count(1 - unit.team, _target.global_position, r) >= 2 or _target.carried_princess != null
+		"reforco":
+			return _count(unit.team, me, r) >= 3 and _count(1 - unit.team, me, 10.0) >= 2
+		"mutirao":
+			return game.nearest_oficina(unit.team, me, r * 2.0, true) != null
 	return false
 
 

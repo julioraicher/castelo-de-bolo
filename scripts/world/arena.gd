@@ -19,6 +19,7 @@ var theme: ThemeConfig
 ## Posições úteis que o resto do jogo consulta.
 var princess_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var hat_spots: Array = [[], []]          # [time] -> lista de Vector3
+var oficina_spots: Array = [[], []]      # [time] -> lista de Vector3
 var spawn_center: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var gate_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 
@@ -237,6 +238,10 @@ func _build_castle(team: int) -> void:
 	for hs in m.hat_spots:
 		spots.append(to_world(team, hs.x, hs.y))
 	hat_spots[team] = spots
+	var ofs := []
+	for os in m.oficina_spots:
+		ofs.append(to_world(team, os.x, os.y))
+	oficina_spots[team] = ofs
 	spawn_center[team] = to_world(team, (m.spawn_min.x + m.spawn_max.x) / 2.0, 0.0)
 	gate_spot[team] = to_world(team, front + m.gate_guard_distance, 0.0)
 

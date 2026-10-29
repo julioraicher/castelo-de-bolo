@@ -56,7 +56,7 @@ func _ready() -> void:
 		_princess_info.append(info)
 		var bar := _bar(Color(1, 0.55, 0.78))
 		bar.custom_minimum_size = Vector2(110, 14)
-		bar.tooltip_text = "Peso da princesa"
+		bar.tooltip_text = "Peso da máscara (espíritos presos)"
 		row.add_child(bar)
 		_fat_bars.append(bar)
 
@@ -130,7 +130,7 @@ func update_state(game: Game) -> void:
 	_score_red.text = "%d VERMELHO" % game.score[1]
 	for team in 2:
 		var p: Princess = game.princesses[team]
-		var who := "Sua princesa" if team == game.player.team else "Princesa inimiga"
+		var who := "Sua máscara" if team == game.player.team else "Máscara inimiga"
 		_princess_info[team].text = "%s: %s" % [who, p.state_text()]
 		_fat_bars[team].value = p.fatness * 100.0
 	var u := game.player
@@ -143,9 +143,9 @@ func update_state(game: Game) -> void:
 		_power_label.text = "[Q] %s!" % u.stats.power_name
 	else:
 		_power_bar.modulate = Color(1, 1, 1, 0.85)
-		_power_label.text = "Glacê %d%%" % int(u.power) if u.stats.power != "nenhum" else ""
+		_power_label.text = "Chi %d%%" % int(u.power) if u.stats.power != "nenhum" else ""
 	if u.has_cake:
-		_class_label.text += "  · levando bolo"
+		_class_label.text += "  · levando espírito"
 	if u.carried_princess:
 		_class_label.text += "  · CARREGANDO A PRINCESA"
 

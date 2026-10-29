@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ClassStats" format=3]
+
+[ext_resource type="PackedScene" path="res://assets/characters/Knight.glb" id="1_1hos3"]
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="2_7l4sg"]
+
+[resource]
+script = ExtResource("2_7l4sg")
+id = &"carpinteiro"
+display_name = "Carpinteiro"
+model = ExtResource("1_1hos3")
+visible_meshes = PackedStringArray("Knight_ArmLeft", "Knight_ArmRight", "Knight_Body", "Knight_Head", "Knight_LegLeft", "Knight_LegRight")
+hat_color = Color(0.85, 0.65, 0.4, 1)
+hat_style = "hachimaki"
+estilo_ninja = "_carpinteiro"
+escala_cabeca = 0.8
+max_hp = 110.0
+move_speed = 6.7
+damage = 13.0
+attack_range = 2.7
+knockback = 7.0
+combo_anims = PackedStringArray()
+velocidade_obra = 2.0
+power = "mutirao"
+power_name = "Mutirão"
+power_radius = 8.0
+power_value = 0.35
+power_duration = 6.0
+carry_speed_mult = 0.9
+anim_attack = "2H_Melee_Attack_Chop"

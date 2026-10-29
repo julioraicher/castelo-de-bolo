@@ -1,29 +1,26 @@
-[gd_resource type="Resource" script_class="ClassStats" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="ClassStats" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="1"]
-[ext_resource type="PackedScene" path="res://assets/characters/Mage.glb" id="2"]
+[ext_resource type="PackedScene" path="res://assets/characters/Mage.glb" id="1_t41qu"]
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="2_8hbr3"]
 
 [resource]
-script = ExtResource("1")
+script = ExtResource("2_8hbr3")
 id = &"monge"
-display_name = "Monge"
-visible_meshes = PackedStringArray("Mage_ArmLeft", "Mage_ArmRight", "Mage_Body", "Mage_Head", "Mage_LegLeft", "Mage_LegRight", "Mage_Hat", "Mage_Cape", "2H_Staff")
-cape_mesh = "Mage_Cape"
-hat_color = Color(0.45, 0.35, 0.85, 1)
-hat_style = "chapeu_pontudo"
+display_name = "Monge de Chi"
+model = ExtResource("1_t41qu")
+visible_meshes = PackedStringArray("Mage_ArmLeft", "Mage_ArmRight", "Mage_Body", "Mage_Head", "Mage_LegLeft", "Mage_LegRight")
+hat_color = Color(0.62, 0.46, 0.24, 1)
+hat_style = "kasa"
+estilo_ninja = "_monge"
+escala_cabeca = 0.8
 max_hp = 90.0
 move_speed = 6.4
 attack_kind = "healer"
-damage = 8.0
 attack_range = 14.0
-attack_cooldown = 0.8
 knockback = 3.0
 projectile_speed = 22.0
-heal_amount = 30.0
-heal_radius = 7.0
-heal_cooldown = 4.0
-carry_speed_mult = 0.75
-anim_attack = "Spellcast_Shoot"
+projetil = "chi"
+combo_anims = PackedStringArray()
 skill = "cura"
 power = "bencao"
 power_name = "Bênção"
@@ -31,4 +28,6 @@ power_radius = 6.0
 power_value = 0.4
 power_duration = 5.0
 power_shield = 25.0
-model = ExtResource("2")
+heal_amount = 30.0
+heal_radius = 7.0
+anim_attack = "Spellcast_Shoot"

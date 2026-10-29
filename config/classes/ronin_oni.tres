@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="ClassStats" format=3]
+
+[ext_resource type="PackedScene" path="res://assets/characters/Barbarian.glb" id="1_x5yf1"]
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="2_ay0cx"]
+
+[resource]
+script = ExtResource("2_ay0cx")
+id = &"ronin_oni"
+display_name = "Ronin Oni"
+model = ExtResource("1_x5yf1")
+visible_meshes = PackedStringArray("Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight")
+hat_color = Color(0.85, 0.12, 0.12, 1)
+hat_style = "mascara_oni"
+estilo_ninja = "_ronin_oni"
+escala_cabeca = 0.8
+escala_modelo = 1.08
+max_hp = 175.0
+move_speed = 5.8
+damage = 30.0
+attack_range = 3.1
+attack_arc_deg = 140.0
+attack_cooldown = 1.0
+knockback = 11.0
+combo_anims = PackedStringArray("2H_Melee_Attack_Slice", "2H_Melee_Attack_Chop")
+combo_finisher_mult = 1.6
+skill = "bloqueio"
+block_reduction = 0.6
+power = "furia"
+power_name = "Fúria"
+power_radius = 4.0
+power_value = 20.0
+power_duration = 6.0
+anim_idle = "2H_Melee_Idle"
+anim_run = "Running_B"
+anim_attack = "2H_Melee_Attack_Chop"

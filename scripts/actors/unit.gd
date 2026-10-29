@@ -98,6 +98,12 @@ var _boost_fx_t := 0.0
 var _slow_t := 0.0
 var _slow_mult := 1.0
 var _trap_cd := 0.0
+var _silence_t := 0.0   # Selo do Onmyoji: sem ataque, botão direito nem poder
+var _fury_t := 0.0      # Fúria do Ronin: dano multiplicado
+var _dmg_boost_t := 0.0 # item no chão "Dano dobrado"
+var _lean := 0.0
+## Construindo uma oficina (marcado pela Oficina a cada quadro).
+var building_t := 0.0
 
 static var _flash_mat: StandardMaterial3D
 static var _merged_body := {}  # caminho do .tres da classe -> ArrayMesh do corpo
@@ -161,6 +167,11 @@ func set_class(new_stats: ClassStats) -> void:
 				mat.albedo_color = Config.team_color(team).lightened(0.15)
 				mi.material_override = mat
 	_merge_body_parts()
+	if stats.estilo_ninja != "" or stats.escala_cabeca != 1.0:
+		var pecas := NinjaVisual.aplicar(_model, _meshes, stats.estilo_ninja, Config.team_color(team), stats.escala_cabeca, Settings.quality >= 2)
+		if pecas:
+			_meshes.append(pecas)
+	_model.scale = Vector3.ONE * stats.escala_modelo
 	_anim = _model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if _anim:
 		for a in LOOPING_ANIMS + [stats.anim_idle, stats.anim_run]:
@@ -369,7 +380,7 @@ func add_power(amount: float) -> void:
 	_power_idle = 0.0
 	if is_player and not was_ready and power >= POWER_MAX and stats.power != "nenhum":
 		Sfx.play_ui("power_ready")
-		game.hud.show_big("Glacê cheio! [Q] %s" % stats.power_name, Color(1, 0.75, 0.9), 1.4)
+		game.hud.show_big("Chi cheio! [Q] %s" % stats.power_name, Color(1, 0.75, 0.9), 1.4)
 
 
 # --- Loop principal -----------------------------------------------------------
@@ -440,11 +451,12 @@ func _physics_process(delta: float) -> void:
 		_equip_t -= delta
 		if _equip_t <= 0.0:
 			_finish_equip()
-	var free_hands := not carried_princess and _dodge_t <= 0.0 and _equip_t <= 0.0 and _spin_t <= 0.0
+	var free_hands := not carried_princess and _dodge_t <= 0.0 and _equip_t <= 0.0 and _spin_t <= 0.0 and _silence_t <= 0.0
 	_update_skill(delta, free_hands)
 	if wants_power:
 		wants_power = false
-		_use_power()
+		if _silence_t <= 0.0:
+			_use_power()
 	if wants_attack and _attack_cd <= 0.0 and free_hands and not _blocking and _charge_t <= 0.0:
 		_attack()
 	_animate(horizontal)
@@ -531,7 +543,7 @@ func _attack() -> void:
 					continue
 				if to.length() > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > stats.attack_arc_deg / 2.0:
 					continue
-				other.take_damage(stats.damage * mult, self, to.normalized(), mult, true)
+				other.take_damage(stats.damage * mult * damage_mult(), self, to.normalized(), mult, true)
 				hit_any = true
 			if hit_any:
 				hitstop(Config.cfg.hitstop_time * (1.6 if finisher else 1.0))
@@ -541,18 +553,49 @@ func _attack() -> void:
 			_shoot_arrow(1.0, 1.0)
 		"healer":
 			Sfx.play("magic", global_position)
-			game.spawn_projectile(self, global_position + Vector3(0, 1.6, 0) + dir * 0.9, dir, "magic")
+			game.spawn_projectile(self, global_position + Vector3(0, 1.6, 0) + dir * 0.9, dir, stats.projetil)
 
 
-func _shoot_arrow(dmg_mult: float, speed_mult: float) -> void:
-	var dir := aim_dir.normalized()
+func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZERO) -> void:
+	var dir := aim_dir.normalized() if dir_override == Vector3.ZERO else dir_override
 	var to := aim_point - global_position
 	to.y = 0
 	Sfx.play("shoot", global_position)
-	var p := game.spawn_projectile(self, global_position + Vector3(0, 1.4, 0) + dir * 0.9, dir, "arrow")
+	var p := game.spawn_projectile(self, global_position + Vector3(0, 1.4, 0) + dir * 0.9, dir, stats.projetil)
 	p.damage *= dmg_mult
 	p.velocity *= speed_mult
-	p.aim_ballistic(clampf(to.length(), 6.0, stats.attack_range * 1.4 * speed_mult))
+	var dist := clampf(to.length(), 6.0 if stats.projetil != "bomba" else 3.0, stats.attack_range * 1.4 * speed_mult)
+	if stats.projetil == "shuriken":
+		p.velocity.y = (Projectile.TARGET_HEIGHT - p.position.y) / maxf(dist / p.velocity.length(), 0.1)  # reto, desce até o peito
+	else:
+		p.aim_ballistic(dist)
+
+
+## Multiplicador de dano de buffs (Fúria, item de dano).
+func damage_mult() -> float:
+	var m := 1.0
+	if _fury_t > 0.0:
+		m *= 1.8
+	if _dmg_boost_t > 0.0:
+		m *= Config.cfg.pickup_damage_mult
+	return m
+
+
+## Selo: sem atacar, sem botão direito e sem poder por t segundos.
+func silence(t: float) -> void:
+	_silence_t = maxf(_silence_t, t)
+	_cancel_skill()
+	Fx.damage_number(game, global_position + Vector3(0, 0.5, 0), "SELADO", Color(0.7, 0.95, 1.0))
+
+
+func give_damage_boost(t: float) -> void:
+	_dmg_boost_t = maxf(_dmg_boost_t, t)
+
+
+func fill_power() -> void:
+	power = 0.0
+	_power_active_t = 0.0
+	add_power(POWER_MAX)
 
 
 ## Congela animação e movimento por t segundos (hitstop).
@@ -713,6 +756,7 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 	add_power(amount * Config.cfg.power_per_damage_taken)
 	_knock = dir * (attacker.stats.knockback if attacker else 4.0) * knock_mult
 	_flash_t = 0.1
+	_squash(0.1 if knock_mult <= 1.0 else 0.18)
 	var col := Color(1, 0.9, 0.3) if attacker and attacker.is_player else Color(1, 1, 1)
 	if blocked:
 		col = Color(0.6, 0.8, 1.0)
@@ -775,6 +819,7 @@ func _respawn() -> void:
 	_move_vel = Vector3.ZERO
 	set_class(Config.cfg.villager)  # quem morre perde o chapéu
 	Fx.ring(game, global_position, Config.team_color(team), 2.0)
+	_play_once("Lie_StandUp", 0.7)
 
 
 # --- Poder do Q (medidor de Glacê) --------------------------------------------
@@ -827,6 +872,87 @@ func _use_power() -> void:
 			for other in game.units:
 				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
 					other.give_boost(stats.power_value, stats.power_duration)
+		"furia":
+			# Ronin Oni: pancada no chão (onda de choque) e dano x1,8 por um tempo.
+			_fury_t = stats.power_duration
+			_play_once("2H_Melee_Attack_Chop", 0.45)
+			Fx.cracks(game, global_position, Color(1.0, 0.12, 0.08), stats.power_radius)
+			Fx.burst(game, global_position + Vector3(0, 0.5, 0), Color(1.0, 0.3, 0.1), 30, 10.0)
+			for other in game.units:
+				if not other.alive or other.team == team:
+					continue
+				var d := other.global_position - global_position
+				d.y = 0
+				if d.length() <= stats.power_radius:
+					other.take_damage(stats.power_value, self, d.normalized() if d.length() > 0.1 else _facing(), 1.6)
+		"corte_relampago":
+			_corte_relampago()
+		"leque":
+			# Ninja: leque de shurikens (power_value = dano de cada uma).
+			_play_upper("Throw", 1.6)
+			var n := int(stats.power_duration)
+			var base := aim_dir.normalized()
+			for i in n:
+				var ang := deg_to_rad(lerpf(-stats.power_radius, stats.power_radius, float(i) / maxf(n - 1, 1)) * 0.5)
+				_shoot_arrow(stats.power_value / maxf(stats.damage, 0.1), 1.1, base.rotated(Vector3.UP, ang))
+			Fx.burst(game, global_position + Vector3(0, 1.4, 0) + base, Color(0.4, 1.0, 1.0), 16, 8.0)
+		"nuvem", "selo", "coluna_fogo":
+			var to := aim_point - global_position
+			to.y = 0
+			var center := global_position + to.limit_length(stats.attack_range)
+			center.y = 0.0
+			var fx := AreaEffect.new()
+			game.add_child(fx)
+			fx.setup(game, self, center, stats.power, stats.power_radius, stats.power_value, stats.power_duration)
+			_power_active_t = stats.power_duration
+			_play_upper("Spellcast_Shoot" if stats.power != "nuvem" else "Throw", 1.2)
+		"reforco":
+			# Pólvora: escudo de tábuas nos aliados em volta (não fere ninguém).
+			_play_upper("Cheer", 1.5)
+			Fx.pillar(game, global_position, Color(1.0, 0.55, 0.15), stats.power_radius)
+			for other in game.units:
+				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
+					other.give_shield(stats.power_value, stats.power_duration)
+		"mutirao":
+			# Carpinteiro: adianta a obra mais próxima e acelera os aliados.
+			_play_upper("Cheer", 1.5)
+			Fx.ring(game, global_position, Color(1.0, 0.75, 0.35, 0.9), stats.power_radius)
+			var of := game.nearest_oficina(team, global_position, stats.power_radius * 2.0, true)
+			if of:
+				of.add_progress(stats.power_value, self)
+			for other in game.units:
+				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
+					other.give_boost(1.25, stats.power_duration)
+
+
+## Lâmina Dupla: atravessa até power_radius m na mira, cortando quem estiver
+## perto da linha (distância ponto-segmento < 1,6 m).
+func _corte_relampago() -> void:
+	var dir := aim_dir.normalized()
+	var from := global_position
+	var to := from + dir * stats.power_radius
+	var q := PhysicsRayQueryParameters3D.create(from + Vector3(0, 1, 0), to + Vector3(0, 1, 0), Config.LAYER_WORLD)
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	if not hit.is_empty():
+		to = Vector3(hit.position.x, from.y, hit.position.z) - dir * 0.8
+	to = game.arena.clamp_to_arena(to)
+	for other in game.units:
+		if not other.alive or other.team == team:
+			continue
+		var p := other.global_position
+		var seg := to - from
+		var tt := clampf((p - from).dot(seg) / maxf(seg.length_squared(), 0.01), 0.0, 1.0)
+		if p.distance_to(from + seg * tt) < 1.6:
+			other.take_damage(stats.power_value * damage_mult(), self, dir, 1.2, true)
+	global_position = to
+	reset_physics_interpolation()
+	Fx.beam(game, from + Vector3(0, 1.0, 0), to + Vector3(0, 1.0, 0), Color(0.3, 0.95, 1.0), 0.5, 0.5)
+	Fx.zap(game, from + Vector3(0, 1.4, 0), to + Vector3(0, 1.4, 0), Color(0.6, 1.0, 1.0), 6)
+	Fx.burst(game, from + Vector3(0, 1, 0), Color(0.4, 1.0, 1.0), 14, 6.0)
+	Fx.burst(game, to + Vector3(0, 1, 0), Color(0.4, 1.0, 1.0), 14, 6.0)
+	_play_once("Dualwield_Melee_Attack_Stab", 0.3)
+	if is_player:
+		game.camera.add_trauma(0.4)
 
 
 func give_shield(amount: float, duration: float) -> void:
@@ -881,6 +1007,19 @@ func _tick_buffs(delta: float) -> void:
 				_shield_mesh.visible = false
 	if _slow_t > 0.0:
 		_slow_t -= delta
+	if _silence_t > 0.0:
+		_silence_t -= delta
+		if fmod(_silence_t, 0.4) < delta:
+			Fx.zap(game, global_position + Vector3(-0.5, 2.3, 0), global_position + Vector3(0.5, 1.2, 0.2), Color(0.6, 0.9, 1.0), 3)
+	if _fury_t > 0.0:
+		_fury_t -= delta
+		if fmod(_fury_t, 0.15) < delta:
+			Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(1.0, 0.15, 0.1), 3, 3.0)
+	if _dmg_boost_t > 0.0:
+		_dmg_boost_t -= delta
+		if fmod(_dmg_boost_t, 0.25) < delta:
+			Fx.burst(game, global_position + Vector3(0, 1.6, 0), Color(1.0, 0.35, 0.3), 2, 2.0)
+	building_t = maxf(building_t - delta, 0.0)
 	if _boost_t > 0.0:
 		_boost_t -= delta
 		_boost_fx_t -= delta
@@ -890,6 +1029,10 @@ func _tick_buffs(delta: float) -> void:
 
 
 func _end_buffs() -> void:
+	_fury_t = 0.0
+	_silence_t = 0.0
+	_dmg_boost_t = 0.0
+	building_t = 0.0
 	_spin_t = 0.0
 	_power_active_t = 0.0
 	_boost_t = 0.0
@@ -917,9 +1060,22 @@ func drop_princess() -> void:
 # --- Visual -------------------------------------------------------------------
 
 func _animate(horizontal: Vector3) -> void:
+	# Inclinação: o corpo tomba para a frente proporcional à velocidade
+	# (como quem corre de verdade: o torque do atrito no pé pede o tronco à frente).
+	var lean_target := clampf(horizontal.length() / 9.0, 0.0, 1.0) * 0.16
+	if _dodge_t > 0.0:
+		lean_target = 0.35
+	_lean = lerpf(_lean, lean_target, 1.0 - exp(-10.0 * get_physics_process_delta_time()))
+	if _model:
+		_model.rotation.x = _lean
 	if _anim_lock > 0.0:
 		return
 	var moving := horizontal.length() > 0.8
+	# Construindo: martela em loop (só o tronco, as pernas seguem livres).
+	if building_t > 0.0 and not moving and _attack_t <= 0.0:
+		_play_upper("1H_Melee_Attack_Chop", 0.9, true)
+	elif _upper and _upper.current_animation == "tronco/1H_Melee_Attack_Chop" and _upper.get_current_animation_length() > 0.0 and building_t <= 0.0:
+		_upper.stop()
 	if carried_princess:
 		_play("Walking_B" if moving else "Idle")
 	else:
@@ -947,8 +1103,20 @@ func _play_once(anim_name: String, lock: float) -> void:
 	_anim_lock = lock
 
 
-func play_cheer() -> void:
-	_play_once("Cheer", 999.0)
+func play_cheer(duration := 999.0) -> void:
+	_play_once("Cheer", duration)
+
+
+## Gesto curto só no tronco (pegar item, interagir).
+func play_gesture(anim_name: String, speed := 1.5) -> void:
+	_play_upper(anim_name, speed)
+
+
+## "Amassa" o boneco por um instante (impacto): escala volta ao normal com mola.
+func _squash(amount := 0.14) -> void:
+	_visual.scale = Vector3(1.0 + amount, 1.0 - amount, 1.0 + amount)
+	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	tw.tween_property(_visual, "scale", Vector3.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _update_flash(delta: float) -> void:

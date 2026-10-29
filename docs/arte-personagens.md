@@ -50,8 +50,11 @@ Caminhos para chegar no modelo, do mais barato ao mais livre:
   orçamento, riggar no mesmo esqueleto, conferir a licença.
 
 Gerar a prancha (corpo KayKit + peças primitivas + shader toon com cor do time):
-`tools/prancha_personagens.gd` (comando no topo do arquivo). As peças de cada
-classe ficam nas funções `_pecas_*`; shaders em `assets/shaders/toon_time.gdshader`
+`tools/prancha_personagens.gd` (comando no topo do arquivo; usa as classes reais).
+As peças de cada estilo ficam em `scripts/actors/ninja_visual.gd` (funções
+`_samurai`, `_kitsune`...; o `.tres` aponta o estilo em `estilo_ninja`), fundidas
+numa malha só presa aos ossos. As 13 classes saem de `tools/gerar_classes.gd`.
+Shaders em `assets/shaders/toon_time.gdshader`
 (pele fica, cinza vira aço, resto vira cor do time) e `contorno.gdshader`.
 
 Import: `.glb` em `assets/characters/`, `.tres` novo em `config/classes/`,
@@ -68,3 +71,4 @@ conferir tris, draw calls e cor do time.
 | 2026-10-29 | Julio escolheu o mundo **A (Ninja)**. Antes de aplicar no jogo: uma rodada de pitacos no visual. |
 | 2026-10-29 | Prancha 3 (Ninja v2): kabuto na cor do time, faixa do ninja em neon do time, kasa 15% menor, cesto com estrepes + lanterna verde. Comparando cabeça 1,0 x 0,85 (Julio acha a cabeça grande). |
 | 2026-10-29 | Prancha 4: 3 variações por papel no mundo Ninja (A Samurai/Shuriken/Monge/Armadilheiro, B Ronin Oni/Arqueiro Yumi/Onmyoji/Mestre da Pólvora, C Lâmina Dupla/Bombas de Fumaça/Kitsune/Carpinteiro), cabeça 0,85. Julio: variações = escolhas de oficina ("qual casinha construir"), cada uma com poderes e efeitos próprios; quer proporção menos cabeçuda, um pouco mais realista, mas ainda estilo Fat Princess. |
+| 2026-10-29 | **No jogo** (rodada 8): 12 classes com visual ninja, cabeça 0,8, oficinas para escolher a variação. Prancha `05-ninjas-no-jogo.png`. Construtor simples: constrói em todas as variações, poder de apoio. |

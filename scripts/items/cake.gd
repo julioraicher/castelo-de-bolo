@@ -1,37 +1,49 @@
 class_name Cake
 extends Node3D
-## Bolo no chão. Quem encosta pega; levando até a própria princesa, ela come
-## e engorda.
+## Espírito solto no mapa (hitodama, chama-fantasma; o nome Cake ficou do
+## protótipo). Quem encosta pega; levando até a própria máscara, ele fica
+## preso nela e a deixa mais pesada para o inimigo carregar.
+
+
+static var _mats: Array = []
 
 
 static func make_visual(s := 1.0) -> Node3D:
+	if _mats.is_empty():
+		_mats = [Fx.unshaded(Color(0.45, 1.6, 0.7)), Fx.unshaded(Color(1.4, 2.0, 1.5))]
 	var root := Node3D.new()
-	var sponge := MeshInstance3D.new()
-	var c1 := CylinderMesh.new()
-	c1.top_radius = 0.6 * s
-	c1.bottom_radius = 0.6 * s
-	c1.height = 0.45 * s
-	sponge.mesh = c1
-	sponge.material_override = Fx.lit(Color(0.96, 0.82, 0.6))
-	sponge.position.y = 0.22 * s
-	root.add_child(sponge)
-	var icing := MeshInstance3D.new()
-	var c2 := CylinderMesh.new()
-	c2.top_radius = 0.64 * s
-	c2.bottom_radius = 0.64 * s
-	c2.height = 0.14 * s
-	icing.mesh = c2
-	icing.material_override = Fx.lit(Color(1.0, 0.5, 0.72), 0.3)
-	icing.position.y = 0.5 * s
-	root.add_child(icing)
-	var cherry := MeshInstance3D.new()
+	var body := MeshInstance3D.new()
 	var sp := SphereMesh.new()
-	sp.radius = 0.12 * s
-	sp.height = 0.24 * s
-	cherry.mesh = sp
-	cherry.material_override = Fx.lit(Color(0.85, 0.05, 0.15), 0.2)
-	cherry.position.y = 0.66 * s
-	root.add_child(cherry)
+	sp.radius = 0.42 * s
+	sp.height = 0.84 * s
+	sp.radial_segments = 10
+	sp.rings = 5
+	body.mesh = sp
+	body.material_override = _mats[0]
+	body.position.y = 0.4 * s
+	body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(body)
+	var tail := MeshInstance3D.new()
+	var c := CylinderMesh.new()
+	c.top_radius = 0.0
+	c.bottom_radius = 0.36 * s
+	c.height = 0.75 * s
+	c.radial_segments = 8
+	tail.mesh = c
+	tail.material_override = _mats[0]
+	tail.position.y = 0.95 * s
+	tail.rotation_degrees.z = 18
+	tail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(tail)
+	var core := MeshInstance3D.new()
+	var cs := SphereMesh.new()
+	cs.radius = 0.2 * s
+	cs.height = 0.4 * s
+	core.mesh = cs
+	core.material_override = _mats[1]
+	core.position = Vector3(0, 0.45 * s, 0.25 * s)
+	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(core)
 	return root
 
 
@@ -50,7 +62,7 @@ func _ready() -> void:
 	glow.mesh = ring
 	glow.scale = Vector3(1, 0.05, 1)
 	glow.position.y = 0.05
-	glow.material_override = Fx.unshaded(Color(1, 0.6, 0.8, 0.7), true)
+	glow.material_override = Fx.unshaded(Color(0.5, 1.0, 0.6, 0.6), true)
 	add_child(glow)
 	scale = Vector3.ONE * 0.01
 	create_tween().tween_property(self, "scale", Vector3.ONE, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

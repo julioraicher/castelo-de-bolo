@@ -12,6 +12,7 @@ var princesses: Array[Princess] = []
 var hat_pads: Array[HatPad] = []
 var cakes: Array[Cake] = []
 var pickups: Array[Pickup] = []
+var oficinas: Array[Oficina] = []
 var score := [0, 0]
 var player: Unit
 var player_brain: PlayerBrain
@@ -24,8 +25,13 @@ var _time := 0.0
 # Modo de desenvolvimento (linha de comando, depois de "--"):
 #   --autoplay          o jogador também é controlado pela IA
 #   --shots=<pasta>     salva prints em alguns momentos e fecha o jogo
+#   --variacoes         bots começam com todas as variações (teste visual/poderes)
+#   --poderes           medidor de todo mundo enche a cada 4 s (vitrine de poderes)
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
+var _variacoes := false
+var _poderes := false
+var _poderes_t := 2.0
 var _shots_dir := ""
 var _shot_times: Array[float] = [4.0, 15.0, 30.0, 50.0, 75.0]
 
@@ -38,6 +44,10 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--autoplay":
 			_autoplay = true
+		elif arg == "--variacoes":
+			_variacoes = true
+		elif arg == "--poderes":
+			_poderes = true
 		elif arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
 	arena = Arena.new()
@@ -47,7 +57,7 @@ func _ready() -> void:
 
 	for team in 2:
 		var p := Princess.new()
-		p.name = "Princesa%s" % Config.TEAM_NAMES[team]
+		p.name = "Mascara%s" % Config.TEAM_NAMES[team]
 		add_child(p)
 		p.setup(self, team, arena.princess_spot[team])
 		p.state_changed.connect(_on_princess_changed)
@@ -58,9 +68,21 @@ func _ready() -> void:
 			add_child(pad)
 			pad.setup(team, hats[i], arena.hat_spots[team][i])
 			hat_pads.append(pad)
+		# Terrenos de oficina: começam com opções diferentes, sorteadas.
+		var n_opts := Config.cfg.oficina_classes.size()
+		if n_opts > 0:
+			var order := range(n_opts)
+			order.shuffle()
+			for i in arena.oficina_spots[team].size():
+				var of := Oficina.new()
+				add_child(of)
+				of.setup(self, team, arena.oficina_spots[team][i], order[i % n_opts])
+				oficinas.append(of)
 
 	var cfg := Config.cfg
 	var start_classes: Array[ClassStats] = cfg.bot_start_classes if not cfg.bot_start_classes.is_empty() else [cfg.villager]
+	if _variacoes:
+		start_classes = cfg.hat_classes() + cfg.oficina_classes
 	for team in 2:
 		for i in cfg.units_per_team:
 			var u := Unit.new()
@@ -111,7 +133,7 @@ func _ready() -> void:
 
 
 func _on_started() -> void:
-	hud.show_big("Resgate a princesa vermelha!\nTraga-a para o seu castelo.", Color(1, 0.9, 0.5), 3.5)
+	hud.show_big("Roube a Máscara Oni vermelha!\nTraga-a para o seu castelo.", Color(1, 0.9, 0.5), 3.5)
 	Sfx.start_music()
 
 
@@ -126,6 +148,12 @@ func _physics_process(delta: float) -> void:
 		return
 	_spawn_cakes(delta)
 	_spawn_pickups(delta)
+	if _poderes:
+		_poderes_t -= delta
+		if _poderes_t <= 0.0:
+			_poderes_t = 4.0
+			for u in units:
+				u.fill_power()
 	_rules()
 	hud.update_state(self)
 
@@ -168,7 +196,7 @@ func _rules() -> void:
 		# Pegar a princesa inimiga: bots pegam sozinhos, o jogador aperta E.
 		if not u.carried_princess and enemy_p.can_be_taken() and pos.distance_to(enemy_p.global_position) < 2.8:
 			if u.is_player:
-				hint = "[E] pegar a princesa!"
+				hint = "[E] pegar a máscara!"
 			if not u.is_player or wants_interact:
 				u.pick_up_princess(enemy_p)
 				u.has_cake = false
@@ -184,7 +212,7 @@ func _rules() -> void:
 				u.has_cake = false
 				u.add_power(Config.cfg.power_per_cake)
 				if u.is_player:
-					hud.show_big("Nhac! Princesa mais pesada", Color(1, 0.6, 0.8), 1.2)
+					hud.show_big("Espírito preso! Máscara mais pesada", Color(1, 0.6, 0.8), 1.2)
 
 		# Pegar bolo (bots atacantes ignoram bolo para não se distraírem).
 		var bot := u.brain as BotBrain
@@ -220,10 +248,19 @@ func _rules() -> void:
 					u.start_equip(pad.take(), from)
 				break
 
+	# Oficina: o jogador troca a opção do terreno com E.
+	if player.alive and not player.carried_princess and hint == "":
+		var of := nearest_oficina(player.team, player.global_position, Oficina.BUILD_RADIUS + 0.5, true)
+		if of:
+			var builder := "  (fique aqui para construir)" if player.stats.velocidade_obra > 0.0 else "  (precisa de um Construtor)"
+			hint = "[E] trocar oficina: %s%s" % [of.opcao().display_name, builder]
+			if player_brain != null and player_brain.interact_pressed:
+				of.trocar_opcao()
+
 	if player.alive and player.carried_princess:
 		hint = "Leve-a até o SEU castelo!  ([E] soltar)"
 	elif player.has_cake:
-		hint = "Leve o bolo até a sua princesa"
+		hint = "Leve o espírito até a sua máscara"
 	hud.set_hint(hint)
 
 
@@ -232,6 +269,7 @@ func _score_point(u: Unit) -> void:
 	var p := u.carried_princess
 	u.carried_princess = null
 	u.add_power(Config.cfg.power_per_capture)
+	u.play_cheer(1.2)
 	p.return_home()
 	score[u.team] += 1
 	Sfx.play_ui("score")
@@ -286,6 +324,28 @@ func nearest_pickup(from: Vector3, max_dist: float) -> Pickup:
 
 # --- Consultas usadas pelos bots ----------------------------------------------
 
+## Oficina do time mais perto (só as não prontas, se unbuilt_only).
+func nearest_oficina(team: int, from: Vector3, max_dist: float, unbuilt_only: bool) -> Oficina:
+	var best: Oficina = null
+	var best_d := max_dist
+	for of in oficinas:
+		if of.team != team or (unbuilt_only and of.estado == Oficina.Estado.PRONTA):
+			continue
+		var d := from.distance_to(of.global_position)
+		if d < best_d:
+			best_d = d
+			best = of
+	return best
+
+
+func on_oficina_pronta(of: Oficina) -> void:
+	_log("oficina %s pronta: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.opcao().display_name, _time])
+	if of.team == player.team:
+		hud.show_big("Oficina pronta: %s!" % of.opcao().display_name, of.opcao().hat_color.lightened(0.3), 2.0)
+	else:
+		hud.show_big("O inimigo liberou %s" % of.opcao().display_name, Color(1, 0.6, 0.55), 1.6)
+
+
 func nearest_free_hat(team: int, from: Vector3) -> HatPad:
 	var best: HatPad = null
 	var best_d := INF
@@ -331,13 +391,13 @@ func _on_unit_died(u: Unit, killer: Unit) -> void:
 
 
 func _on_princess_changed(p: Princess) -> void:
-	_log("princesa %s -> %s [%d] (t=%.0fs)" % [Config.TEAM_NAMES[p.team], p.state_text(), p.state, _time])
+	_log("mascara %s -> %s [%d] (t=%.0fs)" % [Config.TEAM_NAMES[p.team], p.state_text(), p.state, _time])
 	if game_over:
 		return
 	var ours := p.team == player.team
 	if p.state == Princess.State.CARRIED:
 		if ours:
-			hud.show_big("Sua princesa foi sequestrada!", Color(1, 0.45, 0.45), 2.0)
+			hud.show_big("Sua máscara foi roubada!", Color(1, 0.45, 0.45), 2.0)
 			Sfx.play_ui("alarm")
 		elif p.carrier != player:
-			hud.show_big("Um aliado pegou a princesa inimiga!", Color(0.6, 0.85, 1.0), 1.6)
+			hud.show_big("Um aliado pegou a máscara inimiga!", Color(0.6, 0.85, 1.0), 1.6)

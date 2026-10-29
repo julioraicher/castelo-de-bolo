@@ -79,7 +79,7 @@ Cada frente tem sua conversa e mexe só nas suas pastas:
 
 | Frente | Pastas |
 |---|---|
-| Visual dos personagens (conceitos no Gemini → modelo 3D) | `config/classes/`, `assets/characters/` |
+| Visual dos personagens (modelos por código + prancha de prints) | `config/classes/`, `assets/characters/`, `scripts/actors/ninja_visual.gd` |
 | Cenário (temas, mapas, construções) | `config/temas/`, `config/mapas/`, `assets/medieval/` e novas pastas de cenário |
 | Jogabilidade, polimento e desempenho | `scripts/`, `config/game_config.tres`, `project.godot` |
 | Identidade (nome, tema, estilo geral, logo, divulgação) | `docs/identidade.md`, futuras artes de divulgação |
@@ -89,8 +89,8 @@ Cada frente tem sua conversa e mexe só nas suas pastas:
   `scripts/data/`, com valor padrão que não quebre os arquivos existentes.
 - Sempre `git pull --rebase origin main` antes de `git push`; nunca force push.
 - Cada frente registra suas mudanças no CHANGELOG.md, com a frente no título.
-- Imagens do Gemini servem de referência de estilo, não entram no jogo. Viram
-  modelo 3D (pack CC0, imagem→3D, rig no Mixamo) e só então são importadas.
+- Visual: peças por código no esqueleto KayKit (`NinjaVisual`) + shader toon;
+  pitaco por prancha (`tools/prancha_personagens.gd`). Ver docs/arte-personagens.md.
 
 ## Preferências do Julio
 

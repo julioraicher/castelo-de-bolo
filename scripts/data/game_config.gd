@@ -41,6 +41,15 @@ extends Resource
 @export var pickup_shield_time := 8.0
 @export var pickup_speed_mult := 1.35
 @export var pickup_speed_time := 6.0
+## Dano dobrado: multiplicador e duração.
+@export var pickup_damage_mult := 2.0
+@export var pickup_damage_time := 6.0
+
+@export_group("Oficinas")
+## Segundos de obra de um Construtor com velocidade_obra = 1.
+@export var oficina_build_time := 20.0
+## Variações que o time pode escolher nas oficinas (o pedestal do pátio dá a variação A).
+@export var oficina_classes: Array[ClassStats] = []
 
 @export_group("Sensação do combate")
 ## Congelamento de atacante e alvo num golpe corpo a corpo (s).

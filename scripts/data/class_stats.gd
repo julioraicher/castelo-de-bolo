@@ -17,7 +17,14 @@ extends Resource
 ## Cor do chapéu exibido no pedestal do castelo.
 @export var hat_color := Color.WHITE
 ## Formato do chapéu do pedestal (HatPad.make_hat).
-@export_enum("elmo", "capuz", "chapeu_pontudo", "kasa") var hat_style := "elmo"
+@export_enum("elmo", "capuz", "chapeu_pontudo", "kasa", "kabuto", "faixa", "mascara_oni", "eboshi", "orelhas", "cesto", "barril", "hachimaki") var hat_style := "elmo"
+## Visual ninja (NinjaVisual): nome da função que monta as peças (ex.: "_samurai").
+## Vazio = modelo KayKit original, só com a capa na cor do time.
+@export var estilo_ninja := ""
+## Escala da cabeça (1 = KayKit original; menor = proporção mais realista).
+@export var escala_cabeca := 1.0
+## Escala do boneco inteiro (Ronin maior, Kitsune mais miúda).
+@export var escala_modelo := 1.0
 
 @export_group("Atributos")
 @export var max_hp := 60.0
@@ -32,6 +39,10 @@ extends Resource
 ## Velocidade do empurrão no alvo (m/s). Distância empurrada = v²/80 (8 -> 0,8 m).
 @export var knockback := 6.0
 @export var projectile_speed := 30.0
+## Visual e comportamento do projétil: bomba cai em parábola e explode em área.
+@export_enum("flecha", "magia", "shuriken", "bomba", "talisma", "fogo", "chi") var projetil := "flecha"
+## Bomba: raio da explosão (m).
+@export var explosao_raio := 2.2
 @export_group("Combo")
 ## Animações do combo corpo a corpo, em ordem (golpes seguidos em até
 ## COMBO_WINDOW s). Vazio = sempre anim_attack.
@@ -57,10 +68,16 @@ extends Resource
 @export var trap_cooldown := 4.0
 ## Quantas armadilhas do mesmo dono podem existir ao mesmo tempo.
 @export var trap_max := 3
+## estrepes = fura e deixa lento; mina = explode e empurra.
+@export_enum("estrepes", "mina") var trap_kind := "estrepes"
+
+@export_group("Construção")
+## Velocidade de obra nas oficinas (0 = não constrói; Construtor 1 a 2).
+@export var velocidade_obra := 0.0
 
 @export_group("Poder (Q)")
 ## Poder especial, liberado quando o medidor de Glacê enche.
-@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "corrida") var power := "nenhum"
+@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "corrida", "furia", "corte_relampago", "leque", "nuvem", "selo", "coluna_fogo", "reforco", "mutirao") var power := "nenhum"
 @export var power_name := ""
 ## Raio de efeito (m).
 @export var power_radius := 3.0

@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="ClassStats" format=3]
+
+[ext_resource type="PackedScene" path="res://assets/characters/Rogue_Hooded.glb" id="1_tbrrs"]
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="2_rjjrk"]
+
+[resource]
+script = ExtResource("2_rjjrk")
+id = &"arqueiro_yumi"
+display_name = "Arqueiro Yumi"
+model = ExtResource("1_tbrrs")
+visible_meshes = PackedStringArray("Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head_Hooded", "Rogue_LegLeft", "Rogue_LegRight")
+hat_color = Color(0.6, 0.4, 0.2, 1)
+hat_style = "hachimaki"
+estilo_ninja = "_arqueiro_yumi"
+escala_cabeca = 0.8
+max_hp = 75.0
+attack_kind = "ranged"
+damage = 17.0
+attack_range = 20.0
+attack_cooldown = 0.95
+knockback = 4.0
+projectile_speed = 36.0
+combo_anims = PackedStringArray()
+skill = "tiro_carregado"
+charge_time = 1.2
+charge_damage_mult = 2.2
+power = "chuva_de_flechas"
+power_name = "Chuva de Flechas"
+power_radius = 4.0
+power_value = 14.0
+power_duration = 3.0
+anim_attack = "2H_Ranged_Shoot"

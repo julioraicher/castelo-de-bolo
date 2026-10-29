@@ -30,6 +30,8 @@ extends Resource
 @export var pedestal_radius := 1.7
 ## Um pedestal de chapéu por classe de GameConfig.hat_class_list, na ordem.
 @export var hat_spots: PackedVector2Array = [Vector2(5, -8.5), Vector2(5, 8.5), Vector2(-3, -8.5), Vector2(-3, 8.5)]
+## Terrenos de oficina (o time escolhe que variação construir em cada um).
+@export var oficina_spots: PackedVector2Array = [Vector2(-7.5, -8.5), Vector2(-7.5, 8.5)]
 @export var spawn_min := Vector2(-1, -5)
 @export var spawn_max := Vector2(6, 5)
 ## Quanto à frente da muralha os defensores ficam de guarda.

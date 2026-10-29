@@ -3,6 +3,38 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 8 (2026-10-29), frente Visual dos personagens: mundo ninja no jogo
+- Visual: `scripts/actors/ninja_visual.gd` monta as peças de cada estilo (kabuto,
+  máscara oni, kasa, eboshi, orelhas de raposa...) numa malha só presa aos ossos
+  (1 draw call por boneco), shader toon com aro na cor do time
+  (`assets/shaders/toon_time.gdshader`) e contorno (`contorno.gdshader`).
+  Cabeça 0,8 via `EscalaOssos` (modificador de esqueleto).
+- 12 classes (4 papéis x 3 variações) + Recruta, geradas por `tools/gerar_classes.gd`.
+  Campos novos em `ClassStats`: `estilo_ninja`, `escala_cabeca`, `escala_modelo`,
+  `projetil`, `explosao_raio`, `trap_kind`, `velocidade_obra`; poderes novos
+  (fúria, corte relâmpago, leque, nuvem, selo, coluna de fogo, reforço, mutirão).
+  Poderes de área em `scripts/fx/area_effect.gd`; `Fx.beam/zap/cracks`.
+- Projéteis: shuriken (reto, gira), bomba (arco até o chão, explode com dano
+  que cai linearmente com a distância), talismã, fogo-raposa, chi.
+- Construtor simples: toda variação constrói; o poder é de apoio, não de dano.
+- Oficinas (`scripts/items/oficina.gd`): 2 terrenos por castelo
+  (`MapLayout.oficina_spots`), o time escolhe a variação ([E] no terreno),
+  construtores erguem (dP/dt = soma de `velocidade_obra` / `oficina_build_time`);
+  pronta, ganha pedestal da variação. Bots construtores vão até o terreno.
+- Animações: inclinação na corrida, achatamento ao levar golpe, machadadas na
+  obra, levantar do chão ao renascer, comemoração ao pontuar, gesto ao pegar item,
+  arremesso nos atiradores.
+- Itens no chão novos: kunai (dano 2x por 6 s) e chama de chi (enche o medidor).
+- Tema: princesa → Máscara Oni, bolo → espírito (hitodama), Glacê → Chi. Nomes
+  de classe no código ficaram (`Princess`, `Cake`), com comentário.
+- Outras frentes (mudanças em `scripts/`, `config/game_config.tres`,
+  `map_layout.gd`/`arena.gd`, HUD/menus, CONTROLES.md): feitas por esta frente
+  a pedido do Julio. Flags de teste: `--variacoes` (bots com todas as classes) e
+  `--poderes` (enche o medidor a cada 4 s).
+- Teste: 5 min simulados sem erro; oficinas prontas entre 22 e 90 s.
+  Prancha: `personagens/05-ninjas-no-jogo.png` nos arquivos do projeto.
+- Falta: cenário ninja (noite neon). Proposta vai para pitaco antes de montar.
+
 ## Rodada 7 (2026-10-29), frente Jogabilidade: Construtor, itens no chão, Monge e Recruta
 - Tema (princesa/bolo x Máscara Oni/espíritos) **não** mudou: o Julio ainda
   compara 3 mundos. Os nomes de classe abaixo são provisórios.

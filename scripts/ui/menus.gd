@@ -77,12 +77,12 @@ func _build_start() -> Control:
 	var root := _backdrop()
 	var box := _card(root, Vector2(760, 0))
 	box.add_child(_title("Castelo de Bolo", 64, ACCENT))
-	box.add_child(_text("Dois castelos, uma princesa em cada. Invada o castelo vermelho, pegue a princesa deles e traga-a até o pedestal do seu castelo. Proteja a sua!", 20))
+	box.add_child(_text("Dois clãs ninja, uma Máscara Oni em cada castelo. Invada o castelo vermelho, roube a máscara deles e traga-a até o pedestal do seu castelo. Proteja a sua!", 20))
 	var tips := VBoxContainer.new()
 	tips.add_theme_constant_override("separation", 4)
 	for tip in [
 		"Chegue num chapéu do seu pátio e aperte E para virar Guerreiro, Arqueiro, Monge ou Construtor.",
-		"Leve bolos até a SUA princesa: gorda, ela fica pesada para o inimigo carregar.",
+		"Leve espíritos (chamas verdes) até a SUA máscara: cheia deles, ela fica pesada para o inimigo carregar.",
 		"Itens no chão: poção (vida), escudo e velocidade. Quem morre volta como recruta. Primeiro a 3 resgates vence.",
 	]:
 		tips.add_child(_text("•  " + tip, 18, Color(1, 1, 1, 0.85)))
