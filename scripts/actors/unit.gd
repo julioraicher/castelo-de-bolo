@@ -569,13 +569,58 @@ func _attack() -> void:
 			_shoot_arrow(1.0, 1.0)
 		"healer":
 			Sfx.play("magic", global_position)
+			var alvo := _aim_assist(dir)
+			if alvo:
+				dir = _assisted_dir(dir, alvo)
 			game.spawn_projectile(self, global_position + Vector3(0, 1.6, 0) + dir * 0.9, dir, stats.projetil)
+
+
+## Assistência de mira leve, só para o jogador: o inimigo mais alinhado com a
+## mira, dentro de um cone de AIM_ASSIST_DEG e do alcance. Bots já têm a mira
+## deles (com erro de propósito).
+const AIM_ASSIST_DEG := 7.0
+const AIM_ASSIST_PULL := 0.6
+
+func _aim_assist(dir: Vector3) -> Unit:
+	if not is_player:
+		return null
+	var best: Unit = null
+	var best_ang := deg_to_rad(AIM_ASSIST_DEG)
+	for other in game.units:
+		if not other.alive or other.team == team:
+			continue
+		var to := other.global_position - global_position
+		if absf(to.y) > 2.5:
+			continue
+		to.y = 0
+		if to.length() > stats.attack_range * 1.4 or to.length() < 0.5:
+			continue
+		var ang := dir.angle_to(to.normalized())
+		if ang < best_ang:
+			best_ang = ang
+			best = other
+	return best
+
+
+## Gira a mira AIM_ASSIST_PULL (60%) do caminho até o alvo: perto do centro
+## quase não muda nada; errar por 7° vira errar por ~3°, que ainda pode errar.
+func _assisted_dir(dir: Vector3, alvo: Unit) -> Vector3:
+	var to := alvo.global_position - global_position
+	to.y = 0
+	var ang := dir.signed_angle_to(to.normalized(), Vector3.UP)
+	return dir.rotated(Vector3.UP, ang * AIM_ASSIST_PULL).normalized()
 
 
 func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZERO) -> void:
 	var dir := aim_dir.normalized() if dir_override == Vector3.ZERO else dir_override
 	var to := aim_point - global_position
 	to.y = 0
+	var mirado := _aim_assist(dir) if dir_override == Vector3.ZERO else null
+	if mirado:
+		dir = _assisted_dir(dir, mirado)
+		# O arco cai na distância do alvo (senão a flecha passa por cima).
+		to = mirado.global_position - global_position
+		to.y = 0
 	Sfx.play("shoot", global_position)
 	var p := game.spawn_projectile(self, global_position + Vector3(0, 1.4, 0) + dir * 0.9, dir, stats.projetil)
 	p.damage *= dmg_mult

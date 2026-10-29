@@ -7,7 +7,7 @@ extends Node3D
 ## altura do peito do alvo exatamente na distância mirada.
 
 const LIFETIME := 1.4
-const HIT_RADIUS := 0.85
+const HIT_RADIUS := 0.7
 const GRAVITY := 12.0  # m/s² (menor que 9,8·escala real: arco legível sem ficar lento)
 const TARGET_HEIGHT := 1.1  # altura do peito
 
@@ -145,8 +145,13 @@ func _physics_process(delta: float) -> void:
 		look_at(to + velocity, Vector3.UP)
 	for u in _game.units:
 		if u.alive and u.team != owner_unit.team:
-			var d := u.global_position + Vector3(0, 1.1, 0) - global_position
-			if d.length() < HIT_RADIUS + 0.4:
+			# Cápsula do boneco (0,7 m de raio somando o projétil, dos pés até 2,1 m).
+			# Antes era uma esfera de 1,25 m no peito: um corredor de 2,5 m de
+			# largura, por isso flecha "na sorte" acertava tanto.
+			var d := u.global_position - global_position
+			var dy := -d.y
+			d.y = 0
+			if d.length() < HIT_RADIUS and dy > -0.2 and dy < 2.1:
 				if kind == "bomba":
 					_explode(global_position)
 				else:

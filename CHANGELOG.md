@@ -3,6 +3,27 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 13 (2026-10-29), frente Jogabilidade: mira honesta com ajuda leve
+- Pergunta do Julio: "acertei muitas flechas meio na sorte, tem assistência?"
+  Não tinha assistência: o acerto era uma **esfera de 1,25 m** em volta do
+  peito, ou seja, um corredor de ~2,5 m de largura para a flecha passar.
+- Agora o acerto é a **cápsula do boneco** (0,7 m de raio já somando o
+  projétil, dos pés até 2,1 m): corredor de 1,4 m. Vale para todos os
+  projéteis (flecha, shuriken, bomba direta, chi, talismã, fogo-raposa).
+- **Assistência leve, só do jogador** (`Unit._aim_assist`): se um inimigo está
+  a até 7° da mira e no alcance, a mira gira 60% do caminho até ele (errar por
+  7° vira errar por ~3°; a 15 m isso ainda é ~0,7 m de erro e pode errar). Nos
+  tiros em arco, a flecha cai na distância do alvo assistido. O leque de
+  shuriken não tem ajuda.
+- Bots seguem com a mira deles (erro de propósito); a taxa de acerto deles
+  ficou parecida (~70-75% nas simulações, quase sempre de perto).
+- Teste: 5 min simulados no Rio e no Vale sem erro.
+- **O que testar**:
+  1. Atire em inimigos parados e correndo de longe: dá para errar quando a mira
+     está longe, e acertar quando ela está quase em cima?
+  2. Ainda parece "na sorte" ou ficou difícil demais? (dá para mexer no cone de
+     7° e na puxada de 60%)
+
 ## Rodada 12 (2026-10-29), frente Jogabilidade: porradaria com mais peso
 - Pedido do Julio: "porradaria insana", mantendo dash e ritmo. Sem partícula
   nova pesada: tudo é câmera, tempo e física (custo quase zero na Intel UHD).
