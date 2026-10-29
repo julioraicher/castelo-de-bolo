@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ClassStats" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/characters/Rogue_Hooded.glb" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"arqueiro"
+display_name = "Arqueiro"
+visible_meshes = PackedStringArray("Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head_Hooded", "Rogue_LegLeft", "Rogue_LegRight", "Rogue_Cape", "1H_Crossbow")
+cape_mesh = "Rogue_Cape"
+hat_color = Color(0.2, 0.6, 0.3, 1)
+max_hp = 80.0
+move_speed = 6.6
+attack_kind = "ranged"
+damage = 14.0
+attack_range = 17.0
+attack_cooldown = 0.85
+knockback = 4.0
+projectile_speed = 34.0
+carry_speed_mult = 0.75
+anim_attack = "1H_Ranged_Shoot"
+model = ExtResource("2")

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GameConfig" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/game_config.gd" id="1"]
+[ext_resource type="Resource" path="res://config/classes/aldeao.tres" id="2"]
+[ext_resource type="Resource" path="res://config/classes/guerreiro.tres" id="3"]
+[ext_resource type="Resource" path="res://config/classes/arqueiro.tres" id="4"]
+[ext_resource type="Resource" path="res://config/classes/clerigo.tres" id="5"]
+
+[resource]
+script = ExtResource("1")
+villager = ExtResource("2")
+warrior = ExtResource("3")
+archer = ExtResource("4")
+cleric = ExtResource("5")

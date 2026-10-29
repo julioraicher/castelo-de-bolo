@@ -1,0 +1,175 @@
+class_name BotBrain
+extends Node
+## Inteligência dos bots: uma lista de prioridades reavaliada a cada
+## `bot_think_interval` segundos (não a cada quadro, o que também dá um
+## "tempo de reação" humano). Entre uma decisão e outra o bot só segue o
+## caminho e ataca o alvo escolhido.
+##
+## Prioridades (a primeira que se aplica vence):
+##  1. Carregando a princesa inimiga -> voltar para casa.
+##  2. Carregando bolo -> levar para a própria princesa.
+##  3. Aldeão -> pegar um chapéu no castelo.
+##  4. Própria princesa sequestrada -> perseguir quem a leva / buscá-la no chão.
+##  5. Inimigo perto -> lutar.
+##  6. Aliado carregando a princesa inimiga -> escoltar.
+##  7. Papel: ATAQUE vai buscar a princesa inimiga, DEFESA guarda o portão,
+##     CONFEITEIRO busca bolos.
+
+enum Role { ATTACK, DEFEND, CAKE }
+
+var unit: Unit
+var game: Game
+var role := Role.ATTACK
+
+var _think_t := randf() * 0.3
+var _goal := Vector3.ZERO
+var _target: Unit = null
+var _last_nav_goal := Vector3.INF
+var _nav_t := 0.0
+var _wander := Vector3.ZERO
+
+
+func tick(delta: float) -> void:
+	_think_t -= delta
+	if _think_t <= 0.0:
+		_think_t = Config.cfg.bot_think_interval
+		_think()
+	_steer(delta)
+	_combat()
+
+
+func _think() -> void:
+	_target = null
+	var arena := game.arena
+	var me := unit.global_position
+	var enemy_team := 1 - unit.team
+	var my_princess := game.princesses[unit.team]
+	var their_princess := game.princesses[enemy_team]
+
+	if unit.carried_princess:
+		_goal = arena.princess_spot[unit.team]
+		return
+	if unit.has_cake and my_princess.state == Princess.State.HOME:
+		_goal = my_princess.global_position
+		return
+	if unit.is_villager():
+		var pad := game.nearest_free_hat(unit.team, me)
+		if pad and (role != Role.CAKE or randf() < 0.5):
+			_goal = pad.global_position
+			_target = _nearest_enemy(5.0)
+			return
+
+	if my_princess.state == Princess.State.CARRIED:
+		var carrier := my_princess.carrier
+		if role == Role.DEFEND or me.distance_to(carrier.global_position) < 30.0:
+			_goal = carrier.global_position
+			_target = carrier
+			return
+	elif my_princess.state == Princess.State.DROPPED and me.distance_to(my_princess.global_position) < 35.0:
+		_goal = my_princess.global_position
+		_target = _nearest_enemy(6.0)
+		return
+
+	var aggro := Config.cfg.bot_aggro_radius
+	if role == Role.DEFEND:
+		aggro *= 1.3
+	elif role == Role.ATTACK:
+		aggro *= 0.45  # atacante foca na princesa e só briga com quem está colado
+	_target = _nearest_enemy(aggro)
+	if _target:
+		_goal = _target.global_position
+		return
+
+	if their_princess.state == Princess.State.CARRIED and their_princess.carrier.team == unit.team and role != Role.DEFEND:
+		var c := their_princess.carrier
+		_goal = c.global_position + _wander
+		if randf() < 0.2:
+			_wander = Vector3(randf_range(-4, 4), 0, randf_range(-4, 4))
+		return
+
+	match role:
+		Role.ATTACK:
+			_goal = their_princess.global_position
+		Role.DEFEND:
+			if randf() < 0.15 or _wander == Vector3.ZERO:
+				_wander = Vector3(randf_range(-6, 2), 0, randf_range(-7, 7))
+			_goal = arena.gate_spot[unit.team] + _wander * Vector3(arena.forward(unit.team).x, 1, 1)
+		Role.CAKE:
+			var cake := game.nearest_cake(me)
+			if cake and not unit.has_cake:
+				_goal = cake.global_position
+			else:
+				_goal = arena.gate_spot[unit.team]
+
+
+func _nearest_enemy(radius: float) -> Unit:
+	var best: Unit = null
+	var best_d := radius
+	for u in game.units:
+		if u.alive and u.team != unit.team:
+			var d := u.global_position.distance_to(unit.global_position)
+			# Quem carrega a princesa é alvo prioritário.
+			if u.carried_princess:
+				d *= 0.5
+			if d < best_d:
+				best_d = d
+				best = u
+	return best
+
+
+func _steer(delta: float) -> void:
+	var me := unit.global_position
+	var goal := _goal
+	var stop_dist := 1.0
+	if _target and _target.alive and not unit.carried_princess:
+		goal = _target.global_position
+		stop_dist = unit.stats.attack_range * (0.75 if unit.stats.attack_kind != "melee" else 0.6)
+		if unit.stats.attack_kind != "melee" and me.distance_to(goal) < unit.stats.attack_range * 0.45:
+			# Atirador recua quando o inimigo chega perto demais.
+			unit.move_intent = (me - goal).normalized()
+			return
+	var to_goal := goal - me
+	to_goal.y = 0
+	if to_goal.length() <= stop_dist:
+		unit.move_intent = Vector3.ZERO
+		return
+	_nav_t -= delta
+	if _nav_t <= 0.0 or goal.distance_to(_last_nav_goal) > 2.0:
+		unit.nav_agent.target_position = goal
+		_last_nav_goal = goal
+		_nav_t = 0.35
+	var next := unit.nav_agent.get_next_path_position()
+	var dir := next - me
+	dir.y = 0
+	if dir.length() < 0.1:
+		dir = to_goal  # sem caminho ainda: vai reto
+	unit.move_intent = dir.normalized()
+
+
+func _combat() -> void:
+	unit.wants_attack = false
+	unit.wants_special = false
+	if unit.stats.attack_kind == "healer" and _needs_heal():
+		unit.wants_special = true
+	if _target == null or not _target.alive or unit.carried_princess:
+		if unit.move_intent.length() > 0.1:
+			unit.aim_dir = unit.move_intent.normalized()
+		return
+	var to := _target.global_position - unit.global_position
+	to.y = 0
+	var dist := to.length()
+	if unit.stats.attack_kind != "melee":
+		# Mira um pouco à frente do alvo (tempo de voo do projétil) + erro humano.
+		var flight := dist / unit.stats.projectile_speed
+		to += _target.velocity * flight * 0.8
+		to = to.rotated(Vector3.UP, randf_range(-0.08, 0.08))
+	unit.aim_dir = to.normalized()
+	if dist <= unit.stats.attack_range + 0.3:
+		unit.wants_attack = true
+
+
+func _needs_heal() -> bool:
+	for u in game.units:
+		if u.alive and u.team == unit.team and u.hp_ratio() < 0.65 and u.global_position.distance_to(unit.global_position) < unit.stats.heal_radius:
+			return true
+	return false

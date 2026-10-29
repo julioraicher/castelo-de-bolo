@@ -1,0 +1,73 @@
+# Exporta o jogo a cada push na main:
+#  - versão Web publicada no GitHub Pages (link para jogar no navegador)
+#  - .exe (Windows) e Linux anexados à release "ultima-versao"
+name: Build e publicação
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: build
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Baixar Godot e templates de exportação
+        run: |
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          wget -q "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          wget -q "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          unzip -q "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
+          tdir="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$tdir"
+          unzip -q "Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          mv templates/* "$tdir/"
+
+      - name: Importar assets
+        run: ./godot --headless --import --path . || true
+
+      - name: Exportar Web, Windows e Linux
+        run: |
+          mkdir -p build/web build/windows build/linux
+          ./godot --headless --path . --export-release "Web" build/web/index.html
+          ./godot --headless --path . --export-release "Windows" build/windows/CasteloDeBolo.exe
+          ./godot --headless --path . --export-release "Linux" build/linux/CasteloDeBolo.x86_64
+          (cd build/windows && zip -q -r ../CasteloDeBolo-windows.zip .)
+          (cd build/linux && zip -q -r ../CasteloDeBolo-linux.zip .)
+
+      - name: Publicar downloads na release "ultima-versao"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete ultima-versao --yes --cleanup-tag || true
+          gh release create ultima-versao build/CasteloDeBolo-windows.zip build/CasteloDeBolo-linux.zip \
+            --title "Última versão" --notes "Gerada automaticamente a partir de ${GITHUB_SHA::7}." --prerelease
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  pages:
+    needs: export
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
