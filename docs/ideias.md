@@ -97,6 +97,14 @@ sugestão de prioridade. Custo = rodadas de trabalho, não dinheiro (salvo dito)
   editor Godot, rodar o jogo e ler erros. Aqui na nuvem já fazemos isso em
   headless; só vale se o Julio quiser trabalhar no editor no próprio PC.
   Evitar os pagos/proprietários (GDAI, Summer Engine) por enquanto.
+- **B · Trailer de graça** (pedido do Julio, 2026-10-29): o Godot tem o
+  Movie Maker (`--write-movie trailer.avi`), que grava quadro a quadro em FPS
+  fixo sem depender do PC ser rápido: aqui na nuvem dá para gravar o
+  `--autoplay` com câmera roteirizada (cortes, zoom nos poderes, câmera lenta)
+  e montar com ffmpeg (títulos, música do jogo). Custo zero em dinheiro, ~1-2
+  rodadas. Geradores de vídeo por IA (Veo, Kling, Runway) só para planos de
+  abertura curtos: plano grátis limitado e com marca d'água, e os serviços de
+  API desta nuvem estão bloqueados; o Julio geraria pelo site.
 - **C · Estagiário automático**: uma rotina semanal que refaz esta pesquisa e
   anota aqui. Custo: gasta parte do limite semanal; só se o Julio quiser.
 
