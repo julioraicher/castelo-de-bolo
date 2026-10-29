@@ -75,14 +75,25 @@ sugestão de prioridade. Custo = rodadas de trabalho, não dinheiro (salvo dito)
   editor Godot, rodar o jogo e ler erros. Aqui na nuvem já fazemos isso em
   headless; só vale se o Julio quiser trabalhar no editor no próprio PC.
   Evitar os pagos/proprietários (GDAI, Summer Engine) por enquanto.
-- **B · Trailer de graça** (pedido do Julio, 2026-10-29): o Godot tem o
-  Movie Maker (`--write-movie trailer.avi`), que grava quadro a quadro em FPS
-  fixo sem depender do PC ser rápido: aqui na nuvem dá para gravar o
-  `--autoplay` com câmera roteirizada (cortes, zoom nos poderes, câmera lenta)
-  e montar com ffmpeg (títulos, música do jogo). Custo zero em dinheiro, ~1-2
-  rodadas. Geradores de vídeo por IA (Veo, Kling, Runway) só para planos de
-  abertura curtos: plano grátis limitado e com marca d'água, e os serviços de
-  API desta nuvem estão bloqueados; o Julio geraria pelo site.
+- **B · Trailer cinematográfico** (pedido do Julio, 2026-10-29): cutscenes
+  sombrias, de dar medo, no estilo trailer de lançamento; gameplay é opcional.
+  Fluxo de custo zero:
+  1. **Claude**: roteiro em 6-10 planos (ex.: lua vermelha, vila em silêncio,
+     a Máscara Oni acorda, o clã rival nas pontes, briga, título) e storyboard.
+  2. **Claude**: renderiza um quadro-chave de cada plano *dentro do Godot*
+     (câmera de cinema, luz dramática, neblina, os ninjas do jogo). Como cada
+     vídeo parte de uma imagem nossa, os personagens ficam iguais em todos os
+     planos, que é o ponto fraco dessas IAs.
+  3. **Julio**: anima cada quadro com image-to-video no site, usando os
+     créditos grátis diários: Google Flow/Veo 3.1 (~50/dia, até 10 s),
+     Seedance (~100/dia, sem marca d'água), Hailuo (bom em movimento de
+     personagem, com marca d'água). Daqui da nuvem essas APIs estão bloqueadas.
+  4. **Claude**: monta no ffmpeg com cortes, títulos, música do jogo e sons
+     (sfxr/ElevenLabs).
+  Atenção: no plano grátis, vários desses serviços proíbem uso comercial ou
+  põem marca d'água; para divulgar de verdade, conferir os termos. Alternativa
+  aberta: Wan 2.2 (pesos abertos, Colab grátis), mais lento e trabalhoso.
+  Custo: ~2 rodadas do Claude + ~1 h do Julio gerando os clipes.
 - **C · Estagiário automático**: uma rotina semanal que refaz esta pesquisa e
   anota aqui. Custo: gasta parte do limite semanal; só se o Julio quiser.
 
