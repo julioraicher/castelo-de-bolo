@@ -19,9 +19,8 @@ var home: Vector3
 var _game: Game
 var _visual: Node3D
 var _drop_t := 0.0
-## Progresso do resgate (0..RESCUE_TIME) quando um aliado fica ao lado dela caída.
+## Progresso do resgate (0..GameConfig.princess_rescue_time) quando um aliado fica ao lado dela caída.
 var rescue_progress := 0.0
-const RESCUE_TIME := 1.5
 var _beacon: MeshInstance3D
 
 
@@ -152,7 +151,7 @@ func drop(at: Vector3) -> void:
 
 func rescue(delta: float) -> void:
 	rescue_progress += delta * 1.5  # compensa o decaimento em _physics_process
-	if rescue_progress >= RESCUE_TIME:
+	if rescue_progress >= Config.cfg.princess_rescue_time:
 		return_home()
 
 

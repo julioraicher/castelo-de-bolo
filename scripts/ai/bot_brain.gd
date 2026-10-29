@@ -30,6 +30,12 @@ var _target: Unit = null
 var _last_nav_goal := Vector3.INF
 var _nav_t := 0.0
 var _wander := Vector3.ZERO
+# Preso: alvo do outro lado de uma muralha sem caminho. Se em 3 s quis andar
+# mas saiu menos de 1,5 m do lugar, ignora o alvo e dá uma volta por 2 s.
+var _stuck_check_t := 3.0
+var _stuck_from := Vector3.INF
+var _unstuck_t := 0.0
+var _unstuck_goal := Vector3.ZERO
 
 
 func tick(delta: float) -> void:
@@ -41,10 +47,30 @@ func tick(delta: float) -> void:
 		_think()
 	_steer(delta)
 	_combat()
+	_check_stuck(delta)
+
+
+func _check_stuck(delta: float) -> void:
+	_unstuck_t = maxf(_unstuck_t - delta, 0.0)
+	_stuck_check_t -= delta
+	if _stuck_check_t > 0.0:
+		return
+	_stuck_check_t = 3.0
+	var me := unit.global_position
+	var moved := me.distance_to(_stuck_from) if _stuck_from != Vector3.INF else 99.0
+	_stuck_from = me
+	var far := (_target.global_position if _target and _target.alive else _goal).distance_to(me) > 5.0
+	if moved < 1.5 and far and unit.move_intent.length() > 0.1 and unit.alive and not unit.carried_princess:
+		_unstuck_t = 2.0
+		_unstuck_goal = me + Vector3(randf_range(-8, 8), 0, randf_range(-8, 8))
+		_target = null
 
 
 func _think() -> void:
 	_target = null
+	if _unstuck_t > 0.0:
+		_goal = _unstuck_goal
+		return
 	var arena := game.arena
 	var me := unit.global_position
 	var enemy_team := 1 - unit.team
@@ -86,6 +112,13 @@ func _think() -> void:
 	var item := game.nearest_pickup(me, 10.0)
 	if item and _nearest_enemy(5.0) == null and (item.kind != "pocao" or unit.hp_ratio() < 0.8):
 		_goal = item.global_position
+		return
+
+	# Máscara inimiga caída por perto: retomar antes que a devolvam (revezamento).
+	if their_princess.state == Princess.State.DROPPED and role != Role.DEFEND \
+			and me.distance_to(their_princess.global_position) < 30.0:
+		_goal = their_princess.global_position
+		_target = _nearest_enemy(3.0)
 		return
 
 	# Aliado levando a máscara inimiga: atacantes viram guarda-costas. Brigam

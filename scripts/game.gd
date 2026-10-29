@@ -233,8 +233,10 @@ func _rules() -> void:
 				u.has_cake = false
 				continue
 
-		# Devolver a própria princesa caída: ficar ao lado dela por um tempo.
-		if own_p.state == Princess.State.DROPPED and pos.distance_to(own_p.global_position) < 2.5:
+		# Devolver a própria princesa caída: ficar ao lado dela por um tempo,
+		# sem inimigo perto (disputa: aí o resgate para).
+		if own_p.state == Princess.State.DROPPED and pos.distance_to(own_p.global_position) < 2.5 \
+				and not _contested(own_p):
 			own_p.rescue(get_physics_process_delta_time())
 
 		# Alimentar a própria princesa.
@@ -293,6 +295,14 @@ func _rules() -> void:
 	elif player.has_cake:
 		hint = "Leve o espírito até a sua máscara"
 	hud.set_hint(hint)
+
+
+## Máscara caída com alguém do time ladrão perto: ninguém a devolve.
+func _contested(p: Princess) -> bool:
+	for u in units:
+		if u.alive and u.team != p.team and u.global_position.distance_to(p.global_position) < Config.cfg.princess_contest_radius:
+			return true
+	return false
 
 
 func _score_point(u: Unit) -> void:

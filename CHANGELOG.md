@@ -3,6 +3,31 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 16 (2026-10-29), frente Jogabilidade: a máscara chega em casa
+- Problema: em 5 min de bots saíam 0 pontos (às vezes 2). Medindo onde o
+  ladrão caía: quase sempre a 5-30 m do pedestal inimigo (o caminho tem 98 m),
+  cercado por quem renasce ali; e a máscara caída voltava para casa em 1,5 s.
+- Regras novas (`game_config.gd`, grupo Máscara):
+  - `carrier_damage_mult = 0,5`: quem carrega a máscara inimiga leva metade do
+    dano (a máscara protege; ele já anda mais devagar pelo peso).
+  - Arrancada no roubo: x1,35 de velocidade por 3 s (`steal_boost_*`).
+  - Resgate da máscara caída: 3 s ao lado dela (antes 1,5 s) e **para** se
+    houver inimigo a até 4 m (disputa). Dá tempo do time do ladrão retomá-la.
+- Bots: atacantes a até 30 m da máscara inimiga caída correm para retomá-la
+  (revezamento); bot que quer andar e não sai do lugar em 3 s larga o alvo e dá
+  uma volta (no Rio eles ficavam presos atrás de muralhas/casas ~25% do tempo).
+- Medido (5 min, bots): antes 2-3 roubos e 0 pontos por partida; depois 4-14
+  roubos e 0-3 pontos (média ~2), metade das partidas termina 3 x algo antes dos 5 min.
+- Lado azul do Rio: o Visual rodou 7 partidas, e o total ficou parecido
+  (145 x 130). É efeito bola de neve, não o layout. Os pontos de navegação
+  ruins do Rio (onde os bots ficam presos) foram passados para a frente Cenário.
+- Teste: 5 min simulados no Rio, no Vale e com `--poderes`, sem erro.
+- **O que testar**:
+  1. Roube a máscara inimiga: sente a arrancada? Dá para fugir do pátio deles?
+  2. Carregando, você aguenta bem mais pancada. Ficou forte demais?
+  3. Se você cair com a máscara, seus aliados vão buscá-la?
+  4. As partidas estão terminando em um tempo bom (3 pontos)?
+
 ## Rodada 15 (2026-10-29), frente Jogabilidade: personagens duram mais
 - Pedido do Julio: "a barrinha desce rápido demais". Conta do tempo para
   matar: TTK = vida / (DPS · taxa de acerto). Com os números antigos, um

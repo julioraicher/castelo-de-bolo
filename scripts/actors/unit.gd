@@ -816,6 +816,8 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		return
 	if attacker and attacker.team != Config.TEAM_BLUE:
 		amount *= Settings.bot_damage_mult()
+	if carried_princess:
+		amount *= Config.cfg.carrier_damage_mult
 	# Bloqueio: vale para golpes que chegam pela frente (até 60° do rosto).
 	var blocked := _blocking and _facing().dot(-dir) > BLOCK_COS
 	if blocked:
@@ -1148,6 +1150,9 @@ func pick_up_princess(p: Princess) -> void:
 	carried_princess = p
 	p.pick_up(self)
 	Sfx.play("pickup", global_position)
+	# Arrancada do roubo: alguns segundos mais rápido para sair do pátio.
+	if Config.cfg.steal_boost_time > 0.0:
+		give_boost(Config.cfg.steal_boost_mult, Config.cfg.steal_boost_time)
 
 
 func drop_princess() -> void:

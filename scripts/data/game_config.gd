@@ -14,6 +14,16 @@ extends Resource
 @export_range(0.0, 0.95) var fat_slowdown := 0.45
 ## Segundos até a princesa largada no chão voltar sozinha para casa.
 @export var princess_return_time := 15.0
+## Segundos ao lado da máscara caída para devolvê-la (parado se tiver inimigo
+## a até princess_contest_radius m: dá tempo de um aliado do ladrão retomá-la).
+@export var princess_rescue_time := 3.0
+@export var princess_contest_radius := 4.0
+## Dano que quem carrega a máscara inimiga leva (a máscara protege). Sem isso,
+## o ladrão morria a ~15 m do pedestal, cercado por quem renasce ali.
+@export var carrier_damage_mult := 0.5
+## Arrancada ao pegar a máscara (velocidade x mult por time segundos).
+@export var steal_boost_mult := 1.35
+@export var steal_boost_time := 3.0
 @export var cake_spawn_interval := 5.0
 @export var max_cakes := 6
 
