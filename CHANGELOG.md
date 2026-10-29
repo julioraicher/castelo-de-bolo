@@ -3,6 +3,35 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 17 (2026-10-29), frente Visual: cada poder [Q] com efeito próprio
+- `scripts/fx/fx_poder.gd` (`FxPoder`): todo poder agora mostra o **nome do
+  golpe no ar** (fonte de pincel, entra com "soco") e um **selo girando no
+  chão** na cor do chapéu. Mais um efeito só dele:
+  1. Samurai, Redemoinho: tornado dourado de anéis inclinados e rajadas girando.
+  2. Ronin Oni, Fúria: cúpula de choque vermelha, labareda, pedras voando e
+     aura de fogo enquanto a fúria dura.
+  3. Lâmina Dupla, Corte Relâmpago: 5 sombras pelo caminho, X de corte no fim
+     e o "corte atrasado" (0,28 s depois) em quem foi atravessado.
+  4. Ninja, Leque: leque de luz e shuriken gigante girando.
+  5. Yumi, Chuva de Flechas: rajada para o céu e mira que fecha no alvo.
+  6. Bombas de Fumaça: estouro roxo e bolas de fumaça arremessadas.
+  7. Monge, Bênção: lótus dourada abrindo; brilho subindo em cada aliado curado.
+  8. Onmyoji, Selo: estrela de 5 pontas de luz e pilares nos vértices.
+  9. Kitsune: erupção de fogo-raposa e orbes girando em volta das colunas.
+  10. Armadilheiro, Corrida: rastro de vento nos aliados acelerados.
+  11. Pólvora, Reforço: tábuas voam e se fecham em cada aliado.
+  12. Carpinteiro, Mutirão: feixe até a oficina, faíscas e lascas; rastro nos aliados.
+- Só visual: dano, raio e recarga não mudaram. Tudo aditivo, sem luz e sem
+  sombra, some sozinho (barato na GPU integrada).
+- Outras frentes: chamadas `FxPoder.*` em `Unit._use_power()` e
+  `_corte_relampago()` (que agora guarda a lista de atingidos).
+- Teste: 5 min simulados com `--variacoes --poderes` (poder a cada 4 s) sem erro.
+- **O que testar**:
+  1. Use o [Q] de várias classes (oficinas liberam as variações): dá para
+     saber qual poder foi usado só pelo efeito?
+  2. O nome do golpe no ar ajuda ou atrapalha?
+  3. FPS na hora de uma briga com vários poderes juntos.
+
 ## Rodada 16 (2026-10-29), frente Jogabilidade: a máscara chega em casa
 - Problema: em 5 min de bots saíam 0 pontos (às vezes 2). Medindo onde o
   ladrão caía: quase sempre a 5-30 m do pedestal inimigo (o caminho tem 98 m),

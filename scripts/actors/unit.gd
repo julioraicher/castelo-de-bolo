@@ -928,6 +928,7 @@ func _use_power() -> void:
 		game.on_player_power()
 	else:
 		game.camera.shake_at(global_position, 0.2)
+	FxPoder.lancar(self)
 	match stats.power:
 		"redemoinho":
 			_spin_t = stats.power_duration
@@ -935,6 +936,7 @@ func _use_power() -> void:
 			_power_active_t = stats.power_duration
 			_play_once("2H_Melee_Attack_Spinning", stats.power_duration)
 			Fx.ring(game, global_position, Color(1, 0.85, 0.4, 0.9), stats.power_radius * 1.4)
+			FxPoder.redemoinho(self)
 		"chuva_de_flechas":
 			var to := aim_point - global_position
 			to.y = 0
@@ -946,11 +948,14 @@ func _use_power() -> void:
 			_power_active_t = ArrowRain.WARN + stats.power_duration
 			_play_upper("1H_Ranged_Shoot", 1.0)
 			Fx.burst(game, global_position + Vector3(0, 2.0, 0), Config.team_color(team).lightened(0.5), 16, 9.0)
+			FxPoder.chuva(self, center, stats.power_radius)
 		"bencao":
 			_play_upper("Spellcast_Raise", 1.2)
 			Fx.pillar(game, global_position, Color(1, 0.9, 0.5), stats.power_radius)
+			FxPoder.bencao(self)
 			for other in game.units:
 				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
+					FxPoder.em_aliado(other, Color(1, 0.9, 0.5))
 					other.heal(other.max_hp() * stats.power_value)
 					other.give_shield(stats.power_shield, stats.power_duration)
 		"corrida":
@@ -959,12 +964,14 @@ func _use_power() -> void:
 			for other in game.units:
 				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
 					other.give_boost(stats.power_value, stats.power_duration)
+					FxPoder.rastro(other, Color(1, 0.8, 0.3), stats.power_duration)
 		"furia":
 			# Ronin Oni: pancada no chão (onda de choque) e dano x1,8 por um tempo.
 			_fury_t = stats.power_duration
 			_play_once("2H_Melee_Attack_Chop", 0.45)
 			Fx.cracks(game, global_position, Color(1.0, 0.12, 0.08), stats.power_radius)
 			Fx.burst(game, global_position + Vector3(0, 0.5, 0), Color(1.0, 0.3, 0.1), 30, 10.0)
+			FxPoder.furia(self)
 			game.camera.shake_at(global_position, 0.6)
 			var hit_any := false
 			for other in game.units:
@@ -991,6 +998,7 @@ func _use_power() -> void:
 				var ang := deg_to_rad(lerpf(-stats.power_radius, stats.power_radius, float(i) / maxf(n - 1, 1)) * 0.5)
 				_shoot_arrow(stats.power_value * Config.cfg.dano_poder_mult / maxf(stats.damage, 0.1), 1.1, base.rotated(Vector3.UP, ang))
 			Fx.burst(game, global_position + Vector3(0, 1.4, 0) + base, Color(0.4, 1.0, 1.0), 16, 8.0)
+			FxPoder.leque(self, base)
 		"nuvem", "selo", "coluna_fogo":
 			var to := aim_point - global_position
 			to.y = 0
@@ -1001,6 +1009,13 @@ func _use_power() -> void:
 			fx.setup(game, self, center, stats.power, stats.power_radius, stats.power_value * (Config.cfg.dano_poder_mult if stats.power != "nuvem" else 1.0), stats.power_duration)
 			_power_active_t = stats.power_duration
 			_play_upper("Spellcast_Shoot" if stats.power != "nuvem" else "Throw", 1.2)
+			match stats.power:
+				"nuvem":
+					FxPoder.nuvem(game, center, stats.power_radius)
+				"selo":
+					FxPoder.selo(game, center, stats.power_radius)
+				"coluna_fogo":
+					FxPoder.coluna_fogo(game, center, stats.power_radius, stats.power_duration)
 		"reforco":
 			# Pólvora: escudo de tábuas nos aliados em volta (não fere ninguém).
 			_play_upper("Cheer", 1.5)
@@ -1008,6 +1023,7 @@ func _use_power() -> void:
 			for other in game.units:
 				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
 					other.give_shield(stats.power_value, stats.power_duration)
+					FxPoder.reforco_em(other)
 		"mutirao":
 			# Carpinteiro: adianta a obra mais próxima e acelera os aliados.
 			_play_upper("Cheer", 1.5)
@@ -1015,9 +1031,11 @@ func _use_power() -> void:
 			var of := game.nearest_oficina(team, global_position, stats.power_radius * 2.0, true)
 			if of:
 				of.add_progress(stats.power_value, self)
+				FxPoder.mutirao(self, of)
 			for other in game.units:
 				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
 					other.give_boost(1.25, stats.power_duration)
+					FxPoder.rastro(other, Color(1.0, 0.75, 0.35), stats.power_duration)
 
 
 ## Lâmina Dupla: atravessa até power_radius m na mira, cortando quem estiver
@@ -1031,6 +1049,7 @@ func _corte_relampago() -> void:
 	if not hit.is_empty():
 		to = Vector3(hit.position.x, from.y, hit.position.z) - dir * 0.8
 	to = game.arena.clamp_to_arena(to)
+	var atingidos := []
 	for other in game.units:
 		if not other.alive or other.team == team:
 			continue
@@ -1038,6 +1057,7 @@ func _corte_relampago() -> void:
 		var seg := to - from
 		var tt := clampf((p - from).dot(seg) / maxf(seg.length_squared(), 0.01), 0.0, 1.0)
 		if p.distance_to(from + seg * tt) < 1.6:
+			atingidos.append(other)
 			other.take_damage(stats.power_value * Config.cfg.dano_poder_mult * damage_mult(), self, dir, 1.2, true)
 	global_position = to
 	reset_physics_interpolation()
@@ -1045,6 +1065,7 @@ func _corte_relampago() -> void:
 	Fx.zap(game, from + Vector3(0, 1.4, 0), to + Vector3(0, 1.4, 0), Color(0.6, 1.0, 1.0), 6)
 	Fx.burst(game, from + Vector3(0, 1, 0), Color(0.4, 1.0, 1.0), 14, 6.0)
 	Fx.burst(game, to + Vector3(0, 1, 0), Color(0.4, 1.0, 1.0), 14, 6.0)
+	FxPoder.corte_relampago(self, from, to, atingidos)
 	_play_once("Dualwield_Melee_Attack_Stab", 0.3)
 	if is_player:
 		game.camera.add_trauma(0.4)
