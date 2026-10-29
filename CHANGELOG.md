@@ -23,7 +23,7 @@ conversa saber o que mudou sem reler o histórico.
   teclas desenhadas; pausa com abas, botões e listas no mesmo estilo.
   Textos atualizados para as classes ninja.
 - Outras frentes: só a fonte nos `Label3D` de `fx.gd`, `hat_pad.gd`, `oficina.gd`.
-- Teste: 5 min simulados sem erro; pacote exportado roda sem erro de fonte.
+- Teste: partida simulada até o fim (vitória aos 140 s) sem erro; pacote exportado roda sem erro de fonte.
 - **O que testar**:
   1. Dá para ler tudo rápido no meio da briga (placar, estado das máscaras, vida)?
   2. A fonte de pincel nos títulos agrada? E a de texto?
