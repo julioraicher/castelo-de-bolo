@@ -3,6 +3,12 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## 2026-10-29, frente Identidade: prompt-mestre do Gemini
+- `docs/identidade.md`: diário de nome, tema, estilo geral, logo e divulgação,
+  com as restrições que qualquer estilo precisa respeitar e o bloco de estilo.
+- Prompt-mestre para um Gem do Gemini (link no `docs/identidade.md`).
+- CLAUDE.md: frente Identidade na tabela de frentes.
+
 ## Rodada 6 (2026-10-29), frente Jogabilidade: combate e poderes
 - Combate com peso: hitstop de 60 ms no impacto (atacante e alvo congelam),
   golpe só no tronco (dá para bater correndo), rastro do golpe, reação

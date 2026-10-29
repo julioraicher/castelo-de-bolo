@@ -82,6 +82,7 @@ Cada frente tem sua conversa e mexe só nas suas pastas:
 | Visual dos personagens (conceitos no Gemini → modelo 3D) | `config/classes/`, `assets/characters/` |
 | Cenário (temas, mapas, construções) | `config/temas/`, `config/mapas/`, `assets/medieval/` e novas pastas de cenário |
 | Jogabilidade, polimento e desempenho | `scripts/`, `config/game_config.tres`, `project.godot` |
+| Identidade (nome, tema, estilo geral, logo, divulgação) | `docs/identidade.md`, futuras artes de divulgação |
 
 - Precisa mudar código ou pasta de outra frente? Faça a menor mudança possível
   e avise no CHANGELOG. Campo novo num `.tres` = campo novo no esquema em
