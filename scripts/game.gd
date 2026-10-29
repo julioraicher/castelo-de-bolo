@@ -1,7 +1,7 @@
 class_name Game
 extends Node3D
 ## Cérebro da partida: monta o mundo, cria as unidades, cuida das regras
-## (pegar princesa, bolo e chapéus, marcar ponto, vitória) e atualiza o HUD.
+## (pegar princesa, bolo, itens e chapéus, marcar ponto, vitória) e atualiza o HUD.
 ## É o script da cena principal (scenes/main.tscn).
 
 var arena: Arena
@@ -11,12 +11,14 @@ var units: Array[Unit] = []
 var princesses: Array[Princess] = []
 var hat_pads: Array[HatPad] = []
 var cakes: Array[Cake] = []
+var pickups: Array[Pickup] = []
 var score := [0, 0]
 var player: Unit
 var player_brain: PlayerBrain
 var game_over := false
 
 var _cake_t := 2.0
+var _pickup_t := 8.0
 var _time := 0.0
 
 # Modo de desenvolvimento (linha de comando, depois de "--"):
@@ -123,6 +125,7 @@ func _physics_process(delta: float) -> void:
 	if game_over:
 		return
 	_spawn_cakes(delta)
+	_spawn_pickups(delta)
 	_rules()
 	hud.update_state(self)
 
@@ -196,14 +199,22 @@ func _rules() -> void:
 					c.queue_free()
 					break
 
-		# Chapéus: aldeão veste ao encostar; quem já tem classe troca com E.
+		# Itens no chão: qualquer um que encosta pega.
+		for it in pickups:
+			if pos.distance_to(it.global_position) < 1.6:
+				it.apply_to(u)
+				pickups.erase(it)
+				it.queue_free()
+				break
+
+		# Chapéus: recruta veste ao encostar; quem já tem classe troca com E.
 		for pad in hat_pads:
 			if pad.team != u.team or not pad.available or pad.stats == u.stats or u.is_equipping():
 				continue
 			if pos.distance_to(pad.global_position) < 2.0:
 				if u.is_player:
 					hint = "[E] pegar o chapéu de %s" % pad.stats.display_name
-				# Jogador: só com E. Bots aldeões (e o jogador no modo teste) pegam sozinhos.
+				# Jogador: só com E. Bots recrutas (e o jogador no modo teste) pegam sozinhos.
 				if wants_interact or (u.brain is BotBrain and u.is_villager()):
 					var from: Vector3 = pad.hat_world_position()
 					u.start_equip(pad.take(), from)
@@ -251,6 +262,28 @@ func _spawn_cakes(delta: float) -> void:
 	cakes.append(c)
 
 
+func _spawn_pickups(delta: float) -> void:
+	_pickup_t -= delta
+	if _pickup_t > 0.0 or pickups.size() >= Config.cfg.max_pickups:
+		return
+	_pickup_t = Config.cfg.pickup_interval
+	var it := Pickup.new()
+	add_child(it)
+	it.setup(Pickup.KINDS.pick_random(), arena.random_cake_spot())
+	pickups.append(it)
+
+
+func nearest_pickup(from: Vector3, max_dist: float) -> Pickup:
+	var best: Pickup = null
+	var best_d := max_dist
+	for it in pickups:
+		var d := from.distance_to(it.global_position)
+		if d < best_d:
+			best_d = d
+			best = it
+	return best
+
+
 # --- Consultas usadas pelos bots ----------------------------------------------
 
 func nearest_free_hat(team: int, from: Vector3) -> HatPad:
@@ -292,7 +325,7 @@ func _on_player_class_changed(u: Unit) -> void:
 
 func _on_unit_died(u: Unit, killer: Unit) -> void:
 	if u == player:
-		hud.show_big("Você caiu! Renascendo como aldeão...", Color(1, 0.6, 0.6), 1.8)
+		hud.show_big("Você caiu! Voltando como recruta...", Color(1, 0.6, 0.6), 1.8)
 	elif killer == player:
 		Fx.burst(self, u.global_position + Vector3(0, 1, 0), Color(1, 0.9, 0.3), 16, 7.0)
 

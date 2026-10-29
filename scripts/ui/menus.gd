@@ -81,9 +81,9 @@ func _build_start() -> Control:
 	var tips := VBoxContainer.new()
 	tips.add_theme_constant_override("separation", 4)
 	for tip in [
-		"Chegue num chapéu do seu pátio e aperte E para virar Guerreiro, Arqueiro ou Clérigo.",
+		"Chegue num chapéu do seu pátio e aperte E para virar Guerreiro, Arqueiro, Monge ou Construtor.",
 		"Leve bolos até a SUA princesa: gorda, ela fica pesada para o inimigo carregar.",
-		"Quem morre volta como aldeão. Primeiro a 3 resgates vence.",
+		"Itens no chão: poção (vida), escudo e velocidade. Quem morre volta como recruta. Primeiro a 3 resgates vence.",
 	]:
 		tips.add_child(_text("•  " + tip, 18, Color(1, 1, 1, 0.85)))
 	box.add_child(tips)

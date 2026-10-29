@@ -3,6 +3,30 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 7 (2026-10-29), frente Jogabilidade: Construtor, itens no chão, Monge e Recruta
+- Tema (princesa/bolo x Máscara Oni/espíritos) **não** mudou: o Julio ainda
+  compara 3 mundos. Os nomes de classe abaixo são provisórios.
+- Clérigo → Monge (`monge.tres`) e Aldeão → Recruta (`recruta.tres`, sem poder).
+- Construtor (`construtor.tres`, 4º chapéu, modelo Barbarian com machado,
+  chapéu cônico `kasa`): clique direito espalha estrepes (`scripts/items/trap.gd`):
+  quem pisa leva 15 de dano e fica 50% mais lento por 2 s; até 3, recarga 4 s.
+  Poder no Q: Corrida (o poder que era do Aldeão).
+- Itens no chão (`scripts/items/pickup.gd`): poção (50% da vida), escudo (40
+  por 8 s) e velocidade (1,35x por 6 s). Um a cada 15 s, no máximo 3.
+  Números em `game_config.tres` > Itens no chão.
+- Bots: Construtor arma estrepes com inimigo a até 7 m (ou na defesa do portão);
+  qualquer bot desvia até 10 m para pegar item se não houver inimigo colado.
+- Outras frentes (mudança mínima): `config/classes/` (renomes + construtor) e
+  `config/mapas/vale.tres` (4º lugar de chapéu em (-3, 8.5); mesmo padrão em
+  `map_layout.gd`).
+- Teste: 5 min simulados sem erro; até 6 estrepes simultâneas, itens sendo pegos.
+- Hora do Caos ficou para depois (precisa de relógio de partida).
+
+## 2026-10-29, frente Identidade: mundo ninja e variações
+- Mundo escolhido: Clãs de Neon (ninja). Cabeça menor, um pouco mais realista.
+- `docs/design-jogo.md`: 3 variações por papel com 2 poderes cada; o time
+  escolhe qual oficina construir (poucos terrenos por castelo).
+
 ## 2026-10-29, frente Identidade: direção v1 depois do quiz 2
 - `docs/identidade.md`: direção v1 = Clãs de Neon com lado sombrio; Máscara Oni
   + espíritos substituem princesa + bolo; Brawl Stars 1:3; noite neon; bloco de estilo.

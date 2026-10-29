@@ -145,7 +145,7 @@ static func _sector(radius: float, arc_deg: float) -> ArrayMesh:
 	return mesh
 
 
-## Coluna de luz que sobe e some (Bênção do Clérigo), com anel no chão.
+## Coluna de luz que sobe e some (Bênção do Monge), com anel no chão.
 static func pillar(parent: Node, pos: Vector3, color: Color, radius: float) -> void:
 	ring(parent, pos, Color(color, 0.9), radius)
 	var mi := MeshInstance3D.new()

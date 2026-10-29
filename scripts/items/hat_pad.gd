@@ -65,7 +65,7 @@ func take() -> ClassStats:
 	return stats
 
 
-## Chapéus montados com formas simples: elmo, capuz e chapéu de clérigo.
+## Chapéus montados com formas simples: elmo, capuz, kasa e chapéu pontudo.
 static func make_hat(style: String, color: Color) -> Node3D:
 	var root := Node3D.new()
 	var mat := Fx.lit(color, 0.4)
@@ -90,6 +90,25 @@ static func make_hat(style: String, color: Color) -> Node3D:
 			plume.position = Vector3(0, 0.55, -0.1)
 			plume.rotation_degrees.x = -25
 			root.add_child(plume)
+		"kasa":
+			# Chapéu de palha cônico (kasa), largo e baixo.
+			var kasa := MeshInstance3D.new()
+			var k := CylinderMesh.new()
+			k.top_radius = 0.05
+			k.bottom_radius = 0.8
+			k.height = 0.4
+			k.radial_segments = 12
+			kasa.mesh = k
+			kasa.material_override = mat
+			root.add_child(kasa)
+			var knot := MeshInstance3D.new()
+			var kn := SphereMesh.new()
+			kn.radius = 0.09
+			kn.height = 0.18
+			knot.mesh = kn
+			knot.material_override = Fx.lit(Color(0.55, 0.3, 0.15))
+			knot.position.y = 0.22
+			root.add_child(knot)
 		"capuz":
 			var hood := MeshInstance3D.new()
 			var cone := CylinderMesh.new()

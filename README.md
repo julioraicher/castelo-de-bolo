@@ -6,7 +6,7 @@ deixe roubarem a sua. Alimente a sua princesa com bolo: quanto mais gorda,
 mais devagar anda quem tentar levá-la.
 
 - 8 contra 8, com bots
-- Chapéus trocam a classe: Guerreiro, Arqueiro e Clérigo (cura)
+- Chapéus trocam a classe: Guerreiro, Arqueiro, Monge (cura) e Construtor (estrepes)
 - Morreu? Volta como aldeão e precisa pegar outro chapéu
 
 ## Jogar

@@ -32,6 +32,11 @@ daqui, em 3D, no estilo do jogo.
 ## Direção v1 (2026-10-29, a partir do quiz 2)
 
 Rascunho fechado por Claude com base nas notas do Julio. Tudo aqui é reversível.
+~~**Em comparação (2026-10-29):** Julio pediu para ver a primeira prancha com as 4
+classes em 3 mundos (Clãs de Neon, Festival Infernal adulto, Cavaleiros Malditos)
+antes de fechar. O resto desta seção vale para qualquer um dos três.~~
+**Escolhido (2026-10-29): Clãs de Neon (ninja).** Antes do código grande, uma
+rodada rápida de pitacos no visual das 4 classes, na frente de personagens.
 
 **Mundo: Clãs de Neon, com um lado sombrio.** Dois clãs rivais brigam à noite
 pelos telhados e vielas de uma cidade japonesa estilizada: lanternas, letreiros
@@ -45,7 +50,7 @@ Cavaleiros Malditos levaram "Gosto"; vikings, gangues e asfalto ficaram de fora.
 | Tesouro | **Máscara Oni** de cada clã, levada nos braços | escolhida no quiz e casa com o mundo ninja |
 | Carga que pesa | **espíritos** (chamas-fantasma, *hitodama*) que surgem no meio; cada um prende mais uma corrente na sua máscara | mesma mecânica do bolo, sem engordar ninguém |
 | Times | v1: cor do time na roupa toda (azul x vermelho). v2 possível: ninjas x samurais com visual diferente | v2 dobra o trabalho de modelo; vale depois do estilo aprovado |
-| Proporção | cartoon 1:3 | escolha do quiz 2 |
+| Proporção | ~~cartoon 1:3~~ cabeça menor, um pouco mais realista, ainda no espírito Fat Princess (cabeça 0,85 na prancha 4, testar menos) | pitaco do Julio na prancha 3 |
 | Acabamento | liso estilo Brawl Stars: formas redondas, cor forte, brilho simples | escolha do quiz 2; barato na GPU |
 | Rosto | expressivo (bravo, assustado, carregando peso) | quiz 1 |
 | Luz | noite com coisas brilhando | quiz 1 e 2 |
@@ -82,4 +87,7 @@ emissive shapes, not real lights. Readable silhouettes from a high 3/4 camera.
 |---|---|
 | 2026-10-29 | Frente de identidade criada. Nome "Castelo de Bolo" segue provisório. |
 | 2026-10-29 | Sem Gemini: conceitos feitos aqui em 3D por código. Quiz de identidade publicado. |
+| 2026-10-29 | 3 variações por papel, escolhidas pelo time ao construir a oficina; cabeça menor. Ver `docs/design-jogo.md`. |
+| 2026-10-29 | Julio escolheu Clãs de Neon (ninja) depois da prancha comparativa. Pitacos no visual antes do código grande. |
+| 2026-10-29 | Comparar 3 mundos na prancha de personagens antes de fechar (Neon, Festival Infernal, Malditos). |
 | 2026-10-29 | Quiz 1 rejeitado (fofo demais). Quiz 2: direção v1 = Clãs de Neon com lado sombrio, Máscara Oni + espíritos, Brawl Stars 1:3, noite neon. |

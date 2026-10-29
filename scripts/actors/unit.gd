@@ -95,6 +95,9 @@ var _shield_mesh: MeshInstance3D
 var _boost_t := 0.0
 var _boost_mult := 1.0
 var _boost_fx_t := 0.0
+var _slow_t := 0.0
+var _slow_mult := 1.0
+var _trap_cd := 0.0
 
 static var _flash_mat: StandardMaterial3D
 static var _merged_body := {}  # caminho do .tres da classe -> ArrayMesh do corpo
@@ -342,6 +345,8 @@ func current_speed() -> float:
 		s *= stats.carry_speed_mult * (1.0 - carried_princess.fatness * Config.cfg.fat_slowdown)
 	if _boost_t > 0.0:
 		s *= _boost_mult
+	if _slow_t > 0.0:
+		s *= _slow_mult
 	return s
 
 
@@ -578,6 +583,10 @@ func _update_skill(delta: float, free_hands: bool) -> void:
 					_play_upper("Blocking", 1.0, true)
 				else:
 					_stop_upper("Blocking")
+		"armadilha":
+			_trap_cd = maxf(_trap_cd - delta, 0.0)
+			if held and _trap_cd <= 0.0:
+				_place_trap()
 		"tiro_carregado":
 			if held and _attack_cd <= 0.0:
 				if _charge_t <= 0.0:
@@ -589,6 +598,28 @@ func _update_skill(delta: float, free_hands: bool) -> void:
 					_fire_charged()
 				else:
 					_cancel_skill()
+
+
+## Estrepes nos pés; passou do limite, a mais antiga do mesmo dono some.
+func _place_trap() -> void:
+	_trap_cd = stats.trap_cooldown
+	var mine: Array[Node] = []
+	for t in get_tree().get_nodes_in_group("traps"):
+		if t.owner_unit == self and not t.is_queued_for_deletion():
+			mine.append(t)
+	while mine.size() >= stats.trap_max:
+		mine.pop_front().queue_free()
+	var trap := Trap.new()
+	game.add_child(trap)
+	trap.setup(game, self, global_position - _facing() * 0.8)
+	_play_upper("Interact", 1.6)
+	Sfx.play("pickup", global_position, 0.1)
+
+
+func apply_slow(mult: float, duration: float) -> void:
+	_slow_mult = mult
+	_slow_t = maxf(_slow_t, duration)
+	Fx.burst(game, global_position + Vector3(0, 0.4, 0), Color(0.6, 0.6, 0.7), 6, 2.0)
 
 
 func _fire_charged() -> void:
@@ -848,6 +879,8 @@ func _tick_buffs(delta: float) -> void:
 			_shield_t = 0.0
 			if _shield_mesh:
 				_shield_mesh.visible = false
+	if _slow_t > 0.0:
+		_slow_t -= delta
 	if _boost_t > 0.0:
 		_boost_t -= delta
 		_boost_fx_t -= delta
@@ -860,6 +893,7 @@ func _end_buffs() -> void:
 	_spin_t = 0.0
 	_power_active_t = 0.0
 	_boost_t = 0.0
+	_slow_t = 0.0
 	_shield = 0.0
 	_shield_t = 0.0
 	if _shield_mesh:
