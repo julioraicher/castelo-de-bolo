@@ -3,6 +3,31 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 14 (2026-10-29), frente Cenário: leva 2 de peças e vila com moradores
+- Peças novas (`tools/gerar_mapa_rio.gd`, nos 2 temas): **templo** (dois
+  telhados, corda sagrada, altar dourado, incensário, barris de saquê), **casa
+  de chá** (janela redonda, bacia de pedra, bordo vermelho, mestre servindo),
+  **forja** (fornalha acesa, chaminé com fumaça, bigorna, ferreiro martelando,
+  rack de katanas), **dojo** (alunos treinando, pergaminho, bonecos de madeira,
+  estandartes), **barco** com barqueiro e **ponte de corda** pênsil.
+- **Moradores** (`_aldeao`): bonecos low-poly com poses (vender, varrer,
+  martelar, sentado, lanterna, remar, treinar, servir). Fazem parte do modelo
+  das casas: vendedor na loja, senhor sentado na varanda (com gato), moça com
+  lanterna na varanda da pousada, vendedores nas barracas; grupos conversando
+  perto da vila.
+- **Fundos e laterais** de todas as casas: janela acesa, porta com noren,
+  calha de bambu, barril de chuva, varal com roupas, lenha (a fileira de trás
+  mostra os fundos para a câmera).
+- No Rio das Lanternas: templo e dojo nos campos fora das muralhas, forja e
+  casa de chá na vila (no lugar do sino e do jardim), 4 barcos no rio, pontes
+  de corda sobre as cachoeiras. Prancha: `tools/prancha_pecas.gd` aceita
+  `peca@180` para mostrar os fundos.
+- Teste: 5 min simulados sem erro (8 roubos de máscara, 1 ponto).
+- **O que testar**:
+  1. Passeie pela vila: as casas parecem "habitadas"? Moradores no tamanho certo?
+  2. Templo (campo norte) e dojo (campo sul), perto dos castelos: atrapalham o caminho?
+  3. Bots se enroscam na forja, na casa de chá ou nos grupos de moradores?
+
 ## Rodada 13 (2026-10-29), frente Jogabilidade: mira honesta com ajuda leve
 - Pergunta do Julio: "acertei muitas flechas meio na sorte, tem assistência?"
   Não tinha assistência: o acerto era uma **esfera de 1,25 m** em volta do
@@ -51,31 +76,6 @@ conversa saber o que mudou sem reler o histórico.
   3. Bata o combo de 3 golpes: o último joga o alvo para cima e a tela dá tranco?
   4. Leve uma bomba ou pise numa mina: o tremor perto de explosões incomoda?
   5. No PC fraco, notou queda de FPS nos momentos de poder?
-
-## Rodada 12 (2026-10-29), frente Cenário: leva 2 de peças e vila com moradores
-- Peças novas (`tools/gerar_mapa_rio.gd`, nos 2 temas): **templo** (dois
-  telhados, corda sagrada, altar dourado, incensário, barris de saquê), **casa
-  de chá** (janela redonda, bacia de pedra, bordo vermelho, mestre servindo),
-  **forja** (fornalha acesa, chaminé com fumaça, bigorna, ferreiro martelando,
-  rack de katanas), **dojo** (alunos treinando, pergaminho, bonecos de madeira,
-  estandartes), **barco** com barqueiro e **ponte de corda** pênsil.
-- **Moradores** (`_aldeao`): bonecos low-poly com poses (vender, varrer,
-  martelar, sentado, lanterna, remar, treinar, servir). Fazem parte do modelo
-  das casas: vendedor na loja, senhor sentado na varanda (com gato), moça com
-  lanterna na varanda da pousada, vendedores nas barracas; grupos conversando
-  perto da vila.
-- **Fundos e laterais** de todas as casas: janela acesa, porta com noren,
-  calha de bambu, barril de chuva, varal com roupas, lenha (a fileira de trás
-  mostra os fundos para a câmera).
-- No Rio das Lanternas: templo e dojo nos campos fora das muralhas, forja e
-  casa de chá na vila (no lugar do sino e do jardim), 4 barcos no rio, pontes
-  de corda sobre as cachoeiras. Prancha: `tools/prancha_pecas.gd` aceita
-  `peca@180` para mostrar os fundos.
-- Teste: 5 min simulados sem erro (8 roubos de máscara, 1 ponto).
-- **O que testar**:
-  1. Passeie pela vila: as casas parecem "habitadas"? Moradores no tamanho certo?
-  2. Templo (campo norte) e dojo (campo sul), perto dos castelos: atrapalham o caminho?
-  3. Bots se enroscam na forja, na casa de chá ou nos grupos de moradores?
 
 ## Rodada 11 (2026-10-29), frente Visual: interface no estilo Clãs de Neon
 - Pedido do Julio: textos, fontes e visual das informações na tela.
