@@ -1187,17 +1187,20 @@ func _gerar_mapa_rio() -> void:
 
 	# Vila (dos dois lados). Fileira norte olha para +z (rua), sul para -z.
 	var c := "caixa"
+	# Navegação: o bot tem raio 1 m, então um vão só é caminho com 3,4 m ou mais
+	# entre colisores. Cada fileira deixa um beco largo no meio, o corredor da
+	# beira do rio (x < 10) e o corredor junto da muralha do castelo (x > 30,8).
 	var casas := [
 		["casa_a.scn", Vector3(12.5, 0, -9.0), 0.0, Vector3(5.0, 4.8, 4.5)],
-		["loja.scn", Vector3(19.5, 0, -9.0), 0.0, Vector3(5.0, 4.4, 4.5)],
-		["pousada.scn", Vector3(27.0, 0, -9.3), 0.0, Vector3(6.0, 7.0, 5.0)],
+		["loja.scn", Vector3(18.5, 0, -9.0), 0.0, Vector3(5.0, 4.4, 4.5)],
+		["pousada.scn", Vector3(27.6, 0, -9.0), 0.0, Vector3(6.0, 7.0, 5.0)],
 		["loja.scn", Vector3(12.5, 0, 9.0), 180.0, Vector3(5.0, 4.4, 4.5)],
-		["casa_b.scn", Vector3(20.0, 0, 9.3), 180.0, Vector3(6.0, 5.0, 5.0)],
-		["armazem.scn", Vector3(27.5, 0, 9.0), 180.0, Vector3(4.5, 4.8, 4.0)],
-		["casa_b.scn", Vector3(13.0, 0, -16.8), 180.0, Vector3(6.0, 5.0, 5.0)],
-		["casa_a.scn", Vector3(27.5, 0, -16.8), 180.0, Vector3(5.0, 4.8, 4.5)],
-		["casa_a.scn", Vector3(14.0, 0, 16.8), 0.0, Vector3(5.0, 4.8, 4.5)],
-		["pousada.scn", Vector3(28.0, 0, 17.0), 0.0, Vector3(6.0, 7.0, 5.0)],
+		["casa_b.scn", Vector3(19.0, 0, 9.0), 180.0, Vector3(6.0, 5.0, 5.0)],
+		["armazem.scn", Vector3(27.9, 0, 9.0), 180.0, Vector3(4.5, 4.8, 4.0)],
+		["casa_b.scn", Vector3(13.0, 0, -18.0), 180.0, Vector3(6.0, 5.0, 5.0)],
+		["casa_a.scn", Vector3(28.3, 0, -18.0), 180.0, Vector3(5.0, 4.8, 4.5)],
+		["casa_a.scn", Vector3(12.5, 0, 18.0), 0.0, Vector3(5.0, 4.8, 4.5)],
+		["pousada.scn", Vector3(27.8, 0, 18.0), 0.0, Vector3(6.0, 7.0, 5.0)],
 	]
 	for h in casas:
 		for sx in [1.0, -1.0]:
@@ -1206,19 +1209,14 @@ func _gerar_mapa_rio() -> void:
 			pr.collider_size = h[3]
 			pr.collider_offset = Vector3(0, h[3].y / 2.0, 0)
 			_props.append(pr)
-	_dois_lados(_props, "forja.scn", Vector3(20.5, 0, -16.8), 0.0, "caixa")
-	_dois_lados(_props, "casa_de_cha.scn", Vector3(21.0, 0, 16.0), 0.0, "caixa")
-	_dois_lados(_props, "festival.scn", Vector3(32.5, 0, 9.5), 180.0, "cilindro", 1.2, 2.0)
-	_dois_lados(_props, "poco.scn", Vector3(32.0, 0, -9.5), 0.0, "cilindro", 1.0, 2.0)
+	_dois_lados(_props, "forja.scn", Vector3(19.6, 0, -18.0), 0.0, "caixa")
+	_dois_lados(_props, "casa_de_cha.scn", Vector3(20.3, 0, 18.0), 0.0, "caixa")
 	for x in [10.5, 16.0, 23.0, 30.5]:
 		for z in [-4.3, 4.3]:
 			_dois_lados(_props, "poste.scn", Vector3(x, 0, z), 90.0 if z < 0 else -90.0)
 	_dois_lados(_props, "varal.scn", Vector3(19.0, 0, 0))
 	_dois_lados(_props, "torii.scn", Vector3(10.5, 0, 0))
-	_dois_lados(_props, "estatua.scn", Vector3(10.2, 0, -6.0), 0.0, "cilindro", 0.8, 2.0)
-	_dois_lados(_props, "estatua.scn", Vector3(10.2, 0, 6.0), 0.0, "cilindro", 0.8, 2.0)
 	_dois_lados(_props, "carroca.scn", Vector3(23.5, 0, -13.0), 10.0)
-	_dois_lados(_props, "pilha.scn", Vector3(17.0, 0, 13.0), 30.0, "cilindro", 1.2, 2.0)
 
 	# Colinas nos 4 cantos do meio, com escada do lado do rio e do castelo.
 	for sx in [1.0, -1.0]:
@@ -1240,25 +1238,29 @@ func _gerar_mapa_rio() -> void:
 			_props.append(_rampa_col(Vector3(x1, 0, cz + 1.0 * sz), 180.0 - rot, 5.5, ALT_COLINA, 3.2))
 			# Em cima: pagode ou vigia, árvore e lanternas.
 			var topo := ALT_COLINA
-			_props.append(_p("pagode.scn" if sz < 0 else "vigia.scn", Vector3(cx + 2.5 * sx, topo, cz + 1.0 * sz), 0.0, "cilindro", 1.9, 6.0))
+			# Pagode/vigia no fundo do topo: sobra uma faixa livre ligando as duas escadas.
+			_props.append(_p("pagode.scn" if sz < 0 else "vigia.scn", Vector3(cx + 0.5 * sx, topo, cz + 2.2 * sz), 0.0, "cilindro", 1.9, 6.0))
 			_props.append(_p("arvore_media.scn", Vector3(cx - 3.5 * sx, topo, cz + 2.0 * sz), -1.0, "cilindro", 1.0, 3.0))
 			_props.append(_p("lanterna_pedra.scn", Vector3(cx - 1.5 * sx, topo, cz - 2.6 * sz)))
 			_props.append(_p("lanterna_pedra.scn", Vector3(cx + 4.5 * sx, topo, cz - 2.6 * sz)))
 
 	# Cobertura no meio: margens do rio e trilhas das pontes laterais.
-	_dois_lados(_props, "rochas.scn", Vector3(7.5, 0, -12.5), -1.0, "cilindro", 1.0, 2.0)
-	_dois_lados(_props, "rochas.scn", Vector3(7.0, 0, 13.0), -1.0, "cilindro", 1.0, 2.0)
-	_dois_lados(_props, "barricada.scn", Vector3(13.0, 0, -22.5), 90.0, "caixa")
-	_dois_lados(_props, "barricada.scn", Vector3(13.0, 0, 22.5), 90.0, "caixa")
-	_dois_lados(_props, "jizos.scn", Vector3(29.0, 0, -22.0), 90.0)
-	_dois_lados(_props, "pilha.scn", Vector3(23.0, 0, 22.0), -1.0, "cilindro", 1.2, 2.0)
+	# Tudo encostado na margem, no pé da colina ou na boca dos becos: o corredor
+	# das pontes laterais (entre os fundos das casas e a colina) fica livre.
+	_dois_lados(_props, "rochas.scn", Vector3(6.0, 0, -13.2), -1.0, "cilindro", 1.0, 2.0)
+	_dois_lados(_props, "rochas.scn", Vector3(6.0, 0, 13.3), -1.0, "cilindro", 1.0, 2.0)
+	_dois_lados(_props, "barricada.scn", Vector3(17.5, 0, -25.2), 0.0, "caixa")
+	_dois_lados(_props, "festival.scn", Vector3(20.0, 0, 25.0), 180.0, "cilindro", 1.2, 2.0)
+	_dois_lados(_props, "jizos.scn", Vector3(28.5, 0, -22.0), 90.0)
+	_dois_lados(_props, "poco.scn", Vector3(31.5, 0, -24.8), 0.0, "cilindro", 1.0, 2.0)
+	_dois_lados(_props, "pilha.scn", Vector3(28.5, 0, 24.0), -1.0, "cilindro", 1.2, 2.0)
 	_dois_lados(_props, "lanterna_pedra.scn", Vector3(10.0, 0, -19.5))
 	_dois_lados(_props, "lanterna_pedra.scn", Vector3(10.0, 0, -24.5))
 	_dois_lados(_props, "lanterna_pedra.scn", Vector3(10.0, 0, 19.5))
 	_dois_lados(_props, "lanterna_pedra.scn", Vector3(10.0, 0, 24.5))
-	_dois_lados(_props, "estatua.scn", Vector3(34.0, 0, -22.0), 0.0, "cilindro", 0.8, 2.0)
-	_dois_lados(_props, "arvore_grande.scn", Vector3(7.5, 0, -30.0), -1.0, "cilindro", 2.0, 4.0)
-	_dois_lados(_props, "arvore_grande.scn", Vector3(7.5, 0, 30.0), -1.0, "cilindro", 2.0, 4.0)
+	_dois_lados(_props, "estatua.scn", Vector3(34.5, 0, -34.0), 0.0, "cilindro", 0.8, 2.0)
+	_dois_lados(_props, "arvore_grande.scn", Vector3(6.5, 0, -34.0), -1.0, "cilindro", 2.0, 4.0)
+	_dois_lados(_props, "arvore_grande.scn", Vector3(6.5, 0, 34.0), -1.0, "cilindro", 2.0, 4.0)
 	# Campos fora das muralhas (perto dos castelos).
 	_dois_lados(_props, "templo.scn", Vector3(50.0, 0, -28.5), 0.0, "caixa")
 	_dois_lados(_props, "arvore_espirito.scn", Vector3(61.0, 0, -30.5), -1.0, "cilindro", 1.8, 5.0)
@@ -1268,7 +1270,7 @@ func _gerar_mapa_rio() -> void:
 	_dois_lados(_props, "bambuzal.scn", Vector3(62.0, 0, -24.0), 0.0, "caixa")
 	_dois_lados(_props, "santuario.scn", Vector3(41.0, 0, -29.0), 0.0, "cilindro", 1.3, 2.0)
 	_dois_lados(_props, "arvore_alta.scn", Vector3(64.5, 0, 31.5), -1.0, "cilindro", 2.0, 4.0)
-	_dois_lados(_props, "arvore_media.scn", Vector3(38.0, 0, -20.5), -1.0, "cilindro", 1.0, 2.0)
+	_dois_lados(_props, "arvore_media.scn", Vector3(44.0, 0, -34.5), -1.0, "cilindro", 1.0, 2.0)
 	_dois_lados(_props, "ruina.scn", Vector3(44.0, 0, 20.5), -1.0, "cilindro", 1.4, 2.0)
 	_dois_lados(_props, "rochas.scn", Vector3(57.0, 0, 20.0), -1.0, "cilindro", 1.0, 2.0)
 	_dois_lados(_props, "cerca.scn", Vector3(57.0, 0, 34.0))

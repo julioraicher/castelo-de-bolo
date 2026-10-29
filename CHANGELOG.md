@@ -3,6 +3,35 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 18 (2026-10-29), frente Visual: bots andam pela vila do Rio
+- Problema (medido pela Jogabilidade): no Rio os bots acionavam o "desempacar"
+  ~440 vezes em 5 min, contra 16 no Vale. Causa no mapa, não na IA: o navmesh
+  é assado com raio de agente 1 m, então um vão de 2 m entre colisores vira
+  largura zero. Os vãos entre as casas tinham exatamente 2 m, e o poço, o
+  festival, as estátuas, as barricadas e as pedras da margem fechavam o resto.
+  Resultado: a vila, as pontes laterais, as colinas e os campos atrás dos
+  castelos eram ilhas, alcançáveis só pela rua central (print 08).
+- `tools/gerar_mapa_rio.gd` (vila redistribuída, mesmas peças):
+  - Cada fileira tem um beco de 3,5 m no meio; as fileiras de trás foram para
+    z = ±18 (beco de trás com ~4 m) e todas terminam em x = 30,8, deixando um
+    corredor de 3,4 m junto à muralha do castelo.
+  - Barricada no pé da colina (norte) e festival no pé da colina (sul), em vez
+    de atravessados na saída das pontes laterais; poço e pilha foram para os
+    fundos perto do castelo; pedras da margem na boca dos becos.
+  - Saem as 2 estátuas da cabeceira da ponte central (fechavam o caminho da margem).
+  - Topo das colinas: pagode/vigia recuado para o fundo, sobra uma faixa livre
+    ligando as duas escadas. A árvore grande da margem saiu do pé da escada.
+  - Campos atrás dos castelos: estátua e árvore saíram do canto da muralha.
+- Medido (mesmo critério da IA, 5 min de bots): Rio Floresta Oni 33 e Templo
+  ao Luar 58 (antes ~440); Vale 9. O que sobrou é aglomeração de briga na
+  cabeceira da ponte e no portão, não geometria. Topo das colinas, escadas e
+  passarela da muralha agora têm caminho a partir do pátio.
+- Outras frentes: nenhuma mudança em `scripts/`.
+- **O que testar**:
+  1. No Rio, os bots entram nos becos da vila e usam as pontes laterais?
+  2. Ainda aparece bot parado esfregando em parede? Onde?
+  3. A vila ficou com cara de vila com os becos mais largos?
+
 ## Rodada 17 (2026-10-29), frente Visual: cada poder [Q] com efeito próprio
 - `scripts/fx/fx_poder.gd` (`FxPoder`): todo poder agora mostra o **nome do
   golpe no ar** (fonte de pincel, entra com "soco") e um **selo girando no
