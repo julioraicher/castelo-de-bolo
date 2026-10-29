@@ -92,6 +92,15 @@ Cada frente tem sua conversa e mexe só nas suas pastas:
 - Visual: peças por código no esqueleto KayKit (`NinjaVisual`) + shader toon;
   pitaco por prancha (`tools/prancha_personagens.gd`). Ver docs/arte-personagens.md.
 
+## Fluxo de testes e ideias (permanente)
+
+- A `main` é o que o Julio testa: precisa estar **sempre jogável**.
+- Coisa nova (cenário, poder, feature) vai num branch e só entra na `main`
+  com aprovação do Julio ou quando estiver estável (5 min simulados sem erro).
+- Toda entrega na `main` ganha um bloco **"O que testar"** na entrada do CHANGELOG.
+- Ideias para futuras atualizações vão em `docs/ideias.md` (A = próxima, B = depois,
+  C = talvez). Qualquer frente pode anotar; o Julio escolhe o que sobe.
+
 ## Preferências do Julio
 
 - Manter o dash/esquiva como está.

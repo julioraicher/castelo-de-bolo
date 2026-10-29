@@ -34,6 +34,13 @@ conversa saber o que mudou sem reler o histórico.
 - Teste: 5 min simulados sem erro; oficinas prontas entre 22 e 90 s.
   Prancha: `personagens/05-ninjas-no-jogo.png` nos arquivos do projeto.
 - Falta: cenário ninja (noite neon). Proposta vai para pitaco antes de montar.
+- **O que testar** (no navegador ou no .exe da main):
+  1. Pegue cada chapéu do pátio e olhe o visual e o ataque (shuriken, flechas, chi).
+  2. Vire Construtor, vá até um terreno do castelo, aperte E para escolher a
+     variação e fique perto até a casinha subir. Pegue a variação nova no pedestal.
+  3. Encha o Chi (Q) com cada classe e veja se o poder é claro e forte o bastante.
+  4. Kunai (dano 2x) e chama de chi no chão: dá para ver e pegar?
+  5. Leve a Máscara Oni inimiga ao seu pedestal; leve espíritos à sua máscara.
 
 ## Rodada 7 (2026-10-29), frente Jogabilidade: Construtor, itens no chão, Monge e Recruta
 - Tema (princesa/bolo x Máscara Oni/espíritos) **não** mudou: o Julio ainda
