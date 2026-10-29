@@ -33,6 +33,8 @@ func tick(delta: float) -> void:
 	_think_t -= delta
 	if _think_t <= 0.0:
 		_think_t = Config.cfg.bot_think_interval
+		if unit.team != Config.TEAM_BLUE:
+			_think_t *= Settings.bot_reaction_mult()  # dificuldade só afeta os inimigos
 		_think()
 	_steer(delta)
 	_combat()

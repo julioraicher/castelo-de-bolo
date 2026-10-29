@@ -282,6 +282,8 @@ func heal(amount: float) -> void:
 func take_damage(amount: float, attacker: Unit, dir: Vector3) -> void:
 	if not alive or _dodge_t > 0.0:
 		return
+	if attacker and attacker.team != Config.TEAM_BLUE:
+		amount *= Settings.bot_damage_mult()
 	hp -= amount
 	_knock = dir * (attacker.stats.knockback if attacker else 4.0)
 	_flash_t = 0.1

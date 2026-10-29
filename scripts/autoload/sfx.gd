@@ -14,19 +14,23 @@ var _music: AudioStreamPlayer
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS  # música e sons do menu tocam com o jogo pausado
 	for s in SOUNDS:
 		var path := "res://assets/audio/%s.wav" % s
 		if ResourceLoader.exists(path):
 			_streams[s] = load(path)
 	for i in POOL_SIZE:
 		var p := AudioStreamPlayer3D.new()
+		p.bus = "Efeitos"
 		p.unit_size = 18.0
 		p.max_db = 3.0
 		add_child(p)
 		_pool.append(p)
 	_ui = AudioStreamPlayer.new()
+	_ui.bus = "Efeitos"
 	add_child(_ui)
 	_music = AudioStreamPlayer.new()
+	_music.bus = "Musica"
 	_music.volume_db = -14.0
 	add_child(_music)
 

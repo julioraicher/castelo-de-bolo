@@ -13,6 +13,19 @@ const LAYER_UNITS := 2
 const LAYER_ITEMS := 4
 const LAYER_PROJECTILES := 8
 
+## Lista de controles mostrada na tela "Como jogar" e no menu de pausa.
+## Se mudar uma tecla em _setup_input(), atualize aqui também.
+const CONTROLS := [
+	["W A S D", "andar"],
+	["Mouse", "mirar"],
+	["Clique esquerdo", "atacar"],
+	["Clique direito ou Q", "curar aliados (só Clérigo)"],
+	["Espaço ou Shift", "esquivar (rolamento rápido)"],
+	["E", "pegar/soltar a princesa, trocar de chapéu"],
+	["Esc ou P", "pausar, ver controles e configurações"],
+	["R", "reiniciar a partida"],
+]
+
 var cfg: GameConfig = preload("res://config/game_config.tres")
 
 
@@ -35,6 +48,7 @@ func _setup_input() -> void:
 	_bind_keys("dodge", [KEY_SPACE, KEY_SHIFT])
 	_bind_keys("restart", [KEY_R])
 	_bind_keys("special", [KEY_Q])
+	_bind_keys("pause", [KEY_ESCAPE, KEY_P])
 	_bind_mouse("attack", MOUSE_BUTTON_LEFT)
 	_bind_mouse("special", MOUSE_BUTTON_RIGHT)
 

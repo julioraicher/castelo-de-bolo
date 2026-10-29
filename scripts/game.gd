@@ -93,6 +93,16 @@ func _ready() -> void:
 
 	hud = Hud.new()
 	add_child(hud)
+	var menus := Menus.new()
+	add_child(menus)
+	menus.started.connect(_on_started)
+	if _autoplay:
+		_on_started()
+	else:
+		menus.show_start()
+
+
+func _on_started() -> void:
 	hud.show_big("Resgate a princesa vermelha!\nTraga-a para o seu castelo.", Color(1, 0.9, 0.5), 3.5)
 	Sfx.start_music()
 
@@ -104,8 +114,6 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("restart"):
 		get_tree().reload_current_scene()
 		return
-	if _time > 12.0 and _time - delta <= 12.0:
-		hud.hide_help()
 	if game_over:
 		return
 	_spawn_cakes(delta)

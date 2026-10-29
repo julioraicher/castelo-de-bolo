@@ -5,6 +5,8 @@ extends RefCounted
 
 
 static func damage_number(parent: Node, pos: Vector3, text: String, color: Color) -> void:
+	if not Settings.damage_numbers:
+		return
 	var label := Label3D.new()
 	label.text = text
 	label.modulate = color

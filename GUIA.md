@@ -52,7 +52,9 @@ scripts/
   fx/camera_rig.gd        câmera 3/4 com suavização e tremor
   fx/fx.gd                números de dano, faíscas, anel de cura
   ui/hud.gd               placar, vida, dicas, tela de vitória
-  autoload/config.gd      carrega o config e registra as teclas
+  ui/menus.gd             tela inicial e menu de pausa (Controles/Configurações)
+  autoload/config.gd      carrega o config, registra as teclas e a lista CONTROLS
+  autoload/settings.gd    preferências do jogador (volume, dificuldade...), salvas em disco
   autoload/sfx.gd         toca sons
   data/*.gd               definem os campos dos arquivos .tres
 tools/gerar_sons.py       sintetiza todos os sons e a música (Python puro)
@@ -75,9 +77,10 @@ online, no futuro, é trocar só o cérebro.
 | Partida mais longa | `config/game_config.tres` | `score_to_win` |
 | Bolo engordar mais | `config/game_config.tres` | `fat_per_cake`, `fat_slowdown` |
 | Mais/menos soldados | `config/game_config.tres` | `units_per_team` |
-| Bots mais fáceis | `config/game_config.tres` | aumente `bot_think_interval` |
+| Bots mais fáceis | `config/game_config.tres` | aumente `bot_think_interval` (ou só use Esc > Configurações > Dificuldade) |
 | Câmera mais longe | `config/game_config.tres` | `camera_offset` |
-| Trocar teclas | `scripts/autoload/config.gd` | `_setup_input()` |
+| Trocar teclas | `scripts/autoload/config.gd` | `_setup_input()` e o texto em `CONTROLS` (aparece no menu e no [CONTROLES.md](CONTROLES.md)) |
+| Nova opção de configuração | `scripts/autoload/settings.gd` + `scripts/ui/menus.gd` | variável + linha em `_settings_form()` |
 | Mapa diferente | `scripts/world/arena.gd` | `_build_middle()` e `_build_castle()` |
 | Classe nova | copie um `.tres` em `config/classes/`, mude os campos, adicione em `GameConfig.hat_classes()` e uma posição em `Arena.hat_spots` |
 | Novo som | `tools/gerar_sons.py` + nome em `Sfx.SOUNDS` |

@@ -14,6 +14,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Config="*res://scripts/autoload/config.gd"
+Settings="*res://scripts/autoload/settings.gd"
 Sfx="*res://scripts/autoload/sfx.gd"
 
 [display]
@@ -42,3 +43,9 @@ renderer/rendering_method.mobile="gl_compatibility"
 renderer/rendering_method.web="gl_compatibility"
 anti_aliasing/quality/msaa_3d=2
 lights_and_shadows/directional_shadow/size=4096
+
+[editor]
+
+; Mantém os .tres como texto no jogo exportado. A conversão para binário
+; perdia a lista visible_meshes das classes (personagens ficavam invisíveis).
+export/convert_text_resources_to_binary=false

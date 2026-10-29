@@ -26,6 +26,8 @@ func snap() -> void:
 
 
 func add_trauma(amount: float) -> void:
+	if not Settings.camera_shake:
+		return
 	_trauma = minf(_trauma + amount, 1.0)
 
 

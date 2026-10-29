@@ -21,9 +21,18 @@ mais devagar anda quem tentar levá-la.
 | Mouse | mirar |
 | Clique esquerdo | atacar |
 | Clique direito / Q | curar (clérigo) |
-| Espaço | esquivar |
+| Espaço / Shift | esquivar |
 | E | pegar/soltar princesa, trocar de chapéu |
+| Esc / P | pausar: controles e configurações |
 | R | reiniciar |
+
+Detalhes, regras e dicas em [CONTROLES.md](CONTROLES.md). Volume, dificuldade,
+tela cheia e tremor de câmera ficam no menu **Esc > Configurações** e são
+salvos para a próxima vez.
+
+**Primeira abertura no navegador demora uns segundos:** o navegador baixa o
+motor do jogo e os modelos 3D (algumas dezenas de MB) uma vez. Depois fica em cache e abre rápido. A versão
+.exe abre na hora.
 
 ## Para quem vai mexer no código
 

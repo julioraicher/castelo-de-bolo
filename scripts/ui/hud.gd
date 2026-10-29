@@ -77,8 +77,9 @@ func _ready() -> void:
 	root.add_child(_hint)
 
 	# Ajuda de controles (canto superior esquerdo).
-	_help = _label("WASD andar · Mouse mirar · Clique atacar\nBotão direito/Q curar (clérigo) · Espaço esquivar\nE pegar/soltar princesa e trocar chapéu · R reiniciar", 16, Color(1, 1, 1, 0.8))
-	_help.position = Vector2(18, 14)
+	_help = _label("Esc: pausar · controles · configurações", 17, Color(1, 1, 1, 0.9))
+	_help.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_help.position = Vector2(-380, -44)
 	root.add_child(_help)
 
 	# Mensagem grande (centro).
@@ -123,10 +124,6 @@ func update_state(game: Game) -> void:
 
 func set_hint(text: String) -> void:
 	_hint.text = text
-
-
-func hide_help() -> void:
-	create_tween().tween_property(_help, "modulate:a", 0.25, 1.0)
 
 
 func show_big(text: String, color := Color.WHITE, duration := 2.2) -> void:
