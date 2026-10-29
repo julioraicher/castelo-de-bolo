@@ -49,6 +49,11 @@ Caminhos para chegar no modelo, do mais barato ao mais livre:
 - **C. Modelo novo** (Blender ou gerador image-to-3D): decimar para o
   orçamento, riggar no mesmo esqueleto, conferir a licença.
 
+Gerar a prancha (corpo KayKit + peças primitivas + shader toon com cor do time):
+`tools/prancha_personagens.gd` (comando no topo do arquivo). As peças de cada
+classe ficam nas funções `_pecas_*`; shaders em `assets/shaders/toon_time.gdshader`
+(pele fica, cinza vira aço, resto vira cor do time) e `contorno.gdshader`.
+
 Import: `.glb` em `assets/characters/`, `.tres` novo em `config/classes/`,
 conferir tris, draw calls e cor do time.
 
@@ -58,3 +63,4 @@ conferir tris, draw calls e cor do time.
 |---|---|
 | 2026-10-29 | Frente de visual separada. |
 | 2026-10-29 | Sem Gemini: referências saem de modelos por código + prancha de prints aqui. Estilo espera a conversa de identidade visual. |
+| 2026-10-29 | Prancha 1 (caminho A+B): Samurai (kabuto com chifres, katana neon), Ninja (faixa magenta, shuriken), Monge (kasa de palha, contas, chi verde), Armadilheiro (óculos, mochila com estrepes, mina). Roupa toda na cor do time. Aguardando pitaco. |
