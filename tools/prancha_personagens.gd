@@ -43,6 +43,20 @@ var MUNDOS := [
 
 ## Quais mundos entram na prancha (índice em MUNDOS) e a escala da cabeça de cada
 ## fileira. Passe na linha de comando: -- DIR 0:1.0,0:0.85
+## Variações ninja de cada papel (índices 3 e 4 em MUNDOS; o 0 é a primeira versão).
+const _NINJA_B := {"nome": "Ninja B", "classes": [
+	{"nome": "Ronin Oni", "glb": "Barbarian", "anim": "2H_Melee_Idle", "partes": ["Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight"], "pecas": "_ronin_oni"},
+	{"nome": "Arqueiro Yumi", "glb": "Rogue_Hooded", "anim": "2H_Ranged_Aiming", "partes": ["Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head_Hooded", "Rogue_LegLeft", "Rogue_LegRight"], "pecas": "_arqueiro_yumi"},
+	{"nome": "Onmyoji", "glb": "Mage", "anim": "Spellcasting", "partes": ["Mage_ArmLeft", "Mage_ArmRight", "Mage_Body", "Mage_Head", "Mage_LegLeft", "Mage_LegRight"], "pecas": "_onmyoji"},
+	{"nome": "Mestre da Pólvora", "glb": "Barbarian", "anim": "Idle", "partes": ["Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight"], "pecas": "_polvora"},
+]}
+const _NINJA_C := {"nome": "Ninja C", "classes": [
+	{"nome": "Lâmina Dupla", "glb": "Rogue", "anim": "Idle", "partes": ["Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head", "Rogue_LegLeft", "Rogue_LegRight"], "pecas": "_lamina_dupla"},
+	{"nome": "Bombas de Fumaça", "glb": "Rogue", "anim": "1H_Ranged_Aiming", "partes": ["Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head", "Rogue_LegLeft", "Rogue_LegRight"], "pecas": "_fumaca"},
+	{"nome": "Kitsune", "glb": "Mage", "anim": "Spellcast_Raise", "partes": ["Mage_ArmLeft", "Mage_ArmRight", "Mage_Body", "Mage_Head", "Mage_LegLeft", "Mage_LegRight"], "pecas": "_kitsune"},
+	{"nome": "Carpinteiro", "glb": "Knight", "anim": "Idle", "partes": ["Knight_ArmLeft", "Knight_ArmRight", "Knight_Body", "Knight_Head", "Knight_LegLeft", "Knight_LegRight"], "pecas": "_carpinteiro"},
+]}
+
 var fileiras := [[0, 1.0], [1, 1.0], [2, 1.0]]
 
 var dir := "user://prancha"
@@ -58,6 +72,8 @@ func _init() -> void:
 		for f in args[1].split(","):
 			fileiras.append([int(f.get_slice(":", 0)), float(f.get_slice(":", 1))])
 	DirAccess.make_dir_recursive_absolute(dir)
+	MUNDOS.append(_NINJA_B)
+	MUNDOS.append(_NINJA_C)
 	_montar()
 
 func _montar() -> void:
@@ -134,7 +150,7 @@ func _ambiente() -> void:
 	neon.rotation_degrees = Vector3(-15, 200, 0)
 	cena.add_child(neon)
 	# Chão de pedra escura, com uma faixa de neon como referência de escala
-	for x in [0.0, 100.0, 200.0, 1000.0, 1100.0, 1200.0]:
+	for x in [0.0, 100.0, 200.0, 300.0, 1000.0, 1100.0, 1200.0, 1300.0]:
 		var chao := MeshInstance3D.new()
 		var pm := PlaneMesh.new()
 		pm.size = Vector2(60, 30)
@@ -240,6 +256,133 @@ func _armadilheiro(sk: Skeleton3D, time: Color) -> void:
 	var mao_l := _osso(sk, "handslot.l")
 	_peca(mao_l, _caixa(Vector3(0.08, 0.7, 0.08)), Vector3(0, 0.3, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.6, 0.65, 0.75)))
 	_peca(mao_l, _caixa(Vector3(0.25, 0.1, 0.1)), Vector3(0, 0.68, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.6, 0.65, 0.75)))
+
+# --- Ninja: variações B e C -----------------------------------------------
+
+func _ronin_oni(sk: Skeleton3D, time: Color) -> void:
+	var cab := _osso(sk, "head")
+	# Máscara oni vermelho-escura com chifres de osso e presas
+	_peca(cab, _esfera(0.5, 0.4), Vector3(0, 0.5, 0.25), Vector3.ZERO, Vector3(1.0, 0.9, 0.7), _plano(Color(0.55, 0.06, 0.08)))
+	for s in [-1, 1]:
+		_peca(cab, _cone(0.1, 0.5), Vector3(0.3 * s, 1.0, 0.15), Vector3(0, 0, -25 * s), Vector3.ONE, _plano(Color(0.92, 0.88, 0.75)))
+		_peca(cab, _cone(0.05, 0.16), Vector3(0.15 * s, 0.28, 0.58), Vector3(180, 0, 0), Vector3.ONE, _plano(Color(0.95, 0.93, 0.85)))
+		_peca(cab, _esfera(0.06, 0.04), Vector3(0.17 * s, 0.62, 0.6), Vector3.ZERO, Vector3.ONE, _neon(OURO, 2.5))
+	# Juba selvagem
+	for i in 6:
+		var a := PI * (0.15 + 0.7 * i / 5.0)
+		_peca(cab, _cone(0.14, 0.5), Vector3(cos(a) * 0.5, 0.75 + sin(a) * 0.15, -0.3), Vector3(-60, 0, -cos(a) * 70), Vector3.ONE, _plano(Color(0.06, 0.05, 0.08)))
+	# Kanabo: clava grossa com cravos
+	var mao := _osso(sk, "handslot.r")
+	_peca(mao, _cilindro(0.17, 0.07, 1.4), Vector3(0, 0.75, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.12, 0.1, 0.1)))
+	for i in 6:
+		var a := TAU * i / 6.0
+		_peca(mao, _cone(0.04, 0.12), Vector3(cos(a) * 0.15, 0.9 + (i % 2) * 0.3, sin(a) * 0.15), Vector3(sin(a) * 90, 0, -cos(a) * 90), Vector3.ONE, _neon(OURO, 1.4))
+
+func _arqueiro_yumi(sk: Skeleton3D, time: Color) -> void:
+	var cab := _osso(sk, "head")
+	_peca(cab, _cilindro(0.56, 0.56, 0.09), Vector3(0, 0.78, 0.0), Vector3(-6, 0, 0), Vector3.ONE, _neon(time.lightened(0.25), 1.6))
+	# Yumi: arco alto e assimétrico (três segmentos) com corda de neon
+	var mao := _osso(sk, "handslot.l")
+	_peca(mao, _caixa(Vector3(0.06, 1.3, 0.06)), Vector3(0, 0.55, 0.1), Vector3(0, 0, -12), Vector3.ONE, _plano(Color(0.15, 0.1, 0.08)))
+	_peca(mao, _caixa(Vector3(0.06, 0.8, 0.06)), Vector3(0, -0.45, 0.1), Vector3(0, 0, 14), Vector3.ONE, _plano(Color(0.15, 0.1, 0.08)))
+	_peca(mao, _caixa(Vector3(0.015, 2.1, 0.015)), Vector3(0.2, 0.15, 0.1), Vector3.ZERO, Vector3.ONE, _neon(CIANO, 2.0))
+	# Aljava nas costas com penas na cor do time
+	var peito := _osso(sk, "chest")
+	_peca(peito, _cilindro(0.16, 0.13, 0.85), Vector3(0.15, 0.45, -0.45), Vector3(0, 0, -25), Vector3.ONE, _plano(Color(0.15, 0.1, 0.08)))
+	for i in 3:
+		_peca(peito, _cone(0.06, 0.2), Vector3(0.32 + i * 0.06, 0.92 - i * 0.03, -0.45), Vector3(0, 0, -25), Vector3.ONE, _neon(time.lightened(0.3), 1.4))
+
+func _onmyoji(sk: Skeleton3D, time: Color) -> void:
+	var cab := _osso(sk, "head")
+	# Eboshi: chapéu alto e preto, inclinado para trás
+	_peca(cab, _cilindro(0.28, 0.42, 0.9), Vector3(0, 1.15, -0.15), Vector3(-15, 0, 0), Vector3(1, 1, 0.7), _plano(Color(0.04, 0.04, 0.07)))
+	# Talismãs de papel (ofuda) flutuando em volta
+	var peito := _osso(sk, "chest")
+	for i in 5:
+		var a := TAU * i / 5.0
+		_peca(peito, _caixa(Vector3(0.16, 0.36, 0.01)), Vector3(cos(a) * 0.85, 0.6 + 0.15 * sin(a * 2.0), sin(a) * 0.85), Vector3(0, -rad_to_deg(a) + 90, 0), Vector3.ONE, _neon(Color(0.9, 0.95, 1.0), 1.3))
+	# Leque na mão
+	var mao := _osso(sk, "handslot.r")
+	_peca(mao, _cilindro(0.45, 0.45, 0.02), Vector3(0, 0.35, 0), Vector3(90, 0, 0), Vector3(1, 1, 1), _plano(time.lightened(0.2)))
+
+func _polvora(sk: Skeleton3D, time: Color) -> void:
+	var cab := _osso(sk, "head")
+	for s in [-1, 1]:
+		_peca(cab, _cilindro(0.13, 0.13, 0.12), Vector3(0.2 * s, 0.62, 0.45), Vector3(90, 0, 0), Vector3.ONE, _neon(FOGO, 1.8))
+	_peca(cab, _cilindro(0.58, 0.6, 0.12), Vector3(0, 0.66, 0), Vector3.ZERO, Vector3.ONE, _plano(time.darkened(0.3)))
+	# Barril de pólvora nas costas com cintas e pavio aceso
+	var peito := _osso(sk, "chest")
+	_peca(peito, _cilindro(0.38, 0.38, 0.85), Vector3(0, 0.45, -0.55), Vector3.ZERO, Vector3.ONE, _plano(Color(0.42, 0.26, 0.13)))
+	for y in [0.15, 0.75]:
+		_peca(peito, _cilindro(0.4, 0.4, 0.06), Vector3(0, y, -0.55), Vector3.ZERO, Vector3.ONE, _plano(Color(0.15, 0.15, 0.18)))
+	_peca(peito, _cilindro(0.02, 0.02, 0.3), Vector3(0, 0.98, -0.55), Vector3(0, 0, 20), Vector3.ONE, _plano(Color(0.2, 0.2, 0.2)))
+	_peca(peito, _esfera(0.07, 0.07), Vector3(0.05, 1.12, -0.55), Vector3.ZERO, Vector3.ONE, _neon(FOGO, 3.0))
+	# Bomba redonda na mão
+	var mao := _osso(sk, "handslot.r")
+	_peca(mao, _esfera(0.25, 0.25), Vector3(0, 0.2, 0.15), Vector3.ZERO, Vector3.ONE, _plano(Color(0.06, 0.06, 0.09)))
+	_peca(mao, _esfera(0.06, 0.06), Vector3(0, 0.5, 0.15), Vector3.ZERO, Vector3.ONE, _neon(FOGO, 3.0))
+
+func _lamina_dupla(sk: Skeleton3D, time: Color) -> void:
+	var cab := _osso(sk, "head")
+	# Meia-máscara escura + cachecol longo de neon esvoaçando
+	_peca(cab, _esfera(0.5, 0.3), Vector3(0, 0.38, 0.12), Vector3.ZERO, Vector3(1.0, 0.55, 0.95), _plano(Color(0.07, 0.07, 0.12)))
+	var peito := _osso(sk, "chest")
+	_peca(peito, _cilindro(0.38, 0.4, 0.18), Vector3(0, 0.75, 0), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.25), 1.4))
+	for i in 2:
+		_peca(peito, _caixa(Vector3(0.18, 0.9, 0.04)), Vector3(-0.15 + i * 0.3, 0.45, -0.6 - i * 0.1), Vector3(60 - i * 15, 0, -10 + i * 25), Vector3.ONE, _neon(time.lightened(0.25), 1.4))
+	# Duas kodachi (lâminas curtas) de neon
+	for lado in ["handslot.l", "handslot.r"]:
+		var m := _osso(sk, lado)
+		_peca(m, _caixa(Vector3(0.05, 0.85, 0.1)), Vector3(0, 0.6, 0), Vector3.ZERO, Vector3.ONE, _neon(CIANO, 2.2))
+		_peca(m, _cilindro(0.04, 0.04, 0.25), Vector3(0, 0.05, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.1, 0.1, 0.12)))
+
+func _fumaca(sk: Skeleton3D, time: Color) -> void:
+	var cab := _osso(sk, "head")
+	# Máscara de pano com olhos de neon + capuz curto
+	_peca(cab, _esfera(0.62, 0.55), Vector3(0, 0.62, -0.05), Vector3.ZERO, Vector3(1, 1, 1), _plano(Color(0.07, 0.07, 0.12)))
+	for s in [-1, 1]:
+		_peca(cab, _caixa(Vector3(0.16, 0.05, 0.02)), Vector3(0.18 * s, 0.66, 0.6), Vector3(0, 0, 8 * s), Vector3.ONE, _neon(time.lightened(0.35), 2.2))
+	# Cinturão de bombas de fumaça + nuvem saindo da mão
+	var peito := _osso(sk, "chest")
+	for i in 5:
+		var a := PI * (0.15 + 0.7 * i / 4.0)
+		_peca(peito, _esfera(0.11, 0.11), Vector3(cos(a) * 0.48, -0.12, sin(a) * 0.4), Vector3.ZERO, Vector3.ONE, _plano(Color(0.75, 0.78, 0.85)))
+	var mao := _osso(sk, "handslot.r")
+	_peca(mao, _esfera(0.15, 0.15), Vector3(0, 0.15, 0.1), Vector3.ZERO, Vector3.ONE, _plano(Color(0.75, 0.78, 0.85)))
+	for i in 3:
+		_peca(mao, _esfera(0.2 + i * 0.07, 0.18 + i * 0.06), Vector3(0.1 * i, 0.45 + i * 0.25, 0.1), Vector3.ZERO, Vector3.ONE, _neon(Color(0.55, 0.5, 0.7), 0.8))
+
+func _kitsune(sk: Skeleton3D, time: Color) -> void:
+	var cab := _osso(sk, "head")
+	# Máscara de raposa branca com marcas vermelhas e orelhas
+	_peca(cab, _esfera(0.45, 0.38), Vector3(0, 0.55, 0.3), Vector3.ZERO, Vector3(1, 1, 0.75), _plano(Color(0.95, 0.94, 0.9)))
+	_peca(cab, _cone(0.16, 0.35), Vector3(0, 0.45, 0.65), Vector3(90, 0, 0), Vector3.ONE, _plano(Color(0.95, 0.94, 0.9)))
+	for s in [-1, 1]:
+		_peca(cab, _cone(0.15, 0.4), Vector3(0.3 * s, 1.05, 0.15), Vector3(0, 0, -15 * s), Vector3.ONE, _plano(Color(0.95, 0.94, 0.9)))
+		_peca(cab, _caixa(Vector3(0.18, 0.04, 0.02)), Vector3(0.17 * s, 0.68, 0.64), Vector3(0, 0, -20 * s), Vector3.ONE, _neon(Color(1.0, 0.15, 0.2), 1.6))
+	# Fogo de raposa (kitsunebi): chamas azuladas orbitando
+	var peito := _osso(sk, "chest")
+	for i in 4:
+		var a := TAU * i / 4.0 + 0.4
+		var p := Vector3(cos(a) * 0.8, 0.7 + 0.2 * (i % 2), sin(a) * 0.8)
+		_peca(peito, _esfera(0.12, 0.14), p, Vector3.ZERO, Vector3.ONE, _neon(CIANO, 2.4))
+		_peca(peito, _cone(0.1, 0.3), p + Vector3(0, 0.2, 0), Vector3.ZERO, Vector3.ONE, _neon(CIANO, 1.6))
+
+func _carpinteiro(sk: Skeleton3D, time: Color) -> void:
+	var cab := _osso(sk, "head")
+	# Hachimaki (faixa) com nó + toalha no pescoço
+	_peca(cab, _cilindro(0.56, 0.56, 0.1), Vector3(0, 0.75, 0), Vector3(-6, 0, 0), Vector3.ONE, _neon(time.lightened(0.25), 1.5))
+	_peca(cab, _esfera(0.1, 0.1), Vector3(0, 0.78, -0.56), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.25), 1.5))
+	# Prancha de madeira nas costas + cinto de ferramentas
+	var peito := _osso(sk, "chest")
+	_peca(peito, _caixa(Vector3(0.28, 1.5, 0.08)), Vector3(0.1, 0.4, -0.45), Vector3(0, 0, 25), Vector3.ONE, _plano(Color(0.7, 0.52, 0.3)))
+	for i in 3:
+		_peca(peito, _caixa(Vector3(0.14, 0.18, 0.1)), Vector3(-0.3 + i * 0.3, -0.12, 0.42), Vector3.ZERO, Vector3.ONE, _plano(Color(0.35, 0.22, 0.12)))
+	# Kizuchi: marreta grande de madeira
+	var mao := _osso(sk, "handslot.r")
+	_peca(mao, _cilindro(0.04, 0.04, 1.0), Vector3(0, 0.4, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.45, 0.3, 0.15)))
+	_peca(mao, _cilindro(0.2, 0.2, 0.55), Vector3(0, 0.95, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.7, 0.52, 0.3)))
+	_peca(mao, _cilindro(0.21, 0.21, 0.05), Vector3(0.25, 0.95, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.15, 0.15, 0.18)))
 
 # --- Festival Infernal ----------------------------------------------------
 
