@@ -60,8 +60,13 @@ func clamp_to_arena(p: Vector3) -> Vector3:
 
 # --- Ambiente -----------------------------------------------------------------
 
+var _sun: DirectionalLight3D
+var _env: Environment
+
+
 func _build_environment() -> void:
 	var sun := DirectionalLight3D.new()
+	_sun = sun
 	sun.name = "Sol"
 	sun.rotation_degrees = Vector3(-52, -35, 0)
 	sun.light_color = Color(1.0, 0.95, 0.85)
@@ -96,6 +101,29 @@ func _build_environment() -> void:
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
+	_env = env
+	_apply_quality()
+	Settings.changed.connect(_apply_quality)
+
+
+## Qualidade gráfica (Esc > Configurações). O que mais pesa no navegador são
+## as sombras: com 4 divisões (PSSM) cada objeto é desenhado até 4 vezes a
+## mais no mapa de sombra.
+func _apply_quality() -> void:
+	match Settings.quality:
+		0:  # Baixa
+			_sun.shadow_enabled = false
+			_env.glow_enabled = false
+		1:  # Média
+			_sun.shadow_enabled = true
+			_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+			_sun.directional_shadow_max_distance = 55.0
+			_env.glow_enabled = true
+		_:  # Alta
+			_sun.shadow_enabled = true
+			_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+			_sun.directional_shadow_max_distance = 80.0
+			_env.glow_enabled = true
 
 
 func _build_ground() -> void:

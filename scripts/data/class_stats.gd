@@ -27,6 +27,7 @@ extends Resource
 ## Abertura do golpe corpo a corpo, em graus.
 @export var attack_arc_deg := 110.0
 @export var attack_cooldown := 0.8
+## Velocidade do empurrão no alvo (m/s). Distância empurrada = v²/80 (8 -> 0,8 m).
 @export var knockback := 6.0
 @export var projectile_speed := 30.0
 @export_group("Cura (clérigo)")

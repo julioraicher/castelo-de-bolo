@@ -15,6 +15,7 @@ const ACCEL := 70.0
 const DODGE_SPEED := 17.0
 const DODGE_TIME := 0.24
 const DODGE_COOLDOWN := 0.9
+const KNOCK_DECAY := 40.0  # m/s² de "freada" do empurrão: distância = v²/(2·KNOCK_DECAY)
 const LOOPING_ANIMS := ["Idle", "Running_A", "Running_B", "Walking_A", "Walking_B", "Sit_Floor_Idle", "Cheer", "2H_Melee_Idle", "Spellcasting", "1H_Ranged_Aiming"]
 
 var game: Game
@@ -48,7 +49,8 @@ var _heal_cd := 0.0
 var _dodge_cd := 0.0
 var _dodge_t := 0.0
 var _dodge_dir := Vector3.ZERO
-var _knock := Vector3.ZERO
+var _knock := Vector3.ZERO      # velocidade do empurrão (separada da caminhada)
+var _move_vel := Vector3.ZERO   # velocidade da caminhada/esquiva
 var _flash_t := 0.0
 var _respawn_t := 0.0
 var _hp_root: Node3D
@@ -164,18 +166,20 @@ func _physics_process(delta: float) -> void:
 		_start_dodge()
 	wants_dodge = false
 
-	var horizontal := Vector3(velocity.x, 0, velocity.z)
 	if _dodge_t > 0.0:
 		_dodge_t -= delta
-		horizontal = _dodge_dir * DODGE_SPEED
+		_move_vel = _dodge_dir * DODGE_SPEED
 	else:
 		var speed := current_speed()
 		if _anim_lock > 0.0:
 			speed *= 0.55  # anda mais devagar enquanto ataca
 		var target := move_intent.limit_length(1.0) * speed + _separation() * 3.0
-		horizontal = horizontal.move_toward(target, ACCEL * delta)
-	horizontal += _knock
-	_knock = _knock.move_toward(Vector3.ZERO, 30.0 * delta)
+		_move_vel = _move_vel.move_toward(target, ACCEL * delta)
+	# O empurrão entra só na velocidade final. Antes ele era somado à própria
+	# velocidade do quadro anterior, ou seja, integrado de novo a cada quadro:
+	# um golpe de guerreiro jogava o alvo ~45 m em vez de ~1 m.
+	var horizontal := _move_vel + _knock
+	_knock = _knock.move_toward(Vector3.ZERO, KNOCK_DECAY * delta)
 
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
@@ -321,6 +325,7 @@ func _respawn() -> void:
 	global_position = game.arena.random_spawn(team)
 	velocity = Vector3.ZERO
 	_knock = Vector3.ZERO
+	_move_vel = Vector3.ZERO
 	set_class(Config.cfg.villager)  # quem morre perde o chapéu
 	Fx.ring(game, global_position, Config.team_color(team), 2.0)
 

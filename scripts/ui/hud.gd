@@ -12,6 +12,7 @@ var _hp_bar: ProgressBar
 var _hint: Label
 var _big: Label
 var _help: Label
+var _fps: Label
 var _end_panel: PanelContainer
 var _end_label: Label
 var _big_tween: Tween
@@ -82,6 +83,11 @@ func _ready() -> void:
 	_help.position = Vector2(-380, -44)
 	root.add_child(_help)
 
+	# Contador de FPS (Esc > Configurações > Mostrar FPS).
+	_fps = _label("", 17, Color(1, 1, 0.6))
+	_fps.position = Vector2(16, 14)
+	root.add_child(_fps)
+
 	# Mensagem grande (centro).
 	_big = _label("", 52, Color.WHITE)
 	_big.set_anchors_preset(Control.PRESET_CENTER)
@@ -103,6 +109,12 @@ func _ready() -> void:
 	_end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_end_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_end_panel.add_child(_end_label)
+
+
+func _process(_delta: float) -> void:
+	_fps.visible = Settings.show_fps
+	if _fps.visible:
+		_fps.text = "%d FPS · %.1f ms" % [Engine.get_frames_per_second(), 1000.0 / maxf(Engine.get_frames_per_second(), 1.0)]
 
 
 func update_state(game: Game) -> void:

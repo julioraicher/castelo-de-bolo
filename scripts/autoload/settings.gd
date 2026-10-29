@@ -7,6 +7,8 @@ signal changed
 
 const PATH := "user://configuracoes.cfg"
 const DIFFICULTIES := ["Fácil", "Normal", "Difícil"]
+const QUALITIES := ["Baixa", "Média", "Alta"]
+const KEYS := ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty", "quality", "show_fps"]
 
 var music_volume := 0.6      # 0..1
 var sfx_volume := 0.9        # 0..1
@@ -14,6 +16,9 @@ var fullscreen := false
 var camera_shake := true
 var damage_numbers := true
 var difficulty := 1          # índice em DIFFICULTIES
+## Índice em QUALITIES. No navegador começa em Média (WebGL é mais lento).
+var quality := 1 if OS.get_name() == "Web" else 2
+var show_fps := false
 
 
 func _ready() -> void:
@@ -36,6 +41,7 @@ func bot_damage_mult() -> float:
 func apply() -> void:
 	_set_bus_volume("Musica", music_volume)
 	_set_bus_volume("Efeitos", sfx_volume)
+	_apply_quality_viewport()
 	if OS.get_name() != "Web":
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
 	changed.emit()
@@ -43,7 +49,7 @@ func apply() -> void:
 
 func save() -> void:
 	var f := ConfigFile.new()
-	for key in ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty"]:
+	for key in KEYS:
 		f.set_value("jogo", key, get(key))
 	f.save(PATH)
 
@@ -52,7 +58,7 @@ func _load() -> void:
 	var f := ConfigFile.new()
 	if f.load(PATH) != OK:
 		return
-	for key in ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty"]:
+	for key in KEYS:
 		if f.has_section_key("jogo", key):
 			set(key, f.get_value("jogo", key))
 
@@ -68,3 +74,14 @@ func _set_bus_volume(bus_name: String, linear: float) -> void:
 	var idx := AudioServer.get_bus_index(bus_name)
 	AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(linear, 0.0001)))
 	AudioServer.set_bus_mute(idx, linear <= 0.001)
+
+
+## Parte da qualidade que vale para a janela inteira. Sombras e brilho ficam
+## na Arena, que escuta o sinal `changed`.
+func _apply_quality_viewport() -> void:
+	if not is_inside_tree():
+		return
+	var vp := get_viewport()
+	vp.msaa_3d = Viewport.MSAA_2X if quality == 2 else Viewport.MSAA_DISABLED
+	# Renderiza o 3D em 75% da resolução e amplia: ~44% menos pixels para pintar.
+	vp.scaling_3d_scale = 0.75 if quality == 0 else 1.0

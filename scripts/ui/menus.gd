@@ -157,6 +157,20 @@ func _settings_form() -> GridContainer:
 		Settings.apply())
 	grid.add_child(diff)
 
+	grid.add_child(_text("Qualidade gráfica", 19, Color.WHITE, false))
+	var qual := OptionButton.new()
+	for q in Settings.QUALITIES:
+		qual.add_item(q)
+	qual.selected = Settings.quality
+	qual.item_selected.connect(func(i: int):
+		Settings.quality = i
+		Settings.apply())
+	grid.add_child(qual)
+	grid.add_child(_text("Mostrar FPS", 19, Color.WHITE, false))
+	grid.add_child(_check(Settings.show_fps, func(on: bool):
+		Settings.show_fps = on
+		Settings.apply()))
+
 	if OS.get_name() != "Web":
 		grid.add_child(_text("Tela cheia", 19, Color.WHITE, false))
 		grid.add_child(_check(Settings.fullscreen, func(on: bool):
