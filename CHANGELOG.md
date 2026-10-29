@@ -3,6 +3,38 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 20 (2026-10-29), frente Visual: cara de Fat Princess original e mapa único
+- Pedido do Julio: chegar mais perto do visual do Fat Princess original (PS3,
+  colorido, de dia, grama viva com flores) e menos do Adventures (PS4);
+  um mapa só por enquanto, menos apertado; poderes no chão mais claros e
+  nada de círculo simples.
+- Tema novo **Festival ao Sol (dia)**, agora o padrão (`config/temas/dia.tres`,
+  modelos em `assets/ninja/dia/`, paleta "dia" em `tools/gerar_cenario_ninja.gd`):
+  céu azul, sol quente, grama verde-viva, telhados laranja, água azul, árvores
+  redondas verdes e tufos de tulipas de desenho (`flores.scn`, `flores_b.scn`).
+  Floresta Oni e Templo ao Luar continuam em Configurações > Tema.
+- Mapa único: só o Rio das Lanternas (`game_config.maps`). A segunda fileira de
+  casas da vila virou jardim e árvore; ficam a forja e a casa de chá. Mais
+  campo aberto atrás das casas para brigar e fugir.
+- Marcas de poder no chão (`scripts/fx/marca_chao.gd`, `MarcaChao`): um shader
+  desenha o símbolo de cada poder de área, com um aro fino na cor do time e a
+  borda que **esvazia como um relógio** até o poder acabar:
+  - Bombas de Fumaça: borda de pincel de tinta e manchas de tinta girando.
+  - Selo (Onmyoji): estrela de 5 pontas e anel de "escrita" correndo.
+  - Kitsune: língua de fogo-raposa na borda e 3 caudas girando dentro.
+  - Chuva de Flechas: sombras das flechas chegando, borda tracejada e 4 setas
+    apontando para dentro (piscam no aviso antes da chuva).
+- Personagens: a faixa de sombra do toon ficou mais clara (0,25 → 0,4), cara
+  de desenho animado de dia.
+- Outras frentes: `area_effect.gd` e `arrow_rain.gd` trocam o disco + anel pela
+  `MarcaChao` (só visual; dano, raio e duração iguais).
+- **O que testar**:
+  1. O tema de dia lembra mais o Fat Princess original? Cores, grama, flores.
+  2. Os poderes de área (fumaça, selo, kitsune, chuva de flechas): dá para ver
+     a área, de quem é e quanto tempo falta?
+  3. O mapa ficou menos apertado atrás das casas?
+  4. FPS no tema de dia comparado com o de noite.
+
 ## Rodada 19 (2026-10-29), frente Jogabilidade: medir e aliviar o desempenho
 - Pedido do Julio: deixar o jogo mais leve. Primeiro medir: flag nova
   `--perf=N` (qualidade N, sem a automática) imprime a cada 5 s FPS, ms de CPU

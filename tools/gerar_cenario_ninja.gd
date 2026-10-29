@@ -7,6 +7,18 @@ extends SceneTree
 ## Mudou cor, forma ou posição? Edite aqui e rode de novo.
 
 const TEMAS := {
+	"dia": {
+		"pedra": Color(0.66, 0.63, 0.6), "pedra2": Color(0.52, 0.5, 0.5), "musgo": Color(0.32, 0.62, 0.2),
+		"madeira": Color(0.56, 0.32, 0.15), "madeira2": Color(0.82, 0.55, 0.26), "reboco": Color(1.0, 0.95, 0.84),
+		"telhado": Color(0.86, 0.42, 0.2), "folha": Color(0.26, 0.68, 0.18), "folha2": Color(0.46, 0.82, 0.26),
+		"tronco": Color(0.48, 0.3, 0.16), "bambu": Color(0.46, 0.76, 0.28), "capim": Color(0.3, 0.68, 0.16),
+		"capim2": Color(0.48, 0.8, 0.22), "torii": Color(0.95, 0.24, 0.14), "chao_folha": Color(1.0, 0.86, 0.22),
+		"chao_folha2": Color(1.0, 0.58, 0.72), "agua": Color(0.18, 0.55, 0.9), "corda": Color(0.92, 0.82, 0.55),
+		"montanha": Color(0.34, 0.56, 0.36), "neve": Color(0.96, 0.98, 1.0),
+		"luz1": Color(1.0, 0.86, 0.4), "luz2": Color(1.0, 0.52, 0.32), "papel": Color(1.0, 0.92, 0.7),
+		"ouro": Color(1.0, 0.8, 0.3), "branco": Color(1.0, 1.0, 0.96),
+		"arvore": "sakura",
+	},
 	"oni": {
 		"pedra": Color(0.44, 0.42, 0.5), "pedra2": Color(0.32, 0.3, 0.38), "musgo": Color(0.16, 0.3, 0.22),
 		"madeira": Color(0.24, 0.14, 0.13), "madeira2": Color(0.4, 0.26, 0.18), "reboco": Color(0.72, 0.7, 0.78),
@@ -99,6 +111,8 @@ func _gerar_modelos() -> void:
 	_cogumelos(); _salvar("cogumelos")
 	_lajota(); _salvar("lajota")
 	_broto(); _salvar("broto")
+	_flores(0); _salvar("flores")
+	_flores(1); _salvar("flores_b")
 	_lanterna_chao(); _salvar("lanterna_chao")
 
 
@@ -485,6 +499,18 @@ func _broto() -> void:
 		_esfera(0.25, Vector3(0.3, 0.16, 0.1), Vector3(1, 0.7, 1), Color(0.22, 0.42, 0.3), false, 6, 3)
 
 
+
+## Tufo de flores de desenho animado (tulipas grandes, cores puras).
+func _flores(v: int) -> void:
+	var cores := [Color(0.95, 0.14, 0.12), Color(0.18, 0.38, 1.0)] if v == 0 else [Color(1.0, 0.84, 0.12), Color(1.0, 1.0, 0.95)]
+	for k in 3:
+		var a := k * 2.3 + v
+		var p := Vector3(cos(a), 0, sin(a)) * (0.08 + 0.17 * (k % 3))
+		var h := 0.3 + 0.1 * (k % 2)
+		_cil(0.018, 0.024, h, 3, p + Vector3(0, h / 2, 0), Vector3.ZERO, P.capim)
+		_esfera(0.12, p + Vector3(0, h + 0.05, 0), Vector3(1, 1.25, 1), cores[k % 2], false, 5, 2)
+		_caixa(Vector3(0.05, 0.14, 0.012), p + Vector3(0.05, 0.07, 0), Vector3(0, a * 40.0, -30), P.capim2)
+
 func _lanterna_chao() -> void:
 	_caixa(Vector3(0.32, 0.05, 0.32), Vector3(0, 0.03, 0), Vector3.ZERO, P.madeira)
 	_caixa(Vector3(0.26, 0.42, 0.26), Vector3(0, 0.26, 0), Vector3.ZERO, P.papel, true)
@@ -632,6 +658,19 @@ func _gerar_temas() -> void:
 		"decor_estrada": {"lajota.scn": 150, "folhas.scn": 30},
 	}
 	var temas := {
+		"dia": {
+			"display_name": "Festival ao Sol (dia)", "models_dir": "res://assets/ninja/dia",
+			"sun_rotation_deg": Vector3(-55, 30, 0), "sun_color": Color(1.0, 0.95, 0.82), "sun_energy": 1.35,
+			"sky_top": Color(0.2, 0.5, 0.95), "sky_horizon": Color(0.68, 0.86, 1.0),
+			"ground_horizon": Color(0.5, 0.7, 0.85), "ground_bottom": Color(0.2, 0.35, 0.5),
+			"ambient_energy": 1.1, "saturation": 1.25, "contrast": 1.05, "glow_intensity": 0.25,
+			"fog_enabled": false, "fog_color": Color(0.7, 0.85, 1.0), "fog_density": 0.002,
+			"grass_dark": Color(0.3, 0.62, 0.14), "grass_light": Color(0.45, 0.78, 0.2),
+			"road_dark": Color(0.68, 0.6, 0.48), "road_light": Color(0.82, 0.75, 0.6),
+			"pedestal_neutral": Color(0.8, 0.72, 0.55),
+			"decor_campo": {"capim.scn": 520, "flores.scn": 130, "flores_b.scn": 110, "broto.scn": 70, "pedrinhas.scn": 50, "folhas.scn": 60},
+			"particulas": "petalas",
+		},
 		"oni": {
 			"display_name": "Floresta Oni (noite)", "models_dir": "res://assets/ninja/oni",
 			"sun_rotation_deg": Vector3(-50, 35, 0), "sun_color": Color(0.72, 0.8, 1.0), "sun_energy": 1.1,

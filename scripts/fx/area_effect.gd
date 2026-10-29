@@ -30,7 +30,7 @@ func setup(game: Game, owner_unit: Unit, center: Vector3, kind: String, radius: 
 	global_position = center
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado à mão
 	var col := _color()
-	_disc(col)
+	MarcaChao.criar(self, kind, radius, col, Config.team_color(owner_unit.team), duration if kind != "selo" else 1.0)
 	match kind:
 		"nuvem":
 			_mat = Fx.unshaded(Color(0.55, 0.52, 0.68, 0.55), true)
@@ -128,30 +128,6 @@ func _apply_seal() -> void:
 		if d.length() <= _radius:
 			u.take_damage(_value, _owner, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.2)
 			u.silence(_duration)
-
-
-func _disc(col: Color) -> void:
-	var disc := MeshInstance3D.new()
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = _radius
-	cyl.bottom_radius = _radius
-	cyl.height = 0.04
-	cyl.radial_segments = 24
-	disc.mesh = cyl
-	disc.position.y = 0.05
-	disc.material_override = Fx.unshaded(Color(col, 0.25), true)
-	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(disc)
-	var ring := MeshInstance3D.new()
-	var torus := TorusMesh.new()
-	torus.inner_radius = _radius - 0.15
-	torus.outer_radius = _radius
-	ring.mesh = torus
-	ring.scale = Vector3(1, 0.05, 1)
-	ring.position.y = 0.07
-	ring.material_override = Fx.unshaded(Color(col * 1.6, 0.9), true)
-	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(ring)
 
 
 func _part(mesh: Mesh, pos: Vector3, mat: Material) -> MeshInstance3D:

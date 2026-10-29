@@ -1197,10 +1197,6 @@ func _gerar_mapa_rio() -> void:
 		["loja.scn", Vector3(12.5, 0, 9.0), 180.0, Vector3(5.0, 4.4, 4.5)],
 		["casa_b.scn", Vector3(19.0, 0, 9.0), 180.0, Vector3(6.0, 5.0, 5.0)],
 		["armazem.scn", Vector3(27.9, 0, 9.0), 180.0, Vector3(4.5, 4.8, 4.0)],
-		["casa_b.scn", Vector3(13.0, 0, -18.0), 180.0, Vector3(6.0, 5.0, 5.0)],
-		["casa_a.scn", Vector3(28.3, 0, -18.0), 180.0, Vector3(5.0, 4.8, 4.5)],
-		["casa_a.scn", Vector3(12.5, 0, 18.0), 0.0, Vector3(5.0, 4.8, 4.5)],
-		["pousada.scn", Vector3(27.8, 0, 18.0), 0.0, Vector3(6.0, 7.0, 5.0)],
 	]
 	for h in casas:
 		for sx in [1.0, -1.0]:
@@ -1210,6 +1206,12 @@ func _gerar_mapa_rio() -> void:
 			pr.collider_offset = Vector3(0, h[3].y / 2.0, 0)
 			_props.append(pr)
 	_dois_lados(_props, "forja.scn", Vector3(19.6, 0, -18.0), 0.0, "caixa")
+	# Fundos da vila abertos (mapa menos apertado): jardins e árvores no lugar
+	# da segunda fileira de casas.
+	_dois_lados(_props, "jardim.scn", Vector3(12.5, 0, -18.5), 0.0)
+	_dois_lados(_props, "arvore_media.scn", Vector3(28.5, 0, -18.5), -1.0, "cilindro", 1.0, 2.0)
+	_dois_lados(_props, "jardim.scn", Vector3(28.0, 0, 18.5), 180.0)
+	_dois_lados(_props, "arvore_media.scn", Vector3(12.5, 0, 18.5), -1.0, "cilindro", 1.0, 2.0)
 	_dois_lados(_props, "casa_de_cha.scn", Vector3(20.3, 0, 18.0), 0.0, "caixa")
 	for x in [10.5, 16.0, 23.0, 30.5]:
 		for z in [-4.3, 4.3]:

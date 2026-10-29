@@ -22,7 +22,7 @@ var _pulse_t := 0.0
 var _spawn_t := 0.0
 var _arrows: Array[Vector3] = []
 var _mm: MultiMesh
-var _marker_mat: StandardMaterial3D
+var _marker_mat: ShaderMaterial
 
 
 func setup(game: Game, shooter: Unit, center: Vector3, radius: float, damage: float, duration: float) -> void:
@@ -34,22 +34,9 @@ func setup(game: Game, shooter: Unit, center: Vector3, radius: float, damage: fl
 	global_position = center
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado à mão
 
-	# Marca no chão: disco translúcido + anel na cor do time.
+	# Marca no chão (MarcaChao): pisca no aviso, depois o relógio da borda esvazia.
 	var col := Config.team_color(shooter.team)
-	var disc := MeshInstance3D.new()
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = radius
-	cyl.bottom_radius = radius
-	cyl.height = 0.04
-	cyl.radial_segments = 32
-	cyl.rings = 1
-	disc.mesh = cyl
-	_marker_mat = Fx.unshaded(Color(col, 0.2), true)
-	disc.material_override = _marker_mat
-	disc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	disc.position.y = 0.06
-	add_child(disc)
-	Fx.ring(game, center, Color(col, 0.9), radius)
+	_marker_mat = MarcaChao.criar(self, "chuva", radius, col.lightened(0.2), col, duration, WARN)
 
 	var arrow := CylinderMesh.new()
 	arrow.top_radius = 0.07
@@ -72,11 +59,11 @@ func setup(game: Game, shooter: Unit, center: Vector3, radius: float, damage: fl
 func _physics_process(delta: float) -> void:
 	_t += delta
 	if _t < WARN:
-		_marker_mat.albedo_color.a = 0.12 + 0.15 * absf(sin(_t * 18.0))  # pisca: "saia daqui!"
+		_marker_mat.set_shader_parameter("alerta", absf(sin(_t * 18.0)))  # pisca: "saia daqui!"
 		return
 	var raining := _t < WARN + _duration
 	if raining:
-		_marker_mat.albedo_color.a = 0.25
+		_marker_mat.set_shader_parameter("alerta", 0.0)
 		_spawn_t -= delta
 		while _spawn_t <= 0.0 and _arrows.size() < MAX_ARROWS:
 			_spawn_t += SPAWN_EVERY
@@ -89,7 +76,7 @@ func _physics_process(delta: float) -> void:
 			_hit_inside()
 			Sfx.play("shoot", global_position, 0.25)
 	else:
-		_marker_mat.albedo_color.a = maxf(_marker_mat.albedo_color.a - delta, 0.0)
+		_marker_mat.set_shader_parameter("alpha_geral", maxf(1.0 - (_t - WARN - _duration) * 2.0, 0.0))
 		if _arrows.is_empty():
 			queue_free()
 			return

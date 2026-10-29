@@ -40,6 +40,6 @@ void fragment() {
 
 void light() {
 	float ndl = dot(NORMAL, LIGHT);
-	float faixa = mix(0.25, 1.0, smoothstep(0.0, 0.06, ndl));
+	float faixa = mix(0.4, 1.0, smoothstep(0.0, 0.04, ndl));  // sombra clara de desenho animado
 	DIFFUSE_LIGHT += LIGHT_COLOR * ATTENUATION * faixa;
 }
