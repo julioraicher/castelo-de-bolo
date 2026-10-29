@@ -112,6 +112,8 @@ func _hit_inside() -> void:
 		if not u.alive or u.team == _shooter.team:
 			continue
 		var d := u.global_position - global_position
+		if absf(d.y) > 2.5:
+			continue
 		d.y = 0
 		if d.length() <= _radius + 0.5:
 			u.take_damage(_damage, _shooter, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.3)

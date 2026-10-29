@@ -101,6 +101,8 @@ func _physics_process(delta: float) -> void:
 			if not u.alive or u.team == _owner.team:
 				continue
 			var d := u.global_position - global_position
+			if absf(d.y) > 2.5:
+				continue
 			d.y = 0
 			if d.length() <= _radius:
 				u.take_damage(_value, _owner, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.15)
@@ -120,6 +122,8 @@ func _apply_seal() -> void:
 		if not u.alive or u.team == _owner.team:
 			continue
 		var d := u.global_position - global_position
+		if absf(d.y) > 2.5:
+			continue
 		d.y = 0
 		if d.length() <= _radius:
 			u.take_damage(_value, _owner, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.2)

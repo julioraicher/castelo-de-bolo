@@ -538,6 +538,8 @@ func _attack() -> void:
 				if not other.alive or other.team == team:
 					continue
 				var to := other.global_position - global_position
+				if absf(to.y) > 1.8:  # um em cima da muralha, outro embaixo
+					continue
 				to.y = 0
 				if to.length() > stats.attack_range + 0.6:
 					continue
@@ -566,9 +568,10 @@ func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZE
 	p.velocity *= speed_mult
 	var dist := clampf(to.length(), 6.0 if stats.projetil != "bomba" else 3.0, stats.attack_range * 1.4 * speed_mult)
 	if stats.projetil == "shuriken":
-		p.velocity.y = (Projectile.TARGET_HEIGHT - p.position.y) / maxf(dist / p.velocity.length(), 0.1)  # reto, desce até o peito
+		p.velocity.y = (global_position.y + Projectile.TARGET_HEIGHT - p.position.y) / maxf(dist / p.velocity.length(), 0.1)  # reto, na altura do peito
 	else:
-		p.aim_ballistic(dist)
+		var alvo := global_position + to.normalized() * dist
+		p.aim_ballistic(dist, game.arena.ground_y(alvo.x, alvo.z, maxf(global_position.y, aim_point.y) + 3.0))
 
 
 ## Multiplicador de dano de buffs (Fúria, item de dano).
@@ -852,7 +855,7 @@ func _use_power() -> void:
 			var to := aim_point - global_position
 			to.y = 0
 			var center := global_position + to.limit_length(stats.attack_range * 1.4)
-			center.y = 0.0
+			center.y = game.arena.ground_y(center.x, center.z, global_position.y + 3.0)
 			var rain := ArrowRain.new()
 			game.add_child(rain)
 			rain.setup(game, self, center, stats.power_radius, stats.power_value, stats.power_duration)
@@ -900,7 +903,7 @@ func _use_power() -> void:
 			var to := aim_point - global_position
 			to.y = 0
 			var center := global_position + to.limit_length(stats.attack_range)
-			center.y = 0.0
+			center.y = game.arena.ground_y(center.x, center.z, global_position.y + 3.0)
 			var fx := AreaEffect.new()
 			game.add_child(fx)
 			fx.setup(game, self, center, stats.power, stats.power_radius, stats.power_value, stats.power_duration)

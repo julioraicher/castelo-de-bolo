@@ -16,7 +16,7 @@ func setup(game: Game, p_owner: Unit, pos: Vector3) -> void:
 	_game = game
 	owner_unit = p_owner
 	add_to_group("traps")
-	global_position = Vector3(pos.x, 0.0, pos.z)
+	global_position = pos
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # parada; só aparece com tween
 	_mina = p_owner.stats.trap_kind == "mina"
 	if _mina:
@@ -97,6 +97,8 @@ func _physics_process(delta: float) -> void:
 		if not u.alive or u.team == owner_unit.team:
 			continue
 		var d := u.global_position - global_position
+		if absf(d.y) > 1.5:
+			continue
 		d.y = 0
 		if d.length() <= RADIUS:
 			var s := owner_unit.stats
@@ -121,6 +123,8 @@ func _explode() -> void:
 		if not u.alive or u.team == owner_unit.team:
 			continue
 		var d := u.global_position - global_position
+		if absf(d.y) > 1.5:
+			continue
 		d.y = 0
 		if d.length() <= r:
 			u.take_damage(owner_unit.stats.trap_damage, owner_unit, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 1.5)

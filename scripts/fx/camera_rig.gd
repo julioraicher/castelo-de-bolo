@@ -58,6 +58,12 @@ func mouse_ground_point() -> Vector3:
 	var mouse := get_viewport().get_mouse_position()
 	var origin := project_ray_origin(mouse)
 	var dir := project_ray_normal(mouse)
+	# Primeiro o que o mouse aponta de verdade (muralha, ponte, colina)...
+	var q := PhysicsRayQueryParameters3D.create(origin, origin + dir * 300.0, Config.LAYER_WORLD)
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	if not hit.is_empty():
+		return hit.position
+	# ...senão o plano do chão.
 	if absf(dir.y) < 0.001:
 		return target.global_position if target else Vector3.ZERO
 	var t := -origin.y / dir.y

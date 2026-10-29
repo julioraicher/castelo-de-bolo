@@ -70,7 +70,10 @@ extends Resource
 @export_group("Mundo")
 ## Temas disponíveis (Esc > Configurações > Tema). O primeiro é o padrão.
 @export var themes: Array[ThemeConfig] = []
+## Mapa padrão (usado se `maps` estiver vazia).
 @export var map: MapLayout
+## Mapas disponíveis (Esc > Configurações > Mapa). O primeiro é o padrão.
+@export var maps: Array[MapLayout] = []
 
 @export_group("Câmera")
 @export var camera_offset := Vector3(0, 21, 19)

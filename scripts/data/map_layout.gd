@@ -36,6 +36,18 @@ extends Resource
 @export var spawn_max := Vector2(6, 5)
 ## Quanto à frente da muralha os defensores ficam de guarda.
 @export var gate_guard_distance := 3.0
+## Muralha com passarela: altura do caminho em cima (0 = muralha antiga, só bloqueia).
+## As escadas são objetos do pátio com colisor "caixa" inclinado.
+@export var wall_height := 0.0
+@export var wall_thickness := 2.2
+## Mureta do lado de fora da passarela (altura).
+@export var wall_parapet := 1.0
+## Troca os modelos do tema só neste mapa (vazio = usa o do tema). Ex.: muralha
+## alta com passarela no lugar do muro baixo.
+@export var wall_model := ""
+@export var tower_model := ""
+## Altura da bandeira na torre neste mapa (negativo = usa a do tema).
+@export var flag_height := -1.0
 
 @export_group("Objetos")
 ## Objetos de cada pátio (coordenadas locais, aparecem nos dois castelos).

@@ -26,6 +26,7 @@ Os mesmos controles aparecem no jogo: na tela inicial e em **Esc > Controles**.
 | Dificuldade dos inimigos | Fácil: bots vermelhos reagem ~2x mais devagar e batem 30% menos. Difícil: reagem ~30% mais rápido e batem 5% mais |
 | Qualidade gráfica | Alta: sombras completas e antisserrilhado. Média (padrão no navegador): sombras leves. Baixa: sem sombras, 3D em 75% da resolução. Mínima: 3D em 50% |
 | Qualidade automática | se o FPS ficar abaixo de 40 no começo, o jogo baixa a qualidade sozinho |
+| Mapa | Rio das Lanternas (rio com 3 pontes, vila e muralhas andáveis) ou Vale Ninja; o mapa recomeça |
 | Tema do mapa | Floresta Oni ou Templo ao Luar; o mapa recomeça |
 | Mostrar FPS | mostra quadros por segundo no canto superior esquerdo (60 é o ideal) |
 | Tela cheia | também pela tecla F. No navegador, em tela cheia, segure Esc ou aperte F para sair |

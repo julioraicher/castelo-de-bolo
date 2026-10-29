@@ -106,11 +106,11 @@ func _ready() -> void:
 ## Balística: com velocidade horizontal v e distância d, o tempo de voo é
 ## t = d/v. Para cair Δh = h0 − h_alvo nesse tempo sob gravidade g:
 ## vy0 = g·t/2 − Δh/t.
-func aim_ballistic(distance: float) -> void:
+func aim_ballistic(distance: float, chao_alvo := 0.0) -> void:
 	gravity = GRAVITY
 	var vh := Vector3(velocity.x, 0, velocity.z).length()
 	var t := distance / maxf(vh, 0.1)
-	var alvo := 0.0 if kind == "bomba" else TARGET_HEIGHT
+	var alvo := chao_alvo + (0.0 if kind == "bomba" else TARGET_HEIGHT)
 	velocity.y = GRAVITY * t * 0.5 - (position.y - alvo) / t
 	_life = maxf(_life, t * 1.6)
 
@@ -125,7 +125,7 @@ func _physics_process(delta: float) -> void:
 	var to := from + velocity * delta
 	if _spin:
 		_spin.rotate_object_local(Vector3.FORWARD if kind == "shuriken" else Vector3.UP, delta * 25.0)
-	if to.y <= 0.05:
+	if to.y <= -1.0:  # segurança: o chão é colisor, o raio abaixo já pega
 		if kind == "bomba":
 			_explode(Vector3(to.x, 0.0, to.z))
 		else:
@@ -158,7 +158,6 @@ func _physics_process(delta: float) -> void:
 ## Bomba: dano em área, mais forte no centro (cai linearmente até 50% na borda).
 func _explode(at: Vector3) -> void:
 	var r := owner_unit.stats.explosao_raio
-	at.y = 0.0
 	Fx.burst(_game, at + Vector3(0, 0.6, 0), Color(1.0, 0.6, 0.2), 18, 8.0)
 	Fx.burst(_game, at + Vector3(0, 0.4, 0), Color(0.6, 0.6, 0.7), 10, 3.0)
 	Fx.ring(_game, at, Color(1.0, 0.55, 0.15, 0.9), r)
@@ -167,6 +166,8 @@ func _explode(at: Vector3) -> void:
 		if not u.alive or u.team == owner_unit.team:
 			continue
 		var d := u.global_position - at
+		if absf(d.y) > 2.5:  # em cima da muralha / embaixo da ponte
+			continue
 		d.y = 0
 		if d.length() <= r:
 			var f := 1.0 - 0.5 * d.length() / r

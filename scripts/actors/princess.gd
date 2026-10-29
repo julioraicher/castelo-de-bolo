@@ -141,7 +141,9 @@ func drop(at: Vector3) -> void:
 	state = State.DROPPED
 	_drop_t = Config.cfg.princess_return_time
 	rescue_progress = 0.0
-	global_position = _game.arena.clamp_to_arena(Vector3(at.x, 0, at.z))
+	var p := _game.arena.clamp_to_arena(at)
+	p.y = _game.arena.ground_y(p.x, p.z, at.y + 0.5)
+	global_position = p
 	reset_physics_interpolation()
 	_visual.rotation.y = 0
 	_beacon.visible = true

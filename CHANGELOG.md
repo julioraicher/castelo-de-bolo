@@ -3,6 +3,39 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 10 (2026-10-29), frente Cenário: mapa Rio das Lanternas com altura
+- Julio escolheu a ideia 1 (Rio das Lanternas) misturada com a Vila Neon, com
+  mais cobertura no meio e mais altura. Mapa novo `config/mapas/rio_lanternas.tres`
+  (padrão; o Vale Ninja continua em Esc > Configurações > Mapa).
+- Rio no meio (norte-sul) com **3 pontes arqueadas**: a grande no centro (8 m)
+  e duas laterais (4,6 m). O rio bloqueia; só se cruza pelas pontes.
+- **Vila neon** dos dois lados da estrada: casas, loja com toldo, pousada de 2
+  andares, armazém, barracas de festival, poço, sino, jardim zen, postes de
+  lanterna, varais e torii nas cabeceiras das pontes.
+- **Altura**: 4 colinas de 2,4 m (com escada dos dois lados, pagode ou torre de
+  vigia em cima); castelos com **muralha andável** (3,2 m) e escada no pátio
+  (`MapLayout.wall_height/wall_thickness/wall_parapet`).
+- Cobertura no meio: rochas, barricadas, jizos, pilhas de sacos, bambuzais.
+- 29 modelos novos por tema em `tools/gerar_mapa_rio.gd` (estende o gerador
+  base); prancha das peças: `tools/prancha_pecas.gd`.
+- **Mudanças em outras frentes** (pedidas para a altura funcionar):
+  `Arena.ground_y()` (chão real por raio), mira balística até a altura do
+  alvo, golpes/explosões/armadilhas/áreas ignoram quem está 2+ m acima ou
+  abaixo, câmera mira no chão real, máscara cai no chão de verdade;
+  `MapProp` com colisão "caixa" (tamanho, giro, deslocamento; modelo vazio =
+  só colisão); `MapLayout.wall_model/tower_model/flag_height`;
+  `GameConfig.maps` + opção Mapa no menu (`Settings.mapa`, flag `--mapa=N`);
+  modelos com cor por vértice são juntados em blocos de 34 m (2 draw calls por bloco).
+- Teste: 5 min simulados no Rio (Oni e Luar) e no Vale sem erro; roubos de
+  máscara no Rio parecidos com o Vale (4 x 5).
+- **O que testar**:
+  1. Atravesse o rio pelas 3 pontes. A briga fica concentrada nelas? A ponte do
+     meio é larga o bastante?
+  2. Suba na muralha pela escada do pátio e numa colina. Atirar lá de cima é
+     forte demais? (bomba e flecha miram no chão onde o alvo está)
+  3. Alguma casa/peça esconde demais a luta? Algum bot fica preso?
+  4. FPS no Rio comparado ao Vale (Esc > Configurações > Mapa).
+
 ## Rodada 9 (2026-10-29), frente Cenário: mapa atual com cenário ninja
 - Julio escolheu os climas C (Floresta Oni) e B (Templo ao Luar), nessa ordem.
   Viraram os 2 temas do jogo (`config/temas/oni.tres` padrão, `luar.tres`);

@@ -39,6 +39,13 @@ func theme() -> ThemeConfig:
 	return cfg.themes[clampi(Settings.theme, 0, cfg.themes.size() - 1)]
 
 
+## Mapa escolhido em Esc > Configurações (lista em game_config.tres > Mundo).
+func map() -> MapLayout:
+	if cfg.maps.is_empty():
+		return cfg.map
+	return cfg.maps[clampi(Settings.mapa, 0, cfg.maps.size() - 1)]
+
+
 func team_color(team: int) -> Color:
 	return theme().team_colors[team]
 

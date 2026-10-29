@@ -8,7 +8,7 @@ signal changed
 const PATH := "user://configuracoes.cfg"
 const DIFFICULTIES := ["Fácil", "Normal", "Difícil"]
 const QUALITIES := ["Mínima", "Baixa", "Média", "Alta"]
-const KEYS := ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty", "quality", "show_fps", "theme", "auto_quality"]
+const KEYS := ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty", "quality", "show_fps", "theme", "auto_quality", "mapa"]
 
 var music_volume := 0.8      # 0..1
 var sfx_volume := 0.9        # 0..1
@@ -22,6 +22,7 @@ var quality := 2 if OS.get_name() == "Web" else 3
 var auto_quality := true
 var show_fps := false
 var theme := 0               # índice em GameConfig.themes
+var mapa := 0                # índice em GameConfig.maps
 
 
 func _ready() -> void:

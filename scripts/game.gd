@@ -28,6 +28,7 @@ var _time := 0.0
 #   --variacoes         bots começam com todas as variações (teste visual/poderes)
 #   --poderes           medidor de todo mundo enche a cada 4 s (vitrine de poderes)
 #   --tema=N            usa o tema N de GameConfig.themes (prints de cada tema)
+#   --mapa=N            usa o mapa N de GameConfig.maps
 #   --vista=mapa|alto   câmera parada vendo o mapa todo / o castelo de cima (prints)
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
@@ -55,6 +56,8 @@ func _ready() -> void:
 			_shots_dir = arg.trim_prefix("--shots=")
 		elif arg.begins_with("--vista="):
 			_vista = arg.trim_prefix("--vista=")
+		elif arg.begins_with("--mapa="):
+			Settings.mapa = int(arg.trim_prefix("--mapa="))
 		elif arg.begins_with("--tema="):
 			Settings.theme = int(arg.trim_prefix("--tema="))
 	arena = Arena.new()

@@ -184,6 +184,19 @@ func _settings_form() -> GridContainer:
 			get_tree().reload_current_scene())  # o mapa é montado de novo com o tema
 		grid.add_child(th)
 
+	if Config.cfg.maps.size() > 1:
+		grid.add_child(_text("Mapa", 19, Color.WHITE, false))
+		var mp := OptionButton.new()
+		for m in Config.cfg.maps:
+			mp.add_item(m.display_name)
+		mp.selected = clampi(Settings.mapa, 0, Config.cfg.maps.size() - 1)
+		mp.item_selected.connect(func(i: int):
+			Settings.mapa = i
+			Settings.save()
+			get_tree().paused = false
+			get_tree().reload_current_scene())
+		grid.add_child(mp)
+
 	grid.add_child(_text("Qualidade gráfica", 19, Color.WHITE, false))
 	var qual := OptionButton.new()
 	for q in Settings.QUALITIES:

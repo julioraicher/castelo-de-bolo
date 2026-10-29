@@ -16,6 +16,8 @@
 [ext_resource type="Resource" path="res://config/classes/mestre_polvora.tres" id="of_mestre_polvora"]
 [ext_resource type="Resource" path="res://config/classes/carpinteiro.tres" id="of_carpinteiro"]
 [ext_resource type="Resource" path="res://config/mapas/vale_ninja.tres" id="6_c8e20"]
+[ext_resource type="Resource" path="res://config/mapas/rio_lanternas.tres" id="7_rio"]
+[ext_resource type="Script" path="res://scripts/data/map_layout.gd" id="7_mapl"]
 [ext_resource type="Script" path="res://scripts/data/theme_config.gd" id="8_txtu1"]
 [ext_resource type="Resource" path="res://config/temas/oni.tres" id="9_f5mmm"]
 [ext_resource type="Resource" path="res://config/temas/luar.tres" id="10_wo1y8"]
@@ -28,3 +30,4 @@ bot_start_classes = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource
 oficina_classes = Array[ExtResource("1_3yous")]([ExtResource("of_ronin_oni"), ExtResource("of_lamina_dupla"), ExtResource("of_arqueiro_yumi"), ExtResource("of_bombas_fumaca"), ExtResource("of_onmyoji"), ExtResource("of_kitsune"), ExtResource("of_mestre_polvora"), ExtResource("of_carpinteiro")])
 themes = Array[ExtResource("8_txtu1")]([ExtResource("9_f5mmm"), ExtResource("10_wo1y8")])
 map = ExtResource("6_c8e20")
+maps = Array[ExtResource("7_mapl")]([ExtResource("7_rio"), ExtResource("6_c8e20")])

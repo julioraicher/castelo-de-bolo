@@ -27,7 +27,7 @@ var _nav: NavigationRegion3D
 
 
 func build() -> void:
-	map = Config.cfg.map
+	map = Config.map()
 	theme = Config.theme()
 	_build_environment()
 	_nav = NavigationRegion3D.new()
@@ -59,8 +59,23 @@ func random_spawn(team: int) -> Vector3:
 	return to_world(team, randf_range(map.spawn_min.x, map.spawn_max.x), randf_range(map.spawn_min.y, map.spawn_max.y))
 
 
+## Ponto livre no chão do meio do mapa (espíritos e itens). Evita telhados,
+## colinas e água: só aceita pontos no nível do chão, sem nada em cima.
 func random_cake_spot() -> Vector3:
-	return Vector3(randf_range(-map.cake_area.x, map.cake_area.x), 0.0, randf_range(-map.cake_area.y, map.cake_area.y))
+	var p := Vector3.ZERO
+	for i in 16:
+		p = Vector3(randf_range(-map.cake_area.x, map.cake_area.x), 0.0, randf_range(-map.cake_area.y, map.cake_area.y))
+		if ground_y(p.x, p.z) < 0.3:
+			return p
+	return p
+
+
+## Altura do chão (ou do que estiver em cima dele) em (x, z), procurando de
+## `from_y` para baixo. Mapas com muralhas, pontes e colinas não são planos.
+func ground_y(x: float, z: float, from_y := 30.0) -> float:
+	var q := PhysicsRayQueryParameters3D.create(Vector3(x, from_y, z), Vector3(x, -5.0, z), Config.LAYER_WORLD)
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	return hit.position.y if not hit.is_empty() else 0.0
 
 
 func clamp_to_arena(p: Vector3) -> Vector3:
@@ -215,9 +230,10 @@ func _build_castle(team: int) -> void:
 	# Torres com bandeiras.
 	for c in m.tower_spots:
 		var p := to_world(team, c.x, c.y)
-		_model_path(theme.model_path(theme.tower_model, team), p, theme.tower_scale, face)
+		_model_path(theme.model_path(m.tower_model if m.tower_model != "" else theme.tower_model, team), p, theme.tower_scale, face)
 		_cylinder_collider(p, m.tower_collider_radius, 8.0)
-		_model_path(theme.model_path(theme.flag_model, team), p + Vector3(0, theme.flag_height, 0), theme.flag_scale, face)
+		var fh := m.flag_height if m.flag_height >= 0.0 else theme.flag_height
+		_model_path(theme.model_path(theme.flag_model, team), p + Vector3(0, fh, 0), theme.flag_scale, face)
 
 	# Objetos do pátio (barris, caixas, tenda...).
 	for prop in m.courtyard_props:
@@ -260,8 +276,11 @@ func _wall(team: int, a: Vector2, b: Vector2) -> void:
 	var angle := atan2(-dir.z, dir.x)
 	for i in count:
 		var t := (i + 0.5) / count
-		var piece := _model_path(theme.model_path(theme.wall_model), wa.lerp(wb, t), theme.wall_scale, angle)
+		var piece := _model_path(theme.model_path(map.wall_model if map.wall_model != "" else theme.wall_model), wa.lerp(wb, t), theme.wall_scale, angle)
 		piece.scale.x = theme.wall_scale * (length / count) / seg
+	if map.wall_height > 0.0:
+		_wall_walk(team, wa, wb, angle, length)
+		return
 	var mid := (wa + wb) / 2.0 + Vector3(0, 2.0, 0)
 	var body := StaticBody3D.new()
 	body.collision_layer = Config.LAYER_WORLD
@@ -275,6 +294,36 @@ func _wall(team: int, a: Vector2, b: Vector2) -> void:
 	_nav.add_child(body)
 
 
+## Muralha com passarela: bloco maciço até `wall_height` (dá para andar em
+## cima) e uma mureta do lado de fora. O modelo tem a mureta no +z local; se o
+## lado de fora for o -z, ele é girado meia volta.
+func _wall_walk(team: int, wa: Vector3, wb: Vector3, angle: float, length: float) -> void:
+	var mid := (wa + wb) / 2.0
+	var centro := to_world(team, (map.wall_back + map.wall_front) / 2.0, 0.0)
+	var local_z := Vector3(sin(angle), 0, cos(angle))
+	var fora := 1.0 if local_z.dot(mid - centro) > 0.0 else -1.0
+	var pieces := _static_models.slice(_static_models.size() - int(ceil(length / theme.wall_module_length)))
+	if fora < 0.0:
+		for piece: Node3D in pieces:
+			piece.rotation.y += PI
+	var t := map.wall_thickness
+	var blocos := [
+		[Vector3(length + t, map.wall_height, t), mid + Vector3(0, map.wall_height / 2.0, 0)],
+		[Vector3(length + t, map.wall_parapet, 0.4), mid + local_z * fora * (t / 2.0 - 0.2) + Vector3(0, map.wall_height + map.wall_parapet / 2.0, 0)],
+	]
+	for bl in blocos:
+		var body := StaticBody3D.new()
+		body.collision_layer = Config.LAYER_WORLD
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = bl[0]
+		shape.shape = box
+		body.add_child(shape)
+		body.position = bl[1]
+		body.rotation.y = angle
+		_nav.add_child(body)
+
+
 # --- Meio do mapa e bordas ---------------------------------------------------
 
 func _build_middle() -> void:
@@ -285,9 +334,21 @@ func _build_middle() -> void:
 
 func _place_prop(prop: MapProp, pos: Vector3, face: float) -> void:
 	var rot := randf() * TAU if prop.rotation_deg < 0.0 else face + deg_to_rad(prop.rotation_deg)
-	_model_path(theme.model_path(prop.model), pos, prop.scale, rot)
+	if prop.model != "":
+		_model_path(theme.model_path(prop.model), pos, prop.scale, rot)
 	if prop.collider == "cilindro":
 		_cylinder_collider(pos, prop.collider_radius, prop.collider_height)
+	elif prop.collider == "caixa":
+		var b := Basis(Vector3.UP, rot)
+		var body := StaticBody3D.new()
+		body.collision_layer = Config.LAYER_WORLD
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = prop.collider_size
+		shape.shape = box
+		body.add_child(shape)
+		body.transform = Transform3D(b * Basis.from_euler(prop.collider_rot * PI / 180.0), pos + b * prop.collider_offset)
+		_nav.add_child(body)
 
 
 func _build_borders() -> void:
@@ -316,6 +377,60 @@ func _build_borders() -> void:
 			var p := Vector3(xs * (hw + rng.randf_range(5, 10)), 0, z + rng.randf_range(-2, 2))
 			_model_path(theme.model_path(mountains[rng.randi() % mountains.size()]), p, rng.randf_range(4.0, 6.0), rng.randf() * TAU)
 		z += map.border_spacing * 9.0 / 7.0
+
+
+## Modelos feitos por código (cor por vértice, 2 materiais: fosco e brilho)
+## viram poucas malhas grandes, uma por pedaço do mapa (para a câmera ainda
+## poder descartar o que está fora da tela). Com isso o número de chamadas de
+## desenho não cresce com a quantidade nem com a variedade de peças: cada
+## pedaço custa 2 chamadas, tenha 10 ou 100 casas.
+const CHUNK := 34.0
+
+
+func _merge_vertex_color_models() -> void:
+	var chunks := {}  # Vector2i -> [SurfaceTool fosco, SurfaceTool brilho]
+	var mats: Array = [null, null]
+	for root in _static_models:
+		var mis := root.find_children("*", "MeshInstance3D", true, false)
+		if mis.is_empty() or root.find_children("*", "AnimationPlayer", true, false).size() > 0:
+			continue
+		var ok := true
+		for mi: MeshInstance3D in mis:
+			if mi.mesh == null or mi.material_override != null or mi.skin != null:
+				ok = false
+				break
+			for s in mi.mesh.get_surface_count():
+				var mat := mi.mesh.surface_get_material(s) as StandardMaterial3D
+				if mat == null or not mat.vertex_color_use_as_albedo:
+					ok = false
+		if not ok:
+			continue
+		var key := Vector2i(floori(root.global_position.x / CHUNK), floori(root.global_position.z / CHUNK))
+		if not chunks.has(key):
+			chunks[key] = [null, null]
+		for mi: MeshInstance3D in mis:
+			for s in mi.mesh.get_surface_count():
+				var mat := mi.mesh.surface_get_material(s) as StandardMaterial3D
+				var k := 1 if mat.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED else 0
+				if mats[k] == null:
+					mats[k] = mat
+				if chunks[key][k] == null:
+					var st := SurfaceTool.new()
+					st.begin(Mesh.PRIMITIVE_TRIANGLES)
+					chunks[key][k] = st
+				chunks[key][k].append_from(mi.mesh, s, mi.global_transform)
+		root.queue_free()
+	for key in chunks:
+		var mesh := ArrayMesh.new()
+		for k in 2:
+			var st: SurfaceTool = chunks[key][k]
+			if st:
+				st.commit(mesh)
+				mesh.surface_set_material(mesh.get_surface_count() - 1, mats[k])
+		var mi := MeshInstance3D.new()
+		mi.name = "Cenario_%d_%d" % [key.x, key.y]
+		mi.mesh = mesh
+		add_child(mi)
 
 
 # --- Detalhes do chão e partículas ------------------------------------------
@@ -363,6 +478,8 @@ func _build_decor() -> void:
 							break
 					if hit:
 						continue
+				if ground_y(p.x, p.z) > 0.3:  # rio, ponte, telhado, colina
+					continue
 				var basis := Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * rng.randf_range(0.75, 1.3))
 				list.append(Transform3D(basis, p))
 				n -= 1
@@ -453,8 +570,11 @@ func _model_path(path: String, pos: Vector3, scale_factor: float, rot_y := 0.0) 
 ## navegador (WebGL) é o custo de cada chamada que mais pesa, não o número
 ## de triângulos.
 func _batch_static_meshes() -> void:
+	_merge_vertex_color_models()
 	var groups := {}  # Mesh -> Array[MeshInstance3D]
 	for root in _static_models:
+		if not is_instance_valid(root) or root.is_queued_for_deletion():
+			continue
 		if root.find_children("*", "AnimationPlayer", true, false).size() > 0:
 			continue
 		for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
@@ -514,6 +634,6 @@ func _bake_navigation() -> void:
 	nm.agent_max_climb = 0.5
 	nm.cell_size = 0.25
 	nm.cell_height = 0.25
-	nm.filter_baking_aabb = AABB(Vector3(-map.half_width, -1, -map.half_depth), Vector3(map.half_width * 2, 6, map.half_depth * 2))
+	nm.filter_baking_aabb = AABB(Vector3(-map.half_width - 2, -1, -map.half_depth - 2), Vector3(map.half_width * 2 + 4, 14, map.half_depth * 2 + 4))
 	_nav.navigation_mesh = nm
 	_nav.bake_navigation_mesh(false)
