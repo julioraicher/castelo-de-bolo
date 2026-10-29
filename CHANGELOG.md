@@ -3,6 +3,14 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## 2026-10-29, frente Identidade: direção v1 depois do quiz 2
+- `docs/identidade.md`: direção v1 = Clãs de Neon com lado sombrio; Máscara Oni
+  + espíritos substituem princesa + bolo; Brawl Stars 1:3; noite neon; bloco de estilo.
+- `docs/design-jogo.md` (novo): 4 papéis com versões, progressão por oficinas,
+  poderes rápidos x fortes, gatilhos, itens no chão, mapa e partida.
+- `docs/ideias-futuras.md` (novo): jogo de espionagem/hackers pixelado.
+- ROADMAP: Fase 2 reescrita a partir do design. Nenhum código mudou ainda.
+
 ## 2026-10-29, frente Identidade: diário e quiz
 - `docs/identidade.md`: diário de nome, tema, estilo geral, logo e divulgação,
   com as restrições que qualquer estilo precisa respeitar e o bloco de estilo.

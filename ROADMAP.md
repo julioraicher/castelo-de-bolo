@@ -26,13 +26,16 @@ Aqui só entram correções, sensação de jogo (*game feel*), equilíbrio e des
 
 ## Fase 2: o "jogo de semanas" (mecânicas do estilo Fat Princess)
 
-- [ ] Recursos: aldeões coletam madeira e metal
-- [ ] Oficinas que *produzem* chapéus (chapéu deixa de ser infinito)
-- [ ] Upgrades de classe pagos com recursos
+Detalhes em [docs/design-jogo.md](docs/design-jogo.md) (classes, poderes, progressão).
+
+- [ ] Nova identidade v1: Clãs de Neon, Máscara Oni + espíritos no lugar de princesa + bolo ([docs/identidade.md](docs/identidade.md))
+- [ ] Papel Construtor (4º papel) e Clérigo → Monge
+- [ ] Itens no chão (power-ups) e gatilhos de poder (sequência de abates, ao morrer, Hora do Caos)
+- [ ] Recursos: todos coletam madeira e metal; Construtor coleta mais rápido
+- [ ] Oficinas por papel: sobem de nível e liberam a versão 2 (subclasse à escolha)
 - [ ] Catapulta (carregar, mirar, lançar aliados/pedras)
 - [ ] Portão do castelo que pode ser quebrado e consertado
-- [ ] Mais classes (Mago com dano em área, Trabalhador)
-- [ ] Poções / bolos especiais
+- [ ] Atalho que abre durante a partida
 - [ ] Segundo mapa
 
 ## Fase 3: depois
