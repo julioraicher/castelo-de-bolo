@@ -64,3 +64,4 @@ conferir tris, draw calls e cor do time.
 | 2026-10-29 | Frente de visual separada. |
 | 2026-10-29 | Sem Gemini: referências saem de modelos por código + prancha de prints aqui. Estilo espera a conversa de identidade visual. |
 | 2026-10-29 | Prancha 1 (caminho A+B): Samurai (kabuto com chifres, katana neon), Ninja (faixa magenta, shuriken), Monge (kasa de palha, contas, chi verde), Armadilheiro (óculos, mochila com estrepes, mina). Roupa toda na cor do time. Aguardando pitaco. |
+| 2026-10-29 | Prancha 2: mesmas 4 funções em 3 mundos (A Ninja, B Festival Infernal: Guitarrista/Pirotécnico/Vocalista/Roadie, C Cavaleiros Malditos: Cavaleiro maldito/Caçador de besta/Necromante/Ferreiro). Gerada por `tools/prancha_personagens.gd` (lista `MUNDOS`). Aguardando escolha do mundo. |
