@@ -21,7 +21,7 @@ const CONTROLS := [
 	["Clique esquerdo", "atacar"],
 	["Clique direito ou Q", "curar aliados (só Clérigo)"],
 	["Espaço ou Shift", "esquivar (rolamento rápido)"],
-	["E", "pegar/soltar a princesa, trocar de chapéu"],
+	["E", "pegar chapéu, pegar/soltar a princesa"],
 	["Esc ou P", "pausar, ver controles e configurações"],
 	["R", "reiniciar a partida"],
 ]

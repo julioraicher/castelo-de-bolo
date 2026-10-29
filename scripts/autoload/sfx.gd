@@ -31,7 +31,7 @@ func _ready() -> void:
 	add_child(_ui)
 	_music = AudioStreamPlayer.new()
 	_music.bus = "Musica"
-	_music.volume_db = -14.0
+	_music.volume_db = 0.0  # a música gerada já é baixinha; atenuar mais a fazia sumir
 	add_child(_music)
 
 
@@ -55,7 +55,8 @@ func play_ui(sound: String) -> void:
 func start_music() -> void:
 	var path := "res://assets/audio/music.wav"
 	if ResourceLoader.exists(path) and not _music.playing:
+		# O loop vem da importação (music.wav.import: loop_mode=2, "Forward"), que funciona
+		# igual no .exe e no navegador. Religar no sinal finished deixava um
+		# buraco e, no navegador, podia nem tocar de novo.
 		_music.stream = load(path)
 		_music.play()
-		if not _music.finished.is_connected(_music.play):
-			_music.finished.connect(_music.play)

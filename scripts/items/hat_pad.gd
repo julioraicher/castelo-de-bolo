@@ -35,7 +35,7 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 	label.modulate = stats.hat_color.lightened(0.3)
 	add_child(label)
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # chapéu animado em _process
-	_hat = _make_hat(stats.id, stats.hat_color)
+	_hat = make_hat(stats.id, stats.hat_color)
 	_hat.position.y = 1.2
 	add_child(_hat)
 
@@ -53,6 +53,11 @@ func _process(delta: float) -> void:
 			create_tween().tween_property(_hat, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
+## Posição do chapéu flutuante no mundo (de onde ele "sai" ao ser pego).
+func hat_world_position() -> Vector3:
+	return _hat.global_position
+
+
 func take() -> ClassStats:
 	available = false
 	_hat.visible = false
@@ -61,7 +66,7 @@ func take() -> ClassStats:
 
 
 ## Chapéus montados com formas simples: elmo, capuz e chapéu de clérigo.
-func _make_hat(id: StringName, color: Color) -> Node3D:
+static func make_hat(id: StringName, color: Color) -> Node3D:
 	var root := Node3D.new()
 	var mat := Fx.lit(color, 0.4)
 	match id:

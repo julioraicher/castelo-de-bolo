@@ -22,7 +22,7 @@ mais devagar anda quem tentar levá-la.
 | Clique esquerdo | atacar |
 | Clique direito / Q | curar (clérigo) |
 | Espaço / Shift | esquivar |
-| E | pegar/soltar princesa, trocar de chapéu |
+| E | pegar chapéu, pegar/soltar princesa |
 | Esc / P | pausar: controles e configurações |
 | R | reiniciar |
 

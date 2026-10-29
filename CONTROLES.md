@@ -11,7 +11,7 @@ Os mesmos controles aparecem no jogo: na tela inicial e em **Esc > Controles**.
 | **Clique esquerdo** | atacar (segure para atacar sem parar) |
 | **Clique direito** ou **Q** | curar aliados ao seu redor (só Clérigo) |
 | **Espaço** ou **Shift** | esquivar: rolamento rápido, com recarga |
-| **E** | pegar ou soltar a princesa; trocar de chapéu quando já tem um |
+| **E** | pegar um chapéu (perto do pedestal); pegar ou soltar a princesa |
 | **Esc** ou **P** | pausar e abrir Controles / Configurações |
 | **R** | reiniciar a partida |
 | **Enter** | começar (na tela inicial) |
@@ -38,7 +38,8 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
 3. Quem carrega a princesa anda mais devagar e não ataca. Se morrer, ela cai
    no chão. Um inimigo dela pode pegar de novo; um aliado dela fica perto por
    1,5 s para devolvê-la. Se ninguém mexer, ela volta sozinha depois de 15 s.
-4. **Chapéus** ficam no pátio do castelo: pisar num troca sua classe.
+4. **Chapéus** ficam no pátio do castelo: chegue perto e aperte **E**. O
+   personagem pega o chapéu e põe na cabeça (dá para andar enquanto isso).
    - Guerreiro: muita vida, golpe em área.
    - Arqueiro: ataque à distância.
    - Clérigo: cura aliados (clique direito) e ataca com magia.

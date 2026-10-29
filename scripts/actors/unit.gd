@@ -10,12 +10,17 @@ extends CharacterBody3D
 ##   wants_attack / wants_special / wants_dodge
 
 signal died(unit: Unit, killer: Unit)
+signal class_changed(unit: Unit)
 
 const ACCEL := 70.0
 const DODGE_SPEED := 17.0
 const DODGE_TIME := 0.24
 const DODGE_COOLDOWN := 0.9
 const KNOCK_DECAY := 40.0  # m/s² de "freada" do empurrão: distância = v²/(2·KNOCK_DECAY)
+const EQUIP_TIME := 0.75  # s para pegar o chapéu e pôr na cabeça (andando)
+## Ossos do tronco: a animação de pôr o chapéu toca só neles, então as pernas
+## continuam correndo com a animação normal.
+const UPPER_BONES := ["spine", "chest", "upperarm.l", "lowerarm.l", "wrist.l", "hand.l", "handslot.l", "upperarm.r", "lowerarm.r", "wrist.r", "hand.r", "handslot.r", "head"]
 const LOOPING_ANIMS := ["Idle", "Running_A", "Running_B", "Walking_A", "Walking_B", "Sit_Floor_Idle", "Cheer", "2H_Melee_Idle", "Spellcasting", "1H_Ranged_Aiming"]
 
 var game: Game
@@ -58,7 +63,14 @@ var _hp_fill: MeshInstance3D
 var _cake_visual: Node3D
 var _player_marker: MeshInstance3D
 
+var _equip_t := 0.0
+var _equip_stats: ClassStats
+var _equip_hat: Node3D
+var _upper: AnimationPlayer  # segundo player, só para os ossos do tronco
+
 static var _flash_mat: StandardMaterial3D
+static var _merged_body := {}  # caminho do .tres da classe -> ArrayMesh do corpo
+static var _upper_libs := {}  # caminho do modelo -> AnimationLibrary filtrada
 
 
 func setup(p_game: Game, p_team: int, p_is_player: bool, start_class: ClassStats) -> void:
@@ -116,14 +128,147 @@ func set_class(new_stats: ClassStats) -> void:
 			if mat:
 				mat.albedo_color = Config.team_color(team).lightened(0.15)
 				mi.material_override = mat
+	_merge_body_parts()
 	_anim = _model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if _anim:
 		for a in LOOPING_ANIMS + [stats.anim_idle, stats.anim_run]:
 			if _anim.has_animation(a):
 				_anim.get_animation(a).loop_mode = Animation.LOOP_LINEAR
+		_setup_upper_player()
 	_current_anim = ""
 	_play(stats.anim_idle)
 	_update_hp_bar()
+	class_changed.emit(self)
+
+
+# --- Chapéu: pegar e pôr na cabeça --------------------------------------------
+
+func is_equipping() -> bool:
+	return _equip_t > 0.0
+
+
+## Começa a troca de classe: o chapéu sai do pedestal, sobe acima da cabeça e
+## desce nela enquanto os braços fazem o gesto. A classe só muda no fim.
+func start_equip(new_stats: ClassStats, from_world: Vector3) -> void:
+	_cancel_equip()
+	_equip_stats = new_stats
+	_equip_t = EQUIP_TIME
+	_equip_hat = HatPad.make_hat(new_stats.id, new_stats.hat_color)
+	_equip_hat.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
+	add_child(_equip_hat)
+	_equip_hat.global_position = from_world
+	_equip_hat.scale = Vector3.ONE * 0.8
+	var tw := _equip_hat.create_tween()
+	tw.tween_property(_equip_hat, "position", Vector3(0, 3.4, 0), EQUIP_TIME * 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(_equip_hat, "rotation:y", TAU, EQUIP_TIME * 0.6)
+	tw.tween_property(_equip_hat, "position", Vector3(0, 2.3, 0), EQUIP_TIME * 0.4).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	if _upper and _upper.has_animation("tronco/Spellcast_Raise"):
+		_upper.play("tronco/Spellcast_Raise", 0.1, _upper.get_animation("tronco/Spellcast_Raise").length / EQUIP_TIME)
+	Sfx.play("pickup", global_position)
+
+
+func _finish_equip() -> void:
+	var new_stats := _equip_stats
+	_cancel_equip()
+	if new_stats == null or not alive:
+		return
+	set_class(new_stats)
+	Fx.ring(game, global_position, new_stats.hat_color, 2.5)
+	Sfx.play("hat", global_position)
+
+
+func _cancel_equip() -> void:
+	_equip_t = 0.0
+	_equip_stats = null
+	if is_instance_valid(_equip_hat):
+		_equip_hat.queue_free()
+	_equip_hat = null
+	if _upper:
+		_upper.stop()
+
+
+## Cria um segundo AnimationPlayer com cópias das animações filtradas para os
+## ossos do tronco. Ele roda depois do principal e sobrescreve só esses ossos.
+func _setup_upper_player() -> void:
+	var key: String = stats.model.resource_path
+	var lib: AnimationLibrary = _upper_libs.get(key)
+	if lib == null:
+		lib = AnimationLibrary.new()
+		for anim_name in ["Spellcast_Raise"]:
+			if not _anim.has_animation(anim_name):
+				continue
+			var a := _anim.get_animation(anim_name).duplicate() as Animation
+			a.loop_mode = Animation.LOOP_NONE
+			for t in range(a.get_track_count() - 1, -1, -1):
+				var bone := str(a.track_get_path(t).get_concatenated_subnames())
+				if not UPPER_BONES.has(bone):
+					a.remove_track(t)
+			lib.add_animation(anim_name, a)
+		_upper_libs[key] = lib
+	_upper = AnimationPlayer.new()
+	_upper.name = "TroncoPlayer"
+	_anim.get_parent().add_child(_upper)
+	_upper.root_node = _upper.get_path_to(_anim.get_node(_anim.root_node))
+	_upper.add_animation_library("tronco", lib)
+
+
+# --- Desempenho ---------------------------------------------------------------
+
+## Os personagens KayKit vêm com o corpo em 6 malhas (braços, pernas, tronco,
+## cabeça) que usam o mesmo esqueleto e o mesmo material. Juntá-las numa malha
+## só troca 6 chamadas de desenho por 1, por personagem e por passe de sombra.
+func _merge_body_parts() -> void:
+	var parts: Array[MeshInstance3D] = []
+	for mi in _meshes:
+		if mi.skin != null and mi.material_override == null and mi.get_parent() is Skeleton3D:
+			parts.append(mi)
+	if parts.size() < 2:
+		return
+	for mi in parts:
+		if mi.skin != parts[0].skin or mi.mesh.get_surface_count() != 1:
+			return
+	var key := stats.resource_path
+	var merged: ArrayMesh = _merged_body.get(key)
+	if merged == null:
+		merged = _merge_meshes(parts)
+		if merged == null:
+			return
+		_merged_body[key] = merged
+	parts[0].mesh = merged
+	for i in range(1, parts.size()):
+		parts[i].visible = false
+		_meshes.erase(parts[i])
+
+
+static func _merge_meshes(parts: Array[MeshInstance3D]) -> ArrayMesh:
+	var fmt: int = parts[0].mesh.surface_get_format(0)
+	var out := []
+	out.resize(Mesh.ARRAY_MAX)
+	var offset := 0
+	for mi in parts:
+		var a := mi.mesh.surface_get_arrays(0)
+		if a[Mesh.ARRAY_INDEX] == null:
+			return null
+		for k in Mesh.ARRAY_MAX:
+			if (a[k] == null) != (out[k] == null) and offset > 0:
+				return null  # formatos diferentes: não dá para juntar
+			if a[k] == null:
+				continue
+			var arr = a[k]
+			if k == Mesh.ARRAY_INDEX:
+				arr = arr.duplicate()
+				for i in arr.size():
+					arr[i] += offset
+			if out[k] == null:
+				out[k] = arr.duplicate()
+			else:
+				out[k].append_array(arr)
+		offset += a[Mesh.ARRAY_VERTEX].size()
+	var mesh := ArrayMesh.new()
+	var flags := Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS if fmt & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS else 0
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, out, [], {}, flags)
+	mesh.surface_set_material(0, parts[0].mesh.surface_get_material(0))
+	return mesh
 
 
 func is_villager() -> bool:
@@ -188,7 +333,11 @@ func _physics_process(delta: float) -> void:
 	global_position = game.arena.clamp_to_arena(global_position)
 
 	_face(delta)
-	if wants_attack and _attack_cd <= 0.0 and not carried_princess and _dodge_t <= 0.0:
+	if _equip_t > 0.0:
+		_equip_t -= delta
+		if _equip_t <= 0.0:
+			_finish_equip()
+	if wants_attack and _attack_cd <= 0.0 and not carried_princess and _dodge_t <= 0.0 and _equip_t <= 0.0:
 		_attack()
 	if wants_special and stats.attack_kind == "healer" and _heal_cd <= 0.0 and not carried_princess:
 		_heal()
@@ -306,6 +455,7 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3) -> void:
 func _die(killer: Unit) -> void:
 	alive = false
 	hp = 0.0
+	_cancel_equip()
 	if carried_princess:
 		carried_princess.drop(global_position)
 		carried_princess = null
@@ -430,6 +580,9 @@ func _build_hp_bar() -> void:
 	fill_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	fill_mat.no_depth_test = true
 	fill_mat.render_priority = 1
+	# Sem isso o billboard troca a matriz inteira pela da câmera e descarta a
+	# escala: _hp_fill.scale.x mudava, mas a barra continuava cheia na tela.
+	fill_mat.billboard_keep_scale = true
 	_hp_fill.material_override = fill_mat
 	_hp_fill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_hp_root.add_child(_hp_fill)

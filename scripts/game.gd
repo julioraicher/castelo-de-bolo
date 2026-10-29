@@ -71,6 +71,8 @@ func _ready() -> void:
 			u.reset_physics_interpolation()
 			u.died.connect(_on_unit_died)
 			if is_player:
+				u.class_changed.connect(_on_player_class_changed)
+			if is_player:
 				player = u
 			if is_player and not _autoplay:
 				player_brain = PlayerBrain.new()
@@ -192,17 +194,15 @@ func _rules() -> void:
 
 		# Chapéus: aldeão veste ao encostar; quem já tem classe troca com E.
 		for pad in hat_pads:
-			if pad.team != u.team or not pad.available or pad.stats == u.stats:
+			if pad.team != u.team or not pad.available or pad.stats == u.stats or u.is_equipping():
 				continue
 			if pos.distance_to(pad.global_position) < 2.0:
-				if u.is_player and not u.is_villager():
-					hint = "[E] trocar para %s" % pad.stats.display_name
-				if u.is_villager() or wants_interact:
-					u.set_class(pad.take())
-					Fx.ring(self, pos, pad.stats.hat_color, 2.5)
-					Sfx.play("hat", pos)
-					if u.is_player:
-						hud.show_big("Agora você é %s!" % pad.stats.display_name, pad.stats.hat_color.lightened(0.3), 1.3)
+				if u.is_player:
+					hint = "[E] pegar o chapéu de %s" % pad.stats.display_name
+				# Jogador: só com E. Bots aldeões (e o jogador no modo teste) pegam sozinhos.
+				if wants_interact or (u.brain is BotBrain and u.is_villager()):
+					var from: Vector3 = pad.hat_world_position()
+					u.start_equip(pad.take(), from)
 				break
 
 	if player.alive and player.carried_princess:
@@ -278,6 +278,11 @@ func spawn_projectile(shooter: Unit, origin: Vector3, dir: Vector3, kind: String
 
 
 # --- Eventos ------------------------------------------------------------------
+
+func _on_player_class_changed(u: Unit) -> void:
+	if not u.is_villager():
+		hud.show_big("Agora você é %s!" % u.stats.display_name, u.stats.hat_color.lightened(0.3), 1.3)
+
 
 func _on_unit_died(u: Unit, killer: Unit) -> void:
 	if u == player:

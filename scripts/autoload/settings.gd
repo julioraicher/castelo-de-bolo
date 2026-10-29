@@ -10,7 +10,7 @@ const DIFFICULTIES := ["Fácil", "Normal", "Difícil"]
 const QUALITIES := ["Baixa", "Média", "Alta"]
 const KEYS := ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty", "quality", "show_fps"]
 
-var music_volume := 0.6      # 0..1
+var music_volume := 0.8      # 0..1
 var sfx_volume := 0.9        # 0..1
 var fullscreen := false
 var camera_shake := true
@@ -22,6 +22,8 @@ var show_fps := false
 
 
 func _ready() -> void:
+	# Os canais vêm de res://default_bus_layout.tres (carregado antes de tudo,
+	# inclusive no navegador). Criar aqui é só um plano B.
 	_ensure_bus("Musica")
 	_ensure_bus("Efeitos")
 	_load()

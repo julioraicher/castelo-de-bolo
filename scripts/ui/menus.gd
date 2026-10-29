@@ -19,6 +19,7 @@ func _ready() -> void:
 	layer = 10
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_start_panel = _build_start()
+	_start_panel.visible = false  # só aparece via show_start() (no modo teste não)
 	add_child(_start_panel)
 	_pause_panel = _build_pause()
 	_pause_panel.visible = false
@@ -67,7 +68,7 @@ func _build_start() -> Control:
 	var tips := VBoxContainer.new()
 	tips.add_theme_constant_override("separation", 4)
 	for tip in [
-		"Pise num chapéu do seu pátio para virar Guerreiro, Arqueiro ou Clérigo.",
+		"Chegue num chapéu do seu pátio e aperte E para virar Guerreiro, Arqueiro ou Clérigo.",
 		"Leve bolos até a SUA princesa: gorda, ela fica pesada para o inimigo carregar.",
 		"Quem morre volta como aldeão. Primeiro a 3 resgates vence.",
 	]:

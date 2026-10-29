@@ -120,7 +120,7 @@ func _apply_quality() -> void:
 			_sun.shadow_enabled = true
 			_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 			_sun.directional_shadow_max_distance = 55.0
-			_env.glow_enabled = true
+			_env.glow_enabled = false  # brilho custa vários passes de desfoque em tela cheia
 		_:  # Alta
 			_sun.shadow_enabled = true
 			_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
