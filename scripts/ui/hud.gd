@@ -349,7 +349,7 @@ func update_state(game: Game) -> void:
 	_class_label.text = u.stats.display_name if u.alive else "Renascendo..."
 	var ratio := u.hp_ratio()
 	_hp_bar.value = ratio * 100.0
-	_hp_text.text = "%d / %d" % [ceili(u.hp), int(u.stats.max_hp)] if u.alive else ""
+	_hp_text.text = "%d / %d" % [ceili(u.hp), int(u.max_hp())] if u.alive else ""
 	Estilo.cor_barra(_hp_bar, time_cor.lightened(0.25) if ratio > 0.3 else Estilo.PERIGO.lerp(Color.WHITE, pulso * 0.4))
 	_power_bar.value = u.power
 	var tem_poder := u.stats.power != "nenhum"

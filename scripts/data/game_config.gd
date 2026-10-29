@@ -33,6 +33,17 @@ extends Resource
 
 @export_group("Itens no chão")
 ## Um item novo a cada tantos segundos, até o máximo, na área do meio.
+@export_group("Vida e tempo para matar")
+## TTK = vida / (DPS · taxa de acerto). vida_mult multiplica a vida de todas as
+## classes e, junto, curas e escudos (que são números absolutos), para eles
+## valerem a mesma fração da vida. 1,0 = números dos .tres de classe.
+@export var vida_mult := 1.4
+## Dano dos poderes do Q (todos), para eles não ficarem fracos com a vida maior.
+@export var dano_poder_mult := 1.2
+## Fora de combate (sem bater nem apanhar) por regen_delay s, cura
+## regen_rate da vida máxima por segundo. Briga perdida não "vaza" para a próxima.
+@export var regen_delay := 4.0
+@export var regen_rate := 0.06
 @export var pickup_interval := 15.0
 @export var max_pickups := 3
 ## Poção: fração da vida máxima curada.

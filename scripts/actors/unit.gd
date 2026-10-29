@@ -65,7 +65,8 @@ var _dodge_cd := 0.0
 var _dodge_t := 0.0
 var _dodge_dir := Vector3.ZERO
 var _knock := Vector3.ZERO      # velocidade do empurrão (separada da caminhada)
-var _launch_vy := 0.0           # impulso para cima pendente (Fúria, explosões, golpe final)
+var _launch_vy := 0.0
+var _calm_t := 0.0              # s desde a última vez que bateu ou apanhou (regeneração)           # impulso para cima pendente (Fúria, explosões, golpe final)
 var _move_vel := Vector3.ZERO   # velocidade da caminhada/esquiva
 var _flash_t := 0.0
 var _respawn_t := 0.0
@@ -151,7 +152,7 @@ func setup(p_game: Game, p_team: int, p_is_player: bool, start_class: ClassStats
 
 func set_class(new_stats: ClassStats) -> void:
 	stats = new_stats
-	hp = stats.max_hp  # trocar de chapéu cura por completo
+	hp = max_hp()  # trocar de chapéu cura por completo
 	if _model:
 		_model.queue_free()
 	_model = stats.model.instantiate()
@@ -348,7 +349,12 @@ func is_busy_carrying() -> bool:
 
 
 func hp_ratio() -> float:
-	return hp / stats.max_hp
+	return hp / max_hp()
+
+
+## Vida máxima de verdade: a da classe vezes GameConfig.vida_mult.
+func max_hp() -> float:
+	return stats.max_hp * Config.cfg.vida_mult
 
 
 func current_speed() -> float:
@@ -789,16 +795,16 @@ func _heal() -> void:
 	var healed := 0.0
 	for other in game.units:
 		if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.heal_radius:
-			healed += other.heal(stats.heal_amount)
+			healed += other.heal(stats.heal_amount * Config.cfg.vida_mult)
 	add_power(healed * Config.cfg.power_per_damage)
 
 
 ## Cura e devolve quanto curou de fato.
 func heal(amount: float) -> float:
-	if hp >= stats.max_hp or not alive:
+	if hp >= max_hp() or not alive:
 		return 0.0
 	var before := hp
-	hp = minf(hp + amount, stats.max_hp)
+	hp = minf(hp + amount, max_hp())
 	Fx.damage_number(game, global_position, "+%d" % int(hp - before), Color(0.5, 1, 0.55))
 	_update_hp_bar()
 	return hp - before
@@ -820,7 +826,9 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		_shield -= absorbed
 		amount -= absorbed
 	hp -= amount
+	_calm_t = 0.0
 	if attacker:
+		attacker._calm_t = 0.0
 		attacker.add_power(amount * Config.cfg.power_per_damage)
 	add_power(amount * Config.cfg.power_per_damage_taken)
 	_knock = dir * (attacker.stats.knockback if attacker else 4.0) * knock_mult
@@ -932,7 +940,7 @@ func _use_power() -> void:
 			center.y = game.arena.ground_y(center.x, center.z, global_position.y + 3.0)
 			var rain := ArrowRain.new()
 			game.add_child(rain)
-			rain.setup(game, self, center, stats.power_radius, stats.power_value, stats.power_duration)
+			rain.setup(game, self, center, stats.power_radius, stats.power_value * Config.cfg.dano_poder_mult, stats.power_duration)
 			_power_active_t = ArrowRain.WARN + stats.power_duration
 			_play_upper("1H_Ranged_Shoot", 1.0)
 			Fx.burst(game, global_position + Vector3(0, 2.0, 0), Config.team_color(team).lightened(0.5), 16, 9.0)
@@ -941,7 +949,7 @@ func _use_power() -> void:
 			Fx.pillar(game, global_position, Color(1, 0.9, 0.5), stats.power_radius)
 			for other in game.units:
 				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
-					other.heal(other.stats.max_hp * stats.power_value)
+					other.heal(other.max_hp() * stats.power_value)
 					other.give_shield(stats.power_shield, stats.power_duration)
 		"corrida":
 			_play_upper("Cheer", 1.5)
@@ -965,7 +973,7 @@ func _use_power() -> void:
 					continue
 				d.y = 0
 				if d.length() <= stats.power_radius:
-					other.take_damage(stats.power_value, self, d.normalized() if d.length() > 0.1 else _facing(), 1.6, true)
+					other.take_damage(stats.power_value * Config.cfg.dano_poder_mult, self, d.normalized() if d.length() > 0.1 else _facing(), 1.6, true)
 					other.launch(7.0)  # a onda de choque arremessa
 					hit_any = true
 			if hit_any:
@@ -979,7 +987,7 @@ func _use_power() -> void:
 			var base := aim_dir.normalized()
 			for i in n:
 				var ang := deg_to_rad(lerpf(-stats.power_radius, stats.power_radius, float(i) / maxf(n - 1, 1)) * 0.5)
-				_shoot_arrow(stats.power_value / maxf(stats.damage, 0.1), 1.1, base.rotated(Vector3.UP, ang))
+				_shoot_arrow(stats.power_value * Config.cfg.dano_poder_mult / maxf(stats.damage, 0.1), 1.1, base.rotated(Vector3.UP, ang))
 			Fx.burst(game, global_position + Vector3(0, 1.4, 0) + base, Color(0.4, 1.0, 1.0), 16, 8.0)
 		"nuvem", "selo", "coluna_fogo":
 			var to := aim_point - global_position
@@ -988,7 +996,7 @@ func _use_power() -> void:
 			center.y = game.arena.ground_y(center.x, center.z, global_position.y + 3.0)
 			var fx := AreaEffect.new()
 			game.add_child(fx)
-			fx.setup(game, self, center, stats.power, stats.power_radius, stats.power_value, stats.power_duration)
+			fx.setup(game, self, center, stats.power, stats.power_radius, stats.power_value * (Config.cfg.dano_poder_mult if stats.power != "nuvem" else 1.0), stats.power_duration)
 			_power_active_t = stats.power_duration
 			_play_upper("Spellcast_Shoot" if stats.power != "nuvem" else "Throw", 1.2)
 		"reforco":
@@ -1028,7 +1036,7 @@ func _corte_relampago() -> void:
 		var seg := to - from
 		var tt := clampf((p - from).dot(seg) / maxf(seg.length_squared(), 0.01), 0.0, 1.0)
 		if p.distance_to(from + seg * tt) < 1.6:
-			other.take_damage(stats.power_value * damage_mult(), self, dir, 1.2, true)
+			other.take_damage(stats.power_value * Config.cfg.dano_poder_mult * damage_mult(), self, dir, 1.2, true)
 	global_position = to
 	reset_physics_interpolation()
 	Fx.beam(game, from + Vector3(0, 1.0, 0), to + Vector3(0, 1.0, 0), Color(0.3, 0.95, 1.0), 0.5, 0.5)
@@ -1041,6 +1049,7 @@ func _corte_relampago() -> void:
 
 
 func give_shield(amount: float, duration: float) -> void:
+	amount *= Config.cfg.vida_mult  # escudo acompanha a vida maior
 	_shield = maxf(_shield, amount)
 	_shield_t = duration
 	if _shield_mesh == null:
@@ -1080,7 +1089,7 @@ func _tick_buffs(delta: float) -> void:
 				var to := other.global_position - global_position
 				to.y = 0
 				if to.length() <= stats.power_radius + 0.4:
-					other.take_damage(stats.power_value, self, to.normalized() if to.length() > 0.1 else _facing(), 0.8)
+					other.take_damage(stats.power_value * Config.cfg.dano_poder_mult, self, to.normalized() if to.length() > 0.1 else _facing(), 0.8)
 		if _spin_t <= 0.0:
 			_anim_lock = 0.0
 	if _shield_t > 0.0:
@@ -1105,6 +1114,11 @@ func _tick_buffs(delta: float) -> void:
 		if fmod(_dmg_boost_t, 0.25) < delta:
 			Fx.burst(game, global_position + Vector3(0, 1.6, 0), Color(1.0, 0.35, 0.3), 2, 2.0)
 	building_t = maxf(building_t - delta, 0.0)
+	# Regeneração fora de combate: dH/dt = r·Hmax depois de regen_delay s calmo.
+	_calm_t += delta
+	if _calm_t > Config.cfg.regen_delay and hp < max_hp():
+		hp = minf(hp + Config.cfg.regen_rate * max_hp() * delta, max_hp())
+		_update_hp_bar()
 	if _boost_t > 0.0:
 		_boost_t -= delta
 		_boost_fx_t -= delta
@@ -1263,7 +1277,7 @@ func _build_hp_bar() -> void:
 func _update_hp_bar() -> void:
 	if _hp_fill == null:
 		return
-	var r := clampf(hp / stats.max_hp, 0.0, 1.0)
+	var r := clampf(hp / max_hp(), 0.0, 1.0)
 	_hp_fill.scale.x = maxf(r, 0.001)
 	_hp_root.visible = alive and (r < 0.999 or is_player)
 

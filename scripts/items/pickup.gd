@@ -110,7 +110,7 @@ func apply_to(u: Unit) -> void:
 	var cfg := Config.cfg
 	match kind:
 		"pocao":
-			u.heal(u.stats.max_hp * cfg.pickup_heal)
+			u.heal(u.max_hp() * cfg.pickup_heal)
 		"escudo":
 			u.give_shield(cfg.pickup_shield, cfg.pickup_shield_time)
 		"velocidade":

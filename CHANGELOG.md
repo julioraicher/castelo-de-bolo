@@ -3,6 +3,37 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Rodada 15 (2026-10-29), frente Jogabilidade: personagens duram mais
+- Pedido do Julio: "a barrinha desce rápido demais". Conta do tempo para
+  matar: TTK = vida / (DPS · taxa de acerto). Com os números antigos, um
+  Samurai (combo 22+22+30,8 em 2,2 s = 34 de DPS) matava um Ninja de 80 de
+  vida em **2,4 s**, e dois juntos em ~1,2 s: nem dava tempo de usar o dash.
+- Três botões novos em `game_config.gd` (grupo "Vida e tempo para matar"),
+  sem mexer nos .tres de classe:
+  - `vida_mult = 1,4`: vida de todas as classes x1,4. Curas e escudos (números
+    absolutos) sobem junto, para valerem a mesma fração da vida.
+  - `dano_poder_mult = 1,2`: dano dos poderes do Q, para eles não ficarem
+    fracos perto da vida maior (Nuvem não muda: é lentidão).
+  - Regeneração fora de combate: 4 s sem bater nem apanhar, cura 6% da vida
+    por segundo (dH/dt = 0,06·Hmax). Uma briga perdida não vaza para a próxima.
+- TTK 1x1, antes → depois: Samurai em Ninja 2,4 → 3,3 s; Samurai em Samurai
+  4,1 → 5,8 s; Ronin em Samurai 3,7 → 5,2 s; Ninja de Shuriken em Ninja
+  5,3 → 7,5 s. Nas simulações o número de mortes caiu pouco (~10%), porque
+  quase toda morte é em grupo (3 contra 1); a diferença aparece no 1x1.
+- Bots: quem leva a máscara inimiga ganha **guarda-costas** (atacantes até
+  45 m brigam só com quem chega a 8 m do carregador). Pontos ainda são raros
+  (0 a 2 em 5 min): continua na lista.
+- Achado para a frente Cenário: no Rio das Lanternas o time Azul morre bem mais
+  que o Vermelho nas simulações (ex.: 32 x 21, 49 x 15); no Vale fica igual
+  (46 x 42). Algo no lado azul do Rio (caminho, ponte, spawn) favorece o vermelho.
+- Teste: 5 min simulados no Rio (com `--poderes`) e no Vale sem erro.
+- **O que testar**:
+  1. A vida ainda desce rápido demais, ou agora ficou lenta/esponja?
+     (dá para ajustar só o `vida_mult`)
+  2. Saia de uma briga e espere 4 s: a vida voltando ajuda ou deixa fácil?
+  3. Os poderes ainda matam/derrubam como antes?
+  4. Pegue a máscara inimiga: os aliados vêm te proteger?
+
 ## Rodada 14 (2026-10-29), frente Cenário: leva 2 de peças e vila com moradores
 - Peças novas (`tools/gerar_mapa_rio.gd`, nos 2 temas): **templo** (dois
   telhados, corda sagrada, altar dourado, incensário, barris de saquê), **casa

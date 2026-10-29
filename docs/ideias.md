@@ -13,6 +13,10 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
   casa de banho (onsen com vapor), santuário de raposas com fileira de torii.
 - **Moradores com animação leve** (balançar, varrer) e reação à briga (fugir).
 - **Capturas raras**: bots quase não levam a máscara até o fim (frente Jogabilidade).
+  Rodada 14 pôs guarda-costas; ainda 0 a 2 pontos em 5 min. Suspeita: o
+  carregador volta por onde os inimigos renascem. Ideias: rota pela ponte
+  lateral, renascer em ondas (todos a cada 8 s), Hora do Caos.
+- **Lado azul do Rio das Lanternas** morre mais nas simulações (frente Cenário).
 - **Ajuste dos poderes novos** depois do teste do Julio (dano, raio, recarga).
 
 ## B — depois

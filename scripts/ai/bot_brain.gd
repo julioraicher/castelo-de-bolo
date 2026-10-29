@@ -12,8 +12,9 @@ extends Node
 ##  4. Própria princesa sequestrada -> perseguir quem a leva / buscá-la no chão.
 ##  5. Construtor com obra pendente no castelo -> construir.
 ##  6. Item no chão bem perto e ninguém colado -> desviar para pegar.
-##  7. Inimigo perto -> lutar.
-##  8. Aliado carregando a princesa inimiga -> escoltar.
+##  7. Aliado carregando a princesa inimiga (até 45 m) -> escoltar: só briga
+##     com quem chega a 8 m dele.
+##  8. Inimigo perto -> lutar.
 ##  9. Papel: ATAQUE vai buscar a princesa inimiga, DEFESA guarda o portão,
 ##     CONFEITEIRO busca bolos.
 
@@ -87,6 +88,21 @@ func _think() -> void:
 		_goal = item.global_position
 		return
 
+	# Aliado levando a máscara inimiga: atacantes viram guarda-costas. Brigam
+	# só com quem chega perto dele (8 m) e senão andam ao lado dele.
+	if their_princess.state == Princess.State.CARRIED and their_princess.carrier.team == unit.team \
+			and role != Role.DEFEND and their_princess.carrier != unit:
+		var c := their_princess.carrier
+		if me.distance_to(c.global_position) < 45.0:
+			_target = _nearest_enemy_to(c.global_position, 8.0)
+			if _target:
+				_goal = _target.global_position
+				return
+			if randf() < 0.2:
+				_wander = Vector3(randf_range(-4, 4), 0, randf_range(-4, 4))
+			_goal = c.global_position + _wander
+			return
+
 	var aggro := Config.cfg.bot_aggro_radius
 	if role == Role.DEFEND:
 		aggro *= 1.3
@@ -128,6 +144,18 @@ func _nearest_enemy(radius: float) -> Unit:
 			# Quem carrega a princesa é alvo prioritário.
 			if u.carried_princess:
 				d *= 0.5
+			if d < best_d:
+				best_d = d
+				best = u
+	return best
+
+
+func _nearest_enemy_to(at: Vector3, radius: float) -> Unit:
+	var best: Unit = null
+	var best_d := radius
+	for u in game.units:
+		if u.alive and u.team != unit.team:
+			var d := u.global_position.distance_to(at)
 			if d < best_d:
 				best_d = d
 				best = u
