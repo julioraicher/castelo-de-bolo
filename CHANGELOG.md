@@ -3,10 +3,11 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
-## 2026-10-29, frente Identidade: prompt-mestre do Gemini
+## 2026-10-29, frente Identidade: diário e quiz
 - `docs/identidade.md`: diário de nome, tema, estilo geral, logo e divulgação,
   com as restrições que qualquer estilo precisa respeitar e o bloco de estilo.
-- Prompt-mestre para um Gem do Gemini (link no `docs/identidade.md`).
+- Prompt do Gemini descartado: conceitos serão pranchas 3D feitas aqui.
+  Quiz de identidade com 8 mundos candidatos (link no `docs/identidade.md`).
 - CLAUDE.md: frente Identidade na tabela de frentes.
 
 ## Rodada 6 (2026-10-29), frente Jogabilidade: combate e poderes

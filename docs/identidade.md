@@ -7,12 +7,17 @@ personagem vai para `docs/arte-personagens.md`; de cenário, para
 
 ## Como iteramos
 
-1. Julio conversa com um Gem do Gemini que tem o **prompt-mestre** como
-   instrução fixa (contexto do jogo + restrições + tipos de pedido).
-   Doc para copiar: https://claude.ai/artifact/43ndxxs3f3jfxfrraadV4s
-2. Traz as imagens escolhidas, o prompt usado e o que gostou/odiou.
-3. Claude fecha a decisão aqui e atualiza o **bloco de estilo**, que passa a
-   abrir todos os prompts (personagens, cenário, efeitos, divulgação).
+Sem gerador de imagem por enquanto (decisão do Julio em 2026-10-29): tudo sai
+daqui, em 3D, no estilo do jogo.
+
+1. **Quiz de identidade** (respostas salvas no banco do artefato, Claude lê):
+   https://claude.ai/artifact/3dyzh7VgMQiDnc1NPT2fcB — 8 mundos candidatos,
+   tom, proporções, acabamento, paleta, efeitos, poderes, mudanças de regra, nome.
+2. **Pranchas 3D**: Claude monta variações low-poly por código no Godot e manda
+   uma imagem por rodada (opções A/B/C/D, close + câmera do jogo no tamanho real).
+   Julio responde por letra ("B com o chapéu da D").
+3. O escolhido vira dado (`config/`) e vai para o jogo publicado.
+4. Decisão registrada aqui; personagem e cenário seguem nas frentes deles.
 
 ## Restrições que qualquer estilo precisa respeitar
 
@@ -38,4 +43,5 @@ Nome definitivo, tema, estilo, paleta, design da princesa, nomes dos poderes, lo
 
 | Data | Decisão |
 |---|---|
-| 2026-10-29 | Frente de identidade criada; prompt-mestre do Gemini entregue. Nome "Castelo de Bolo" segue provisório. |
+| 2026-10-29 | Frente de identidade criada. Nome "Castelo de Bolo" segue provisório. |
+| 2026-10-29 | Sem Gemini: conceitos feitos aqui em 3D por código. Quiz de identidade publicado. |
