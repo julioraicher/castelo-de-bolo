@@ -7,8 +7,11 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 ## A — próxima
 - **Peças do Rio das Lanternas**: prancha `cenario/06-pecas-rio.png`; o Julio
   diz por número o que detalhar mais, trocar ou repetir.
-- **Mais peças** (pedido do Julio: "muito mais"): templo grande, casa de chá,
-  barco no rio, ponte de corda, cemitério de lanternas, forja, estábulo, dojo.
+- **Leva 2 de peças**: prancha `cenario/07-leva2-pecas.png` (templo, casa de chá,
+  forja, dojo, barco, ponte de corda, moradores, fundos das casas).
+- **Leva 3** (próximas): cemitério de lanternas, estábulo, mercado de peixe,
+  casa de banho (onsen com vapor), santuário de raposas com fileira de torii.
+- **Moradores com animação leve** (balançar, varrer) e reação à briga (fugir).
 - **Capturas raras**: bots quase não levam a máscara até o fim (frente Jogabilidade).
 - **Ajuste dos poderes novos** depois do teste do Julio (dano, raio, recarga).
 

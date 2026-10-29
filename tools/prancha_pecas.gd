@@ -2,7 +2,7 @@ extends SceneTree
 ## Prancha das peças prontas (.scn) de um tema, uma imagem por peça.
 ## Uso (xvfb no servidor):
 ##   xvfb-run -a -s "-screen 0 800x600x24" godot --path . --rendering-driver opengl3 \
-##     --rendering-method gl_compatibility --audio-driver Dummy -s tools/prancha_pecas.gd -- DIR tema peca1 peca2 ...
+##     --rendering-method gl_compatibility --audio-driver Dummy -s tools/prancha_pecas.gd -- DIR tema peca1 peca2@180 ...
 ## Salva DIR/peca_NN.png; a montagem com números é feita fora (tools/montar_prancha.py).
 
 func _init() -> void:
@@ -19,11 +19,14 @@ func _rodar() -> void:
 		var cena := Node3D.new()
 		root.add_child(cena)
 		_luz(cena)
-		var ps: PackedScene = load("res://assets/ninja/%s/%s.scn" % [tema, args[i]])
+		var partes := args[i].split("@")  # "casa_a@180" = peça girada (ver os fundos)
+		var ps: PackedScene = load("res://assets/ninja/%s/%s.scn" % [tema, partes[0]])
 		var no: Node3D = ps.instantiate()
+		if partes.size() > 1:
+			no.rotation_degrees.y = float(partes[1])
 		cena.add_child(no)
 		var mi: MeshInstance3D = no.get_node("Malha")
-		var bb := mi.get_aabb()
+		var bb := no.transform * mi.get_aabb()
 		var centro := bb.get_center()
 		var raio := bb.size.length() * 0.5
 		var cam := Camera3D.new()

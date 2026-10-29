@@ -60,6 +60,13 @@ func _gerar_modelos_rio() -> void:
 	_jizos(); _salvar("jizos")
 	_bambuzal(); _salvar("bambuzal")
 	_pilha(); _salvar("pilha")
+	_aldeoes(); _salvar("aldeoes")
+	_templo(); _salvar("templo")
+	_casa_de_cha(); _salvar("casa_de_cha")
+	_barco(); _salvar("barco")
+	_ponte_corda(); _salvar("ponte_corda")
+	_forja(); _salvar("forja")
+	_dojo(); _salvar("dojo")
 
 
 # --- Ferramentas de forma ------------------------------------------------------
@@ -398,6 +405,9 @@ func _casa_a() -> void:
 		_placa_neon(Vector3(w / 2 + 0.45, 3.4, d / 2 - 0.3), 2.2, P.luz2, 90.0)
 	else:
 		_placa_neon(Vector3(w / 2 + 0.45, 3.4, d / 2 - 0.3), 2.2, P.torii, 90.0)
+	_fundos(w, d, [1.4])
+	_shoji(Vector3(-w * 0.2, 3.75, -0.3 - (d - 0.9) / 2 - 0.03), 1.2, 0.8, -1, P.papel)
+	_aldeao(Vector3(-1.3, 0, d / 2 + 1.0), 30.0, P.luz2.darkened(0.35), "varrer")
 
 
 ## Casa de fazenda térrea (6 x 5 m) com telhado alto de palha e varanda (engawa).
@@ -421,6 +431,10 @@ func _casa_b() -> void:
 		_cil(0.12, 0.12, 1.2, 6, Vector3(-w / 2 - 0.65, 0.15 + k * 0.22, -1.1), Vector3(90, 0, 0), P.madeira2.darkened(0.1))
 	_lanterna_papel(Vector3(w / 2 - 0.3, 2.3, d / 2 + 0.1), P.papel)
 	_vaso(Vector3(-1.0, 0.45, d / 2 + 0.5))
+	_fundos(w, d, [1.45])
+	_aldeao(Vector3(1.3, 0.68, d / 2 - 0.55), 0.0, P.telhado.lightened(0.25), "sentado")
+	for k in 2:  # gato dormindo na varanda
+		_esfera(0.13 - k * 0.04, Vector3(2.0 + k * 0.17, 0.78 + k * 0.05, d / 2 - 0.4), Vector3(1.4, 0.8, 1), Color(0.95, 0.6, 0.25), false, 6, 3)
 
 
 ## Loja com toldo listrado, balcão com mercadorias e placa de neon grande.
@@ -443,6 +457,8 @@ func _loja() -> void:
 	_placa_neon(Vector3(-w / 2 - 0.1, 3.4, d / 2 - 0.2), 3.0, P.luz1 if P.arvore == "bambu" else P.luz2, 0.0)
 	for j in 5:
 		_lanterna_papel(Vector3(-2.0 + j, 2.55, d / 2 + 0.85), P.papel if j % 2 else P.luz2, 0.16)
+	_aldeao(Vector3(0.9, 0.3, d / 2 - 0.85), 0.0, P.torii.darkened(0.1), "vender", false, P.branco)
+	_fundos(w, d, [1.6])
 
 
 ## Pousada de 3 andares com varanda e cordão de lanternas.
@@ -467,6 +483,10 @@ func _pousada() -> void:
 	_telhado(Vector3(0, 7.05, -0.1), w - 1.6, d - 1.6, 1.1, P.telhado, 0.45)
 	for k in 7:
 		_lanterna_papel(Vector3(-w / 2 + k * w / 6, 3.0 - (0.15 if k % 2 else 0.0), d / 2 + 0.8), P.luz2 if k % 3 == 0 else P.papel, 0.17)
+	_aldeao(Vector3(1.6, 2.93, 2.3), -15.0, P.luz2.darkened(0.2), "lanterna")
+	_aldeao(Vector3(-1.9, 0.3, d / 2 + 0.6), 20.0, P.madeira2.lightened(0.2), "parado", true)
+	_fundos(w, d, [1.4])
+	_shoji(Vector3(-w * 0.2, 4.0, -0.1 - (d - 0.8) / 2 - 0.03), 1.3, 0.9, -1, P.papel)
 
 
 ## Armazém (kura): reboco branco, base com grade namako, porta pesada.
@@ -489,6 +509,7 @@ func _armazem() -> void:
 		_caixa(Vector3(0.8, 0.8, 0.8), Vector3(w / 2 + 0.6, 0.4 + (0.8 if k == 2 else 0.0), -0.9 + (k % 2) * 0.9), Vector3(0, k * 13, 0), P.madeira2)
 	_cil(0.4, 0.4, 0.85, 10, Vector3(-w / 2 - 0.55, 0.43, 0.8), Vector3.ZERO, P.madeira2)
 	_cil(0.42, 0.42, 0.08, 10, Vector3(-w / 2 - 0.55, 0.65, 0.8), Vector3.ZERO, P.corda)
+	_fundos(w, d, [2.6])
 
 
 ## Fileira de 3 barracas de festival com máscaras, peixinhos e lanternas.
@@ -513,6 +534,8 @@ func _festival() -> void:
 		_caixa(Vector3(1.6, 0.12, 0.05), Vector3(x, 2.05, 1.04), Vector3.ZERO, [P.luz1, P.luz2, P.ouro][i] * 1.4, true)
 	for k in 9:
 		_lanterna_papel(Vector3(-4.4 + k * 1.1, 2.65 - sin(k / 8.0 * PI) * 0.3, 1.25), P.papel if k % 2 else P.luz2, 0.15)
+	for i in 3:  # vendedores atrás das barracas
+		_aldeao(Vector3((i - 1) * 3.0 + 0.3, 0, 0.05), 0.0, [P.telhado.lightened(0.3), P.torii.lightened(0.1), P.musgo.lightened(0.25)][i], "vender", i == 1)
 
 
 func _poco() -> void:
@@ -686,6 +709,376 @@ func _pilha() -> void:
 	_caixa(Vector3(1.4, 0.06, 0.9), Vector3(0, 1.93, 0.05), Vector3(0, 15, 6), P.torii.darkened(0.2))
 
 
+# --- Aldeões (moradores parados, parte do modelo) ------------------------------
+
+const PELE := Color(0.93, 0.76, 0.62)
+const CABELO := Color(0.08, 0.06, 0.08)
+
+
+## Morador low-poly (~1,6 m) em `pos`, virado para `rot_y` (0 = olha para +z).
+## pose: parado, vender, varrer, martelar, sentado, lanterna, remar, treinar, servir.
+func _aldeao(pos: Vector3, rot_y: float, roupa: Color, pose := "parado", chapeu := false, obi := Color(-1, 0, 0)) -> void:
+	var b := Basis(Vector3.UP, deg_to_rad(rot_y))
+	var faixa := obi if obi.r >= 0.0 else roupa.lerp(P.ouro, 0.6)
+	var sentado := pose == "sentado" or pose == "servir"
+	var dy := -0.5 if sentado else 0.0
+	if sentado:
+		# Pernas dobradas para a frente (seiza/sentado na varanda).
+		_caixa(Vector3(0.46, 0.22, 0.5), pos + b * Vector3(0, 0.11, 0.12), Vector3(0, rot_y, 0), roupa.darkened(0.35))
+	else:
+		_cil(0.19, 0.3, 0.78, 7, pos + b * Vector3(0, 0.39, 0), Vector3(0, rot_y, 0), roupa.darkened(0.35))
+		for s in [-1.0, 1.0]:
+			_caixa(Vector3(0.1, 0.06, 0.22), pos + b * Vector3(s * 0.1, 0.03, 0.06), Vector3(0, rot_y, 0), Color(0.1, 0.08, 0.07))
+	_cil(0.2, 0.21, 0.58, 7, pos + b * Vector3(0, 1.06 + dy, 0), Vector3(0, rot_y, 0), roupa)
+	_cil(0.215, 0.215, 0.12, 7, pos + b * Vector3(0, 0.86 + dy, 0), Vector3(0, rot_y, 0), faixa)
+	for s in [-1.0, 1.0]:  # gola cruzada
+		_caixa(Vector3(0.05, 0.36, 0.02), pos + b * Vector3(s * 0.05, 1.2 + dy, 0.2), Vector3(0, rot_y, s * 24.0), P.branco.darkened(0.1))
+	_esfera(0.15, pos + b * Vector3(0, 1.5 + dy, 0.01), Vector3.ONE, PELE, false, 8, 5)
+	_esfera(0.155, pos + b * Vector3(0, 1.55 + dy, -0.03), Vector3(1, 0.8, 1), CABELO, false, 8, 4)
+	_esfera(0.07, pos + b * Vector3(0, 1.69 + dy, -0.08), Vector3.ONE, CABELO, false, 6, 3)
+	for s in [-1.0, 1.0]:
+		_esfera(0.022, pos + b * Vector3(s * 0.055, 1.52 + dy, 0.145), Vector3.ONE, Color(0.05, 0.04, 0.05), false, 4, 2)
+	if chapeu:
+		_cil(0.0, 0.4, 0.22, 8, pos + b * Vector3(0, 1.74 + dy, 0), Vector3(0, rot_y, 0), P.corda)
+	# Braços: [inclinação para a frente (graus, negativo = à frente), abertura].
+	var bracos := {
+		"parado": [[0.0, 8.0], [0.0, 8.0]], "vender": [[-55.0, 6.0], [-55.0, 6.0]],
+		"varrer": [[-35.0, 4.0], [-50.0, 18.0]], "martelar": [[-35.0, 6.0], [-150.0, 10.0]],
+		"sentado": [[-30.0, 6.0], [-30.0, 6.0]], "lanterna": [[0.0, 8.0], [-70.0, 4.0]],
+		"remar": [[-40.0, 10.0], [-25.0, 25.0]], "treinar": [[-90.0, 4.0], [-90.0, 4.0]],
+		"servir": [[-65.0, 4.0], [-65.0, 4.0]],
+	}
+	var mao := Vector3.ZERO
+	for i in 2:
+		var s := -1.0 if i == 0 else 1.0
+		var ang: Array = bracos.get(pose, bracos["parado"])[i]
+		var ba := Basis.from_euler(Vector3(deg_to_rad(ang[0]), 0, deg_to_rad(-s * ang[1])))
+		var ombro := Vector3(s * 0.25, 1.3 + dy, 0)
+		_cil(0.07, 0.1, 0.5, 6, pos + b * (ombro + ba * Vector3(0, -0.25, 0)), Vector3(ang[0], rot_y, -s * ang[1]), roupa.lightened(0.05))
+		mao = ombro + ba * Vector3(0, -0.53, 0)
+		_esfera(0.055, pos + b * mao, Vector3.ONE, PELE, false, 5, 3)
+		if i == 0:
+			continue
+		# Objeto na mão direita, conforme a pose.
+		match pose:
+			"varrer":
+				_cil(0.025, 0.025, 1.4, 4, pos + b * (mao + Vector3(-0.15, -0.35, 0.25)), Vector3(-30, rot_y, 25), P.madeira2)
+				_caixa(Vector3(0.35, 0.25, 0.08), pos + b * (mao + Vector3(-0.42, -0.95, 0.6)), Vector3(-10, rot_y, 0), P.corda)
+			"martelar":
+				_cil(0.025, 0.025, 0.45, 4, pos + b * (mao + Vector3(0, 0.2, 0)), Vector3(0, rot_y, 0), P.madeira)
+				_caixa(Vector3(0.22, 0.12, 0.12), pos + b * (mao + Vector3(0, 0.45, 0)), Vector3(0, rot_y, 0), Color(0.25, 0.25, 0.3))
+			"lanterna":
+				_lanterna_papel(pos + b * (mao + Vector3(0, -0.28, 0.05)), P.papel, 0.13)
+			"remar":
+				_cil(0.025, 0.025, 2.6, 4, pos + b * (mao + Vector3(0.2, -0.5, 0)), Vector3(0, rot_y, -20), P.madeira2)
+			"treinar":
+				_cil(0.022, 0.03, 1.0, 5, pos + b * (mao + Vector3(0.05, 0.1, 0.45)), Vector3(70, rot_y, 0), P.madeira2.lightened(0.2))
+			"servir":
+				_cil(0.06, 0.05, 0.08, 6, pos + b * (mao + Vector3(-0.12, 0.04, 0.02)), Vector3(0, rot_y, 0), P.musgo.lightened(0.3))
+
+
+## Grupo de moradores conversando (enfeite sem colisão).
+func _aldeoes() -> void:
+	_aldeao(Vector3(-0.6, 0, 0), 60.0, P.telhado.lightened(0.15), "parado", true)
+	_aldeao(Vector3(0.5, 0, 0.4), -110.0, P.torii.lightened(0.1), "lanterna")
+	_aldeao(Vector3(0.1, 0, -0.6), 170.0, P.musgo.lightened(0.15), "vender")
+	_caixa(Vector3(0.5, 0.35, 0.4), Vector3(-0.2, 0.17, 0.9), Vector3(0, 20, 0), P.madeira2)  # cesto
+	_esfera(0.12, Vector3(-0.25, 0.42, 0.9), Vector3.ONE, P.ouro, false, 5, 3)
+
+
+## Lanterna de pedra (ishidoro) em qualquer posição e escala.
+func _ishidoro(pos: Vector3, e := 1.0) -> void:
+	_cil(0.35 * e, 0.42 * e, 0.2 * e, 6, pos + Vector3(0, 0.1 * e, 0), Vector3.ZERO, P.pedra2)
+	_cil(0.12 * e, 0.14 * e, 0.8 * e, 6, pos + Vector3(0, 0.6 * e, 0), Vector3.ZERO, P.pedra)
+	_cil(0.3 * e, 0.22 * e, 0.12 * e, 6, pos + Vector3(0, 1.06 * e, 0), Vector3.ZERO, P.pedra2)
+	_caixa(Vector3(0.36, 0.3, 0.36) * e, pos + Vector3(0, 1.27 * e, 0), Vector3.ZERO, P.pedra)
+	_caixa(Vector3(0.2, 0.2, 0.38) * e, pos + Vector3(0, 1.27 * e, 0), Vector3.ZERO, P.luz1, true)
+	_caixa(Vector3(0.38, 0.2, 0.2) * e, pos + Vector3(0, 1.27 * e, 0), Vector3.ZERO, P.luz1, true)
+	_cil(0.05 * e, 0.42 * e, 0.28 * e, 6, pos + Vector3(0, 1.56 * e, 0), Vector3.ZERO, P.pedra)
+	_esfera(0.07 * e, pos + Vector3(0, 1.74 * e, 0), Vector3.ONE, P.pedra, false, 5, 3)
+
+
+## Fundos e lateral de uma casa (frente em +z): janelas, porta, calha, varal,
+## barril de chuva e lenha. `andares` = alturas (centro) das janelas de trás.
+func _fundos(w: float, d: float, andares: Array, recuo := 0.0) -> void:
+	var z := -d / 2 - 0.03 + recuo
+	for k in andares.size():
+		var y: float = andares[k]
+		var largura := minf(w * 0.35, 1.6) if k == 0 else minf(w * 0.3, 1.3)
+		_shoji(Vector3(w * 0.22, y, z), largura, 0.9, -1, P.papel if k % 2 == 0 else P.luz1.lerp(P.papel, 0.5))
+		_caixa(Vector3(largura + 0.3, 0.08, 0.3), Vector3(w * 0.22, y + 0.6, z - 0.15), Vector3(20, 0, 0), P.telhado.darkened(0.15))
+	# Porta dos fundos.
+	_caixa(Vector3(0.9, 1.8, 0.06), Vector3(-w * 0.25, 1.2, z - 0.02), Vector3.ZERO, Color(0.1, 0.08, 0.07))
+	_caixa(Vector3(1.1, 0.12, 0.12), Vector3(-w * 0.25, 2.15, z - 0.05), Vector3.ZERO, P.madeira)
+	_caixa(Vector3(0.7, 0.5, 0.04), Vector3(-w * 0.25, 1.75, z - 0.07), Vector3.ZERO, P.torii.lightened(0.1))  # noren
+	# Calha de bambu e barril de chuva.
+	_cil(0.05, 0.05, 2.4, 5, Vector3(w / 2 - 0.2, 1.4, z - 0.12), Vector3.ZERO, P.bambu)
+	_cil(0.3, 0.3, 0.7, 8, Vector3(w / 2 - 0.25, 0.35, z - 0.45), Vector3.ZERO, P.madeira2)
+	_cil(0.31, 0.31, 0.05, 8, Vector3(w / 2 - 0.25, 0.55, z - 0.45), Vector3.ZERO, P.corda)
+	_cil(0.27, 0.27, 0.02, 8, Vector3(w / 2 - 0.25, 0.71, z - 0.45), Vector3.ZERO, P.agua.lightened(0.2), true)
+	# Varal com roupas coloridas.
+	for x in [-w / 2 + 0.3, -w * 0.25 + 0.9]:
+		_cil(0.03, 0.03, 1.7, 4, Vector3(x, 0.85, z - 1.0), Vector3.ZERO, P.madeira)
+	var cores := [P.luz2, P.branco, P.torii, P.telhado.lightened(0.3)]
+	var x0 := -w / 2 + 0.3
+	var x1 := -w * 0.25 + 0.9
+	_cil(0.01, 0.01, x1 - x0, 3, Vector3((x0 + x1) / 2, 1.65, z - 1.0), Vector3(0, 0, 90), P.corda)
+	for k in 3:
+		_caixa(Vector3(0.36, 0.5, 0.02), Vector3(x0 + 0.25 + k * (x1 - x0 - 0.5) / 2.0, 1.38, z - 1.0), Vector3(0, 0, (k - 1) * 3), cores[k % 4])
+	# Lenha e caixotes encostados.
+	for k in 3:
+		_cil(0.1, 0.1, 0.9, 5, Vector3(w * 0.1 + k * 0.05, 0.12 + k * 0.18, z - 0.3), Vector3(0, 0, 90), P.madeira2.darkened(0.05 * k))
+	_caixa(Vector3(0.6, 0.5, 0.5), Vector3(w * 0.38, 0.25, z - 0.35), Vector3(0, 12, 0), P.madeira2)
+	# Lateral (+x): janela pequena com grade e uma lanterna.
+	_caixa(Vector3(0.04, 0.7, 0.9), Vector3(w / 2 + 0.02, 1.5, -d * 0.1 + recuo * 0.5), Vector3.ZERO, P.papel, true)
+	for k in 4:
+		_caixa(Vector3(0.06, 0.7, 0.04), Vector3(w / 2 + 0.05, 1.5, -d * 0.1 - 0.35 + k * 0.23 + recuo * 0.5), Vector3.ZERO, P.madeira)
+	_lanterna_papel(Vector3(-w / 2 - 0.15, 2.0, -d * 0.2 + recuo * 0.5), P.luz2, 0.15)
+
+
+# --- Leva 2: templo, casa de chá, barco, ponte de corda, forja, dojo --------------
+
+## Templo (hondo) 8 x 6,5 m em plataforma de pedra, frente em +z.
+func _templo() -> void:
+	_caixa(Vector3(8.4, 0.45, 6.6), Vector3(0, 0.22, 0), Vector3.ZERO, P.pedra2)
+	_caixa(Vector3(7.8, 0.45, 6.0), Vector3(0, 0.67, -0.1), Vector3.ZERO, P.pedra)
+	for k in 3:  # escadaria
+		_caixa(Vector3(3.2, 0.3, 0.4), Vector3(0, 0.15 + k * 0.3, 3.5 - k * 0.4), Vector3.ZERO, P.pedra if k % 2 else P.pedra2)
+	_caixa(Vector3(6.4, 2.6, 4.2), Vector3(0, 2.2, -0.6), Vector3.ZERO, P.madeira2)
+	_caixa(Vector3(7.4, 0.14, 1.3), Vector3(0, 0.96, 2.05), Vector3.ZERO, P.madeira)  # varanda
+	for k in 6:
+		var x := -3.3 + k * 1.32
+		_cil(0.15, 0.17, 2.9, 8, Vector3(x, 2.4, 2.55), Vector3.ZERO, P.torii)
+		_cil(0.2, 0.2, 0.12, 8, Vector3(x, 1.05, 2.55), Vector3.ZERO, P.pedra2)
+	_caixa(Vector3(7.2, 0.22, 0.25), Vector3(0, 3.7, 2.55), Vector3.ZERO, P.torii)
+	_caixa(Vector3(7.2, 0.12, 0.2), Vector3(0, 3.35, 2.55), Vector3.ZERO, P.ouro)
+	for x in [-2.2, 2.2]:
+		_shoji(Vector3(x, 2.1, 1.52), 1.8, 1.9, 1, P.papel)
+	_caixa(Vector3(2.0, 2.0, 0.05), Vector3(0, 2.05, 1.5), Vector3.ZERO, Color(0.08, 0.05, 0.05))  # porta aberta
+	_caixa(Vector3(0.9, 1.0, 0.3), Vector3(0, 1.75, 0.9), Vector3.ZERO, P.ouro, true)  # altar ao fundo
+	_esfera(0.3, Vector3(0, 2.45, 0.9), Vector3(1, 1.2, 1), P.ouro, true, 7, 4)
+	# Caixa de oferendas e corda sagrada com papéis shide.
+	_caixa(Vector3(1.5, 0.55, 0.6), Vector3(0, 1.3, 2.25), Vector3.ZERO, P.madeira)
+	for k in 6:
+		_caixa(Vector3(0.05, 0.03, 0.6), Vector3(-0.6 + k * 0.24, 1.59, 2.25), Vector3.ZERO, Color(0.1, 0.08, 0.07))
+	_cil(0.13, 0.13, 3.6, 7, Vector3(0, 3.15, 2.7), Vector3(0, 0, 90), P.corda)
+	for k in 5:
+		var x := -1.4 + k * 0.7
+		for j in 3:
+			_caixa(Vector3(0.14, 0.14, 0.02), Vector3(x + (j % 2) * 0.06, 2.9 - j * 0.13, 2.75), Vector3.ZERO, P.branco, true)
+	_lanterna_papel(Vector3(0, 2.6, 2.8), P.luz2, 0.42)
+	for x in [-2.6, 2.6]:
+		_lanterna_papel(Vector3(x, 2.9, 2.75), P.papel, 0.2)
+	# Telhado em dois níveis.
+	_telhado(Vector3(0, 3.85, -0.1), 8.6, 6.2, 0.9, P.telhado, 0.75)
+	_caixa(Vector3(5.0, 1.0, 3.2), Vector3(0, 5.15, -0.4), Vector3.ZERO, P.madeira2)
+	for k in 7:
+		_caixa(Vector3(0.12, 0.6, 0.04), Vector3(-1.8 + k * 0.6, 5.15, 1.22), Vector3.ZERO, P.madeira)
+	_caixa(Vector3(4.0, 0.6, 0.03), Vector3(0, 5.15, 1.2), Vector3.ZERO, P.papel, true)
+	_telhado(Vector3(0, 5.65, -0.4), 6.6, 4.6, 1.9, P.telhado, 0.8)
+	for x in [-1.7, 1.7]:  # enfeites dourados na cumeeira
+		_caixa(Vector3(0.25, 0.5, 0.2), Vector3(x, 7.75, -0.4), Vector3(0, 0, -x * 12), P.ouro, true)
+	# Barris de saquê oferecidos, incensário e lanternas de pedra.
+	for k in 6:
+		var fila := 0 if k < 3 else 1
+		var col := k if k < 3 else k - 3
+		if fila == 1 and col == 2:
+			continue
+		var p := Vector3(-3.4 + col * 0.62 + fila * 0.31, 1.18 + fila * 0.52, 0.6)
+		_cil(0.3, 0.3, 0.52, 8, p, Vector3(90, 0, 0), P.branco.darkened(0.1))
+		_cil(0.31, 0.31, 0.1, 8, p, Vector3(90, 0, 0), P.torii)
+	_cil(0.35, 0.45, 0.4, 8, Vector3(0, 0.2, 4.7), Vector3.ZERO, P.pedra2)
+	_esfera(0.45, Vector3(0, 0.75, 4.7), Vector3(1, 0.7, 1), Color(0.22, 0.2, 0.18), false, 8, 4)
+	_cil(0.32, 0.32, 0.05, 8, Vector3(0, 0.98, 4.7), Vector3.ZERO, P.luz1, true)
+	for k in 3:
+		_cil(0.012, 0.012, 0.35, 3, Vector3(-0.12 + k * 0.12, 1.15, 4.7), Vector3.ZERO, P.ouro)
+	for x in [-3.0, 3.0]:
+		_ishidoro(Vector3(x, 0, 4.3))
+	_aldeao(Vector3(2.0, 0, 4.9), -70.0, Color(0.95, 0.55, 0.15), "varrer")
+
+
+## Casa de chá (chashitsu) com jardim seco, bacia de pedra e bordo vermelho.
+func _casa_de_cha() -> void:
+	_caixa(Vector3(3.6, 0.35, 3.4), Vector3(0, 0.17, -0.6), Vector3.ZERO, P.pedra2)
+	_caixa(Vector3(3.2, 2.0, 3.0), Vector3(0, 1.35, -0.6), Vector3.ZERO, P.reboco.darkened(0.08))
+	for x in [-1.6, -0.5, 0.5, 1.6]:
+		_cil(0.07, 0.08, 2.1, 6, Vector3(x, 1.4, 0.9), Vector3.ZERO, P.tronco)
+	_cil(0.5, 0.5, 0.04, 14, Vector3(-0.8, 1.5, 0.92), Vector3(90, 0, 0), P.papel, true)  # janela redonda
+	for k in 3:
+		_caixa(Vector3(0.03, 0.9, 0.03), Vector3(-1.1 + k * 0.3, 1.5, 0.95), Vector3.ZERO, P.bambu)
+	_caixa(Vector3(0.7, 0.75, 0.05), Vector3(0.75, 0.75, 0.92), Vector3.ZERO, Color(0.1, 0.07, 0.06))  # porta baixa
+	_caixa(Vector3(3.6, 0.1, 0.9), Vector3(0, 0.55, 1.35), Vector3.ZERO, P.madeira2)  # varanda
+	var casca := Color(0.3, 0.22, 0.18) if P.arvore == "bambu" else Color(0.5, 0.36, 0.26)
+	_telhado(Vector3(0, 2.35, -0.3), 4.2, 4.0, 1.5, casca, 0.4)
+	_aldeao(Vector3(0.6, 0.6, 1.4), 0.0, P.musgo.lightened(0.2), "servir", false, P.branco)
+	_caixa(Vector3(0.5, 0.06, 0.4), Vector3(-0.2, 0.62, 1.45), Vector3.ZERO, Color(0.12, 0.08, 0.06))  # bandeja
+	_cil(0.07, 0.06, 0.1, 7, Vector3(-0.3, 0.7, 1.45), Vector3.ZERO, P.musgo.lightened(0.3))
+	_cil(0.09, 0.09, 0.14, 7, Vector3(-0.05, 0.72, 1.45), Vector3.ZERO, Color(0.2, 0.18, 0.16))
+	# Pedras de pisar, bacia tsukubai com bica de bambu, lanterna e bordo.
+	for k in 5:
+		_cil(0.28, 0.3, 0.08, 7, Vector3(0.9 + sin(k * 1.3) * 0.4, 0.04, 2.0 + k * 0.55), Vector3.ZERO, P.pedra)
+	_cil(0.4, 0.45, 0.45, 8, Vector3(-1.3, 0.22, 2.6), Vector3.ZERO, P.pedra)
+	_cil(0.3, 0.3, 0.03, 8, Vector3(-1.3, 0.45, 2.6), Vector3.ZERO, P.agua.lightened(0.3), true)
+	_cil(0.04, 0.04, 0.9, 5, Vector3(-1.75, 0.65, 2.6), Vector3(0, 0, 70), P.bambu)
+	_cil(0.04, 0.04, 0.6, 5, Vector3(-2.15, 0.35, 2.6), Vector3.ZERO, P.bambu)
+	_ishidoro(Vector3(1.9, 0, 2.6), 0.7)
+	_cil(0.08, 0.12, 1.6, 6, Vector3(-2.2, 0.8, 0.6), Vector3(0, 0, 8), P.tronco)
+	var bordo := Color(0.9, 0.22, 0.18) if P.arvore == "bambu" else Color(0.95, 0.35, 0.25)
+	for k in 4:
+		_esfera(0.55, Vector3(-2.3 + (k % 2) * 0.5, 1.8 + k * 0.2, 0.4 + (k / 2) * 0.5), Vector3(1, 0.7, 1), bordo.darkened(0.08 * k), false, 7, 4)
+	for k in 10:  # cascalho rastelado
+		_caixa(Vector3(2.6, 0.02, 0.04), Vector3(-0.2, 0.02, 1.9 + k * 0.12), Vector3.ZERO, Color(0.7, 0.68, 0.66))
+	_cerca_baixa(Vector3(0, 0, 3.3), 4.6)
+
+
+func _cerca_baixa(pos: Vector3, comp: float) -> void:
+	var n := int(comp / 0.25)
+	for k in n:
+		_cil(0.03, 0.03, 0.5, 4, pos + Vector3(-comp / 2 + k * 0.25, 0.25, 0), Vector3.ZERO, P.bambu)
+	_cil(0.025, 0.025, comp, 4, pos + Vector3(0, 0.4, 0), Vector3(0, 0, 90), P.bambu.darkened(0.2))
+
+
+## Barco de rio (5 m em x) com cobertura, lanterna e barqueiro.
+func _barco() -> void:
+	var casco: Color = P.madeira2
+	_caixa(Vector3(4.0, 0.35, 1.3), Vector3(0, 0.2, 0), Vector3.ZERO, casco.darkened(0.1))
+	for s in [-1.0, 1.0]:
+		_caixa(Vector3(4.2, 0.5, 0.1), Vector3(0, 0.4, s * 0.68), Vector3(s * 12.0, 0, 0), casco)
+		_caixa(Vector3(1.0, 0.5, 0.1), Vector3(s * 2.35, 0.55, 0.0), Vector3(0, 90, s * 25.0), casco)
+	_caixa(Vector3(0.9, 0.1, 1.4), Vector3(2.4, 0.75, 0), Vector3(0, 0, 25), casco.darkened(0.15))
+	_caixa(Vector3(0.9, 0.1, 1.4), Vector3(-2.4, 0.75, 0), Vector3(0, 0, -25), casco.darkened(0.15))
+	for x in [-1.3, 0.5]:
+		for z in [-0.6, 0.6]:
+			_cil(0.04, 0.04, 1.2, 4, Vector3(x, 1.0, z), Vector3.ZERO, P.bambu.darkened(0.25))
+	_caixa(Vector3(1.8, 0.06, 1.3), Vector3(-0.4, 1.58, 0), Vector3.ZERO, P.corda.darkened(0.25))
+	for s in [-1.0, 1.0]:
+		_caixa(Vector3(1.8, 0.6, 0.04), Vector3(-0.4, 1.3, s * 0.62), Vector3(s * 10.0, 0, 0), P.corda.darkened(0.15))
+	_caixa(Vector3(0.6, 0.4, 0.5), Vector3(-0.6, 0.55, 0.1), Vector3(0, 10, 0), P.madeira)
+	_cil(0.2, 0.2, 0.4, 7, Vector3(0.2, 0.55, -0.2), Vector3.ZERO, P.branco.darkened(0.1))
+	_cil(0.03, 0.03, 1.6, 4, Vector3(-2.1, 1.3, 0), Vector3(0, 0, -15), P.madeira)
+	_lanterna_papel(Vector3(-2.45, 1.75, 0), P.luz2, 0.18)
+	_aldeao(Vector3(1.6, 0.35, 0), -90.0, P.telhado.lightened(0.2), "remar", true)
+	for k in 6:  # marolas brilhando em volta
+		_esfera(0.18, Vector3(-2.6 + k * 1.05, 0.05, (0.85 if k % 2 else -0.85)), Vector3(2.2, 0.15, 0.6), P.agua.lightened(0.45), true, 6, 2)
+
+
+## Ponte de corda pênsil (14 m em x), tábuas em catenária, lanternas penduradas.
+func _ponte_corda() -> void:
+	var meia := 7.0
+	var alt := 4.6
+	var flecha := 0.8
+	for s in [-1.0, 1.0]:
+		for z in [-0.75, 0.75]:
+			_cil(0.13, 0.16, alt + 1.2, 6, Vector3(s * meia, (alt + 1.2) / 2, z), Vector3.ZERO, P.madeira)
+		_caixa(Vector3(0.3, 0.25, 1.9), Vector3(s * meia, alt + 1.0, 0), Vector3.ZERO, P.madeira2)
+		_cil(0.06, 0.06, 2.0, 4, Vector3(s * (meia + 0.9), alt * 0.5, 0.75), Vector3(0, 0, s * 40), P.corda)
+		_lanterna_papel(Vector3(s * meia, alt + 1.45, 0), P.luz2, 0.2)
+	var n := 40
+	for k in n:
+		var x := -meia + 2.0 * meia * (k + 0.5) / n
+		var y := alt - flecha * (1.0 - pow(x / meia, 2.0))
+		_caixa(Vector3(0.25, 0.06, 1.4), Vector3(x, y, 0), Vector3(0, 0, 0), P.madeira2 if k % 3 else P.madeira2.darkened(0.2))
+	for z in [-0.72, 0.72]:
+		for k in 14:
+			var xa := -meia + 2.0 * meia * k / 14.0
+			var xb := -meia + 2.0 * meia * (k + 1) / 14.0
+			var ya := alt + 0.9 - flecha * (1.0 - pow(xa / meia, 2.0))
+			var yb := alt + 0.9 - flecha * (1.0 - pow(xb / meia, 2.0))
+			var meio := Vector3((xa + xb) / 2, (ya + yb) / 2, z)
+			_cil(0.025, 0.025, Vector2(xb - xa, yb - ya).length(), 4, meio, Vector3(0, 0, 90 + rad_to_deg(atan2(yb - ya, xb - xa))), P.corda)
+			if k % 2 == 0:
+				_cil(0.012, 0.012, 0.9, 3, Vector3(xa, (ya + alt - flecha * (1.0 - pow(xa / meia, 2.0))) / 2.0, z), Vector3.ZERO, P.corda)
+	for k in 3:
+		var x := -3.5 + k * 3.5
+		_lanterna_papel(Vector3(x, alt - flecha * (1.0 - pow(x / meia, 2.0)) - 0.45, 0.8), P.papel if k != 1 else P.luz2, 0.15)
+	_aldeao(Vector3(2.2, alt - flecha * (1.0 - pow(2.2 / meia, 2.0)) + 0.03, 0), -90.0, P.torii.lightened(0.15), "lanterna", true)
+
+
+## Forja (5 x 4 m) aberta na frente: fornalha acesa, bigorna, ferreiro e armas.
+func _forja() -> void:
+	var w := 5.0
+	var d := 4.0
+	_caixa(Vector3(w + 0.2, 0.2, d + 0.2), Vector3(0, 0.1, 0), Vector3.ZERO, P.pedra2)
+	_caixa(Vector3(w, 2.8, 0.25), Vector3(0, 1.5, -d / 2 + 0.12), Vector3.ZERO, P.madeira2)
+	for s in [-1.0, 1.0]:
+		_caixa(Vector3(0.25, 2.8, d), Vector3(s * (w / 2 - 0.12), 1.5, 0), Vector3.ZERO, P.madeira2)
+		_cil(0.12, 0.14, 2.9, 6, Vector3(s * (w / 2 - 0.1), 1.45, d / 2 - 0.1), Vector3.ZERO, P.madeira)
+	_caixa(Vector3(w + 0.1, 0.25, 0.25), Vector3(0, 2.9, d / 2 - 0.1), Vector3.ZERO, P.madeira)
+	_telhado(Vector3(0, 3.05, 0), w + 0.4, d + 0.4, 1.2, P.telhado.darkened(0.15), 0.5)
+	# Fornalha de pedra com brasa e chaminé.
+	_caixa(Vector3(1.8, 1.1, 1.3), Vector3(-1.2, 0.75, -1.1), Vector3.ZERO, P.pedra)
+	_caixa(Vector3(1.0, 0.45, 0.1), Vector3(-1.2, 0.85, -0.42), Vector3.ZERO, Color(1.0, 0.45, 0.12) * 1.6, true)
+	_caixa(Vector3(1.3, 0.12, 0.9), Vector3(-1.2, 1.36, -1.1), Vector3.ZERO, Color(1.0, 0.35, 0.1) * 1.3, true)
+	_cil(0.3, 0.4, 3.4, 6, Vector3(-1.4, 3.2, -1.4), Vector3.ZERO, P.pedra2)
+	_cil(0.32, 0.32, 0.1, 6, Vector3(-1.4, 4.92, -1.4), Vector3.ZERO, Color(1.0, 0.5, 0.15), true)
+	for k in 3:  # fumaça
+		_esfera(0.4 + k * 0.15, Vector3(-1.4 + k * 0.25, 5.4 + k * 0.6, -1.4), Vector3(1, 0.7, 1), Color(0.45, 0.42, 0.5, 1).darkened(0.1 * k), false, 6, 3)
+	# Bigorna, balde, pedra de amolar e rack de armas.
+	_caixa(Vector3(0.4, 0.5, 0.35), Vector3(0.6, 0.45, 0.2), Vector3.ZERO, P.madeira)
+	_caixa(Vector3(0.75, 0.2, 0.32), Vector3(0.6, 0.8, 0.2), Vector3.ZERO, Color(0.2, 0.2, 0.24))
+	_caixa(Vector3(0.5, 0.04, 0.06), Vector3(0.55, 0.92, 0.2), Vector3.ZERO, Color(1.0, 0.55, 0.2) * 1.5, true)
+	_aldeao(Vector3(0.6, 0.2, 0.95), 180.0, Color(0.3, 0.26, 0.3), "martelar", false, P.torii)
+	_cil(0.28, 0.24, 0.5, 8, Vector3(1.7, 0.45, -0.2), Vector3.ZERO, P.madeira2)
+	_cil(0.24, 0.24, 0.03, 8, Vector3(1.7, 0.7, -0.2), Vector3.ZERO, P.agua.lightened(0.2), true)
+	_cil(0.4, 0.4, 0.12, 12, Vector3(1.6, 0.75, 1.2), Vector3(90, 0, 0), P.pedra)
+	_caixa(Vector3(0.1, 0.6, 0.5), Vector3(1.6, 0.4, 1.2), Vector3.ZERO, P.madeira)
+	_caixa(Vector3(0.12, 1.6, 2.2), Vector3(w / 2 - 0.35, 1.2, -0.2), Vector3.ZERO, P.madeira)
+	for k in 5:
+		var z := -1.1 + k * 0.45
+		_caixa(Vector3(0.03, 1.1, 0.05), Vector3(w / 2 - 0.45, 1.3, z), Vector3(0, 0, 4), Color(0.75, 0.78, 0.85))
+		_caixa(Vector3(0.05, 0.3, 0.08), Vector3(w / 2 - 0.45, 0.7, z), Vector3.ZERO, P.torii.darkened(0.3))
+	_caixa(Vector3(2.4, 0.6, 0.05), Vector3(0, 2.45, d / 2 + 0.05), Vector3.ZERO, Color(0.06, 0.05, 0.07))
+	_caixa(Vector3(1.8, 0.14, 0.06), Vector3(0, 2.45, d / 2 + 0.08), Vector3.ZERO, Color(1.0, 0.5, 0.2) * 1.4, true)
+	for k in 6:  # faíscas paradas no ar
+		_esfera(0.04, Vector3(0.4 + k * 0.08, 1.0 + fmod(k * 0.37, 0.5), 0.3 + fmod(k * 0.61, 0.4)), Vector3.ONE, Color(1.0, 0.7, 0.25) * 1.6, true, 4, 2)
+	_fundos(w, d, [1.6])
+
+
+## Dojo (8 x 6 m): piso elevado, portas abertas, pergaminho, alunos treinando
+## e bonecos de madeira na frente.
+func _dojo() -> void:
+	var w := 8.0
+	var d := 6.0
+	_caixa(Vector3(w + 0.3, 0.6, d + 0.3), Vector3(0, 0.3, 0), Vector3.ZERO, P.pedra2)
+	_caixa(Vector3(w, 0.12, d), Vector3(0, 0.66, 0), Vector3.ZERO, P.madeira2.lightened(0.12))
+	for k in 12:
+		_caixa(Vector3(0.03, 0.02, d - 0.2), Vector3(-w / 2 + 0.3 + k * 0.65, 0.73, 0), Vector3.ZERO, P.madeira2)
+	_caixa(Vector3(w, 2.8, 0.2), Vector3(0, 2.1, -d / 2 + 0.1), Vector3.ZERO, P.reboco)
+	for s in [-1.0, 1.0]:
+		_caixa(Vector3(0.2, 2.8, d), Vector3(s * (w / 2 - 0.1), 2.1, 0), Vector3.ZERO, P.reboco)
+	for k in 5:
+		_cil(0.13, 0.13, 2.9, 7, Vector3(-w / 2 + 0.15 + k * (w - 0.3) / 4.0, 2.15, d / 2 - 0.1), Vector3.ZERO, P.madeira)
+	_caixa(Vector3(w + 0.1, 0.3, 0.25), Vector3(0, 3.5, d / 2 - 0.1), Vector3.ZERO, P.madeira)
+	for s in [-1.0, 1.0]:  # portas de correr abertas
+		_shoji(Vector3(s * 3.2, 1.9, d / 2 - 0.25), 1.5, 2.3, 1, P.papel.darkened(0.15))
+	_caixa(Vector3(1.2, 1.7, 0.03), Vector3(0, 2.4, -d / 2 + 0.22), Vector3.ZERO, P.branco)  # pergaminho
+	for k in 4:
+		_caixa(Vector3(0.16, 0.16 + (k % 2) * 0.1, 0.02), Vector3(0, 2.9 - k * 0.32, -d / 2 + 0.24), Vector3(0, 0, k * 15), Color(0.05, 0.05, 0.06))
+	_caixa(Vector3(2.6, 0.6, 0.5), Vector3(0, 1.0, -d / 2 + 0.45), Vector3.ZERO, P.madeira)  # kamiza
+	for x in [-0.9, 0.9]:
+		_cil(0.06, 0.08, 0.3, 6, Vector3(x, 1.45, -d / 2 + 0.45), Vector3.ZERO, P.luz1, true)
+	for k in 6:  # rack de bokken na parede lateral
+		_caixa(Vector3(0.04, 1.0, 0.05), Vector3(-w / 2 + 0.3, 1.6, -1.8 + k * 0.3), Vector3(0, 0, 8), P.madeira2.lightened(0.2))
+	_aldeao(Vector3(0, 0.72, -1.7), 0.0, P.branco.darkened(0.15), "parado", false, Color(0.08, 0.06, 0.06))
+	_aldeao(Vector3(-1.2, 0.72, 0.4), 180.0, P.branco, "treinar", false, Color(0.08, 0.06, 0.06))
+	_aldeao(Vector3(1.3, 0.72, 0.6), 180.0, P.branco, "treinar", false, P.torii)
+	_aldeao(Vector3(2.4, 0.72, 0.2), 200.0, P.branco.darkened(0.05), "treinar", false, P.ouro)
+	_telhado(Vector3(0, 3.65, 0), w + 0.4, d + 0.4, 1.9, P.telhado, 0.7)
+	_caixa(Vector3(2.2, 0.6, 0.08), Vector3(0, 4.05, d / 2 + 0.6), Vector3.ZERO, Color(0.06, 0.05, 0.07))
+	_caixa(Vector3(1.7, 0.15, 0.1), Vector3(0, 4.05, d / 2 + 0.63), Vector3.ZERO, P.ouro, true)
+	for k in 3:  # degraus
+		_caixa(Vector3(2.0, 0.2, 0.35), Vector3(0, 0.1 + k * 0.2, d / 2 + 0.85 - k * 0.3), Vector3.ZERO, P.pedra)
+	for x in [-3.0, 3.2]:  # bonecos de treino (mokujin) e estandartes
+		_cil(0.16, 0.18, 1.7, 8, Vector3(x, 0.85, d / 2 + 1.8), Vector3.ZERO, P.madeira2)
+		for y in [0.9, 1.3]:
+			_cil(0.04, 0.04, 0.7, 5, Vector3(x, y, d / 2 + 2.0), Vector3(90, 0, 0), P.madeira)
+		_cil(0.17, 0.17, 0.25, 8, Vector3(x, 1.3, d / 2 + 1.8), Vector3.ZERO, P.corda)
+		_cil(0.03, 0.03, 3.4, 4, Vector3(x * 1.25, 1.7, d / 2 + 1.0), Vector3.ZERO, P.madeira)
+		_caixa(Vector3(0.5, 2.2, 0.03), Vector3(x * 1.25 + 0.27, 2.2, d / 2 + 1.0), Vector3.ZERO, P.torii if x < 0 else P.telhado.lightened(0.25))
+		_caixa(Vector3(0.12, 1.6, 0.04), Vector3(x * 1.25 + 0.27, 2.2, d / 2 + 1.02), Vector3.ZERO, P.branco, true)
+	_fundos(w, d, [2.2])
+
+
 # --- Mapa -------------------------------------------------------------------------
 
 func _p(model: String, pos: Vector3, rot := 0.0, col := "nenhuma", raio := 1.0, alt := 2.0) -> Resource:
@@ -787,6 +1180,10 @@ func _gerar_mapa_rio() -> void:
 			_props.append(_caixa_col(Vector3(0, 0, z), 0.0, Vector3(18.0, 2.6, 0.3), Vector3(0, 1.3, s * (larg / 2.0 - 0.12))))
 	_props.append(_p("cachoeira.scn", Vector3(0, 0, -37.5)))
 	_props.append(_p("cachoeira.scn", Vector3(0, 0, 37.5), 180.0))
+	_props.append(_p("ponte_corda.scn", Vector3(0, 0, -35.2)))
+	_props.append(_p("ponte_corda.scn", Vector3(0, 0, 35.2), 180.0))
+	for b in [[1.5, -11.0, 90.0], [-1.5, 12.0, -90.0], [1.4, -30.0, 90.0], [-1.4, 30.0, -90.0]]:
+		_props.append(_p("barco.scn", Vector3(b[0], 0, b[1]), b[2]))
 
 	# Vila (dos dois lados). Fileira norte olha para +z (rua), sul para -z.
 	var c := "caixa"
@@ -809,8 +1206,8 @@ func _gerar_mapa_rio() -> void:
 			pr.collider_size = h[3]
 			pr.collider_offset = Vector3(0, h[3].y / 2.0, 0)
 			_props.append(pr)
-	_dois_lados(_props, "sino.scn", Vector3(20.5, 0, -16.5), 0.0, "cilindro", 1.6, 4.0)
-	_dois_lados(_props, "jardim.scn", Vector3(21.0, 0, 16.8), 0.0)
+	_dois_lados(_props, "forja.scn", Vector3(20.5, 0, -16.8), 0.0, "caixa")
+	_dois_lados(_props, "casa_de_cha.scn", Vector3(21.0, 0, 16.0), 0.0, "caixa")
 	_dois_lados(_props, "festival.scn", Vector3(32.5, 0, 9.5), 180.0, "cilindro", 1.2, 2.0)
 	_dois_lados(_props, "poco.scn", Vector3(32.0, 0, -9.5), 0.0, "cilindro", 1.0, 2.0)
 	for x in [10.5, 16.0, 23.0, 30.5]:
@@ -863,20 +1260,36 @@ func _gerar_mapa_rio() -> void:
 	_dois_lados(_props, "arvore_grande.scn", Vector3(7.5, 0, -30.0), -1.0, "cilindro", 2.0, 4.0)
 	_dois_lados(_props, "arvore_grande.scn", Vector3(7.5, 0, 30.0), -1.0, "cilindro", 2.0, 4.0)
 	# Campos fora das muralhas (perto dos castelos).
-	_dois_lados(_props, "arvore_espirito.scn", Vector3(50.0, 0, -27.0), -1.0, "cilindro", 1.8, 5.0)
-	_dois_lados(_props, "lago.scn", Vector3(52.0, 0, 28.0), 0.0, "cilindro", 3.2, 2.0)
+	_dois_lados(_props, "templo.scn", Vector3(50.0, 0, -28.5), 0.0, "caixa")
+	_dois_lados(_props, "arvore_espirito.scn", Vector3(61.0, 0, -30.5), -1.0, "cilindro", 1.8, 5.0)
+	_dois_lados(_props, "dojo.scn", Vector3(47.0, 0, 28.5), 0.0, "caixa")
+	_dois_lados(_props, "lago.scn", Vector3(58.5, 0, 27.0), 0.0, "cilindro", 3.2, 2.0)
 	_dois_lados(_props, "bambuzal.scn", Vector3(40.5, 0, 24.0), 90.0, "caixa")
 	_dois_lados(_props, "bambuzal.scn", Vector3(62.0, 0, -24.0), 0.0, "caixa")
 	_dois_lados(_props, "santuario.scn", Vector3(41.0, 0, -29.0), 0.0, "cilindro", 1.3, 2.0)
-	_dois_lados(_props, "arvore_alta.scn", Vector3(60.0, 0, 30.0), -1.0, "cilindro", 2.0, 4.0)
+	_dois_lados(_props, "arvore_alta.scn", Vector3(64.5, 0, 31.5), -1.0, "cilindro", 2.0, 4.0)
 	_dois_lados(_props, "arvore_media.scn", Vector3(38.0, 0, -20.5), -1.0, "cilindro", 1.0, 2.0)
 	_dois_lados(_props, "ruina.scn", Vector3(44.0, 0, 20.5), -1.0, "cilindro", 1.4, 2.0)
 	_dois_lados(_props, "rochas.scn", Vector3(57.0, 0, 20.0), -1.0, "cilindro", 1.0, 2.0)
-	_dois_lados(_props, "cerca.scn", Vector3(48.0, 0, 33.5))
+	_dois_lados(_props, "cerca.scn", Vector3(57.0, 0, 34.0))
 	_dois_lados(_props, "cerca.scn", Vector3(54.0, 0, -33.5))
-	# Colisores das barricadas e bambuzais (caixa achatada).
+	_dois_lados(_props, "aldeoes.scn", Vector3(32.0, 0, -27.5), 200.0, "cilindro", 1.0, 2.0)
+	_dois_lados(_props, "aldeoes.scn", Vector3(32.0, 0, 27.5), 20.0, "cilindro", 1.0, 2.0)
+	# Colisores em caixa das construções novas e das coberturas.
 	for pr in _props:
-		if pr.model == "barricada.scn":
+		if pr.model == "forja.scn":
+			pr.collider_size = Vector3(5.2, 4.0, 4.2)
+			pr.collider_offset = Vector3(0, 2.0, 0)
+		elif pr.model == "casa_de_cha.scn":
+			pr.collider_size = Vector3(3.6, 3.2, 3.4)
+			pr.collider_offset = Vector3(0, 1.6, -0.6)
+		elif pr.model == "templo.scn":
+			pr.collider_size = Vector3(8.4, 5.0, 6.6)
+			pr.collider_offset = Vector3(0, 2.5, 0)
+		elif pr.model == "dojo.scn":
+			pr.collider_size = Vector3(8.3, 4.5, 6.3)
+			pr.collider_offset = Vector3(0, 2.25, 0)
+		elif pr.model == "barricada.scn":
 			pr.collider_size = Vector3(6.0, 1.6, 1.4)
 			pr.collider_offset = Vector3(0, 0.8, 0)
 		elif pr.model == "bambuzal.scn":
