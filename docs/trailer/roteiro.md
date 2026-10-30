@@ -33,9 +33,12 @@ lanternas, corvos, poder aceso no corpo dos ninjas.
 |---|---|---|
 | 1, 3, 8 | castelo e fundo (main d8e23ea, **aprovado**); Máscara Oni (não muda neste ciclo) | pronto para renderizar |
 | 2, 7 | Rio novo (sakuras, feira, arrozais, casa_a, lanterna_pedra), **aprovado** na main d8e23ea; luz do trailer = Crepúsculo (`--tema=1`); render na qualidade Alta (`--perf=3`) para sair o contorno de tinta | plano 2 pronto; o 7 tem ninja (espera a rodada 3) |
-| 4, 5, 6, 7 | ninjas 3,5 cabeças + marcas de poder acesas | Diretor Visual, rodada 3 |
+| 4, 5, 6, 7 | ninjas 3,5 cabeças + marcas de poder acesas: **aprovado** na main 38b9fe7 | pronto para renderizar |
 
-Render só depois da arte firme e do roteiro aprovado, para não refazer.
+Toda a arte está aprovada (main 38b9fe7). Falta só o ok do Julio no roteiro.
+Ferramentas para enquadrar: `tools/prancha_patio.gd` (câmera do jogo, `--alvo=X,Z`),
+`tools/prancha_mecanica.gd` (close das casas; quadros a 30 fps com
+`--fixed-fps 30 ... -- DIR filme`) e `tools/prancha_poder.gd` (ninjas vazio/carregando/pronto).
 
 Recurso da Jogabilidade (main dc459c4): `-- --autoplay --filme=PASTA` grava PNG a
 cada 2 quadros com câmera baixa de lado (Samurai: golpe, dash, pulo, pancada,
