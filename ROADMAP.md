@@ -38,6 +38,7 @@ Detalhes em [docs/design-jogo.md](docs/design-jogo.md) (classes, poderes, progre
 - [ ] Portão do castelo que pode ser quebrado e consertado
 - [ ] Atalho que abre durante a partida
 - [ ] Segundo mapa
+- [ ] **Ciclo 2.2: jogo mais "completo"** (visual pintado estilo Fat Princess PS3, tom sombrio, poder no corpo, animação exagerada; piloto primeiro): [docs/direcao-ciclo-2.2.md](docs/direcao-ciclo-2.2.md)
 
 ## Fase 3: depois
 

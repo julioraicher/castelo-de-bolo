@@ -50,11 +50,12 @@ Cavaleiros Malditos levaram "Gosto"; vikings, gangues e asfalto ficaram de fora.
 | Tesouro | **Máscara Oni** de cada clã, levada nos braços | escolhida no quiz e casa com o mundo ninja |
 | Carga que pesa | **espíritos** (chamas-fantasma, *hitodama*) que surgem no meio; cada um prende mais uma corrente na sua máscara | mesma mecânica do bolo, sem engordar ninguém |
 | Times | v1: cor do time na roupa toda (azul x vermelho). v2 possível: ninjas x samurais com visual diferente | v2 dobra o trabalho de modelo; vale depois do estilo aprovado |
-| Proporção | ~~cartoon 1:3~~ cabeça menor, um pouco mais realista, ainda no espírito Fat Princess (cabeça 0,85 na prancha 4, testar menos) | pitaco do Julio na prancha 3 |
-| Acabamento | liso estilo Brawl Stars: formas redondas, cor forte, brilho simples | escolha do quiz 2; barato na GPU |
+| Proporção | ~~cartoon 1:3~~ ~~cabeça menor, mais realista~~ **meio-termo: ~3,5 cabeças de altura** (hoje ~4,5; Fat Princess ~2,5), mãos e pés um pouco maiores | Ciclo 2.2 (`docs/direcao-ciclo-2.2.md`) |
+| Acabamento | ~~liso estilo Brawl Stars~~ **pintado à mão estilo Fat Princess PS3**: shader de pintura de baixa frequência, silhueta torta e gorda, muito enfeite, animação exagerada | Ciclo 2.2: Julio achou o jogo "quadrado, liso, vazio" |
 | Rosto | expressivo (bravo, assustado, carregando peso) | quiz 1 |
-| Luz | noite com coisas brilhando | quiz 1 e 2 |
+| Luz | ~~noite com coisas brilhando~~ **conto sombrio pintado**: fim de tarde/crepúsculo, sombras frias, lanternas acesas, neblina baixa (Festival ao Sol fica opcional; o piloto decide o padrão) | Ciclo 2.2 |
 | Paleta | base "Neon de cidade" (azul-noite, ciano, magenta) + acentos "Sombrio verde" (fogo-fantasma) | 4 paletas marcadas; essas duas cobrem o mundo |
+| Poder no corpo | marcas/selos que acendem com o medidor, aura quando pronto, olhos que brilham, rastro de energia | Ciclo 2.2: "ninjas com poder junto" |
 | Efeitos | hitstop forte no golpe final, números de dano, rastro no dash, anel de área, brilho emissivo, rachaduras brilhando, choque elétrico | quiz 2; intensidade 7/10, caos 5/10 |
 | Medidor | barra sob o retrato + ícone do poder pulsando quando cheio | marcou todos; esses são os mais legíveis |
 
@@ -91,3 +92,4 @@ emissive shapes, not real lights. Readable silhouettes from a high 3/4 camera.
 | 2026-10-29 | Julio escolheu Clãs de Neon (ninja) depois da prancha comparativa. Pitacos no visual antes do código grande. |
 | 2026-10-29 | Comparar 3 mundos na prancha de personagens antes de fechar (Neon, Festival Infernal, Malditos). |
 | 2026-10-29 | Quiz 1 rejeitado (fofo demais). Quiz 2: direção v1 = Clãs de Neon com lado sombrio, Máscara Oni + espíritos, Brawl Stars 1:3, noite neon. |
+| 2026-10-30 | Ciclo 2.2 (`docs/direcao-ciclo-2.2.md`): visual pintado estilo Fat Princess PS3 + tom sombrio + poder no corpo; proporção ~3,5 cabeças. Tema ninja fica. |

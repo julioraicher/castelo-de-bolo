@@ -5,6 +5,9 @@ Lista viva. Qualquer frente anota aqui; o Julio escolhe o que sobe de nível.
 a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 
 ## A — próxima
+- **Ciclo 2.2** (aprovado 2026-10-30): piloto da direção nova em
+  `docs/direcao-ciclo-2.2.md`. As ideias de cenário abaixo passam a seguir o
+  estilo pintado e o tom sombrio de lá.
 - **Peças do Rio das Lanternas**: prancha `cenario/06-pecas-rio.png`; o Julio
   diz por número o que detalhar mais, trocar ou repetir.
 - **Leva 2 de peças**: prancha `cenario/07-leva2-pecas.png` (templo, casa de chá,

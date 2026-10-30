@@ -58,10 +58,16 @@ por peça:
   a cor da peça com um ruído de pincel, escurece cantos e frestas (oclusão
   pintada) e clareia as bordas viradas para o sol. É matemática no pixel, sem
   mais polígonos: resolve boa parte do "liso" em todas as peças existentes.
+  **Cuidado de Nyquist**: um boneco ocupa ~60-100 px e uma casa ~150-250 px
+  na tela; detalhe menor que ~2 px vira chuvisco (aliasing) ao mover a
+  câmera. Então a "pintura" é de **baixa frequência**: pinceladas grandes,
+  gradiente de cima para baixo, cantos escuros, não veio fino de madeira.
 - **Vento no shader**: grama, folhas, bandeiras e varais balançam com um seno
   deslocado pela posição (custo zero de CPU). Ataca o "parado".
 - **Espalhador de enfeite**: tufos de grama, flores, pedrinhas, folhas,
-  manchas de terra nos caminhos, por MultiMesh (1 draw call por tipo).
+  manchas de terra nos caminhos, por MultiMesh (1 draw call por tipo), sem
+  sombra e sem transparência (recorte opaco), dentro do orçamento de
+  `cenario/arte-cenario.md` (cenário ≤ ~40 draw calls; o espalhador leva ≤ 6).
   Ataca o "vazio" entre as coisas.
 - **Luz**: sol mais quente, sombra mais azulada, brilho leve (o glow já existe
   no tema de dia; só a dose muda).

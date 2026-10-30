@@ -3,6 +3,19 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Ciclo 2.2 (2026-10-30), estagiário de ideias: direção nova (só documentos)
+- Pedido do Julio: o jogo está "quadrado, liso, vazio"; aproximar do Fat
+  Princess de PS3 e dar uma pegada mais sombria, com ninjas que mostram o
+  poder no corpo. Quiz respondido e direção aprovada.
+- Novo `docs/direcao-ciclo-2.2.md`: diagnóstico, decisões (proporção ~3,5
+  cabeças, textura pintada de baixa frequência, enfeite, vento, luz de
+  crepúsculo, marcas de poder), piloto (casa + lanterna no nível máximo, resto
+  só com a camada global) e ordem de trabalho dos Diretores Visual e de
+  Jogabilidade.
+- Atualizados para bater com ela: `docs/identidade.md`,
+  `docs/arte-personagens.md`, `docs/ideias.md`, `ROADMAP.md`, `CLAUDE.md`.
+- Nada mudou no jogo. **O que testar**: nada; é só leitura.
+
 ## Rodada 20 (2026-10-29), frente Visual: cara de Fat Princess original e mapa único
 - Pedido do Julio: chegar mais perto do visual do Fat Princess original (PS3,
   colorido, de dia, grama viva com flores) e menos do Adventures (PS4);

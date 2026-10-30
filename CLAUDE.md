@@ -103,6 +103,9 @@ Cada frente tem sua conversa e mexe só nas suas pastas:
 
 ## Preferências do Julio
 
+- **Direção atual (Ciclo 2.2)**: `docs/direcao-ciclo-2.2.md` manda no visual
+  (pintado estilo Fat Princess PS3, tom sombrio, poder no corpo, ~3,5 cabeças).
+
 - Manter o dash/esquiva como está.
 - Quer prints a cada marco e explicações com a física por trás.
 - Fase 1 = polimento (bugs, sensação, equilíbrio, desempenho). Features novas

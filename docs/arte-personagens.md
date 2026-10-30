@@ -27,6 +27,9 @@ A física do problema: a câmera fica longe, então o personagem ocupa ~60–100
 de altura na tela. Abaixo do limite de Nyquist da textura, detalhe vira ruído.
 Logo, o que diferencia uma classe é **silhueta + massa de cor + proporção**,
 não textura. Isso favorece estilos chibi (cabeça grande) e cores chapadas.
+Ciclo 2.2: a textura volta, mas só **pintura de baixa frequência** (gradiente,
+sombra pintada em dobras e cantos, pinceladas grandes), que sobrevive a essa
+resolução. Ver `docs/direcao-ciclo-2.2.md`.
 
 ## Fluxo de trabalho (tudo nesta conversa, sem gerador de imagem externo)
 
@@ -72,3 +75,4 @@ conferir tris, draw calls e cor do time.
 | 2026-10-29 | Prancha 3 (Ninja v2): kabuto na cor do time, faixa do ninja em neon do time, kasa 15% menor, cesto com estrepes + lanterna verde. Comparando cabeça 1,0 x 0,85 (Julio acha a cabeça grande). |
 | 2026-10-29 | Prancha 4: 3 variações por papel no mundo Ninja (A Samurai/Shuriken/Monge/Armadilheiro, B Ronin Oni/Arqueiro Yumi/Onmyoji/Mestre da Pólvora, C Lâmina Dupla/Bombas de Fumaça/Kitsune/Carpinteiro), cabeça 0,85. Julio: variações = escolhas de oficina ("qual casinha construir"), cada uma com poderes e efeitos próprios; quer proporção menos cabeçuda, um pouco mais realista, mas ainda estilo Fat Princess. |
 | 2026-10-29 | **No jogo** (rodada 8): 12 classes com visual ninja, cabeça 0,8, oficinas para escolher a variação. Prancha `05-ninjas-no-jogo.png`. Construtor simples: constrói em todas as variações, poder de apoio. |
+| 2026-10-30 | Ciclo 2.2: proporção ~3,5 cabeças (meio-termo), shader de pintura, marcas de poder que acendem com o medidor, animação exagerada (comparativo de 3 versões antes de refazer). `docs/direcao-ciclo-2.2.md`. |
