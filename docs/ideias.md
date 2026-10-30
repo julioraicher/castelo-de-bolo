@@ -40,6 +40,9 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 - Sons próprios por poder (shuriken, talismã, fogo-raposa, explosão de pólvora).
 
 ## C — talvez
+- **Outro mundo, se um dia trocar o tema** (Julio, 2026-10-30): "minhas vs
+  cowboys" (transcrição de áudio; provavelmente mineiros vs cowboys, faroeste).
+  Por enquanto fica ninja.
 - Catapulta / arma de cerco construída pelo Construtor (Fase 2).
 - Recursos no mapa (madeira, pólvora) para pagar oficinas.
 - Clima que muda durante a partida (a lua sobe, a névoa fecha).
