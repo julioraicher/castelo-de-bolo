@@ -37,6 +37,11 @@ lanternas, corvos, poder aceso no corpo dos ninjas.
 
 Render só depois da arte firme, para não refazer.
 
+Recurso da Jogabilidade (main dc459c4): `-- --autoplay --filme=PASTA` grava PNG a
+cada 2 quadros com câmera baixa de lado (Samurai: golpe, dash, pulo, pancada,
+morte). Útil para o plano 6 (impactos com estica e encolhe, contorno aceso com o
+Chi). A morte cômica (panqueca) não combina com o tom: não usar.
+
 ## Em aberto (Julio)
 
 - Nome do jogo no título final (hoje "Castelo de Bolo" é provisório).
