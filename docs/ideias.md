@@ -109,7 +109,11 @@ sugestão de prioridade. Custo = rodadas de trabalho, não dinheiro (salvo dito)
   3. **Julio**: anima cada quadro com image-to-video no site, usando os
      créditos grátis diários: Google Flow/Veo 3.1 (~50/dia, até 10 s),
      Seedance (~100/dia, sem marca d'água), Hailuo (bom em movimento de
-     personagem, com marca d'água). Daqui da nuvem essas APIs estão bloqueadas.
+     personagem, com marca d'água). O Julio tem Google AI Pro (estudante):
+     Veo pelo app Gemini/Flow entra na assinatura. A API do Gemini responde
+     desta nuvem (testado 2026-10-30), mas Veo pela API exige chave com
+     cobrança ativa (paga por segundo); se um dia quiser, a chave vai como
+     segredo do ambiente, nunca no chat.
   4. **Claude**: monta no ffmpeg com cortes, títulos, música do jogo e sons
      (sfxr/ElevenLabs).
   Atenção: no plano grátis, vários desses serviços proíbem uso comercial ou
