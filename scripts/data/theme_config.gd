@@ -48,6 +48,9 @@ extends Resource
 @export var flag_scale := 4.0
 ## Altura da bandeira em cima da torre.
 @export var flag_height := 7.0
+## Casa da oficina pronta ({cor} = time). Vazio = casinha simples feita por código.
+## Nós "Telhado" (cai quando a obra acaba) e "Gira_*" (engrenagens) são opcionais.
+@export var oficina_model := ""
 @export var wall_model := "wall_straight.gltf"
 @export var wall_scale := 3.0
 ## Comprimento de um módulo de muralha já escalado (2 m x escala 3).

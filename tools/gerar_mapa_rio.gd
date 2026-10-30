@@ -46,6 +46,9 @@ func _gerar_modelos_rio() -> void:
 	_cachoeira(); _salvar("cachoeira")
 	_casa_a(); _salvar("casa_a")
 	_casa_b(); _salvar("casa_b")
+	_casa_moinho(); _salvar("casa_moinho")
+	for t in TIMES:
+		_oficina(TIMES[t]); _salvar("oficina_" + t)
 	_loja(); _salvar("loja")
 	_pousada(); _salvar("pousada")
 	_armazem(); _salvar("armazem")
@@ -551,6 +554,297 @@ func _kit_casa(w: float, d: float, topo_terreo: float) -> void:
 	# Pedras de pisar até a porta da frente.
 	for j in 3:
 		_blocod(Vector3(0.55, 0.1, 0.42), Vector3(-1.45 + j * 0.12, 0.04, d / 2 + 0.75 + j * 0.62), Vector3(0, j * 17.0, 0), P.pedra.lightened(0.05), 0.05)
+
+
+## Oficina de chapéus (karakuri): frente aberta com bancada e martelo que bate
+## no chapéu, engrenagens com manivela na parede da direita, catavento e
+## chapéu-placa no telhado. Frente em +z (a câmera do jogo olha de +z, então
+## tudo que mexe fica na frente). Nós à parte: "Telhado" (cai do céu quando a
+## obra acaba) e "Gira_*" (o Oficina acelera conforme a obra anda).
+func _oficina(time: Color) -> void:
+	_rng.seed = 21
+	var w := 3.4
+	var d := 3.0
+	var hp := 2.2
+	var y0 := 0.3
+	var mad: Color = P.madeira
+	var mad2: Color = P.madeira2
+	var cor_time := time.lerp(P.madeira, 0.2)
+	var ferro := Color(0.2, 0.18, 0.19)
+	# Alicerce de pedras com uma fiada irregular na frente.
+	_tipo = 3
+	_blocod(Vector3(w + 0.3, y0, d + 0.3), Vector3(0, y0 / 2, 0), Vector3.ZERO, P.pedra2, 0.06)
+	var x := -w / 2 - 0.15
+	while x < w / 2 + 0.1:
+		var lw := _rng.randf_range(0.4, 0.7)
+		_blocod(Vector3(lw - 0.04, _rng.randf_range(0.3, 0.38), 0.26), Vector3(x + lw / 2, 0.17, d / 2 + 0.12), Vector3(0, _rng.randf_range(-4, 4), _rng.randf_range(-3, 3)), P.pedra.lerp(P.pedra2, _rng.randf()), 0.07)
+		x += lw
+	# Tábuas: fundos e lados inteiros; na frente, só a metade direita (a esquerda é a oficina aberta).
+	_tipo = 1
+	_blocod(Vector3(w - 0.1, hp, 0.16), Vector3(0, y0 + hp / 2, -d / 2 + 0.08), Vector3(0, 0, 0.5), mad2.darkened(0.06), 0.04)
+	for s in [-1.0, 1.0]:
+		_blocod(Vector3(0.16, hp, d - 0.1), Vector3(s * (w / 2 - 0.08), y0 + hp / 2, 0), Vector3(0, 0, s * 0.4), mad2, 0.04)
+	_blocod(Vector3(w / 2 - 0.05, hp, 0.16), Vector3(w / 4, y0 + hp / 2, d / 2 - 0.08), Vector3(0, 0, -0.6), mad2.darkened(0.03), 0.04)
+	_tipo = 0
+	# Fundo escuro da parte aberta, chão de tábuas e ferramentas na parede.
+	_ao = 0.3
+	_blocod(Vector3(w / 2 - 0.2, hp - 0.1, 0.05), Vector3(-w / 4, y0 + hp / 2, -d / 2 + 0.2), Vector3.ZERO, Color(0.13, 0.09, 0.08), 0.01)
+	_blocod(Vector3(0.05, hp - 0.1, d - 0.4), Vector3(0.02, y0 + hp / 2, 0), Vector3.ZERO, Color(0.15, 0.1, 0.09), 0.01)
+	_ao = 0.6
+	_blocod(Vector3(w / 2 - 0.2, 0.05, d - 0.3), Vector3(-w / 4, y0 + 0.02, 0), Vector3.ZERO, mad.darkened(0.15), 0.01)
+	for j in 4:
+		var px := -1.4 + j * 0.32
+		_blocod(Vector3(0.05, 0.5, 0.04), Vector3(px, 1.6, -d / 2 + 0.26), Vector3(0, 0, (j - 1.5) * 6.0), mad2.lightened(0.1), 0.01)
+		_blocod(Vector3(0.16, 0.1, 0.05), Vector3(px, 1.85, -d / 2 + 0.27), Vector3.ZERO, ferro, 0.01)
+	# Pilha de chapéus prontos no fundo da oficina.
+	for j in 4:
+		_cil(0.0, 0.34, 0.16, 10, Vector3(-1.25, y0 + 0.1 + j * 0.09, -0.6), Vector3(0, j * 20.0, 0), P.corda.darkened(0.04 * j))
+	_ao = 1.0
+	# Postes de canto e do meio da frente, tortos.
+	for p in [Vector2(-w / 2, d / 2), Vector2(w / 2, d / 2), Vector2(-w / 2, -d / 2), Vector2(w / 2, -d / 2), Vector2(0.0, d / 2)]:
+		var torto := Vector3(_rng.randf_range(-0.05, 0.07), 0, _rng.randf_range(-0.03, 0.03))
+		_viga(Vector3(p.x, y0, p.y + 0.02), Vector3(p.x, y0 + hp + 0.12, p.y + 0.02) + torto, 0.22, mad, 0.04)
+	_viga(Vector3(-w / 2 - 0.14, y0 + hp, d / 2 + 0.06), Vector3(0.1, y0 + hp - 0.05, d / 2 + 0.06), 0.22, mad)
+	_viga(Vector3(0.1, y0 + hp - 0.05, d / 2 + 0.06), Vector3(w / 2 + 0.14, y0 + hp + 0.01, d / 2 + 0.06), 0.22, mad)
+	# Noren na cor do time sobre a abertura, com o brasão branco no meio.
+	var m := _marca()
+	for j in 3:
+		_blocod(Vector3(0.5, 0.55, 0.025), Vector3(-w / 2 + 0.36 + j * 0.51, y0 + hp - 0.36, d / 2 + 0.12), Vector3(0, 0, (j - 1) * 2.5), cor_time.darkened(0.08 * j), 0.01)
+	_cil(0.13, 0.13, 0.02, 10, Vector3(-w / 2 + 0.87, y0 + hp - 0.36, d / 2 + 0.14), Vector3(90, 0, 0), P.branco)
+	_vento_pendurado(m, y0 + hp - 0.08, 0.55, 1.3)
+	# Bancada com o chapéu na forma (o martelo bate aqui).
+	var zb := d / 2 - 0.3
+	_blocod(Vector3(1.45, 0.1, 0.6), Vector3(-0.92, 0.88, zb), Vector3(0, 0, -1.0), mad2.lightened(0.06), 0.03)
+	for bx in [-1.55, -0.3]:
+		for bz in [-0.22, 0.22]:
+			_blocod(Vector3(0.08, 0.56, 0.08), Vector3(bx, 0.58, zb + bz), Vector3.ZERO, mad, 0.02)
+	_cil(0.13, 0.16, 0.12, 8, Vector3(-1.12, 0.99, zb), Vector3.ZERO, mad.darkened(0.2))
+	_cil(0.0, 0.34, 0.2, 12, Vector3(-1.12, 1.15, zb), Vector3(0, 0, 4), P.corda)
+	_cil(0.04, 0.04, 0.03, 6, Vector3(-1.12, 1.26, zb), Vector3.ZERO, cor_time)
+	# Suporte do martelo (poste em cima da bancada) e o martelo, que vai e volta.
+	var piv := Vector3(-0.25, 1.36, zb + 0.05)
+	_viga(Vector3(-0.25, 0.93, zb + 0.05), piv + Vector3(0, 0.08, 0), 0.1, mad)
+	var g := _inicio_peca()
+	var ponta := Vector3(-cos(0.2), sin(0.2), 0) * 0.86
+	_viga(Vector3(0.1, -0.02, 0), ponta, 0.08, mad2.darkened(0.1), 0.02)
+	_blocod(Vector3(0.18, 0.28, 0.2), ponta + Vector3(0, -0.06, 0), Vector3(0, 0, -11), ferro, 0.03)
+	_cil(0.05, 0.05, 0.2, 6, Vector3.ZERO, Vector3(90, 0, 0), ferro)
+	_fim_peca(g, "Gira_martelo", Transform3D(Basis(), piv), Vector2(7.0, 0.22))
+	# Engrenagens na parede da direita: a grande engrena na pequena, que leva a manivela.
+	var zg := d / 2 + 0.14
+	var c1 := Vector3(0.78, 1.4, zg)
+	var phi := deg_to_rad(-40.0)
+	var passo := 0.26
+	_cil(0.07, 0.07, 0.3, 6, c1 - Vector3(0, 0, 0.12), Vector3(90, 0, 0), ferro)
+	g = _inicio_peca()
+	var r1 := _engrenagem(14, passo, 0.12, mad2, phi)
+	_fim_peca(g, "Gira_engrenagem_grande", Transform3D(Basis(), c1), Vector2(0.9, 0.0))
+	var r2 := 8 * passo / TAU
+	var c2 := c1 + Vector3(cos(phi), sin(phi), 0) * (r1 + r2 + passo * 0.42)
+	_cil(0.06, 0.06, 0.3, 6, c2 - Vector3(0, 0, 0.12), Vector3(90, 0, 0), ferro)
+	g = _inicio_peca()
+	_engrenagem(8, passo, 0.12, mad2.darkened(0.12), phi + PI + PI / 8)
+	_viga(Vector3(0, 0, 0.13), Vector3(0.5, 0, 0.13), 0.08, ferro, 0.02)
+	_cil(0.045, 0.045, 0.26, 6, Vector3(0.5, 0, 0.26), Vector3(90, 0, 0), mad2.lightened(0.15))
+	_fim_peca(g, "Gira_manivela", Transform3D(Basis(), c2), Vector2(-0.9 * 14.0 / 8.0, 0.0))
+	# Lanterna de papel na cor do time, pendurada no poste da esquerda (vento).
+	m = _marca()
+	_lanterna_papel(Vector3(-w / 2 - 0.05, y0 + hp - 0.55, d / 2 + 0.35), cor_time.lightened(0.45), 0.17)
+	_vento_pendurado(m, y0 + hp - 0.1, 0.7, 0.8)
+	# Fora: varas de bambu encostadas, caixote e chapéus secando num cavalete.
+	for j in 3:
+		_viga(Vector3(w / 2 + 0.35 + j * 0.1, 0.0, -0.9 + j * 0.25), Vector3(w / 2 + 0.12, 2.2 - j * 0.2, -0.8 + j * 0.25), 0.07, P.bambu, 0.02)
+	_blocod(Vector3(0.6, 0.5, 0.5), Vector3(w / 2 + 0.45, 0.25, 0.75), Vector3(0, 12, 0), mad2, 0.04)
+	_cil(0.0, 0.3, 0.16, 10, Vector3(w / 2 + 0.45, 0.58, 0.75), Vector3(0, 0, -6), P.corda.darkened(0.08))
+	# Telhado (nó à parte): quatro águas curvo, cumeeira na cor do time, mastro com chapéu-placa.
+	g = _inicio_peca()
+	var W := w + 1.4
+	var D := d + 0.9   # beiral curto na frente: a câmera vê a parede das engrenagens
+	var hT := 1.3
+	var yt := y0 + hp + 0.14
+	var f_tel := func(px: float, pz: float) -> float:
+		return _altura_telhado(px, pz, W, D, hT, 0.1, 0.24)
+	_superficie(Vector3(0, yt, 0), f_tel, -W / 2, W / 2, -D / 2, D / 2, 12, 10, 0.14, P.telhado, mad)
+	var r := (W - D) / 2.0
+	_blocod(Vector3(2 * r + 0.6, 0.2, 0.32), Vector3(0, yt + f_tel.call(0.0, 0.0) + 0.06, 0), Vector3.ZERO, cor_time.darkened(0.25), 0.06)
+	var topo: float = yt + f_tel.call(0.0, 0.0) + 0.15
+	_viga(Vector3(-0.35, topo - 0.05, -0.1), Vector3(-0.35, topo + 0.75, -0.1), 0.09, mad)
+	_cil(0.0, 0.55, 0.3, 12, Vector3(-0.35, topo + 0.95, -0.1), Vector3(0, 0, -8), P.corda)
+	_cil(0.56, 0.58, 0.04, 12, Vector3(-0.35, topo + 0.8, -0.1), Vector3(0, 0, -8), P.corda.darkened(0.15))
+	_cil(0.21, 0.27, 0.07, 12, Vector3(-0.35, topo + 0.9, -0.1), Vector3(0, 0, -8), cor_time)
+	# Suporte do catavento na ponta direita da cumeeira.
+	var cv := Vector3(0.55, topo + 0.55, 0.2)
+	_viga(Vector3(0.55, topo - 0.1, 0.0), cv - Vector3(0, 0, 0.05), 0.07, mad)
+	_fim_peca(g, "Telhado", Transform3D())
+	g = _inicio_peca()
+	for j in 4:
+		var a := TAU * j / 4.0
+		var dir := Vector3(cos(a), sin(a), 0)
+		var lado := Vector3(-sin(a), cos(a), 0)
+		_tri(Vector3.ZERO, dir * 0.42, dir * 0.42 + lado * 0.2 + Vector3(0, 0, 0.06), cor_time.lightened(0.15) if j % 2 == 0 else P.branco, Vector3(0, 0, 1))
+		_tri(Vector3.ZERO, dir * 0.42 + lado * 0.2 + Vector3(0, 0, 0.06), dir * 0.42, cor_time.darkened(0.3) if j % 2 == 0 else P.branco.darkened(0.3), Vector3(0, 0, -1))
+	_cil(0.05, 0.05, 0.08, 6, Vector3(0, 0, 0.04), Vector3(90, 0, 0), ferro)
+	_fim_peca(g, "Telhado/Gira_catavento", Transform3D(Basis(), cv), Vector2(2.4, 0.0))
+
+
+## Casa com roda d'água (piloto do Ciclo 2.2): a roda é alimentada por uma
+## calha de bambu (kakehi) e, pelo eixo, gira uma engrenagem pequena que move
+## a grande; a grande tem uma manivela e marca o compasso do pilão de arroz
+## (karausu) na varanda. Tudo gira no plano da fachada (eixos em z), virado
+## para a câmera do jogo.
+func _casa_moinho() -> void:
+	_rng.seed = 13
+	var w := 5.0
+	var d := 4.2
+	var mad: Color = P.madeira
+	var mad2: Color = P.madeira2
+	var ferro := Color(0.2, 0.18, 0.19)
+	# Alicerce de pedras.
+	_tipo = 3
+	_blocod(Vector3(w + 0.1, 0.32, d + 0.1), Vector3(0, 0.16, 0), Vector3.ZERO, P.pedra2, 0.05)
+	for lado in 2:
+		var x := -w / 2
+		while x < w / 2 - 0.1:
+			var lw := minf(_rng.randf_range(0.45, 0.8), w / 2 - x)
+			var tom: Color = P.pedra.lerp(P.pedra2, _rng.randf()).lerp(P.musgo, 0.3 if _rng.randf() < 0.3 else 0.0)
+			_blocod(Vector3(lw - 0.04, _rng.randf_range(0.34, 0.44), 0.3), Vector3(x + lw / 2, 0.19, (d / 2 + 0.08) * (1 if lado == 0 else -1)), Vector3(0, _rng.randf_range(-4, 4), _rng.randf_range(-3, 3)), tom, 0.08)
+			x += lw
+	# Paredes: tábuas embaixo, reboco em cima, cada faixa um pouco torta.
+	var y := 0.32
+	for k in 2:
+		_tipo = 1
+		_blocod(Vector3(w - 0.1, 0.8, d - 0.1), Vector3(0.03 * k, y + 0.4, 0), Vector3(0, 0, _rng.randf_range(-0.6, 0.6)), mad2.darkened(0.05 * k), 0.05)
+		y += 0.8
+	_tipo = 4
+	_blocod(Vector3(w - 0.14, 0.75, d - 0.14), Vector3(0.05, y + 0.37, 0), Vector3(0, 0, -0.5), P.reboco, 0.04)
+	y += 0.75
+	var topo_parede := y
+	_tipo = 0
+	for p in [Vector2(-w / 2, d / 2), Vector2(w / 2, d / 2), Vector2(-w / 2, -d / 2), Vector2(w / 2, -d / 2), Vector2(-0.9, d / 2), Vector2(0.9, d / 2)]:
+		var torto := Vector3(_rng.randf_range(-0.06, 0.08), 0, _rng.randf_range(-0.03, 0.03))
+		_viga(Vector3(p.x, 0.32, p.y + 0.02), Vector3(p.x, topo_parede + 0.1, p.y + 0.02) + torto, 0.24, mad, 0.05)
+	_viga(Vector3(-w / 2 - 0.15, 1.95, d / 2 + 0.06), Vector3(w / 2 + 0.15, 1.92, d / 2 + 0.06), 0.18, mad)
+	# Frente: porta com noren, duas janelas de papel acesas.
+	_ao = 0.35
+	_blocod(Vector3(0.95, 1.5, 0.06), Vector3(0.0, 1.07, d / 2 + 0.0), Vector3.ZERO, Color(0.1, 0.07, 0.07), 0.02)
+	_ao = 1.0
+	var m := _marca()
+	for j in 2:
+		_blocod(Vector3(0.46, 0.55, 0.025), Vector3(-0.24 + j * 0.48, 1.6, d / 2 + 0.1), Vector3(0, 0, (j - 0.5) * 3.0), P.agua.darkened(0.25).lerp(P.madeira, 0.2 * j), 0.01)
+	_vento_pendurado(m, 1.88, 0.55, 1.3)
+	_shoji(Vector3(-1.75, 1.3, d / 2 + 0.02), 1.1, 0.9, 1, P.papel)
+	_shoji(Vector3(1.7, 2.45, d / 2 + 0.02), 1.0, 0.5, 1, P.luz1.lerp(P.papel, 0.5))
+	_sombra_faixa(1.7, topo_parede + 0.1, 0.6, w / 2 + 0.25, d / 2 + 0.3)
+	# Varanda (engawa) baixa na frente, só do lado esquerdo.
+	_tipo = 1
+	_blocod(Vector3(2.3, 0.1, 0.8), Vector3(-1.25, 0.5, d / 2 + 0.45), Vector3.ZERO, mad2.lightened(0.05), 0.03)
+	_tipo = 0
+	for px in [-2.3, -0.2]:
+		_blocod(Vector3(0.1, 0.45, 0.1), Vector3(px, 0.23, d / 2 + 0.78), Vector3.ZERO, mad, 0.02)
+	# Telhado grande de quatro águas, curvo, com cumeeira e corvo.
+	var W := w + 1.5
+	var D := d + 1.5
+	var hT := 1.7
+	var f_tel := func(px: float, pz: float) -> float:
+		return _altura_telhado(px, pz, W, D, hT, 0.15, 0.22)
+	var base_tel := Vector3(0, topo_parede + 0.12, 0)
+	_superficie(base_tel, f_tel, -W / 2, W / 2, -D / 2, D / 2, 16, 10, 0.16, P.telhado, mad)
+	var r := (W - D) / 2.0
+	var crista := []
+	for j in 5:
+		var px := lerpf(-r - 0.1, r + 0.1, float(j) / 4.0)
+		crista.append(base_tel + Vector3(px, f_tel.call(px, 0.0) + 0.1, 0))
+	for j in 4:
+		_viga(crista[j], crista[j + 1], 0.24, P.telhado.darkened(0.35), 0.06)
+	for s in [-1.0, 1.0]:
+		var pt: Vector3 = crista[0] if s < 0 else crista[4]
+		_blocod(Vector3(0.3, 0.5, 0.42), pt + Vector3(s * 0.05, 0.16, 0), Vector3(0, 0, -s * 14.0), P.telhado.darkened(0.4), 0.1)
+	# --- Roda d'água à direita (+x), na frente da casa ---
+	var cw := Vector3(w / 2 + 1.25, 1.4, d / 2 + 0.25)
+	var rr := 1.2
+	# Tanque de pedra embaixo da roda, com água.
+	_tipo = 3
+	for s in [-1.0, 1.0]:
+		_blocod(Vector3(2.8, 0.42, 0.25), Vector3(cw.x, 0.21, cw.z + s * 0.62), Vector3(0, 0, _rng.randf_range(-2, 2)), P.pedra, 0.07)
+		_blocod(Vector3(0.25, 0.42, 1.25), Vector3(cw.x + s * 1.4, 0.21, cw.z), Vector3.ZERO, P.pedra2, 0.07)
+	_tipo = 0
+	_blocod(Vector3(2.6, 0.04, 1.0), Vector3(cw.x, 0.34, cw.z), Vector3.ZERO, P.agua, 0.01)
+	# Mancais: dois postes com o eixo apoiado (atrás e na frente da roda).
+	for s in [-1.0, 1.0]:
+		_viga(Vector3(cw.x, 0.3, cw.z + s * 0.48), Vector3(cw.x, cw.y + 0.15, cw.z + s * 0.48), 0.2, mad, 0.04)
+		_blocod(Vector3(0.3, 0.16, 0.26), Vector3(cw.x, cw.y + 0.02, cw.z + s * 0.48), Vector3.ZERO, ferro, 0.03)
+	_cil(0.09, 0.09, 1.5, 8, cw + Vector3(0, 0, 0.12), Vector3(90, 0, 0), ferro)
+	# Caixa d'água de madeira em pernas, logo atrás da roda: a bica jorra no alto
+	# da roda do lado +x, então ela gira no sentido horário.
+	var cx := Vector3(cw.x + 0.75, 2.45, cw.z - 1.45)
+	for px in [-0.4, 0.4]:
+		for pz in [-0.35, 0.35]:
+			_viga(Vector3(cx.x + px * 1.15, 0.0, cx.z + pz * 1.15), Vector3(cx.x + px, cx.y - 0.3, cx.z + pz), 0.11, mad, 0.02)
+	_tipo = 1
+	_blocod(Vector3(1.0, 0.7, 0.9), cx + Vector3(0, 0.05, 0), Vector3(0, 6, 0), mad2.darkened(0.08), 0.04)
+	_tipo = 0
+	for yy in [-0.2, 0.3]:
+		_blocod(Vector3(1.04, 0.07, 0.94), cx + Vector3(0, yy, 0), Vector3(0, 6, 0), ferro, 0.02)
+	_blocod(Vector3(0.9, 0.03, 0.8), cx + Vector3(0, 0.38, 0), Vector3(0, 6, 0), P.agua.lightened(0.1), 0.01)
+	var bica := Vector3(cw.x + 0.55, cw.y + rr + 0.3, cw.z - 0.05)
+	_viga(cx + Vector3(-0.2, -0.05, 0.4), bica, 0.13, P.bambu, 0.03)
+	_blocod(Vector3(0.08, 0.4, 0.14), Vector3(bica.x + 0.04, bica.y - 0.22, bica.z), Vector3.ZERO, P.agua.lightened(0.35), 0.03)
+	var queda := Vector3(cw.x + rr - 0.05, 0.0, cw.z)
+	_blocod(Vector3(0.1, cw.y - 0.3, 0.3), Vector3(queda.x, 0.35 + (cw.y - 0.3) / 2.0, cw.z), Vector3.ZERO, P.agua.lightened(0.3), 0.03)
+	for j in 5:  # respingos no tanque
+		_esfera(0.07, Vector3(cw.x + 0.3 + j * 0.15, 0.42, cw.z + (j - 2) * 0.12), Vector3(1, 0.6, 1), P.agua.lightened(0.5), false, 5, 3)
+	var g := _inicio_peca()
+	var aro := 14
+	for s in [-1.0, 1.0]:
+		var pts := []
+		for k in aro:
+			var a := TAU * k / aro
+			pts.append(Vector3(cos(a) * rr, sin(a) * rr, s * 0.26))
+		for k in aro:
+			_viga(pts[k], pts[(k + 1) % aro], 0.1, mad2.darkened(0.05), 0.025)
+		for k in 6:
+			var a := TAU * (k + 0.25) / 6.0
+			_viga(Vector3(0, 0, s * 0.22), Vector3(cos(a), sin(a), 0) * (rr - 0.05) + Vector3(0, 0, s * 0.26), 0.09, mad, 0.02)
+	for k in aro:
+		var a := TAU * (k + 0.5) / aro
+		_bloco(Vector3(0.06, 0.36, 0.56), Vector3(cos(a), sin(a), 0) * (rr - 0.12), Basis(Vector3.BACK, a - PI / 2 + 0.25), mad2.lightened(0.04 * (k % 3)), 0.015)
+	_cil(0.22, 0.22, 0.62, 8, Vector3.ZERO, Vector3(90, 0, 0), mad.darkened(0.15))
+	var w_roda := -0.75
+	_fim_peca(g, "Gira_roda", Transform3D(Basis(), cw), Vector2(w_roda, 0.0))
+	# Engrenagem pequena no eixo da roda (na frente) e a grande, à esquerda, com manivela.
+	var passo := 0.24
+	var za := cw.z + 0.5
+	g = _inicio_peca()
+	var ra := _engrenagem(12, passo, 0.12, mad2, PI)
+	_fim_peca(g, "Gira_engrenagem_eixo", Transform3D(Basis(), Vector3(cw.x, cw.y, za)), Vector2(w_roda, 0.0))
+	var rb := 18 * passo / TAU
+	var cb := Vector3(cw.x - (ra + rb + passo * 0.42), cw.y, za)
+	_cil(0.07, 0.07, 0.55, 6, cb - Vector3(0, 0, 0.25), Vector3(90, 0, 0), ferro)
+	var w_b := -w_roda * 12.0 / 18.0
+	g = _inicio_peca()
+	_engrenagem(18, passo, 0.12, mad, PI / 18)
+	_viga(Vector3(0, 0, 0.13), Vector3(0, -0.62, 0.13), 0.08, ferro, 0.02)
+	_cil(0.05, 0.05, 0.22, 6, Vector3(0, -0.62, 0.24), Vector3(90, 0, 0), mad2.lightened(0.15))
+	_fim_peca(g, "Gira_engrenagem_manivela", Transform3D(Basis(), cb), Vector2(w_b, 0.0))
+	# Pilão de arroz (karausu): cavalete, viga que vai e volta e o pilão de pedra.
+	var pp := Vector3(cb.x - 0.95, 0.95, d / 2 + 1.2)
+	for s in [-1.0, 1.0]:
+		_viga(Vector3(pp.x - 0.25, 0.0, pp.z + s * 0.2), Vector3(pp.x, pp.y + 0.05, pp.z + s * 0.2), 0.08, mad, 0.02)
+		_viga(Vector3(pp.x + 0.25, 0.0, pp.z + s * 0.2), Vector3(pp.x, pp.y + 0.05, pp.z + s * 0.2), 0.08, mad, 0.02)
+	var usu := Vector3(pp.x - 1.15, 0.0, pp.z)
+	_cil(0.3, 0.34, 0.5, 10, usu + Vector3(0, 0.25, 0), Vector3.ZERO, P.pedra)
+	_cil(0.2, 0.2, 0.02, 10, usu + Vector3(0, 0.51, 0), Vector3.ZERO, P.branco)
+	g = _inicio_peca()
+	_viga(Vector3(-1.2, 0.08, 0), Vector3(0.75, -0.08, 0), 0.13, mad2.darkened(0.08), 0.03)
+	_cil(0.09, 0.11, 0.42, 7, Vector3(-1.15, -0.18, 0), Vector3.ZERO, mad.darkened(0.2))
+	_cil(0.05, 0.05, 0.5, 6, Vector3.ZERO, Vector3(90, 0, 0), ferro)
+	_fim_peca(g, "Gira_pilao", Transform3D(Basis(), pp), Vector2(w_b, 0.18))
+	# Sacos de arroz e o moleiro.
+	for j in 3:
+		_esfera(0.26, Vector3(-2.0 + j * 0.45, 0.28 + (0.32 if j == 1 else 0.0), d / 2 + 1.2 + (0.05 if j == 1 else 0.0)), Vector3(1, 0.85, 0.8), P.corda.lightened(0.1 * j), false, 7, 4)
+	_aldeao(Vector3(usu.x - 0.6, 0.0, usu.z + 0.35), 30.0, P.madeira2.lightened(0.15), "parado", true)
+	_lanterna_papel(Vector3(-w / 2 - 0.05, 1.6, d / 2 + 0.3), P.luz2, 0.18)
+	_fundos(w, d, [1.3])
 
 
 ## Casa de fazenda térrea (6 x 5 m) com telhado alto de palha e varanda (engawa).
@@ -1310,8 +1604,12 @@ func _gerar_mapa_rio() -> void:
 	m.keep_position = Vector2(-9, 0)
 	m.tower_spots = PackedVector2Array([Vector2(12, -7.6), Vector2(12, 7.6)])
 	m.tower_collider_radius = 2.0
-	m.hat_spots = PackedVector2Array([Vector2(5, -8.5), Vector2(5, 8.5), Vector2(-3, -8.5), Vector2(-3, 8.5)])
-	m.oficina_spots = PackedVector2Array([Vector2(-8.5, -8.3), Vector2(-8.5, 8.3)])
+	# Nada de jogo atrás da torre principal (x de -12 a -6): a câmera olha de +z
+	# e o que fica em z < 0 atrás dela some. Oficinas ao lado da máscara, chapéus
+	# na frente, perto do portão.
+	m.hat_spots = PackedVector2Array([Vector2(7, -9.2), Vector2(7, 9.2), Vector2(2.5, -9.2), Vector2(2.5, 9.2)])
+	# (z = ±7: mais perto da muralha, a escada da passarela tapa a frente da oficina.)
+	m.oficina_spots = PackedVector2Array([Vector2(-3.5, -7.0), Vector2(-3.5, 7.0)])
 	m.wall_height = ALT_MURO
 	m.wall_thickness = ESP_MURO
 	m.wall_parapet = 1.0
@@ -1333,7 +1631,7 @@ func _gerar_mapa_rio() -> void:
 	_patio.append(_p("carroca.scn", Vector3(9.5, 0, 12.0), 75.0))
 	for z in [-4.6, 4.6]:
 		_patio.append(_p("lanterna_pedra.scn", Vector3(9.0, 0, z)))
-		_patio.append(_p("poste.scn", Vector3(1.0, 0, z * 2.2), 90.0))
+		_patio.append(_p("poste.scn", Vector3(4.25, 0, signf(z) * 11.8), 90.0))
 
 	# Rio: trechos de água + travas (alta fora das pontes, baixa embaixo delas).
 	var zs := range(-32, 33, 8)

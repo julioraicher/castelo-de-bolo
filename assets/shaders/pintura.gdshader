@@ -10,6 +10,10 @@ shader_type spatial;
 //  - luz em faixas suaves, sombra puxada para uma cor fria (roxo/azul) e borda
 //    clara do lado do sol;
 //  - vento = seno no vértice com peso em UV.x (0 = parado, 1 = balança inteiro);
+//  - peça que gira (engrenagem, manivela, roda d'água) em UV2: x = velocidade
+//    angular (rad/s), y = amplitude (0 = gira sem parar; > 0 = vai e volta, rad).
+//    Eixo Z local, pivô na origem da peça. `relogio` >= 0 substitui o TIME
+//    (a oficina acelera as engrenagens conforme a obra anda);
 //  - desenho do material em UV.y: 0 liso, 1 tábuas, 2 telhas, 3 pedras, 4 reboco.
 //    Tamanhos de 20-35 cm; fwidth() apaga o desenho quando ele fica denso demais
 //    para a tela, o mesmo papel do mipmap numa textura.
@@ -25,6 +29,7 @@ uniform vec3 cor_borda : source_color = vec3(1.0, 0.85, 0.6);
 uniform float forca_borda : hint_range(0.0, 2.0) = 0.45;
 uniform float vento_amp = 0.06;
 uniform float vento_vel = 1.7;
+uniform float relogio = -1.0;
 
 varying vec3 v_mundo;
 varying vec3 v_normal_mundo;
@@ -77,17 +82,26 @@ vec3 voronoi(vec2 p) {
 }
 
 void vertex() {
+	// O desenho do material acompanha a peça que gira: ele usa a posição parada.
+	vec3 parado = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	v_normal_mundo = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	if (UV2.x != 0.0) {
+		float t = relogio >= 0.0 ? relogio : TIME;
+		float ang = UV2.y > 0.0 ? UV2.y * sin(t * UV2.x) : t * UV2.x;
+		mat2 r = mat2(vec2(cos(ang), sin(ang)), vec2(-sin(ang), cos(ang)));
+		VERTEX.xy = r * VERTEX.xy;
+		NORMAL.xy = r * NORMAL.xy;
+	}
 	vec3 mundo = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float peso = UV.x;
 	if (peso > 0.0) {
 		float t = TIME * vento_vel + mundo.x * 0.35 + mundo.z * 0.27;
 		VERTEX.x += sin(t) * vento_amp * peso;
 		VERTEX.z += sin(t * 0.77 + 1.3) * vento_amp * 0.6 * peso;
-		mundo = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+		parado = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	}
-	v_mundo = mundo;
-	v_normal_mundo = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
-	v_alt = mundo.y - NODE_POSITION_WORLD.y;
+	v_mundo = parado;
+	v_alt = parado.y - NODE_POSITION_WORLD.y;
 	v_mat = UV.y;
 }
 

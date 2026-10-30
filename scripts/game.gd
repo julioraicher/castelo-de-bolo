@@ -29,7 +29,8 @@ var _time := 0.0
 #   --poderes           medidor de todo mundo enche a cada 4 s (vitrine de poderes)
 #   --tema=N            usa o tema N de GameConfig.themes (prints de cada tema)
 #   --mapa=N            usa o mapa N de GameConfig.maps
-#   --vista=mapa|alto   câmera parada vendo o mapa todo / o castelo de cima (prints)
+#   --vista=mapa|alto|patio  câmera parada vendo o mapa todo / o castelo de cima /
+#                       o pátio azul no ângulo da câmera do jogo (prints)
 #   --print-poder       com --shots: os prints saem logo depois de cada poder do jogador
 #   --filme=<pasta>     roteiro fixo com o jogador (golpe, dash, pulo, pancada,
 #                       morte) salvando um quadro a cada 2: prancha de animação
@@ -162,6 +163,10 @@ func _ready() -> void:
 			camera.fov = 50
 			camera.position = Vector3(0, 95, 62)
 			camera.look_at(Vector3(0, 0, 2))
+		elif _vista == "patio":
+			camera.fov = 42
+			camera.position = Vector3(-50, 0, 0) + Vector3(0, 21, 19) * 1.55
+			camera.look_at(Vector3(-50, 0, 0))
 		else:
 			camera.fov = 45
 			camera.position = Vector3(-22, 22, 26)

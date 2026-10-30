@@ -106,7 +106,7 @@ scale = 1.0
 [sub_resource type="Resource" id="Resource_on1di"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
-position = Vector3(1, 0, -10.12)
+position = Vector3(4.25, 0, -11.8)
 scale = 1.0
 rotation_deg = 90.0
 
@@ -119,7 +119,7 @@ scale = 1.0
 [sub_resource type="Resource" id="Resource_dtvb3"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
-position = Vector3(1, 0, 10.12)
+position = Vector3(4.25, 0, 11.8)
 scale = 1.0
 rotation_deg = 90.0
 
@@ -1711,8 +1711,8 @@ gate_half_width = 6.8
 keep_position = Vector2(-9, 0)
 tower_spots = PackedVector2Array(12, -7.6, 12, 7.6)
 tower_collider_radius = 2.0
-hat_spots = PackedVector2Array(5, -8.5, 5, 8.5, -3, -8.5, -3, 8.5)
-oficina_spots = PackedVector2Array(-8.5, -8.3, -8.5, 8.3)
+hat_spots = PackedVector2Array(7, -9.2, 7, 9.2, 2.5, -9.2, 2.5, 9.2)
+oficina_spots = PackedVector2Array(-3.5, -7, -3.5, 7)
 wall_height = 3.2
 wall_thickness = 3.6
 wall_model = "muralha.scn"

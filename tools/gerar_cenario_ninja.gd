@@ -85,6 +85,8 @@ var _tipo := 0       # desenho do material (UV.y): 0 liso, 1 tábuas, 2 telhas, 
 var _tipo_auto := false  # sem _tipo: deduz o desenho pela cor da paleta
 var _contorno := true
 var _rng := RandomNumberGenerator.new()
+var _giro := Vector2.ZERO  # UV2 da peça que está sendo fechada (velocidade, amplitude)
+var _pecas: Array = []      # [nome do nó, ArrayMesh, Transform3D]: entram no próximo _salvar
 
 
 func _init() -> void:
@@ -907,6 +909,16 @@ func _salvar(nome: String) -> void:
 	mi.mesh = mesh
 	root.add_child(mi)
 	mi.owner = root
+	for pc in _pecas:  # "Telhado/Gira_x" = filho do nó Telhado
+		var no := MeshInstance3D.new()
+		var caminho: String = pc[0]
+		no.name = caminho.get_file()
+		no.mesh = pc[1]
+		no.transform = pc[2]
+		var pai: Node = root.get_node(caminho.get_base_dir()) if caminho.contains("/") else root
+		pai.add_child(no)
+		no.owner = root
+	_pecas.clear()
 	var ps := PackedScene.new()
 	ps.pack(root)
 	ResourceSaver.save(ps, _dir.path_join(nome + ".scn"))
@@ -917,13 +929,13 @@ var _ultima_tris := 0
 
 
 ## Fecha a malha com o que foi desenhado até agora e zera o construtor.
-func _malha() -> ArrayMesh:
+func _malha(contato := true) -> ArrayMesh:
 	# Oclusão de contato: tudo escurece perto do chão (a peça "senta" no terreno).
 	# Só em peça com altura: enfeite rasteiro ficaria todo escuro.
 	var topo := 0.0
 	for v in V[0]:
 		topo = maxf(topo, v.y)
-	if topo > 0.4:
+	if contato and topo > 0.4:
 		var faixa := minf(0.9, topo * 0.25)
 		for i in V[0].size():
 			var c: Color = C[0][i]
@@ -940,6 +952,11 @@ func _malha() -> ArrayMesh:
 		arr[Mesh.ARRAY_NORMAL] = N[s]
 		arr[Mesh.ARRAY_COLOR] = C[s]
 		arr[Mesh.ARRAY_TEX_UV] = U[s]
+		if _giro != Vector2.ZERO:
+			var u2 := PackedVector2Array()
+			u2.resize(V[s].size())
+			u2.fill(_giro)
+			arr[Mesh.ARRAY_TEX_UV2] = u2
 		arr[Mesh.ARRAY_INDEX] = I[s]
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
 		mesh.surface_set_material(mesh.get_surface_count() - 1, _mat(true) if s == 1 else _mat_pintura())
@@ -954,6 +971,67 @@ func _malha() -> ArrayMesh:
 	_vento = 0.0
 	_tipo = 0
 	return mesh
+
+
+## Peça à parte do modelo (nó próprio no .scn): o que for desenhado entre
+## _inicio_peca() e _fim_peca() sai da malha principal. Desenhe em volta da
+## origem; se `giro` != 0, ela gira no eixo Z local (ver pintura.gdshader):
+## giro.x = rad/s, giro.y = amplitude de vaivém (0 = volta inteira).
+func _inicio_peca() -> Array:
+	var guardado := [V, N, C, I, U, _ao, _vento, _tipo]
+	V = [PackedVector3Array(), PackedVector3Array()]
+	N = [PackedVector3Array(), PackedVector3Array()]
+	C = [PackedColorArray(), PackedColorArray()]
+	I = [PackedInt32Array(), PackedInt32Array()]
+	U = [PackedVector2Array(), PackedVector2Array()]
+	return guardado
+
+
+func _fim_peca(guardado: Array, nome: String, xf: Transform3D, giro := Vector2.ZERO) -> void:
+	_giro = giro
+	var mesh := _malha(false)
+	_giro = Vector2.ZERO
+	_pecas.append([nome, mesh, xf])
+	V = guardado[0]
+	N = guardado[1]
+	C = guardado[2]
+	I = guardado[3]
+	U = guardado[4]
+	_ao = guardado[5]
+	_vento = guardado[6]
+	_tipo = guardado[7]
+
+
+## Engrenagem de madeira no plano XY (eixo Z), centrada na origem: aro de
+## vigas, raios, cubo e `dentes` dentes. Raio primitivo = dentes * passo / 2π,
+## então duas engrenagens do mesmo passo engrenam a r1 + r2 + altura do dente,
+## com velocidades na razão inversa do número de dentes. `fase` = ângulo do
+## primeiro dente: a que gira encosta um dente na direção da vizinha (fase = φ)
+## e a vizinha deixa o vão virado para ela (fase = φ + π + π/dentes).
+func _engrenagem(dentes: int, passo: float, esp: float, cor: Color, fase := 0.0) -> float:
+	var r := dentes * passo / TAU
+	var hd := passo * 0.42           # altura do dente
+	var aro := 12 if dentes > 10 else 8
+	var pts := []
+	for k in aro:
+		var a := TAU * k / aro
+		pts.append(Vector3(cos(a), sin(a), 0) * (r - 0.05))
+	for k in aro:
+		_viga(pts[k], pts[(k + 1) % aro], maxf(0.11, r * 0.22), cor, 0.025)
+	var raios := 6 if dentes > 10 else 4
+	for k in raios:
+		var a := TAU * (k + 0.5) / raios
+		_viga(Vector3.ZERO, Vector3(cos(a), sin(a), 0) * (r - 0.08), maxf(0.06, r * 0.1), cor.darkened(0.08), 0.02)
+	_cil(r * 0.24, r * 0.24, esp * 1.3, 8, Vector3.ZERO, Vector3(90, 0, 0), cor.darkened(0.2))
+	_cil(r * 0.09, r * 0.09, esp * 1.6, 6, Vector3.ZERO, Vector3(90, 0, 0), Color(0.16, 0.13, 0.12))
+	var hh := hd + 0.08
+	var afinar := func(q: Vector3) -> Vector3:  # dente mais fino na ponta (trapézio)
+		q.x *= 1.0 - 0.4 * clampf(q.y / hh + 0.5, 0.0, 1.0)
+		return q
+	for k in dentes:
+		var a := fase + TAU * k / dentes
+		_bloco(Vector3(passo * 0.46, hh, esp), Vector3(cos(a), sin(a), 0) * (r + hd / 2.0 - 0.04), Basis(Vector3.BACK, a - PI / 2), cor.lightened(0.06), 0.015, afinar)
+	return r
 
 
 var _mats := {}
@@ -989,6 +1067,7 @@ func _mat_pintura() -> ShaderMaterial:
 	c.shader = CONTORNO
 	c.set_shader_parameter("espessura", 0.03)
 	c.set_shader_parameter("cor", P.tinta)
+	c.set_shader_parameter("girar", true)
 	if _contorno:
 		m.next_pass = c
 	_mats[k] = m
@@ -1001,7 +1080,7 @@ func _gerar_temas() -> void:
 	var TC: Script = load("res://scripts/data/theme_config.gd")
 	var base := {
 		"team_model_suffix": PackedStringArray(["azul", "vermelho"]),
-		"keep_model": "castelo_{cor}.scn", "keep_scale": 1.0,
+		"keep_model": "castelo_{cor}.scn", "keep_scale": 1.0, "oficina_model": "oficina_{cor}.scn",
 		"tower_model": "torre_{cor}.scn", "tower_scale": 1.0,
 		"flag_model": "bandeira_{cor}.scn", "flag_scale": 1.0, "flag_height": 4.1,
 		"wall_model": "muro.scn", "wall_scale": 1.0, "wall_module_length": 6.0,

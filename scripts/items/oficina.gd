@@ -25,6 +25,12 @@ var _casa: Node3D
 var _roof: Node3D
 var _walls: Node3D
 var _dust_t := 0.0
+## Casa do tema (ThemeConfig.oficina_model): as peças "Gira_*" giram pelo
+## relógio próprio (pintura.gdshader, `relogio`), que anda na velocidade da obra.
+var _mats_gira: Array[ShaderMaterial] = []
+var _relogio := 0.0
+var _ritmo := 0.0
+var _alt_label := 3.6
 
 
 func setup(game: Game, p_team: int, pos: Vector3, opcao: int) -> void:
@@ -46,7 +52,7 @@ func setup(game: Game, p_team: int, pos: Vector3, opcao: int) -> void:
 	_label.pixel_size = 0.012
 	_label.outline_size = 10
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.position.y = 3.6
+	_label.position.y = _alt_label
 	add_child(_label)
 	_update_label()
 
@@ -88,6 +94,7 @@ func _physics_process(delta: float) -> void:
 				and u.global_position.distance_to(global_position) < BUILD_RADIUS:
 			rate += u.stats.velocidade_obra
 			u.building_t = 0.25
+	_ritmo = rate
 	if rate <= 0.0:
 		return
 	add_progress(rate * delta / Config.cfg.oficina_build_time, null)
@@ -112,11 +119,11 @@ func _finish() -> void:
 	Sfx.play("score", global_position, 0.05)
 	pad = HatPad.new()
 	_game.add_child(pad)
-	var to_center := _game.arena.spawn_center[team] - global_position
-	to_center.y = 0
-	pad.setup(team, opcao(), global_position + to_center.normalized() * 3.2)
+	# Ao lado da casa, do lado do portão: atrás dela (z menor) a câmera não vê.
+	var lado := signf(_game.arena.spawn_center[team].x - global_position.x)
+	pad.setup(team, opcao(), global_position + Vector3(lado * 3.0, 0, 0))
 	_game.hat_pads.append(pad)
-	_label.position.y = 4.6
+	_label.position.y = _alt_label + 1.0
 	_update_label()
 	_game.on_oficina_pronta(self)
 
@@ -160,8 +167,54 @@ func _build_lot() -> void:
 		add_child(s)
 
 
+func _process(delta: float) -> void:
+	if _mats_gira.is_empty() or not _casa.visible:
+		return
+	# Pronta: gira devagar sozinha. Em obra: na velocidade dos Construtores.
+	_relogio += delta * (0.6 if estado == Estado.PRONTA else _ritmo)
+	for m in _mats_gira:
+		m.set_shader_parameter("relogio", _relogio)
+
+
+## Casa do tema: o corpo cresce com a obra, o "Telhado" cai no fim e as peças
+## "Gira_*" ganham material próprio (o relógio é desta oficina).
+func _casa_do_tema(path: String) -> Node3D:
+	var root := Node3D.new()
+	var casa: Node3D = (load(path) as PackedScene).instantiate()
+	root.add_child(casa)
+	_walls = casa
+	_roof = casa.get_node_or_null("Telhado")
+	if _roof:
+		casa.remove_child(_roof)  # não achata junto com as paredes
+		_roof.owner = null
+		for n in _roof.find_children("*", "", true, false):
+			n.owner = null
+	else:
+		_roof = Node3D.new()
+	root.add_child(_roof)
+	var contorno := Settings.quality >= 3
+	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
+		var gira := mi.name.begins_with("Gira_")
+		for s in mi.mesh.get_surface_count():
+			var mat := mi.mesh.surface_get_material(s) as ShaderMaterial
+			if mat == null or (not gira and (contorno or mat.next_pass == null)):
+				continue
+			var m: ShaderMaterial = mat.duplicate()
+			m.next_pass = (mat.next_pass.duplicate() as ShaderMaterial) if contorno and mat.next_pass else null
+			mi.set_surface_override_material(s, m)
+			if gira:
+				_mats_gira.append(m)
+				if m.next_pass:
+					_mats_gira.append(m.next_pass)
+	_alt_label = 5.6
+	return root
+
+
 ## Casinha de oficina japonesa: base de madeira, telhado na cor do time e lanterna.
 func _build_house() -> Node3D:
+	var th := _game.arena.theme
+	if th.oficina_model != "" and ResourceLoader.exists(th.model_path(th.oficina_model, team)):
+		return _casa_do_tema(th.model_path(th.oficina_model, team))
 	var root := Node3D.new()
 	var col := Config.team_color(team)
 	_walls = Node3D.new()

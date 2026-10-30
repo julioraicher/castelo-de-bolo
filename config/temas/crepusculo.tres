@@ -32,6 +32,7 @@ tower_scale = 1.0
 flag_model = "bandeira_{cor}.scn"
 flag_scale = 1.0
 flag_height = 4.1
+oficina_model = "oficina_{cor}.scn"
 wall_model = "muro.scn"
 wall_scale = 1.0
 border_trees = PackedStringArray("borda_a.scn", "borda_a.scn", "borda_b.scn", "borda_c.scn")
