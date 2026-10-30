@@ -3,6 +3,22 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Ciclo 2.2, rodada 2b (2026-10-30), frente Visual: desempenho do cenário pintado
+- A Jogabilidade mediu a rodada 2 na Média: +32% de chamadas de desenho e +93%
+  de triângulos (o orçamento da direção é ~10%).
+- Causas e correções (`scripts/world/arena.gd`, só cenário):
+  - O material pintado não entrava na junção do cenário em pedaços; agora entra,
+    e as cópias iguais do material (cada .scn salva a sua) viram uma só.
+  - O contorno de tinta do cenário desenhava tudo de novo, inclusive na sombra:
+    agora só na qualidade Alta.
+  - Enfeite (capim, flores...): 100% na Alta, 60% na Média, 35% na Baixa
+    (`visible_instance_count`, troca na hora).
+- Medida aqui (xvfb, Média, 26 s, mesma régua para as duas): antes desta correção
+  541 chamadas e 1,37 milhão de triângulos; depois 344 e 620 mil (−36% e −55%),
+  abaixo do que era antes do Ciclo 2.2 na mesma proporção.
+- **O que testar**: o FPS na Média voltou ao de antes? Na Alta, o contorno do
+  cenário aparece; na Média, não.
+
 ## Ciclo 2.2, rodadas 1 e 2 (2026-10-30), frente Visual: estilo pintado em todo o cenário e mapa mexido
 - Pedido do Julio: o jogo estava "quadrado, liso e vazio"; o piloto (pranchas
   cenario/10 e 10b) mostrou o caminho e ele pediu para "mudar bem o mapa" e

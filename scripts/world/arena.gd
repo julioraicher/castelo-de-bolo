@@ -42,6 +42,22 @@ func build() -> void:
 	_build_particles()
 	_bake_navigation()
 	_batch_static_meshes()
+	_registrar_contornos.call_deferred()
+
+
+## Acha os contornos de tinta que sobraram fora dos pedaços juntados (MultiMesh,
+## peças animadas) e aplica a qualidade atual neles e no enfeite.
+func _registrar_contornos() -> void:
+	for n in find_children("*", "GeometryInstance3D", true, false):
+		var mesh: Mesh = null
+		if n is MeshInstance3D:
+			mesh = n.mesh
+		elif n is MultiMeshInstance3D and n.multimesh:
+			mesh = n.multimesh.mesh
+		if mesh:
+			for s in mesh.get_surface_count():
+				_mesclavel(mesh.surface_get_material(s))
+	_apply_quality()
 
 
 ## Converte coordenadas locais do castelo de `team` para o mundo.
@@ -141,6 +157,13 @@ func _build_environment() -> void:
 func _apply_quality() -> void:
 	if _particles:
 		_particles.visible = Settings.quality >= 2
+	# Contorno de tinta do cenário só na Alta: ele redesenha cada construção
+	# (dobra triângulos e chamadas de desenho). Enfeite: 100% / 60% / 35%.
+	for mat: ShaderMaterial in _contornos:
+		mat.next_pass = _contornos[mat] if Settings.quality >= 3 else null
+	var fracao := 1.0 if Settings.quality >= 3 else (0.6 if Settings.quality == 2 else 0.35)
+	for mm in _enfeites:
+		mm.visible_instance_count = int(mm.instance_count * fracao)
 	match Settings.quality:
 		0, 1:  # Mínima, Baixa (a diferença está na resolução 3D, em Settings)
 			_sun.shadow_enabled = false
@@ -370,9 +393,37 @@ func _build_borders() -> void:
 const CHUNK := 34.0
 
 
+## Material que dá para juntar num pedaço só: cor por vértice (StandardMaterial)
+## ou o material pintado do cenário (pintura.gdshader). Guarda o contorno de
+## tinta (next_pass) para ligar/desligar pela qualidade.
+func _mesclavel(mat: Material) -> bool:
+	if mat is StandardMaterial3D:
+		return (mat as StandardMaterial3D).vertex_color_use_as_albedo
+	if mat is ShaderMaterial and (mat as ShaderMaterial).shader == PINTURA:
+		if mat.next_pass and not _contornos.has(mat):
+			_contornos[mat] = mat.next_pass
+		return true
+	return false
+
+
+## Cada .scn salva a própria cópia do material: junta as cópias iguais numa só
+## (uma superfície por tipo de material em cada pedaço, não uma por modelo).
+var _unicos := {}
+
+
+func _material_unico(mat: Material) -> Material:
+	var k := ""
+	if mat is ShaderMaterial:
+		k = "pintura%s%s" % [mat.next_pass != null, (mat as ShaderMaterial).get_shader_parameter("cor_sombra")]
+	else:
+		k = "padrao%d" % (mat as StandardMaterial3D).shading_mode
+	if not _unicos.has(k):
+		_unicos[k] = mat
+	return _unicos[k]
+
+
 func _merge_vertex_color_models() -> void:
-	var chunks := {}  # Vector2i -> [SurfaceTool fosco, SurfaceTool brilho]
-	var mats: Array = [null, null]
+	var chunks := {}  # Vector2i -> {Material: SurfaceTool}
 	for root in _static_models:
 		var mis := root.find_children("*", "MeshInstance3D", true, false)
 		if mis.is_empty() or root.find_children("*", "AnimationPlayer", true, false).size() > 0:
@@ -383,33 +434,27 @@ func _merge_vertex_color_models() -> void:
 				ok = false
 				break
 			for s in mi.mesh.get_surface_count():
-				var mat := mi.mesh.surface_get_material(s) as StandardMaterial3D
-				if mat == null or not mat.vertex_color_use_as_albedo:
+				if not _mesclavel(mi.mesh.surface_get_material(s)):
 					ok = false
 		if not ok:
 			continue
 		var key := Vector2i(floori(root.global_position.x / CHUNK), floori(root.global_position.z / CHUNK))
 		if not chunks.has(key):
-			chunks[key] = [null, null]
+			chunks[key] = {}
 		for mi: MeshInstance3D in mis:
 			for s in mi.mesh.get_surface_count():
-				var mat := mi.mesh.surface_get_material(s) as StandardMaterial3D
-				var k := 1 if mat.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED else 0
-				if mats[k] == null:
-					mats[k] = mat
-				if chunks[key][k] == null:
+				var mat := _material_unico(mi.mesh.surface_get_material(s))
+				if not chunks[key].has(mat):
 					var st := SurfaceTool.new()
 					st.begin(Mesh.PRIMITIVE_TRIANGLES)
-					chunks[key][k] = st
-				chunks[key][k].append_from(mi.mesh, s, mi.global_transform)
+					chunks[key][mat] = st
+				chunks[key][mat].append_from(mi.mesh, s, mi.global_transform)
 		root.queue_free()
 	for key in chunks:
 		var mesh := ArrayMesh.new()
-		for k in 2:
-			var st: SurfaceTool = chunks[key][k]
-			if st:
-				st.commit(mesh)
-				mesh.surface_set_material(mesh.get_surface_count() - 1, mats[k])
+		for mat: Material in chunks[key]:
+			chunks[key][mat].commit(mesh)
+			mesh.surface_set_material(mesh.get_surface_count() - 1, mat)
 		var mi := MeshInstance3D.new()
 		mi.name = "Cenario_%d_%d" % [key.x, key.y]
 		mi.mesh = mesh
@@ -419,6 +464,9 @@ func _merge_vertex_color_models() -> void:
 # --- Detalhes do chão e partículas ------------------------------------------
 
 var _particles: CPUParticles3D
+var _enfeites: Array[MultiMesh] = []
+const PINTURA := preload("res://assets/shaders/pintura.gdshader")
+var _contornos := {}  # material pintado -> contorno (next_pass), só na Alta
 
 
 ## Espalha os enfeites do tema (capim, pedrinhas, folhas, lajotas...). Sem
@@ -483,6 +531,7 @@ func _build_decor() -> void:
 		mmi.multimesh = mm
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mmi)
+		_enfeites.append(mm)
 		inst.free()
 
 
