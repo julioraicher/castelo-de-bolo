@@ -35,7 +35,7 @@ var _tem_neon := false
 
 ## Aplica o visual no modelo já instanciado (filho de Unit/_visual).
 ## `corpo` são as malhas visíveis do corpo (já juntadas por Unit).
-static func aplicar(model: Node3D, corpo: Array[MeshInstance3D], estilo: String, time: Color, cabeca: float, contorno: bool) -> MeshInstance3D:
+static func aplicar(model: Node3D, corpo: Array[MeshInstance3D], estilo: String, time: Color, cabeca: float, contorno: bool, extremidades := 1.0) -> MeshInstance3D:
 	var sk: Skeleton3D = model.find_child("Skeleton3D", true, false)
 	if sk == null:
 		return null
@@ -44,12 +44,28 @@ static func aplicar(model: Node3D, corpo: Array[MeshInstance3D], estilo: String,
 	var skin: Skin = null
 	for mi in corpo:
 		var tex := _textura(mi)
+		mi.mesh = _com_pose_de_repouso(mi.mesh)
 		mi.material_override = _material_corpo(tex, time, contorno)
 		if mi.skin and skin == null:
 			skin = mi.skin
-	if cabeca != 1.0:
+	if cabeca != 1.0 or extremidades != 1.0:
 		var mod := EscalaOssos.new()
 		mod.escalas = {"head": cabeca}
+		for osso in ["hand.l", "hand.r"]:
+			mod.escalas[osso] = extremidades
+		if cabeca < 0.8:
+			# Proporção ~3,5 cabeças (Ciclo 2.2): além da cabeça menor, pernas
+			# 20% mais compridas (coxa e canela no eixo do osso); o pé desfaz o
+			# esticão herdado e ganha o tamanho de `extremidades`.
+			var perna := 1.2
+			for lado in [".l", ".r"]:
+				mod.escalas["upperleg" + lado] = Vector3(1.0, perna, 1.0)
+				mod.escalas["lowerleg" + lado] = Vector3(1.0, perna, 1.0)
+				mod.escalas["foot" + lado] = Vector3(extremidades, extremidades / (perna * perna), extremidades)
+			mod.subir_quadril = (0.52 - 0.15) * (perna - 1.0)
+		else:
+			for osso in ["foot.l", "foot.r"]:
+				mod.escalas[osso] = extremidades
 		sk.add_child(mod)
 	if estilo == "" or skin == null:
 		return null
@@ -71,6 +87,37 @@ static func aplicar(model: Node3D, corpo: Array[MeshInstance3D], estilo: String,
 	return pecas
 
 
+static var _repouso_cache := {}   # Mesh -> Mesh com CUSTOM0
+
+
+## Copia a malha guardando a posição de repouso de cada vértice em CUSTOM0.
+## As marcas de poder (toon_time.gdshader) são desenhadas nessa posição, então
+## ficam grudadas no corpo quando o boneco anima (em VERTEX elas "nadariam").
+static func _com_pose_de_repouso(mesh: Mesh) -> Mesh:
+	if mesh == null or not mesh is ArrayMesh:
+		return mesh
+	if _repouso_cache.has(mesh):
+		return _repouso_cache[mesh]
+	var novo := ArrayMesh.new()
+	for s in mesh.get_surface_count():
+		var arr := mesh.surface_get_arrays(s)
+		var vs: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+		var c0 := PackedFloat32Array()
+		c0.resize(vs.size() * 4)
+		for i in vs.size():
+			c0[i * 4] = vs[i].x
+			c0[i * 4 + 1] = vs[i].y
+			c0[i * 4 + 2] = vs[i].z
+			c0[i * 4 + 3] = 1.0
+		arr[Mesh.ARRAY_CUSTOM0] = c0
+		var flags: int = mesh.surface_get_format(s) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS
+		flags |= Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT
+		novo.add_surface_from_arrays(mesh.surface_get_primitive_type(s), arr, [], {}, flags)
+		novo.surface_set_material(s, mesh.surface_get_material(s))
+	_repouso_cache[mesh] = novo
+	return novo
+
+
 static func _textura(mi: MeshInstance3D) -> Texture2D:
 	var m := mi.mesh.surface_get_material(0) if mi.mesh else null
 	if m is StandardMaterial3D:
@@ -89,6 +136,7 @@ static func _material_corpo(tex: Texture2D, time: Color, contorno: bool) -> Shad
 		m.shader = TOON
 		m.set_shader_parameter("textura", tex)
 		m.set_shader_parameter("cor_time", time)
+		m.set_shader_parameter("usar_marcas", true)
 		if contorno:
 			m.next_pass = _contorno()
 		_corpo_cache[key] = m

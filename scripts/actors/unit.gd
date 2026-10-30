@@ -185,7 +185,7 @@ func set_class(new_stats: ClassStats) -> void:
 				mi.material_override = mat
 	_merge_body_parts()
 	if stats.estilo_ninja != "" or stats.escala_cabeca != 1.0:
-		var pecas := NinjaVisual.aplicar(_model, _meshes, stats.estilo_ninja, Config.team_color(team), stats.escala_cabeca, Settings.quality >= 2)
+		var pecas := NinjaVisual.aplicar(_model, _meshes, stats.estilo_ninja, Config.team_color(team), stats.escala_cabeca, Settings.quality >= 2, stats.escala_extremidades)
 		if pecas:
 			_meshes.append(pecas)
 	_model.scale = Vector3.ONE * stats.escala_modelo
