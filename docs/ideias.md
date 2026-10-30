@@ -44,12 +44,8 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 Achados da pesquisa externa. Nada é adotado sem o Julio escolher; a letra é a
 sugestão de prioridade. Custo = rodadas de trabalho, não dinheiro (salvo dito).
 
-- **A · Teste de fumaça no CI** (frente Jogabilidade): rodar a partida
-  `--autoplay` de 5 min no GitHub Actions em todo push de branch e falhar se o
-  stdout tiver `SCRIPT ERROR`. Automatiza a regra "main sempre jogável" sem
-  ninguém lembrar. Custo: ~1 rodada curta, só YAML. Depois, se quiser testes
-  de unidade: gdUnit4 + `MikeSchulze/gdUnit4-action` (MIT).
-- **A · Sons por poder com IA** (frentes Visual/Jogabilidade; já é ideia B
+- ~~Teste de fumaça no CI~~: feito na main (dc459c4, job "fumaca").
+- **A · Sons por poder com IA** (aprovado; com o Diretor de Jogabilidade 2.2; já é ideia B
   "Sons próprios por poder"): ElevenLabs text-to-SFX gera shuriken, talismã,
   explosão em segundos a partir de texto. Atenção: conferir a licença do plano
   grátis para uso comercial. Alternativa 100% livre: sfxr/jsfxr (CC0, gerado
