@@ -25,6 +25,9 @@ extends Resource
 @export var escala_cabeca := 1.0
 ## Escala do boneco inteiro (Ronin maior, Kitsune mais miúda).
 @export var escala_modelo := 1.0
+## Multiplicador da animação exagerada desta classe (GameConfig.exagero_animacao).
+## Pesados (Ronin) amassam menos; leves (Kitsune) mais.
+@export var exagero := 1.0
 
 @export_group("Atributos")
 @export var max_hp := 60.0

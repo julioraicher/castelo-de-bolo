@@ -9,6 +9,11 @@ uniform bool usar_cor_fixa = false;
 uniform bool usar_cor_vertice = false;  // peças montadas por código (cor no vértice, sRGB)
 uniform vec4 cor_fixa : source_color = vec4(1.0);
 uniform float aro = 0.7;
+// Medidor do poder [Q] deste boneco (Unit._tick_aura), 0..1. Por instância:
+// o material é dividido por todos do time. O contraluz acende com a carga,
+// puxa para a cor do poder e pulsa quando está pronto.
+instance uniform float poder_carga = 0.0;
+instance uniform vec4 cor_poder : source_color = vec4(1.0, 0.75, 0.3, 1.0);
 
 void fragment() {
 	vec3 c;
@@ -35,7 +40,9 @@ void fragment() {
 	}
 	ALBEDO = c;
 	float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0);
-	EMISSION = cor_time.rgb * fres * aro;
+	float pronto = step(0.999, poder_carga) * (0.6 + 0.4 * sin(TIME * 7.0));
+	vec3 aura = mix(cor_time.rgb, cor_poder.rgb, poder_carga);
+	EMISSION = aura * fres * (aro + 1.8 * poder_carga * poder_carga + 1.6 * pronto);
 }
 
 void light() {
