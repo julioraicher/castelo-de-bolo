@@ -5,8 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 d, saida = sys.argv[1], sys.argv[2]
 temas = [("dia", "A  Festival ao Sol"), ("crepusculo", "B  Crepúsculo")]
-vistas = [("antes", "1  Antes (câmera do jogo)"), ("jogo", "2  Piloto (câmera do jogo)"),
-          ("frente", "3  Piloto de frente"), ("fundos", "4  Piloto pelos fundos")]
+vistas = [("jogo", "1  Câmera do jogo"), ("frente", "2  De frente"), ("fundos", "3  Pelos fundos")]
 W, H, top, esq = 640, 480, 44, 230
 fonte = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 f = ImageFont.truetype(fonte, 22)

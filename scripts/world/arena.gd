@@ -174,36 +174,19 @@ func _build_ground() -> void:
 	grass.size = Vector2(map.half_width * 2 + 120, map.half_depth * 2 + 120)
 	var mi := MeshInstance3D.new()
 	mi.mesh = grass
-	mi.material_override = _noise_material(theme.grass_dark, theme.grass_light, 26.0)
+	# Chão pintado: grama em manchas e a estrada de terra ligando os dois portões
+	# (borda irregular desenhada no próprio shader).
+	var chao := ShaderMaterial.new()
+	chao.shader = preload("res://assets/shaders/chao_pintado.gdshader")
+	chao.set_shader_parameter("grama_escura", theme.grass_dark)
+	chao.set_shader_parameter("grama_clara", theme.grass_light)
+	chao.set_shader_parameter("terra_escura", theme.road_dark)
+	chao.set_shader_parameter("terra_clara", theme.road_light)
+	chao.set_shader_parameter("rua_z", 0.0)
+	chao.set_shader_parameter("rua_meia", map.road_width / 2.0)
+	chao.set_shader_parameter("rua_x_max", map.castle_distance - 5.0)
+	mi.material_override = chao
 	add_child(mi)
-
-	# Estrada de terra ligando os dois portões.
-	var road := PlaneMesh.new()
-	road.size = Vector2(map.castle_distance * 2 - 10, map.road_width)
-	var rmi := MeshInstance3D.new()
-	rmi.mesh = road
-	rmi.position.y = 0.02
-	rmi.material_override = _noise_material(theme.road_dark, theme.road_light, 8.0)
-	add_child(rmi)
-
-
-func _noise_material(dark: Color, light: Color, tiling: float) -> StandardMaterial3D:
-	var noise := FastNoiseLite.new()
-	noise.frequency = 0.03
-	var grad := Gradient.new()
-	grad.set_color(0, dark)
-	grad.set_color(1, light)
-	var tex := NoiseTexture2D.new()
-	tex.noise = noise
-	tex.seamless = true
-	tex.color_ramp = grad
-	tex.width = 256
-	tex.height = 256
-	var mat := StandardMaterial3D.new()
-	mat.albedo_texture = tex
-	mat.uv1_scale = Vector3(tiling, tiling, 1)
-	mat.roughness = 1.0
-	return mat
 
 
 # --- Castelos -----------------------------------------------------------------

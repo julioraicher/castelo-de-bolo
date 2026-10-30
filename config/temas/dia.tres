@@ -36,12 +36,12 @@ wall_scale = 1.0
 border_trees = PackedStringArray("borda_a.scn", "borda_a.scn", "borda_b.scn", "borda_c.scn")
 border_mountains = PackedStringArray("montanha_a.scn", "montanha_b.scn")
 decor_campo = {
-"broto.scn": 70,
-"capim.scn": 520,
-"flores.scn": 130,
-"flores_b.scn": 110,
-"folhas.scn": 60,
-"pedrinhas.scn": 50
+"broto.scn": 130,
+"capim.scn": 950,
+"flores.scn": 230,
+"flores_b.scn": 190,
+"folhas.scn": 110,
+"pedrinhas.scn": 100
 }
 decor_estrada = {
 "folhas.scn": 30,

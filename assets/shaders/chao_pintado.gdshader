@@ -1,5 +1,5 @@
 shader_type spatial;
-// Chão pintado (piloto do Ciclo 2.2): grama em manchas de duas cores, touceiras
+// Chão pintado (Ciclo 2.2): grama em manchas de duas cores, touceiras
 // mais escuras, pinceladas claras e uma estrada de terra com borda irregular.
 // Mesma regra de frequência do pintura.gdshader (manchas >= ~25 cm).
 render_mode specular_disabled;
@@ -9,7 +9,8 @@ uniform vec3 grama_clara : source_color = vec3(0.45, 0.78, 0.2);
 uniform vec3 terra_escura : source_color = vec3(0.68, 0.6, 0.48);
 uniform vec3 terra_clara : source_color = vec3(0.82, 0.75, 0.6);
 uniform float rua_z = 5.6;       // centro da estrada (z, em metros)
-uniform float rua_meia = 1.6;    // meia-largura da estrada
+uniform float rua_meia = 1.6;    // meia-largura da estrada (0 = sem estrada)
+uniform float rua_x_max = 1000.0; // a estrada acaba em |x| = rua_x_max (portões)
 
 float hash(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -41,13 +42,13 @@ void fragment() {
 	grama *= 1.0 + 0.14 * smoothstep(0.7, 0.9, risco);
 	// Estrada: borda ondulada, terra manchada e trilhas de roda mais escuras.
 	float borda = rua_meia + (ruido(vec2(p.x * 0.8, 1.0)) - 0.5) * 0.7;
-	float dz = abs(p.y - rua_z);
-	float na_rua = 1.0 - smoothstep(borda - 0.15, borda + 0.15, dz);
+	float dz = abs(p.y - rua_z) + max(abs(p.x) - rua_x_max, 0.0);
+	float na_rua = (1.0 - smoothstep(borda - 0.15, borda + 0.15, dz)) * step(0.01, rua_meia);
 	vec3 terra = mix(terra_escura, terra_clara, ruido(p * 0.9 + 21.0)) * 0.85;
 	terra *= 1.0 - 0.15 * (1.0 - smoothstep(0.1, 0.3, abs(dz - rua_meia * 0.45)));
 	vec3 cor = mix(grama, terra, na_rua);
 	// Faixa de grama pisada / sombra na borda da estrada.
-	cor *= 1.0 - 0.18 * (1.0 - smoothstep(0.0, 0.35, abs(dz - borda)));
+	cor *= 1.0 - 0.18 * (1.0 - smoothstep(0.0, 0.35, abs(dz - borda))) * step(0.01, rua_meia);
 	ALBEDO = cor;
 	ROUGHNESS = 1.0;
 }

@@ -89,6 +89,9 @@ Cada frente tem sua conversa e mexe só nas suas pastas:
   `scripts/data/`, com valor padrão que não quebre os arquivos existentes.
 - Sempre `git pull --rebase origin main` antes de `git push`; nunca force push.
 - Cada frente registra suas mudanças no CHANGELOG.md, com a frente no título.
+- Cenário: `tools/gerar_cenario_ninja.gd` (+ `gerar_mapa_rio.gd`) gera tudo com o
+  material `pintura.gdshader`: COLOR.a = oclusão, UV.x = vento, UV.y = desenho
+  (0 liso, 1 tábuas, 2 telhas, 3 pedras, 4 reboco). Rode os dois depois de mudar.
 - Visual: peças por código no esqueleto KayKit (`NinjaVisual`) + shader toon;
   pitaco por prancha (`tools/prancha_personagens.gd`). Ver docs/arte-personagens.md.
 

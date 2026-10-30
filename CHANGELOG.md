@@ -3,26 +3,41 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
-## Ciclo 2.2, rodada 1 (2026-10-30), frente Visual: piloto casa + lanterna (SÓ NO BRANCH)
-- Branch `claude/project-thread-n9z79h`, fora da main até o "aprovado" do Julio.
-- `assets/shaders/pintura.gdshader`: material pintado do cenário (pincel de baixa
-  frequência em espaço de mundo, oclusão pintada em COLOR.a, luz em faixas,
-  sombra fria, borda clara pro sol, vento por seno com peso em UV.x).
-- `tools/gerar_piloto.gd`: `casa_piloto` (mesma pegada da casa_a: chanfros,
-  tábuas tortas, telhado curvo cedendo, porta baixa, kit barril/lenha/vaso/varal,
-  corvo) e `lanterna_piloto` (velha, inclinada, musgo), nos temas dia e crepúsculo.
-- Tema novo `config/temas/crepusculo.tres` (ainda não está na lista do jogo; só
-  as peças do piloto existem em `assets/ninja/crepusculo/`).
-- Prancha: `tools/prancha_piloto.gd` + `tools/montar_piloto.py` →
-  cenario/10-piloto-casa-lanterna.jpg. Casa: ~9,8 mil triângulos (enxugar na
-  rodada 4 se o orçamento pedir).
-- Rodada 1b (pitaco "ainda quadrado, liso e vazio"): estilo de desenho mais
-  forte. O shader desenha o material (UV.y: tábuas, telhas, pedras, reboco)
-  com antisserrilhado por fwidth; contorno de tinta igual ao dos bonecos
-  (`contorno.gdshader` como next_pass); chão pintado
-  (`assets/shaders/chao_pintado.gdshader`) e enfeite espalhado em volta na
-  prancha → cenario/10b-piloto-estilo-desenho.jpg.
-- **O que testar**: nada no jogo ainda; só a prancha.
+## Ciclo 2.2, rodadas 1 e 2 (2026-10-30), frente Visual: estilo pintado em todo o cenário e mapa mexido
+- Pedido do Julio: o jogo estava "quadrado, liso e vazio"; o piloto (pranchas
+  cenario/10 e 10b) mostrou o caminho e ele pediu para "mudar bem o mapa" e
+  publicar tudo junto para jogar.
+- **Material pintado em todas as peças** (`assets/shaders/pintura.gdshader`):
+  pincel de baixa frequência em espaço de mundo, oclusão pintada (COLOR.a),
+  luz em faixas suaves, sombra fria, borda clara pro sol, vento por vértice
+  (UV.x) e desenho do material (UV.y: tábuas, telhas, pedras, reboco) com
+  antisserrilhado por `fwidth`. Peças antigas recebem o desenho pela cor da
+  paleta (`_desenho_pela_cor`).
+- **Contorno de tinta** nas construções e objetos (o `contorno.gdshader` dos
+  bonecos como next_pass); enfeite miúdo, água e paisagem distante ficam sem.
+- **Casa comum nova** (`casa_a`: chanfros, tábuas tortas, telhado curvo que cede,
+  porta baixa, barril, lenha, vaso, varal, corvo) e **lanterna de pedra nova**
+  (velha, inclinada, com musgo). Árvores, capim e flores balançam no vento.
+- **Chão pintado** (`assets/shaders/chao_pintado.gdshader`): grama em manchas e
+  a estrada desenhada com borda irregular (sai a malha de estrada separada).
+  Enfeite do Festival ao Sol quase dobrou.
+- **Tema novo Crepúsculo (sombrio)** em Esc > Configurações > Tema (paleta
+  `crepusculo` no gerador). Festival ao Sol continua o padrão.
+- **Mapa Rio das Lanternas mexido**: bosques de sakura no lugar dos jardins de
+  pedra, feira de barracas na boca da ponte grande e arrozais com espantalho nos
+  campos de fora das muralhas.
+- Ferramentas: todo o construtor (chanfro, viga, superfície curva, oclusão,
+  vento) está em `tools/gerar_cenario_ninja.gd`; prancha da casa em
+  `tools/prancha_piloto.gd` + `tools/montar_piloto.py`.
+- Outras frentes: `scripts/world/arena.gd` (só o material do chão) e
+  `config/game_config.tres` (tema na lista). Navegação: 42 destravadas de bot
+  em 5 min simulados (antes 33-58), sem erro de script.
+- **O que testar**:
+  1. Ainda parece quadrado, liso e vazio? Olhe as casas, telhados, pedras e chão.
+  2. O contorno de tinta no cenário combina com o dos ninjas?
+  3. Esc > Configurações > Tema > Crepúsculo: o clima sombrio funciona para jogar?
+  4. Bosques, feira e arrozais: atrapalham ou ajudam a luta e a fuga?
+  5. FPS comparado com antes (o contorno dobra as chamadas de desenho do cenário).
 
 ## Ciclo 2.2 (2026-10-30), estagiário de ideias: direção nova (só documentos)
 - Pedido do Julio: o jogo está "quadrado, liso, vazio"; aproximar do Fat

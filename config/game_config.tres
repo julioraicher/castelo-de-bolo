@@ -22,6 +22,7 @@
 [ext_resource type="Resource" path="res://config/temas/dia.tres" id="11_dia"]
 [ext_resource type="Resource" path="res://config/temas/oni.tres" id="9_f5mmm"]
 [ext_resource type="Resource" path="res://config/temas/luar.tres" id="10_wo1y8"]
+[ext_resource type="Resource" path="res://config/temas/crepusculo.tres" id="12_crep"]
 
 [resource]
 script = ExtResource("1")
@@ -29,6 +30,6 @@ villager = ExtResource("2")
 hat_class_list = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("11")])
 bot_start_classes = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("11"), ExtResource("2")])
 oficina_classes = Array[ExtResource("1_3yous")]([ExtResource("of_ronin_oni"), ExtResource("of_lamina_dupla"), ExtResource("of_arqueiro_yumi"), ExtResource("of_bombas_fumaca"), ExtResource("of_onmyoji"), ExtResource("of_kitsune"), ExtResource("of_mestre_polvora"), ExtResource("of_carpinteiro")])
-themes = Array[ExtResource("8_txtu1")]([ExtResource("11_dia"), ExtResource("9_f5mmm"), ExtResource("10_wo1y8")])
+themes = Array[ExtResource("8_txtu1")]([ExtResource("11_dia"), ExtResource("12_crep"), ExtResource("9_f5mmm"), ExtResource("10_wo1y8")])
 map = ExtResource("6_c8e20")
 maps = Array[ExtResource("7_mapl")]([ExtResource("7_rio")])

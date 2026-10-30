@@ -1,5 +1,5 @@
 extends SceneTree
-## Prancha do piloto do Ciclo 2.2: casa + lanterna antigas × novas, nas luzes
+## Prancha da casa comum + lanterna de pedra (piloto do Ciclo 2.2), nas luzes
 ## de dois temas (a luz vem do próprio .tres, como no jogo).
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
 ##     --rendering-method gl_compatibility --audio-driver Dummy -s tools/prancha_piloto.gd -- DIR
@@ -8,10 +8,9 @@ extends SceneTree
 const TEMAS := ["dia", "crepusculo"]
 ## [nome, casa, lanterna, direção da câmera (do alvo para a câmera), distância, fov]
 const VISTAS := [
-	["antes", "casa_a", "lanterna_pedra", Vector3(0, 21, 19), 15.5, 42.0],
-	["jogo", "casa_piloto", "lanterna_piloto", Vector3(0, 21, 19), 15.5, 42.0],
-	["frente", "casa_piloto", "lanterna_piloto", Vector3(0.55, 0.32, 1.0), 13.0, 40.0],
-	["fundos", "casa_piloto", "lanterna_piloto", Vector3(-0.7, 0.45, -1.0), 13.0, 40.0],
+	["jogo", "casa_a", "lanterna_pedra", Vector3(0, 21, 19), 15.5, 42.0],
+	["frente", "casa_a", "lanterna_pedra", Vector3(0.55, 0.32, 1.0), 13.0, 40.0],
+	["fundos", "casa_a", "lanterna_pedra", Vector3(-0.7, 0.45, -1.0), 13.0, 40.0],
 ]
 
 
@@ -29,12 +28,10 @@ func _rodar() -> void:
 			var cena := Node3D.new()
 			root.add_child(cena)
 			_ambiente(cena, cfg)
-			# As peças antigas só existem no tema de dia: mesma forma, luz do tema.
-			var pasta: String = tema if (v[1] as String).ends_with("piloto") else "dia"
+			var pasta: String = tema
 			_peca(cena, pasta, v[1], Vector3.ZERO)
 			_peca(cena, pasta, v[2], Vector3(3.7, 0, 3.4))
-			if v[0] != "antes":
-				_entorno(cena)
+			_entorno(cena)
 			var cam := Camera3D.new()
 			cam.fov = v[5]
 			cena.add_child(cam)
