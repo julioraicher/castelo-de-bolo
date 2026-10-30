@@ -3,6 +3,21 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Ciclo 2.2, rodada 1 (2026-10-30), frente Visual: piloto casa + lanterna (SÓ NO BRANCH)
+- Branch `claude/project-thread-n9z79h`, fora da main até o "aprovado" do Julio.
+- `assets/shaders/pintura.gdshader`: material pintado do cenário (pincel de baixa
+  frequência em espaço de mundo, oclusão pintada em COLOR.a, luz em faixas,
+  sombra fria, borda clara pro sol, vento por seno com peso em UV.x).
+- `tools/gerar_piloto.gd`: `casa_piloto` (mesma pegada da casa_a: chanfros,
+  tábuas tortas, telhado curvo cedendo, porta baixa, kit barril/lenha/vaso/varal,
+  corvo) e `lanterna_piloto` (velha, inclinada, musgo), nos temas dia e crepúsculo.
+- Tema novo `config/temas/crepusculo.tres` (ainda não está na lista do jogo; só
+  as peças do piloto existem em `assets/ninja/crepusculo/`).
+- Prancha: `tools/prancha_piloto.gd` + `tools/montar_piloto.py` →
+  cenario/10-piloto-casa-lanterna.jpg. Casa: ~9,8 mil triângulos (enxugar na
+  rodada 4 se o orçamento pedir).
+- **O que testar**: nada no jogo ainda; só a prancha.
+
 ## Ciclo 2.2 (2026-10-30), estagiário de ideias: direção nova (só documentos)
 - Pedido do Julio: o jogo está "quadrado, liso, vazio"; aproximar do Fat
   Princess de PS3 e dar uma pegada mais sombria, com ninjas que mostram o
