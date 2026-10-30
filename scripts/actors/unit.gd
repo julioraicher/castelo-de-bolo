@@ -104,6 +104,21 @@ var _silence_t := 0.0   # Selo do Onmyoji: sem ataque, botão direito nem poder
 var _fury_t := 0.0      # Fúria do Ronin: dano multiplicado
 var _dmg_boost_t := 0.0 # item no chão "Dano dobrado"
 var _lean := 0.0
+# Corpo de desenho (animação exagerada por código, sem mexer nos clipes):
+# duas molas amortecidas, uma de esticar/amassar na vertical e outra na
+# frente. Golpes, dash, pulo e pancadas só dão "petelecos" de velocidade nelas.
+var _sq := 0.0       # vertical: + estica, − amassa
+var _sq_v := 0.0
+var _st := 0.0       # para a frente (eixo z local do _visual, que gira com o rosto)
+var _st_v := 0.0
+var _tremor_t := 0.0
+var _vy_antes := 0.0
+var _no_chao := true
+var _windup_t := 0.0  # antecipação: o golpe já começou, o dano ainda não saiu
+var _golpe_mult := 1.0
+var _golpe_final := false
+var _carga_vista := -1.0  # último poder_carga mandado ao material
+var _morte_t := -1.0  # s desde a morte (pulinho cômico); < 0 = vivo
 ## Construindo uma oficina (marcado pela Oficina a cada quadro).
 var building_t := 0.0
 
@@ -183,6 +198,9 @@ func set_class(new_stats: ClassStats) -> void:
 	_current_anim = ""
 	_play(stats.anim_idle)
 	_update_hp_bar()
+	for mi in _meshes:
+		mi.set_instance_shader_parameter("cor_poder", stats.hat_color)
+	_carga_vista = -1.0
 	class_changed.emit(self)
 
 
@@ -398,6 +416,8 @@ func _physics_process(delta: float) -> void:
 		if not is_on_floor():
 			velocity = Vector3(0, velocity.y - 30.0 * delta, 0)
 			move_and_slide()
+		_tick_corpo(delta, Vector3.ZERO)
+		_tick_aura()
 		_respawn_t -= delta
 		if _respawn_t <= 0.0:
 			_respawn()
@@ -409,6 +429,7 @@ func _physics_process(delta: float) -> void:
 		_hitstop_t -= delta
 		if _hitstop_t <= 0.0:
 			_set_anim_speed(1.0)
+		_tick_corpo(delta, Vector3.ZERO, true)  # a pose congela, o tremor não
 		return
 
 	if brain and brain.has_method("tick"):
@@ -431,6 +452,8 @@ func _physics_process(delta: float) -> void:
 	if _dodge_t > 0.0:
 		_dodge_t -= delta
 		_move_vel = _dodge_dir * DODGE_SPEED
+		if _dodge_t <= 0.0:
+			_mola(-5.0, -4.0)  # "pouso" do dash: amassa e devolve o esticão
 	else:
 		var speed := current_speed()
 		if _spin_t > 0.0:
@@ -455,10 +478,17 @@ func _physics_process(delta: float) -> void:
 	velocity.z = horizontal.z
 	if _launch_vy > 0.0:
 		velocity.y = _launch_vy  # lançado: sobe com v0 e cai com g = 30 m/s²
+		_mola(minf(_launch_vy, 8.0), 0.0)  # sai do chão esticado
 		_launch_vy = 0.0
 	else:
 		velocity.y = 0.0 if is_on_floor() else velocity.y - 30.0 * delta
+	_vy_antes = velocity.y
 	move_and_slide()
+	# Pouso: amassa proporcional à velocidade de queda (o "impulso" do chão).
+	var no_chao := is_on_floor()
+	if no_chao and not _no_chao and _vy_antes < -2.0:
+		_mola(-minf(-_vy_antes * 0.6, 8.0), 0.0)
+	_no_chao = no_chao
 	global_position = game.arena.clamp_to_arena(global_position)
 
 	_face(delta)
@@ -472,9 +502,16 @@ func _physics_process(delta: float) -> void:
 		wants_power = false
 		if _silence_t <= 0.0:
 			_use_power()
-	if wants_attack and _attack_cd <= 0.0 and free_hands and not _blocking and _charge_t <= 0.0:
+	if _windup_t > 0.0:
+		_windup_t -= delta
+		if _windup_t <= 0.0:
+			if free_hands:
+				_attack_hit()
+	elif wants_attack and _attack_cd <= 0.0 and free_hands and not _blocking and _charge_t <= 0.0:
 		_attack()
 	_animate(horizontal)
+	_tick_corpo(delta, horizontal)
+	_tick_aura()
 	_update_flash(delta)
 	_cake_visual.visible = has_cake
 	if has_cake:
@@ -519,6 +556,8 @@ func _start_dodge() -> void:
 		_upper.stop()
 	_play_once("Dodge_Forward", DODGE_TIME + 0.1)
 	Sfx.play("dodge", global_position)
+	_windup_t = 0.0  # o dash cancela um golpe que ainda não saiu
+	_mola(-1.5, 8.0)  # esticão na direção do dash
 
 
 func _attack() -> void:
@@ -539,6 +578,24 @@ func _attack() -> void:
 		_combo_t = _attack_cd + COMBO_WINDOW
 	_attack_t = minf(_attack_cd, 0.45)
 	_play_upper(anim, 1.35)
+	_golpe_mult = mult
+	_golpe_final = finisher
+	# Antecipação: o corpo encolhe e recua um instante antes do dano sair
+	# (≤ 50 ms, para o controle não ficar "mole").
+	_windup_t = Config.cfg.antecipacao_golpe if _exagero() > 0.0 else 0.0
+	_mola(-3.0, -3.5)
+	if _windup_t <= 0.0:
+		_attack_hit()
+
+
+## O golpe sai de fato (depois da antecipação): dano, projétil, efeitos.
+func _attack_hit() -> void:
+	_windup_t = 0.0
+	var mult := _golpe_mult
+	var finisher := _golpe_final
+	var combo := stats.combo_anims
+	var forte := 1.4 if finisher else 1.0
+	_mola(2.0 * forte, 7.0 * forte)  # estica para a frente no golpe
 	var dir := aim_dir.normalized()
 	match stats.attack_kind:
 		"melee":
@@ -835,7 +892,9 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 	add_power(amount * Config.cfg.power_per_damage_taken)
 	_knock = dir * (attacker.stats.knockback if attacker else 4.0) * knock_mult
 	_flash_t = 0.1
-	_squash(0.1 if knock_mult <= 1.0 else 0.18)
+	var forte := knock_mult > 1.0
+	_mola(-5.0 if forte else -3.0, -3.0 if forte else -1.5)
+	_tremor_t = 0.22 if forte else 0.15
 	var col := Color(1, 0.9, 0.3) if attacker and attacker.is_player else Color(1, 1, 1)
 	if blocked:
 		col = Color(0.6, 0.8, 1.0)
@@ -866,6 +925,9 @@ func _facing() -> Vector3:
 func _die(killer: Unit) -> void:
 	alive = false
 	hp = 0.0
+	_windup_t = 0.0
+	_morte_t = 0.0 if _exagero() > 0.0 else -1.0
+	_mola(7.0, 0.0)  # "boing": estica antes do pulinho
 	_cancel_equip()
 	_cancel_skill()
 	_end_buffs()
@@ -897,6 +959,14 @@ func _respawn() -> void:
 	velocity = Vector3.ZERO
 	_knock = Vector3.ZERO
 	_move_vel = Vector3.ZERO
+	_morte_t = -1.0
+	_sq = 0.0
+	_sq_v = 0.0
+	_st = 0.0
+	_st_v = 0.0
+	_tremor_t = 0.0
+	_visual.position = Vector3.ZERO
+	_visual.scale = Vector3.ONE
 	set_class(Config.cfg.villager)  # quem morre perde o chapéu
 	Fx.ring(game, global_position, Config.team_color(team), 2.0)
 	_play_once("Lie_StandUp", 0.7)
@@ -1237,11 +1307,87 @@ func play_gesture(anim_name: String, speed := 1.5) -> void:
 	_play_upper(anim_name, speed)
 
 
-## "Amassa" o boneco por um instante (impacto): escala volta ao normal com mola.
-func _squash(amount := 0.14) -> void:
-	_visual.scale = Vector3(1.0 + amount, 1.0 - amount, 1.0 + amount)
-	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-	tw.tween_property(_visual, "scale", Vector3.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+# --- Corpo de desenho ----------------------------------------------------------
+# Cada mola é um oscilador amortecido x'' = −ω²(x − alvo) − 2ζω·x'.
+# Com ω = 26 rad/s (~4 Hz) e ζ = 0,32 ela passa do ponto uma vez e meia e
+# assenta em ~0,3 s: o "boing" de desenho. Um peteleco de velocidade v dá um
+# pico de ~v/ω (v = 7 → ~27% de esticão).
+const MOLA_W := 26.0
+const MOLA_ZETA := 0.32
+const MORTE_VY := 5.5   # pulinho da morte: sobe v²/2g ≈ 0,5 m
+const MORTE_G := 30.0
+
+
+## Liga o medidor do poder ao material (uniform poder_carga do toon). Só
+## manda quando muda ~2%, para não mexer no material todo quadro.
+func _tick_aura() -> void:
+	var c := clampf(power / POWER_MAX, 0.0, 1.0) if alive else 0.0
+	if absf(c - _carga_vista) < 0.02 and not (c >= 1.0 and _carga_vista < 1.0):
+		return
+	_carga_vista = c
+	for mi in _meshes:
+		mi.set_instance_shader_parameter("poder_carga", c)
+
+
+func _exagero() -> float:
+	return Config.cfg.exagero_animacao * (stats.exagero if stats else 1.0)
+
+
+## Peteleco nas molas: dv vertical (+ estica) e df para a frente.
+func _mola(dv: float, df: float) -> void:
+	var k := _exagero()
+	_sq_v += dv * k
+	_st_v += df * k
+
+
+func _tick_corpo(delta: float, horizontal: Vector3, congelado := false) -> void:
+	var k := _exagero()
+	if k <= 0.0:
+		return
+	var off := Vector3.ZERO
+	var alvo := 0.0
+	# Quique ao andar: dois pulinhos por ciclo do clipe de corrida (um por
+	# passo), em fase com o clipe para não "bater" com as pernas.
+	var spd := horizontal.length()
+	if alive and spd > 0.8 and _dodge_t <= 0.0 and _no_chao and _anim and _anim.current_animation != "":
+		var ciclo := _anim.current_animation_length
+		var fase := TAU * _anim.current_animation_position / ciclo if ciclo > 0.0 else 0.0
+		var s := absf(sin(fase))
+		var forca := clampf(spd / 6.0, 0.4, 1.2) * k
+		off.y = s * 0.08 * forca
+		alvo = (s - 0.5) * 0.07 * forca  # estica no alto do passo, amassa no apoio
+	if not congelado:
+		var w2 := MOLA_W * MOLA_W
+		var c := 2.0 * MOLA_ZETA * MOLA_W
+		# Euler semi-implícito: estável enquanto ω·Δt < 2 (aqui 0,43 a 60 Hz).
+		_sq_v += (-w2 * (_sq - alvo) - c * _sq_v) * delta
+		_sq += _sq_v * delta
+		_st_v += (-w2 * _st - c * _st_v) * delta
+		_st += _st_v * delta
+	# Morte cômica: pulinho girando, cai e vira panqueca.
+	if _morte_t >= 0.0:
+		var t0 := _morte_t
+		_morte_t += delta
+		var voo := 2.0 * MORTE_VY / MORTE_G
+		if _morte_t < voo:
+			off.y += MORTE_VY * _morte_t - 0.5 * MORTE_G * _morte_t * _morte_t
+			_visual.rotation.y += TAU / voo * delta  # uma volta inteira no ar
+		elif t0 < voo:
+			_mola(-10.0, 0.0)
+			Fx.burst(game, global_position + Vector3(0, 0.3, 0), Color(0.75, 0.72, 0.7), 10, 3.0)
+			Fx.burst(game, global_position + Vector3(0, 1.4, 0), Color(1.0, 0.9, 0.3), 5, 2.0)
+	# Volume constante: V·F na vertical/frente, os outros eixos compensam
+	# (sx·sy·sz = 1), como massa de modelar.
+	var v := 1.0 + clampf(_sq, -0.45, 0.6)
+	var f := 1.0 + clampf(_st, -0.35, 0.55)
+	_visual.scale = Vector3(1.0 / sqrt(v * f), v / sqrt(f), f / sqrt(v))
+	# Tremor de quem apanha: chacoalho aleatório que some em ~0,2 s.
+	if _tremor_t > 0.0:
+		_tremor_t -= delta
+		var amp := 0.09 * k * clampf(_tremor_t / 0.2, 0.0, 1.0)
+		off.x += randf_range(-amp, amp)
+		off.z += randf_range(-amp, amp)
+	_visual.position = off
 
 
 func _update_flash(delta: float) -> void:

@@ -31,6 +31,8 @@ var _time := 0.0
 #   --mapa=N            usa o mapa N de GameConfig.maps
 #   --vista=mapa|alto   câmera parada vendo o mapa todo / o castelo de cima (prints)
 #   --print-poder       com --shots: os prints saem logo depois de cada poder do jogador
+#   --filme=<pasta>     roteiro fixo com o jogador (golpe, dash, pulo, pancada,
+#                       morte) salvando um quadro a cada 2: prancha de animação
 #   --perf=N            mede o desempenho na qualidade N (0-3): a cada 5 s imprime
 #                       ms de CPU por quadro, draw calls, triângulos e objetos
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
@@ -42,6 +44,9 @@ var _shots_dir := ""
 var _vista := ""
 var _print_poder := false
 var _perf := false
+var _filme_dir := ""
+var _filme_f := -1
+var _filme_y := 0.0
 var _hud_t := 0.0
 var _perf_acc := {}
 var _perf_n := 0
@@ -69,6 +74,8 @@ func _ready() -> void:
 			Settings.quality = int(arg.trim_prefix("--perf="))
 		elif arg == "--print-poder":
 			_print_poder = true
+		elif arg.begins_with("--filme="):
+			_filme_dir = arg.trim_prefix("--filme=")
 		elif arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
 		elif arg.begins_with("--vista="):
@@ -217,6 +224,8 @@ func _physics_process(delta: float) -> void:
 	_time += delta
 	if _shots_dir != "" and not _shot_times.is_empty() and _time >= _shot_times[0]:
 		_take_shot()
+	if _filme_dir != "" and _time >= 3.0:
+		_filme()
 	if Input.is_action_just_pressed("restart"):
 		get_tree().reload_current_scene()
 		return
@@ -242,6 +251,52 @@ func _physics_process(delta: float) -> void:
 func _log(msg: String) -> void:
 	if _autoplay:
 		print(msg)
+
+
+## --filme: o jogador (sem cérebro) faz um roteiro fixo, de lado para a
+## câmera, e cada 2 quadros vira um PNG.
+func _filme() -> void:
+	_filme_f += 1
+	var f := _filme_f
+	var p := player
+	var lado := Vector3(-1, 0, 0)
+	if f == 0:
+		p.brain = null
+		p.move_intent = Vector3.ZERO
+		p.aim_dir = lado
+		p.set_class(load("res://config/classes/guerreiro.tres"))
+		p.fill_power()
+		# Câmera parada, baixa e de lado, perto do boneco.
+		hud.visible = false
+		camera.set_process(false)
+		camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+		camera.fov = 30
+		camera.near = 6.5  # corta o que estiver entre a câmera e o boneco
+		_filme_y = p.global_position.y
+	# A câmera acompanha o boneco de lado só no chão (o pulo aparece), sem
+	# suavizar, para comparar quadros.
+	var foco := Vector3(p.global_position.x, _filme_y, p.global_position.z)
+	camera.global_position = foco + Vector3(0, 3.5, 9.0)
+	camera.look_at(foco + Vector3(0, 1.2, 0))
+
+	match f:
+		10:
+			p._attack()
+		50:
+			p.move_intent = lado
+			p._start_dodge()
+		66:
+			p.move_intent = Vector3.ZERO
+		100:
+			p.launch(9.0)
+		160:
+			p.take_damage(4.0, null, -lado, 1.5, true)
+		200:
+			p.take_damage(9999.0, null, -lado, 1.0, true)
+		270:
+			get_tree().quit()
+	if f % 2 == 0:
+		get_viewport().get_texture().get_image().save_png("%s/f_%03d.png" % [_filme_dir, f])
 
 
 func _take_shot() -> void:

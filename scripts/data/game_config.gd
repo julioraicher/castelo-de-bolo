@@ -75,6 +75,12 @@ extends Resource
 @export_group("Sensação do combate")
 ## Congelamento de atacante e alvo num golpe corpo a corpo (s).
 @export var hitstop_time := 0.06
+## Animação exagerada por código (estica e encolhe, quique, tremor, morte
+## cômica): 0 = desliga, 1 = normal, 2 = desenho animado. Cada classe ainda
+## multiplica pelo próprio ClassStats.exagero.
+@export_range(0.0, 2.5, 0.05) var exagero_animacao := 1.4
+## Antecipação do golpe (s): o corpo "carrega" antes do dano sair.
+@export_range(0.0, 0.1, 0.005) var antecipacao_golpe := 0.05
 
 @export_group("Chapéus")
 @export var hat_respawn_time := 6.0

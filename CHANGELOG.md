@@ -39,6 +39,43 @@ conversa saber o que mudou sem reler o histórico.
   4. Bosques, feira e arrozais: atrapalham ou ajudam a luta e a fuga?
   5. FPS comparado com antes (o contorno dobra as chamadas de desenho do cenário).
 
+## Rodada 21 (2026-10-30), frente Jogabilidade: animação exagerada e poder no corpo
+- Direção do Ciclo 2.2, seção 9 (Diretor de Jogabilidade, itens 1 e 3).
+- **Corpo de desenho** em `unit.gd` (`_tick_corpo`), sem mexer nos clipes: duas
+  molas amortecidas (ω = 26 rad/s, ζ = 0,32: passa do ponto e volta em ~0,3 s)
+  esticam/amassam o boneco na vertical e para a frente, com volume constante
+  (sx·sy·sz = 1, como massa de modelar). Recebem "petelecos" em:
+  - **Golpe**: antecipação de 50 ms (encolhe e recua; o dano sai depois dela,
+    alinhado com o braço) e esticão para a frente no golpe; o final do combo estica mais.
+  - **Dash**: esticão na saída, amassa no "pouso".
+  - **Pulo/lançamento**: sai esticado, pousa amassado na proporção da queda.
+  - **Andar**: quique de um pulinho por passo, em fase com o clipe de corrida.
+  - **Apanhar**: amassa e treme ~0,2 s (o tremor continua durante o hitstop).
+  - **Morte cômica**: "boing", pulinho girando uma volta, vira panqueca com
+    poeira e estrelinhas.
+  - Intensidade: `GameConfig.exagero_animacao` (1,4; 0 desliga) ×
+    `ClassStats.exagero` por classe (1 em todas por enquanto).
+- **Poder no corpo** (para o Visual usar): `toon_time.gdshader` ganhou
+  `instance uniform poder_carga` (0..1, mandado pelo `Unit._tick_aura` só
+  quando muda 2%) e `cor_poder` (= cor do chapéu). Por enquanto o contraluz
+  acende com o medidor, puxa para a cor da classe e pulsa quando o [Q] está pronto.
+- **Teste de fumaça no CI** (achado do estagiário, aprovado): todo push em
+  qualquer branch roda 5 min de partida simulada; erro de script reprova e,
+  na main, o export só sai se ele passar.
+- Ferramenta: `-- --autoplay --filme=PASTA` grava o jogador fazendo golpe,
+  dash, pulo, pancada e morte de lado, quadro a quadro (prancha 02 da Jogabilidade).
+- Desempenho (`--perf=1`, Média, mesmo trecho): sem diferença mensurável
+  (física 3,2 → 3,3 ms; draw calls e triângulos iguais dentro do ruído).
+- Teste: 5 min simulados com `--poderes`, sem erro.
+- Outras frentes: `assets/shaders/toon_time.gdshader` (2 uniforms novos,
+  padrão sem efeito visível com medidor vazio) e `.github/workflows/build.yml`.
+- **O que testar**:
+  1. Bater, dar dash e apanhar: o boneco estica e amassa? Está exagerado
+     demais, de menos ou no ponto? (dá para ajustar um número só)
+  2. O golpe ficou "atrasado"? A antecipação é de 50 ms.
+  3. Morrer: o pulinho girando com panqueca ficou engraçado ou atrapalha?
+  4. Encher o Chi: o contorno do boneco acende e pulsa quando o [Q] está pronto?
+
 ## Ciclo 2.2 (2026-10-30), estagiário de ideias: direção nova (só documentos)
 - Pedido do Julio: o jogo está "quadrado, liso, vazio"; aproximar do Fat
   Princess de PS3 e dar uma pegada mais sombria, com ninjas que mostram o
