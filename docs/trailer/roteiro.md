@@ -31,8 +31,8 @@ lanternas, corvos, poder aceso no corpo dos ninjas.
 
 | Plano | Precisa de | Quem faz |
 |---|---|---|
-| 1, 3, 8 | Máscara Oni, castelo (já existem) | dá para renderizar antes |
-| 2, 7 | tema Crepúsculo + casa piloto remodelada | Diretor Visual, rodadas 1-2 |
+| 1, 3, 8 | castelo e fundo com shader de pintura/vento/enfeite; Máscara Oni (não muda neste ciclo) | Diretor Visual, rodada 2 |
+| 2, 7 | tema Crepúsculo (`config/temas/crepusculo.tres`) + casa piloto (`tools/gerar_piloto.gd`, branch claude/project-thread-n9z79h); falta o Julio escolher a luz padrão | Diretor Visual, rodadas 1-2 |
 | 4, 5, 6, 7 | ninjas 3,5 cabeças + marcas de poder acesas | Diretor Visual, rodada 3 |
 
 Render só depois da arte firme, para não refazer.
