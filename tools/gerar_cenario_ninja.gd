@@ -836,6 +836,12 @@ func _altura_telhado(x: float, z: float, W: float, D: float, h: float, ceder: fl
 
 
 func _caixa(size: Vector3, pos: Vector3, rot: Vector3, cor: Color, brilho := false) -> void:
+	# Ciclo 2.2: caixa grande sai com quinas chanfradas (pega luz na aresta e
+	# deixa de parecer bloco de brinquedo); miúda continua reta (12 triângulos).
+	var menor := minf(size.x, minf(size.y, size.z))
+	if not brilho and menor >= 0.1 and maxf(size.x, maxf(size.y, size.z)) >= 0.6:
+		_blocod(size, pos, rot, cor, minf(0.07, menor * 0.3))
+		return
 	var m := BoxMesh.new()
 	m.size = size
 	_prim(m, pos, rot, Vector3.ONE, cor, brilho)
@@ -1000,6 +1006,49 @@ func _fim_peca(guardado: Array, nome: String, xf: Transform3D, giro := Vector2.Z
 	_ao = guardado[5]
 	_vento = guardado[6]
 	_tipo = guardado[7]
+
+
+## Espelha em x tudo o que foi desenhado (e as peças à parte): versão "do
+## outro lado" de um modelo assimétrico. Inverte a ordem dos triângulos (senão
+## a face vira para dentro) e o sentido de giro das peças.
+func _espelhar_x() -> void:
+	for s in 2:
+		for i in V[s].size():
+			V[s][i].x = -V[s][i].x
+			N[s][i].x = -N[s][i].x
+		for t in range(0, I[s].size(), 3):
+			var k: int = I[s][t + 1]
+			I[s][t + 1] = I[s][t + 2]
+			I[s][t + 2] = k
+	var S := Basis.from_scale(Vector3(-1, 1, 1))
+	for pc in _pecas:
+		var velha: ArrayMesh = pc[1]
+		var nova := ArrayMesh.new()
+		for s in velha.get_surface_count():
+			var arr := velha.surface_get_arrays(s)
+			var vs: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			var ns: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
+			var ix: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+			for i in vs.size():
+				vs[i].x = -vs[i].x
+				ns[i].x = -ns[i].x
+			for t in range(0, ix.size(), 3):
+				var k: int = ix[t + 1]
+				ix[t + 1] = ix[t + 2]
+				ix[t + 2] = k
+			arr[Mesh.ARRAY_VERTEX] = vs
+			arr[Mesh.ARRAY_NORMAL] = ns
+			arr[Mesh.ARRAY_INDEX] = ix
+			if arr[Mesh.ARRAY_TEX_UV2] != null:
+				var u2: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV2]
+				for i in u2.size():
+					u2[i].x = -u2[i].x
+				arr[Mesh.ARRAY_TEX_UV2] = u2
+			nova.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+			nova.surface_set_material(s, velha.surface_get_material(s))
+		pc[1] = nova
+		var xf: Transform3D = pc[2]
+		pc[2] = Transform3D(S * xf.basis * S, S * xf.origin)
 
 
 ## Engrenagem de madeira no plano XY (eixo Z), centrada na origem: aro de

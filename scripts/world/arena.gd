@@ -424,6 +424,7 @@ func _material_unico(mat: Material) -> Material:
 
 func _merge_vertex_color_models() -> void:
 	var chunks := {}  # Vector2i -> {Material: SurfaceTool}
+	var giram: Array[MeshInstance3D] = []  # engrenagens, rodas d'água (ver pintura.gdshader)
 	for root in _static_models:
 		var mis := root.find_children("*", "MeshInstance3D", true, false)
 		if mis.is_empty() or root.find_children("*", "AnimationPlayer", true, false).size() > 0:
@@ -442,6 +443,14 @@ func _merge_vertex_color_models() -> void:
 		if not chunks.has(key):
 			chunks[key] = {}
 		for mi: MeshInstance3D in mis:
+			if mi.name.begins_with("Gira_"):
+				# Peça que gira no shader em volta da própria origem: fica de fora.
+				var xf := mi.global_transform
+				mi.get_parent().remove_child(mi)
+				add_child(mi)
+				mi.global_transform = xf
+				giram.append(mi)
+				continue
 			for s in mi.mesh.get_surface_count():
 				var mat := _material_unico(mi.mesh.surface_get_material(s))
 				if not chunks[key].has(mat):
@@ -459,6 +468,27 @@ func _merge_vertex_color_models() -> void:
 		mi.name = "Cenario_%d_%d" % [key.x, key.y]
 		mi.mesh = mesh
 		add_child(mi)
+	# Peças iguais que giram: um MultiMesh por malha (uma chamada de desenho).
+	var por_malha := {}
+	for mi in giram:
+		if not por_malha.has(mi.mesh):
+			por_malha[mi.mesh] = []
+		por_malha[mi.mesh].append(mi)
+	for mesh: Mesh in por_malha:
+		var lista: Array = por_malha[mesh]
+		if lista.size() < 2:
+			continue
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = mesh
+		mm.instance_count = lista.size()
+		for i in lista.size():
+			mm.set_instance_transform(i, lista[i].global_transform)
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		add_child(mmi)
+		for mi: MeshInstance3D in lista:
+			mi.queue_free()
 
 
 # --- Detalhes do chão e partículas ------------------------------------------

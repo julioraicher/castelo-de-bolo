@@ -3,6 +3,48 @@
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 
+## Ciclo 2.2, rodada 3 + piloto 2 (2026-10-30), frente Visual: ninjas com poder no corpo, pátio à vista e casas que funcionam
+- Pedidos do Julio: "pegada mais sombria, ninjas com poder junto"; a oficina de
+  chapéus ficava atrás da torre principal e a câmera não via; casas "quadradas e
+  bobinhas", com vontade de manivelas, engrenagens e animação. Pranchas
+  personagens/07, cenario/12 e o vídeo cenario/12b aprovadas ("aplique tudo").
+- **Ninjas**: cabeça 0,58, mãos e pés 1,3, pernas +20% (~3,5 cabeças; o KayKit
+  tinha ~2,5). Marcas pelo corpo que ficam apagadas sem poder, acendem enquanto
+  a barra enche e, cheia, selos e olhos brilham na cor do time
+  (`toon_time.gdshader`: `usar_marcas`, posição de repouso em CUSTOM0; o
+  `poder_carga` da Jogabilidade não mudou). `ClassStats.escala_extremidades`.
+- **Pátio**: nada de jogo atrás da torre principal nem na frente da escada da
+  muralha (a câmera olha de cima a ~48°: uma torre de 6 m esconde ~5,5 m atrás
+  dela). Oficinas em (-3,5, ±7), chapéus em (7 e 2,5, ±9,2); o pedestal da
+  variação pronta aparece ao lado da oficina, do lado do portão.
+- **Peças que giram** sem custo de CPU: nós `Gira_*` nos modelos, girados no
+  shader (UV2 = velocidade e vaivém; `relogio` substitui o TIME). Engrenagens
+  com o mesmo passo engrenam de verdade (velocidade na razão dos dentes).
+  O Arena tira essas peças da junção do cenário e junta as iguais num MultiMesh.
+- **Oficina de chapéus nova** (`oficina_{cor}`, `ThemeConfig.oficina_model`):
+  martelo batendo no chapéu, engrenagens com manivela, catavento e chapéu-placa;
+  as engrenagens andam na velocidade da obra (mais Construtores, mais rápido) e
+  o telhado cai do céu quando fica pronta.
+- **Casa da roda d'água** (`casa_moinho` e `casa_moinho_esq`, espelhada) no lugar
+  da casa de fazenda na vila: caixa d'água, roda, engrenagens, manivela e pilão
+  de arroz. Poço com sarilho e manivela, forja com pedra de amolar e fole, loja
+  com catavento de papel. Toda caixa grande dos modelos ganhou quina chanfrada
+  (menos cara de bloco).
+- Outras frentes (mudança mínima, combinada com a Jogabilidade): `unit.gd`
+  (passa `escala_extremidades`), `oficina.gd` (modelo do tema, relógio das
+  engrenagens, posição do pedestal), `arena.gd` (peças `Gira_*`), `game.gd`
+  (`--vista=patio`). Ferramentas: `tools/prancha_poder.gd`, `prancha_patio.gd`
+  (`--alvo=X,Z`), `prancha_mecanica.gd`, `montar_mecanica.py`.
+- Testes: 5 min simulados sem erro de script; 22 destravadas de bot (antes 42).
+- **O que testar**:
+  - Os ninjas com cabeça menor e mãos/pés maiores: a silhueta ficou boa no jogo?
+    Encha o Chi e veja as marcas acenderem e os olhos brilharem quando está cheio.
+  - No pátio, as duas oficinas aparecem sem esconder nada? Com um Construtor,
+    as engrenagens giram mais rápido quanto mais gente trabalha?
+  - Na vila, a casa da roda d'água (dos dois lados do rio), o poço, a forja e o
+    catavento da loja estão girando? Algum lugar ficou apertado para passar?
+  - O FPS na Média ficou igual ao de antes?
+
 ## Ciclo 2.2, rodada 2b (2026-10-30), frente Visual: desempenho do cenário pintado
 - A Jogabilidade mediu a rodada 2 na Média: +32% de chamadas de desenho e +93%
   de triângulos (o orçamento da direção é ~10%).

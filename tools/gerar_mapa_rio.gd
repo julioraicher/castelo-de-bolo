@@ -47,6 +47,7 @@ func _gerar_modelos_rio() -> void:
 	_casa_a(); _salvar("casa_a")
 	_casa_b(); _salvar("casa_b")
 	_casa_moinho(); _salvar("casa_moinho")
+	_casa_moinho(); _espelhar_x(); _salvar("casa_moinho_esq")
 	for t in TIMES:
 		_oficina(TIMES[t]); _salvar("oficina_" + t)
 	_loja(); _salvar("loja")
@@ -694,7 +695,7 @@ func _oficina(time: Color) -> void:
 ## para a câmera do jogo.
 func _casa_moinho() -> void:
 	_rng.seed = 13
-	var w := 5.0
+	var w := 4.4
 	var d := 4.2
 	var mad: Color = P.madeira
 	var mad2: Color = P.madeira2
@@ -732,14 +733,14 @@ func _casa_moinho() -> void:
 	for j in 2:
 		_blocod(Vector3(0.46, 0.55, 0.025), Vector3(-0.24 + j * 0.48, 1.6, d / 2 + 0.1), Vector3(0, 0, (j - 0.5) * 3.0), P.agua.darkened(0.25).lerp(P.madeira, 0.2 * j), 0.01)
 	_vento_pendurado(m, 1.88, 0.55, 1.3)
-	_shoji(Vector3(-1.75, 1.3, d / 2 + 0.02), 1.1, 0.9, 1, P.papel)
-	_shoji(Vector3(1.7, 2.45, d / 2 + 0.02), 1.0, 0.5, 1, P.luz1.lerp(P.papel, 0.5))
+	_shoji(Vector3(-1.45, 1.3, d / 2 + 0.02), 1.0, 0.9, 1, P.papel)
+	_shoji(Vector3(1.4, 2.45, d / 2 + 0.02), 0.9, 0.5, 1, P.luz1.lerp(P.papel, 0.5))
 	_sombra_faixa(1.7, topo_parede + 0.1, 0.6, w / 2 + 0.25, d / 2 + 0.3)
 	# Varanda (engawa) baixa na frente, só do lado esquerdo.
 	_tipo = 1
-	_blocod(Vector3(2.3, 0.1, 0.8), Vector3(-1.25, 0.5, d / 2 + 0.45), Vector3.ZERO, mad2.lightened(0.05), 0.03)
+	_blocod(Vector3(2.0, 0.1, 0.8), Vector3(-1.1, 0.5, d / 2 + 0.45), Vector3.ZERO, mad2.lightened(0.05), 0.03)
 	_tipo = 0
-	for px in [-2.3, -0.2]:
+	for px in [-2.05, -0.15]:
 		_blocod(Vector3(0.1, 0.45, 0.1), Vector3(px, 0.23, d / 2 + 0.78), Vector3.ZERO, mad, 0.02)
 	# Telhado grande de quatro águas, curvo, com cumeeira e corvo.
 	var W := w + 1.5
@@ -760,15 +761,15 @@ func _casa_moinho() -> void:
 		var pt: Vector3 = crista[0] if s < 0 else crista[4]
 		_blocod(Vector3(0.3, 0.5, 0.42), pt + Vector3(s * 0.05, 0.16, 0), Vector3(0, 0, -s * 14.0), P.telhado.darkened(0.4), 0.1)
 	# --- Roda d'água à direita (+x), na frente da casa ---
-	var cw := Vector3(w / 2 + 1.25, 1.4, d / 2 + 0.25)
-	var rr := 1.2
+	var cw := Vector3(w / 2 + 1.1, 1.3, d / 2 + 0.25)
+	var rr := 1.05
 	# Tanque de pedra embaixo da roda, com água.
 	_tipo = 3
 	for s in [-1.0, 1.0]:
-		_blocod(Vector3(2.8, 0.42, 0.25), Vector3(cw.x, 0.21, cw.z + s * 0.62), Vector3(0, 0, _rng.randf_range(-2, 2)), P.pedra, 0.07)
-		_blocod(Vector3(0.25, 0.42, 1.25), Vector3(cw.x + s * 1.4, 0.21, cw.z), Vector3.ZERO, P.pedra2, 0.07)
+		_blocod(Vector3(2.4, 0.42, 0.25), Vector3(cw.x, 0.21, cw.z + s * 0.62), Vector3(0, 0, _rng.randf_range(-2, 2)), P.pedra, 0.07)
+		_blocod(Vector3(0.25, 0.42, 1.25), Vector3(cw.x + s * 1.2, 0.21, cw.z), Vector3.ZERO, P.pedra2, 0.07)
 	_tipo = 0
-	_blocod(Vector3(2.6, 0.04, 1.0), Vector3(cw.x, 0.34, cw.z), Vector3.ZERO, P.agua, 0.01)
+	_blocod(Vector3(2.2, 0.04, 1.0), Vector3(cw.x, 0.34, cw.z), Vector3.ZERO, P.agua, 0.01)
 	# Mancais: dois postes com o eixo apoiado (atrás e na frente da roda).
 	for s in [-1.0, 1.0]:
 		_viga(Vector3(cw.x, 0.3, cw.z + s * 0.48), Vector3(cw.x, cw.y + 0.15, cw.z + s * 0.48), 0.2, mad, 0.04)
@@ -841,7 +842,7 @@ func _casa_moinho() -> void:
 	_fim_peca(g, "Gira_pilao", Transform3D(Basis(), pp), Vector2(w_b, 0.18))
 	# Sacos de arroz e o moleiro.
 	for j in 3:
-		_esfera(0.26, Vector3(-2.0 + j * 0.45, 0.28 + (0.32 if j == 1 else 0.0), d / 2 + 1.2 + (0.05 if j == 1 else 0.0)), Vector3(1, 0.85, 0.8), P.corda.lightened(0.1 * j), false, 7, 4)
+		_esfera(0.26, Vector3(-1.9 + j * 0.45, 0.28 + (0.32 if j == 1 else 0.0), d / 2 + 1.2 + (0.05 if j == 1 else 0.0)), Vector3(1, 0.85, 0.8), P.corda.lightened(0.1 * j), false, 7, 4)
 	_aldeao(Vector3(usu.x - 0.6, 0.0, usu.z + 0.35), 30.0, P.madeira2.lightened(0.15), "parado", true)
 	_lanterna_papel(Vector3(-w / 2 - 0.05, 1.6, d / 2 + 0.3), P.luz2, 0.18)
 	_fundos(w, d, [1.3])
@@ -895,6 +896,18 @@ func _loja() -> void:
 	for j in 5:
 		_lanterna_papel(Vector3(-2.0 + j, 2.55, d / 2 + 0.85), P.papel if j % 2 else P.luz2, 0.16)
 	_aldeao(Vector3(0.9, 0.3, d / 2 - 0.85), 0.0, P.torii.darkened(0.1), "vender", false, P.branco)
+	# Catavento de papel (kazaguruma) num bambu na quina da frente.
+	var cv := Vector3(w / 2 + 0.25, 3.0, d / 2 + 0.6)
+	_viga(Vector3(cv.x, 0.0, cv.z), cv - Vector3(0, 0, 0.05), 0.06, P.bambu, 0.015)
+	var g := _inicio_peca()
+	for j in 4:
+		var a := TAU * j / 4.0
+		var dir := Vector3(cos(a), sin(a), 0)
+		var lado := Vector3(-sin(a), cos(a), 0)
+		var cor: Color = [P.torii, P.luz1, P.branco, P.agua.lightened(0.3)][j]
+		_tri(Vector3.ZERO, dir * 0.38, dir * 0.38 + lado * 0.18 + Vector3(0, 0, 0.05), cor, Vector3(0, 0, 1))
+		_tri(Vector3.ZERO, dir * 0.38 + lado * 0.18 + Vector3(0, 0, 0.05), dir * 0.38, cor.darkened(0.3), Vector3(0, 0, -1))
+	_fim_peca(g, "Gira_catavento", Transform3D(Basis(), cv), Vector2(2.8, 0.0))
 	_fundos(w, d, [1.6])
 
 
@@ -983,7 +996,15 @@ func _poco() -> void:
 	_caixa(Vector3(2.0, 0.1, 0.12), Vector3(0, 2.4, 0), Vector3.ZERO, P.madeira)
 	_telhado(Vector3(0, 2.5, 0), 1.6, 1.2, 0.6, P.telhado, 0.25)
 	_cil(0.2, 0.17, 0.3, 8, Vector3(0.95, 0.95, 0.3), Vector3.ZERO, P.madeira2)
-	_caixa(Vector3(0.02, 1.4, 0.02), Vector3(0, 1.7, 0), Vector3.ZERO, P.corda)
+	_caixa(Vector3(0.02, 1.0, 0.02), Vector3(0, 1.45, 0), Vector3.ZERO, P.corda)
+	# Sarilho (rolo com corda) e manivela no lado +x: gira no eixo x.
+	var g := _inicio_peca()
+	_cil(0.13, 0.13, 1.6, 8, Vector3.ZERO, Vector3(90, 0, 0), P.madeira2)
+	for k in 4:
+		_cil(0.15, 0.15, 0.06, 8, Vector3(0, 0, -0.25 + k * 0.17), Vector3(90, 0, 0), P.corda.darkened(0.1 * (k % 2)))
+	_viga(Vector3(0, 0, 0.85), Vector3(0, 0.38, 0.85), 0.06, P.madeira, 0.015)
+	_cil(0.035, 0.035, 0.22, 6, Vector3(0, 0.38, 0.95), Vector3(90, 0, 0), P.madeira2.lightened(0.15))
+	_fim_peca(g, "Gira_sarilho", Transform3D(Basis(Vector3.UP, PI / 2), Vector3(0, 2.0, 0)), Vector2(1.6, 0.0))
 
 
 func _carroca() -> void:
@@ -1489,8 +1510,20 @@ func _forja() -> void:
 	_aldeao(Vector3(0.6, 0.2, 0.95), 180.0, Color(0.3, 0.26, 0.3), "martelar", false, P.torii)
 	_cil(0.28, 0.24, 0.5, 8, Vector3(1.7, 0.45, -0.2), Vector3.ZERO, P.madeira2)
 	_cil(0.24, 0.24, 0.03, 8, Vector3(1.7, 0.7, -0.2), Vector3.ZERO, P.agua.lightened(0.2), true)
-	_cil(0.4, 0.4, 0.12, 12, Vector3(1.6, 0.75, 1.2), Vector3(90, 0, 0), P.pedra)
 	_caixa(Vector3(0.1, 0.6, 0.5), Vector3(1.6, 0.4, 1.2), Vector3.ZERO, P.madeira)
+	var g := _inicio_peca()  # pedra de amolar com manivela
+	_cil(0.4, 0.4, 0.12, 12, Vector3.ZERO, Vector3(90, 0, 0), P.pedra)
+	for k in 3:
+		_caixa(Vector3(0.05, 0.5, 0.13), Vector3.ZERO, Vector3(0, 0, k * 60.0), P.pedra2)
+	_viga(Vector3(0, 0, 0.1), Vector3(0.3, 0, 0.1), 0.05, Color(0.2, 0.18, 0.19), 0.01)
+	_cil(0.03, 0.03, 0.18, 6, Vector3(0.3, 0, 0.18), Vector3(90, 0, 0), P.madeira2)
+	_fim_peca(g, "Gira_amolar", Transform3D(Basis(), Vector3(1.6, 0.75, 1.2)), Vector2(3.0, 0.0))
+	# Fole da fornalha: alavanca que sobe e desce.
+	_viga(Vector3(-0.15, 0.0, -0.35), Vector3(-0.15, 1.45, -0.35), 0.1, P.madeira, 0.02)
+	g = _inicio_peca()
+	_viga(Vector3(-0.9, 0, 0), Vector3(0.5, 0, 0), 0.08, P.madeira2.darkened(0.1), 0.02)
+	_caixa(Vector3(0.5, 0.18, 0.4), Vector3(-0.75, -0.12, 0), Vector3.ZERO, Color(0.35, 0.25, 0.2))
+	_fim_peca(g, "Gira_fole", Transform3D(Basis(), Vector3(-0.15, 1.5, -0.35)), Vector2(4.0, 0.18))
 	_caixa(Vector3(0.12, 1.6, 2.2), Vector3(w / 2 - 0.35, 1.2, -0.2), Vector3.ZERO, P.madeira)
 	for k in 5:
 		var z := -1.1 + k * 0.45
@@ -1668,16 +1701,23 @@ func _gerar_mapa_rio() -> void:
 		["loja.scn", Vector3(18.5, 0, -9.0), 0.0, Vector3(5.0, 4.4, 4.5)],
 		["pousada.scn", Vector3(27.6, 0, -9.0), 0.0, Vector3(6.0, 7.0, 5.0)],
 		["loja.scn", Vector3(12.5, 0, 9.0), 180.0, Vector3(5.0, 4.4, 4.5)],
-		["casa_b.scn", Vector3(19.0, 0, 9.0), 180.0, Vector3(6.0, 5.0, 5.0)],
+		# Casa da roda d'água virada para +z (a câmera vê a roda e as engrenagens;
+		# a rua fica com os fundos). Colisor só da casa; a roda tem o dela abaixo.
+		["casa_moinho.scn", Vector3(17.6, 0, 9.0), 0.0, Vector3(4.4, 5.0, 4.2)],
 		["armazem.scn", Vector3(27.9, 0, 9.0), 180.0, Vector3(4.5, 4.8, 4.0)],
 	]
 	for h in casas:
 		for sx in [1.0, -1.0]:
 			var pos := Vector3(h[1].x * sx, 0, h[1].z)
-			var pr := _p(h[0], pos, h[2], c)
+			var modelo: String = h[0]
+			if sx < 0 and modelo == "casa_moinho.scn":
+				modelo = "casa_moinho_esq.scn"  # espelhada: a roda fica do lado de fora
+			var pr := _p(modelo, pos, h[2], c)
 			pr.collider_size = h[3]
 			pr.collider_offset = Vector3(0, h[3].y / 2.0, 0)
 			_props.append(pr)
+	for sx in [1.0, -1.0]:  # roda d'água + tanque (|x| de 19,7 a 22,1), sempre do lado de fora
+		_props.append(_caixa_col(Vector3(sx * 17.6, 0, 9.0), 0.0, Vector3(2.4, 2.6, 1.5), Vector3(3.3 * sx, 1.3, 2.45)))
 	_dois_lados(_props, "forja.scn", Vector3(19.6, 0, -18.0), 0.0, "caixa")
 	# Fundos da vila abertos (mapa menos apertado): jardins e árvores no lugar
 	# da segunda fileira de casas.
