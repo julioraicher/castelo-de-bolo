@@ -12,13 +12,14 @@ extends "res://tools/gerar_mapa_rio.gd"
 ##   - vento: peso por vértice em UV.x (cortina, roupas, folhas, lanternas).
 
 const SHADER := preload("res://assets/shaders/pintura.gdshader")
+const CONTORNO := preload("res://assets/shaders/contorno.gdshader")
 
 ## Paletas do piloto: "dia" é a do Festival ao Sol; "crepusculo" entra em
 ## TEMAS (gerar_cenario_ninja.gd) na rodada 2, quando o mapa inteiro for gerado.
 var PALETAS := {
 	"dia": TEMAS["dia"].merged({
-		"sombra": Color(0.36, 0.42, 0.72), "forca_sombra": 0.16, "borda": Color(1.0, 0.9, 0.65),
-	}),
+		"sombra": Color(0.36, 0.42, 0.72), "forca_sombra": 0.16, "borda": Color(1.0, 0.9, 0.65), "tinta": Color(0.16, 0.08, 0.05), "reboco": Color(0.95, 0.86, 0.72),
+	}, true),
 	"crepusculo": {
 		"pedra": Color(0.55, 0.5, 0.52), "pedra2": Color(0.4, 0.37, 0.42), "musgo": Color(0.27, 0.38, 0.2),
 		"madeira": Color(0.3, 0.17, 0.12), "madeira2": Color(0.55, 0.33, 0.2), "reboco": Color(0.86, 0.78, 0.68),
@@ -30,7 +31,7 @@ var PALETAS := {
 		"luz1": Color(1.0, 0.68, 0.3), "luz2": Color(1.0, 0.42, 0.22), "papel": Color(1.0, 0.78, 0.45),
 		"ouro": Color(1.0, 0.75, 0.32), "branco": Color(0.92, 0.88, 0.84),
 		"arvore": "sakura",
-		"sombra": Color(0.38, 0.3, 0.68), "forca_sombra": 0.42, "borda": Color(1.0, 0.6, 0.32),
+		"sombra": Color(0.38, 0.3, 0.68), "forca_sombra": 0.42, "borda": Color(1.0, 0.6, 0.32), "tinta": Color(0.06, 0.03, 0.06),
 	},
 }
 const CORVO := Color(0.07, 0.06, 0.09)
@@ -38,6 +39,7 @@ const CORVO := Color(0.07, 0.06, 0.09)
 var U := [PackedVector2Array(), PackedVector2Array()]
 var _ao := 1.0       # oclusão pintada dos próximos vértices (1 = aberto)
 var _vento := 0.0    # peso de vento dos próximos vértices
+var _tipo := 0       # desenho do material (UV.y): 0 liso, 1 tábuas, 2 telhas, 3 pedras, 4 reboco
 var _rng := RandomNumberGenerator.new()
 
 
@@ -70,7 +72,7 @@ func _sincronizar() -> void:
 	for s in 2:
 		while U[s].size() < V[s].size():
 			var i: int = U[s].size()
-			U[s].append(Vector2(_vento, 0.0))
+			U[s].append(Vector2(_vento, _tipo))
 			var c: Color = C[s][i]
 			c.a = _ao
 			C[s][i] = c
@@ -85,14 +87,14 @@ func _marca() -> Array:
 func _vento_pendurado(m: Array, topo: float, comp: float, forca := 1.0) -> void:
 	for s in 2:
 		for i in range(m[s], V[s].size()):
-			U[s][i] = Vector2(clampf((topo - V[s][i].y) / comp, 0.0, 1.0) * forca, 0.0)
+			U[s][i].x = clampf((topo - V[s][i].y) / comp, 0.0, 1.0) * forca
 
 
 ## Vento de planta: 0 na base (y = base) até 1 a `comp` acima.
 func _vento_planta(m: Array, base: float, comp: float) -> void:
 	for s in 2:
 		for i in range(m[s], V[s].size()):
-			U[s][i] = Vector2(clampf((V[s][i].y - base) / comp, 0.0, 1.0), 0.0)
+			U[s][i].x = clampf((V[s][i].y - base) / comp, 0.0, 1.0)
 
 
 ## Escurece o que já foi desenhado numa faixa de altura (embaixo do beiral):
@@ -136,6 +138,7 @@ func _malha() -> ArrayMesh:
 		I[s] = PackedInt32Array()
 	_ao = 1.0
 	_vento = 0.0
+	_tipo = 0
 	return mesh
 
 
@@ -148,6 +151,12 @@ func _mat_pintura() -> ShaderMaterial:
 	m.set_shader_parameter("cor_sombra", P.sombra)
 	m.set_shader_parameter("forca_sombra", P.forca_sombra)
 	m.set_shader_parameter("cor_borda", P.borda)
+	# Contorno de tinta igual ao dos bonecos (casca invertida), mais fino.
+	var c := ShaderMaterial.new()
+	c.shader = CONTORNO
+	c.set_shader_parameter("espessura", 0.03)
+	c.set_shader_parameter("cor", P.tinta)
+	m.next_pass = c
 	_mats[k] = m
 	return m
 
@@ -243,7 +252,9 @@ func _superficie(base: Vector3, f: Callable, x0: float, x1: float, z0: float, z1
 			var d: Vector3 = g[i][j + 1]
 			# Leve variação por telha-faixa: pincelada "na mão", não CG liso.
 			var tom := cor.darkened(0.05 * float((i * 7 + j * 3) % 3))
+			_tipo = 2
 			_quad(a, b, c, d, tom, Vector3(0, 1, 0) + (a - base) * 0.05)
+			_tipo = 0
 			_ao = 0.45
 			_quad(a + baixo, b + baixo, c + baixo, d + baixo, Color(0.12, 0.09, 0.1), Vector3(0, -1, 0))
 			_ao = ao_antes
@@ -257,27 +268,6 @@ func _superficie(base: Vector3, f: Callable, x0: float, x1: float, z0: float, z1
 		borda.append([g[nx][j], g[nx][j + 1], Vector3(1, 0, 0)])
 	for e in borda:
 		_quad(e[0], e[1], e[1] + baixo, e[0] + baixo, cor_borda, e[2])
-
-
-## Nervuras de telha (cordões em V) seguindo a superfície, de z0 até z1.
-func _nervuras(base: Vector3, f: Callable, xs: Array, z0: float, z1: float, n: int, cor: Color, limite := Callable()) -> void:
-	for x in xs:
-		for j in n:
-			var za := lerpf(z0, z1, float(j) / n)
-			var zb := lerpf(z0, z1, float(j + 1) / n)
-			if limite.is_valid() and not limite.call(x, (za + zb) / 2.0):
-				continue
-			var pa := base + Vector3(x, f.call(x, za), za)
-			var pb := base + Vector3(x, f.call(x, zb), zb)
-			var la := pa + Vector3(-0.07, 0.01, 0)
-			var lb := pb + Vector3(-0.07, 0.01, 0)
-			var ra := pa + Vector3(0.07, 0.01, 0)
-			var rb := pb + Vector3(0.07, 0.01, 0)
-			var ta := pa + Vector3(0, 0.08, 0)
-			var tb := pb + Vector3(0, 0.08, 0)
-			var fora := Vector3(0, 1, signf(za + zb) * 0.5)
-			_quad(la, lb, tb, ta, cor.darkened(0.12), fora + Vector3(-0.5, 0, 0))
-			_quad(ta, tb, rb, ra, cor.lightened(0.04), fora + Vector3(0.5, 0, 0))
 
 
 ## Altura do telhado de quatro águas japonês (cumeeira em x). Perfil côncavo
@@ -306,6 +296,7 @@ func _casa_piloto() -> void:
 	var mad: Color = P.madeira
 	var mad2: Color = P.madeira2
 	# Alicerce: pedras irregulares em volta de uma laje.
+	_tipo = 3
 	_blocod(Vector3(w + 0.1, 0.26, d + 0.1), Vector3(0, 0.13, 0), Vector3.ZERO, P.pedra2, 0.05)
 	for lado in 4:
 		var comp := w if lado < 2 else d
@@ -321,17 +312,20 @@ func _casa_piloto() -> void:
 			var tom: Color = P.pedra.lerp(P.pedra2, _rng.randf()).lerp(P.musgo, 0.25 if _rng.randf() < 0.25 else 0.0)
 			_blocod(tam, cen, Vector3(0, _rng.randf_range(-4, 4), _rng.randf_range(-3, 3)), tom, 0.08)
 			x += lw
-	# Térreo: tábuas horizontais, cada uma um pouco fora de esquadro (parede torta).
-	var y := 0.3
+	# Térreo: 3 faixas de tábuas (o shader desenha 3 tábuas de 26 cm em cada),
+	# cada faixa um pouco fora de esquadro (parede torta).
+	_tipo = 1
+	var y := 0.26
 	var k := 0
-	while y < 2.6:
-		var tw := 0.38
-		var desloc := 0.02 * float(k)  # a parede inteira tomba para a direita
+	while y < 2.5:
+		var tw := 0.78
+		var desloc := 0.04 * float(k)  # a parede inteira tomba para a direita
 		var tom := mad2.darkened(0.06 * float(k % 2) + _rng.randf_range(0.0, 0.05))
 		_blocod(Vector3(w - 0.1, tw, d - 0.1), Vector3(desloc, y + tw / 2.0, 0), Vector3(0, 0, _rng.randf_range(-0.6, 0.6)), tom, 0.05)
 		y += tw
 		k += 1
 	var topo_terreo := y
+	_tipo = 0
 	# Postes de canto e da frente, grossos e tortos.
 	for p in [Vector2(-w / 2, d / 2), Vector2(w / 2, d / 2), Vector2(-w / 2, -d / 2), Vector2(w / 2, -d / 2), Vector2(-0.45, d / 2), Vector2(0.75, d / 2)]:
 		var torto := Vector3(_rng.randf_range(-0.06, 0.1), 0, _rng.randf_range(-0.04, 0.04))
@@ -361,10 +355,6 @@ func _casa_piloto() -> void:
 		return -0.42 * u - 0.07 * sin(PI * (x / aba_w + 0.5)) * (0.4 + u) + 0.18 * pow(absf(x) / (aba_w / 2.0), 4.0) * u
 	var base_aba := Vector3(0, topo_terreo + 0.22, d / 2 - 0.05)
 	_superficie(base_aba, f_aba, -aba_w / 2, aba_w / 2, 0.0, aba_d, 10, 3, 0.1, P.telhado, mad)
-	var xs := []
-	for j in int(aba_w / 0.5):
-		xs.append(-aba_w / 2 + 0.3 + j * 0.5)
-	_nervuras(base_aba, f_aba, xs, 0.0, aba_d, 3, P.telhado)
 	# Lanternas de papel penduradas nas pontas da aba (balançam).
 	for s in [-1.0, 1.0]:
 		var lp := Vector3(s * (w / 2 + 0.05), topo_terreo - 0.35, d / 2 + 0.95)
@@ -372,6 +362,7 @@ func _casa_piloto() -> void:
 		_lanterna_papel(lp, P.luz2 if s < 0 else P.papel, 0.2)
 		_vento_pendurado(m, lp.y + 0.5, 0.9, 0.9)
 	# Segundo andar: reboco em 3 faixas, tombando para o outro lado.
+	_tipo = 4
 	var w2 := w - 0.35
 	var d2 := d - 0.9
 	var z2 := -0.35
@@ -380,6 +371,7 @@ func _casa_piloto() -> void:
 		var hj := 0.62
 		_blocod(Vector3(w2, hj, d2), Vector3(-0.015 * j, y2 + hj * (j + 0.5), z2), Vector3.ZERO, P.reboco.darkened(0.03 * j), 0.03)
 	var topo2 := y2 + 1.86
+	_tipo = 0
 	for p in [Vector2(-w2 / 2, z2 + d2 / 2), Vector2(w2 / 2, z2 + d2 / 2), Vector2(-w2 / 2, z2 - d2 / 2), Vector2(w2 / 2, z2 - d2 / 2)]:
 		_viga(Vector3(p.x, y2, p.y), Vector3(p.x - 0.05, topo2 + 0.05, p.y), 0.2, mad, 0.04)
 	_viga(Vector3(-w2 / 2 - 0.1, y2 + 0.06, z2 + d2 / 2 + 0.04), Vector3(w2 / 2 + 0.1, y2 + 0.04, z2 + d2 / 2 + 0.04), 0.18, mad)
@@ -397,14 +389,7 @@ func _casa_piloto() -> void:
 		return _altura_telhado(x, z, W, D, hT, 0.16, 0.2)
 	var base_tel := Vector3(0, topo2 + 0.1, z2)
 	_superficie(base_tel, f_tel, -W / 2, W / 2, -D / 2, D / 2, 16, 10, 0.16, P.telhado, mad)
-	xs = []
 	var r := (W - D) / 2.0
-	for j in int(W / 0.5):
-		xs.append(-W / 2 + 0.25 + j * 0.5)
-	var so_agua := func(x: float, z: float) -> bool:  # nervura só nas águas longas
-		return absf(z) / (D / 2.0) > maxf(absf(x) - r, 0.0) / (D / 2.0) + 0.04
-	_nervuras(base_tel, f_tel, xs, 0.0, D / 2, 7, P.telhado, so_agua)
-	_nervuras(base_tel, f_tel, xs, 0.0, -D / 2, 7, P.telhado, so_agua)
 	# Cumeeira (segue o meio cedido) com onigawara erguidas nas pontas.
 	var crista := []
 	for j in 7:
@@ -566,7 +551,7 @@ func _lanterna_piloto() -> void:
 	for j in 4:
 		var a := _rng.randf() * TAU
 		var pm: Vector3 = ap.call(Vector3(cos(a) * 0.45, 1.84, sin(a) * 0.45))
-		_esfera(0.13, pm, Vector3(1.3, 0.25, 1.0), P.musgo.lerp(pedra, 0.35 + _rng.randf() * 0.2), false, 7, 3)
+		_esfera(0.13, pm, Vector3(1.3, 0.25, 1.0), P.musgo.lerp(pedra, 0.55 + _rng.randf() * 0.2), false, 7, 3)
 	for j in 3:
 		var a := _rng.randf() * TAU
 		_esfera(0.16, Vector3(cos(a) * 0.55, 0.2, sin(a) * 0.55), Vector3(1.3, 0.3, 1.0), P.musgo.lerp(p2, 0.3), false, 7, 3)

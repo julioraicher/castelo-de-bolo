@@ -9,7 +9,10 @@ shader_type spatial;
 //    andando. Veio fino de madeira viraria chuvisco, por isso não existe aqui;
 //  - luz em faixas suaves, sombra puxada para uma cor fria (roxo/azul) e borda
 //    clara do lado do sol;
-//  - vento = seno no vértice com peso em UV.x (0 = parado, 1 = balança inteiro).
+//  - vento = seno no vértice com peso em UV.x (0 = parado, 1 = balança inteiro);
+//  - desenho do material em UV.y: 0 liso, 1 tábuas, 2 telhas, 3 pedras, 4 reboco.
+//    Tamanhos de 20-35 cm; fwidth() apaga o desenho quando ele fica denso demais
+//    para a tela, o mesmo papel do mipmap numa textura.
 render_mode specular_disabled;
 
 uniform float forca_pincel : hint_range(0.0, 0.6) = 0.32;
@@ -26,6 +29,7 @@ uniform float vento_vel = 1.7;
 varying vec3 v_mundo;
 varying vec3 v_normal_mundo;
 varying float v_alt;
+varying float v_mat;
 
 float hash(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -45,6 +49,33 @@ vec3 linear(vec3 c) {
 	return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
 }
 
+// Linha escura antialiasada: `f` = fração dentro da célula, `w` = meia-largura.
+// fwidth mede quantas células cabem num pixel; quando o desenho fica denso
+// demais para a tela (perto de Nyquist), ele some em vez de virar chuvisco.
+float sulco(float f, float w, float dens) {
+	float d = min(f, 1.0 - f);
+	return 1.0 - smoothstep(w - dens, w + dens, d);
+}
+
+// Distância às bordas de células de Voronoi (pedras com rejunte).
+vec3 voronoi(vec2 p) {
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	float d1 = 9.0;
+	float d2 = 9.0;
+	vec2 id = vec2(0.0);
+	for (int y = -1; y <= 1; y++) {
+		for (int x = -1; x <= 1; x++) {
+			vec2 g = vec2(float(x), float(y));
+			vec2 o = vec2(hash(i + g), hash(i + g + 31.7)) * 0.8 + 0.1;
+			float d = length(g + o - f);
+			if (d < d1) { d2 = d1; d1 = d; id = i + g; }
+			else if (d < d2) { d2 = d; }
+		}
+	}
+	return vec3(d2 - d1, id);
+}
+
 void vertex() {
 	vec3 mundo = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float peso = UV.x;
@@ -57,15 +88,62 @@ void vertex() {
 	v_mundo = mundo;
 	v_normal_mundo = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 	v_alt = mundo.y - NODE_POSITION_WORLD.y;
+	v_mat = UV.y;
 }
 
 void fragment() {
 	vec3 n = abs(v_normal_mundo);
-	// Plano de projeção pela normal; pinceladas esticadas na horizontal.
-	vec2 p = n.y > 0.6 ? v_mundo.xz : (n.x > n.z ? v_mundo.zy : v_mundo.xy);
-	p *= escala_pincel * vec2(0.4, 1.5);
+	bool deitado = n.y > 0.6;
+	float lado = n.x > n.z ? v_mundo.z : v_mundo.x;   // coordenada horizontal da face
+	vec2 q = deitado ? v_mundo.xz : vec2(lado, v_mundo.y);
+	// Pincel: manchas grandes esticadas na horizontal.
+	vec2 p = q * escala_pincel * vec2(0.4, 1.5);
 	float b = ruido(p * 1.1) * 0.6 + ruido(p * 2.5 + 17.0) * 0.4;
 	vec3 cor = linear(COLOR.rgb);
+	float m = 1.0;            // multiplicador do desenho do material
+	int id = int(v_mat + 0.5);
+	if (id == 1) {
+		// Tábuas: faixas de 26 cm com sulco, emendas desencontradas e tom por tábua.
+		float t = (deitado ? v_mundo.z : v_mundo.y) / 0.26;
+		float fila = floor(t);
+		float u = (deitado ? v_mundo.x : lado) / 1.6 + hash(vec2(fila, 3.1));
+		float dt = fwidth(t);
+		m *= 1.0 - 0.45 * sulco(fract(t), 0.06, dt);
+		m *= 1.0 - 0.4 * sulco(fract(u), 0.015, fwidth(u));
+		m *= 0.88 + 0.24 * hash(vec2(fila, floor(u)));
+		m *= 0.92 + 0.16 * ruido(vec2(u * 6.0, fila));           // veio largo
+	} else if (id == 2) {
+		// Telhas: fileiras pela altura, meia-cana desencontrada, sombra em arco embaixo.
+		float t = v_mundo.y / 0.2;
+		float fila = floor(t);
+		float c = lado / 0.34 + fila * 0.5;
+		float fc = fract(c);
+		float fr = fract(t);
+		float arco = 0.18 + 0.2 * (1.0 - sin(3.14159 * fc));
+		float dens = fwidth(t) + fwidth(c);
+		float some = clamp(1.6 - dens * 2.5, 0.0, 1.0);
+		float sombra = 1.0 - smoothstep(arco - dens, arco + dens, fr);
+		m *= 1.0 - some * (0.5 * sombra + 0.3 * sulco(fc, 0.04, fwidth(c)));
+		m *= 1.0 + some * 0.18 * smoothstep(0.6, 0.95, fr) * sin(3.14159 * fc);   // brilho no lombo
+		m *= 0.9 + 0.2 * hash(vec2(floor(c), fila));
+	} else if (id == 3) {
+		// Pedras: células de ~35 cm, rejunte escuro, tom e musgo por pedra.
+		vec3 v = voronoi(q / 0.35);
+		float dens = fwidth(q.x / 0.35) * 1.5;
+		m *= mix(0.45, 1.0, smoothstep(0.05, 0.12 + dens, v.x));
+		float h = hash(v.yz);
+		m *= 0.82 + 0.3 * h;
+		cor = mix(cor, cor * vec3(0.75, 1.05, 0.6), step(0.78, h) * 0.6);
+		m *= 0.9 + 0.2 * smoothstep(0.1, 0.4, v.x);               // pedra abaulada
+	} else if (id == 4) {
+		// Reboco: manchas de umidade, sujeira escorrendo de cima e rodapé encardido.
+		float mancha = ruido(q * vec2(1.2, 0.6) + 5.0);
+		m *= 1.0 - 0.22 * smoothstep(0.55, 0.85, mancha);
+		float escorre = ruido(vec2(lado * 3.0, 0.0)) * smoothstep(0.4, 1.0, fract(v_alt / 1.9));
+		m *= 1.0 - 0.18 * escorre * step(n.y, 0.6);
+		m *= 1.0 - 0.08 * sulco(fract(lado / 2.3 + ruido(q * 2.0) * 0.2), 0.004, fwidth(lado / 2.3));
+	}
+	cor *= m;
 	cor *= 1.0 + (b - 0.5) * 2.0 * forca_pincel;
 	cor *= mix(vec3(0.9, 0.95, 1.1), vec3(1.1, 1.0, 0.88), b);  // mancha fria / quente
 	cor *= mix(0.9, 1.06, clamp(v_alt / 5.0, 0.0, 1.0));           // gradiente de cima para baixo

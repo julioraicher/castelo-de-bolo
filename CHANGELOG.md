@@ -16,6 +16,12 @@ conversa saber o que mudou sem reler o histórico.
 - Prancha: `tools/prancha_piloto.gd` + `tools/montar_piloto.py` →
   cenario/10-piloto-casa-lanterna.jpg. Casa: ~9,8 mil triângulos (enxugar na
   rodada 4 se o orçamento pedir).
+- Rodada 1b (pitaco "ainda quadrado, liso e vazio"): estilo de desenho mais
+  forte. O shader desenha o material (UV.y: tábuas, telhas, pedras, reboco)
+  com antisserrilhado por fwidth; contorno de tinta igual ao dos bonecos
+  (`contorno.gdshader` como next_pass); chão pintado
+  (`assets/shaders/chao_pintado.gdshader`) e enfeite espalhado em volta na
+  prancha → cenario/10b-piloto-estilo-desenho.jpg.
 - **O que testar**: nada no jogo ainda; só a prancha.
 
 ## Ciclo 2.2 (2026-10-30), estagiário de ideias: direção nova (só documentos)

@@ -33,6 +33,8 @@ func _rodar() -> void:
 			var pasta: String = tema if (v[1] as String).ends_with("piloto") else "dia"
 			_peca(cena, pasta, v[1], Vector3.ZERO)
 			_peca(cena, pasta, v[2], Vector3(3.7, 0, 3.4))
+			if v[0] != "antes":
+				_entorno(cena)
 			var cam := Camera3D.new()
 			cam.fov = v[5]
 			cena.add_child(cam)
@@ -94,29 +96,48 @@ func _ambiente(cena: Node3D, t: Resource) -> void:
 	var pm := PlaneMesh.new()
 	pm.size = Vector2(120, 120)
 	chao.mesh = pm
-	var noise := FastNoiseLite.new()
-	noise.frequency = 0.03
-	var grad := Gradient.new()
-	grad.set_color(0, t.grass_dark)
-	grad.set_color(1, t.grass_light)
-	var tex := NoiseTexture2D.new()
-	tex.noise = noise
-	tex.seamless = true
-	tex.color_ramp = grad
-	var m := StandardMaterial3D.new()
-	m.albedo_texture = tex
-	m.uv1_scale = Vector3(30, 30, 1)
-	m.roughness = 1.0
+	var m := ShaderMaterial.new()
+	m.shader = load("res://assets/shaders/chao_pintado.gdshader")
+	m.set_shader_parameter("grama_escura", t.grass_dark)
+	m.set_shader_parameter("grama_clara", t.grass_light)
+	m.set_shader_parameter("terra_escura", t.road_dark)
+	m.set_shader_parameter("terra_clara", t.road_light)
 	chao.material_override = m
 	cena.add_child(chao)
-	# Caminho de terra na frente da casa.
-	var rua := MeshInstance3D.new()
-	var rm := PlaneMesh.new()
-	rm.size = Vector2(30, 3.2)
-	rua.mesh = rm
-	rua.position = Vector3(0, 0.01, 5.6)
-	var mr := StandardMaterial3D.new()
-	mr.albedo_color = t.road_dark.lerp(t.road_light, 0.5)
-	mr.roughness = 1.0
-	rua.material_override = mr
-	cena.add_child(rua)
+
+
+## "Vazio": enfeite espalhado em volta (o espalhador MultiMesh da rodada 2 fará
+## isso no mapa inteiro). Semente fixa; fora da casa, da lanterna e da estrada.
+func _entorno(cena: Node3D) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	var tipos := {"capim.scn": 260, "flores.scn": 50, "flores_b.scn": 40, "pedrinhas.scn": 30, "broto.scn": 30, "folhas.scn": 25}
+	for nome in tipos:
+		var malha: Mesh = ((load("res://assets/ninja/dia/" + nome) as PackedScene).instantiate().get_node("Malha") as MeshInstance3D).mesh
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = malha
+		var pts := []
+		while pts.size() < tipos[nome]:
+			var p := Vector3(rng.randf_range(-14, 14), 0, rng.randf_range(-12, 10))
+			if absf(p.x) < 3.4 and absf(p.z) < 3.6:
+				continue
+			if p.distance_to(Vector3(3.7, 0, 3.4)) < 1.1 or absf(p.z - 5.6) < 1.9:
+				continue
+			# Mais denso encostado na casa (onde a vassoura não chega).
+			if Vector2(p.x, p.z).length() > 7.0 and rng.randf() < 0.45:
+				continue
+			pts.append(p)
+		mm.instance_count = pts.size()
+		for k in pts.size():
+			var e := rng.randf_range(0.7, 1.3)
+			mm.set_instance_transform(k, Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(e, e, e)), pts[k]))
+		var mi := MultiMeshInstance3D.new()
+		mi.multimesh = mm
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		cena.add_child(mi)
+	for a in [["arvore_grande.scn", Vector3(-8.5, 0, 3.0), 1.1], ["arvore_media.scn", Vector3(7.5, 0, -4.5), 1.0], ["cerca.scn", Vector3(-5.5, 0, 2.5), 1.0]]:
+		var no: Node3D = (load("res://assets/ninja/dia/" + a[0]) as PackedScene).instantiate()
+		no.position = a[1]
+		no.scale = Vector3.ONE * float(a[2])
+		cena.add_child(no)
