@@ -58,6 +58,8 @@ var _time := 0.0
 #                       ms de CPU por quadro, draw calls, triângulos e objetos
 #   --testes            roda os testes de regra (tests/regras.gd) e sai com 0/1
 #   --qa-mapa=<pasta>   QA automático do mapa (tests/qa_mapa.gd): qa_mapa.txt
+#   --vitrine=<pasta>   com --classe: câmera parada, 3 alvos, o jogador faz 3 ataques,
+#                       o Q e o E; salva 1 PNG a cada 3 quadros (GIF antes/depois)
 #                       (até 30 linhas) e, com tela, qa_mapa.jpg; implica --autoplay
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
@@ -75,6 +77,10 @@ var _perf := false
 var _filme_dir := ""
 var _filme_f := -1
 var _filme_y := 0.0
+var _vitrine_dir := ""
+var _vitrine_f := -1
+var _vitrine_p0 := Vector3.ZERO
+var _vitrine_alvos: Array[Unit] = []
 var _hud_t := 0.0
 var _perf_acc := {}
 var _perf_n := 0
@@ -115,6 +121,8 @@ func _ready() -> void:
 			_classe_jogador = arg.trim_prefix("--classe=")
 		elif arg.begins_with("--filme="):
 			_filme_dir = arg.trim_prefix("--filme=")
+		elif arg.begins_with("--vitrine="):
+			_vitrine_dir = arg.trim_prefix("--vitrine=")
 		elif arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
 		elif arg.begins_with("--vista="):
@@ -321,6 +329,8 @@ func _physics_process(delta: float) -> void:
 		_take_shot()
 	if _filme_dir != "" and _time >= 3.0:
 		_filme()
+	if _vitrine_dir != "" and _time >= 1.0:
+		_vitrine()
 	if Input.is_action_just_pressed("restart"):
 		get_tree().reload_current_scene()
 		return
@@ -393,6 +403,78 @@ func _filme() -> void:
 			get_tree().quit()
 	if f % 2 == 0:
 		get_viewport().get_texture().get_image().save_png("%s/f_%03d.png" % [_filme_dir, f])
+
+
+## --vitrine: o mesmo roteiro para qualquer classe (3 ataques, Q, E) com
+## câmera fixa e alvos parados que não morrem. Rodar no commit antigo e no
+## novo dá o GIF antes/depois de cada poder.
+func _vitrine() -> void:
+	_vitrine_f += 1
+	var f := _vitrine_f
+	var p := player
+	var frente := Vector3(1, 0, 0)
+	var corpo := p.stats.attack_kind == "melee"
+	if f == 0:
+		_vitrine_p0 = Vector3(-24, 0, 0)
+		_vitrine_p0.y = arena.ground_y(_vitrine_p0.x, _vitrine_p0.z, 10.0)
+		hud.visible = false
+		camera.set_process(false)
+		camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+		camera.fov = 42
+		var aliado: Unit = null
+		for u in units:
+			if u == p:
+				continue
+			if u.team != p.team and _vitrine_alvos.size() < 3:
+				u.brain = null
+				_vitrine_alvos.append(u)
+			elif u.team == p.team and aliado == null:
+				aliado = u  # aliado ferido (cura, bênção, corrida)
+			else:
+				u.process_mode = Node.PROCESS_MODE_DISABLED
+				u.global_position = Vector3(0, -40, 0)
+				u.visible = false
+		aliado.brain = null
+		_vitrine_alvos.append(aliado)
+		p.brain = null
+	if f == 0 or f == 150 or f == 290:
+		p.global_position = _vitrine_p0
+		p.reset_physics_interpolation()
+		var perto := 2.2 if corpo else 8.0
+		var lugares := [Vector3(perto, 0, -0.9), Vector3(perto + 0.6, 0, 1.0), Vector3(perto + 2.0, 0, 0.1), Vector3(-1.6, 0, 1.8)]
+		for i in _vitrine_alvos.size():
+			var u := _vitrine_alvos[i]
+			u.global_position = _vitrine_p0 + lugares[i]
+			u.reset_physics_interpolation()
+			u.move_intent = Vector3.ZERO
+			u.aim_dir = -frente if i < 3 else frente
+	var foco := _vitrine_p0 + frente * (2.0 if corpo else 4.0)
+	camera.global_position = foco + Vector3(0, 7.0, 9.0)
+	camera.look_at(foco + Vector3(0, 0.8, 0))
+	p.move_intent = Vector3.ZERO
+	p.aim_dir = frente
+	p.aim_point = _vitrine_p0 + frente * (3.0 if corpo else 9.0)
+	for i in _vitrine_alvos.size():
+		var u := _vitrine_alvos[i]
+		if not u.alive:
+			continue
+		u.hp = maxf(u.hp, u.max_hp() * (0.5 if i == 3 else 0.6))
+		if i == 3 and f < 150:
+			u.hp = u.max_hp() * 0.4
+	match f:
+		20, 55, 90:
+			p.wants_attack = true
+		21, 56, 91:
+			p.wants_attack = false
+		165:
+			p.wants_quick = true
+		300:
+			p.fill_power()
+			p.wants_power = true
+		480:
+			get_tree().quit()
+	if f % 3 == 0 and f >= 6:
+		get_viewport().get_texture().get_image().save_png("%s/f_%03d.png" % [_vitrine_dir, f / 3])
 
 
 func _take_shot() -> void:
