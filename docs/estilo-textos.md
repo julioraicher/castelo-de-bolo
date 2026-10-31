@@ -40,3 +40,5 @@ Time: `Config.team_color(t)`. Nada de branco-azulado neon.
 - Português com acento, "você", sem gíria de programador ("spawn", "buff").
 - Nome de classe/poder como em `config/classes/*.tres` (`display_name`, `power_name`).
 - Tecla sempre como tecla desenhada ou entre colchetes na dica, nunca "(E)" solto.
+- Símbolos que as fontes têm: `· × › … —` e acentos. **Não use `→`** (nenhuma das fontes tem;
+  no navegador vira quadradinho). Confira glifo novo com fontTools antes de usar.

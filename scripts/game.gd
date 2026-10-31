@@ -538,7 +538,7 @@ func _rules() -> void:
 	if player.alive and hint == "" and player.lenhador() and not player.carried_tora:
 		for pad in hat_pads:
 			if pad.team == player.team and pad.nivel == 1 and player.global_position.distance_to(pad.global_position) < HatPad.OBRA_RAIO:
-				hint = "Maquininha de %s → nível 2: faltam %d madeiras  ·  fique aqui" % [pad.stats.display_name, pad.faltam_n2()]
+				hint = "Nível 2 da maquininha de %s: faltam %d madeiras  ·  fique perto" % [pad.stats.display_name, pad.faltam_n2()]
 				break
 
 	# Perto de uma planta: diz quem corta e como (a madeira não é óbvia).
