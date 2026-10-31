@@ -25,3 +25,5 @@ aqui e anote no CHANGELOG.
 10. **Explicar com a física por trás** quando houver (impulso, decaimento,
     Nyquist...).
 11. **Git:** `git pull --rebase origin main` antes de push; nunca force push.
+12. **Economia de tokens:** seguir `docs/economia-de-tokens.md` (modelo por
+    papel, arquivos grandes por trecho, logs filtrados).

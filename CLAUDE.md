@@ -72,6 +72,18 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
   Existe `AutoQuality` (baixa qualidade sozinho). xvfb aqui também é software:
   bom para comparar, não para medir FPS real.
 
+## Economia de tokens (detalhes: docs/economia-de-tokens.md)
+
+- Arquivo grande (`unit.gd`, `tools/gerar_*.gd`): subagente `explorador` ou Grep
+  + leitura por trecho. Testes/partida: subagente `testador` ou saída filtrada.
+- CHANGELOG: só a entrada mais nova. Uma imagem por rodada (JPG, ≤1280 px).
+- Avisar outra thread só quando ela depende disso, numa mensagem só.
+
+# Compact instructions
+
+Ao compactar, preserve: decisões do Julio, arquivos alterados, resultado dos
+testes, pendências e o que espera aprovação. Descarte logs e saídas de comando.
+
 ## Fluxo de trabalho
 
 Rodadas: Julio joga e manda feedback (áudio transcrito). Responder com lista

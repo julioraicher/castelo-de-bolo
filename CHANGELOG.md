@@ -5,6 +5,20 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Organização (2026-10-31), estagiário de ideias: economia de tokens
+- Pedido do Julio: rever boas práticas de economia de tokens para um projeto
+  deste tamanho (modelo por agente, skills, organização) e aplicar.
+- Novo `docs/economia-de-tokens.md`: o que gasta de verdade (contexto ×
+  mensagens), modelo e esforço recomendados por papel, 10 regras para agentes.
+  Fonte: documentação oficial do Claude Code (custos e modelos), lida hoje.
+- Subagentes baratos em `.claude/agents/` (Haiku, esforço baixo):
+  `explorador` (acha coisas em arquivos grandes sem lê-los inteiros) e
+  `testador` (roda testes/partida e devolve só as falhas).
+- `.claude/settings.json`: bloqueia leitura de binários e cache (`.godot/`,
+  `.glb`, `.bin`, `.scn`, `.wav`, `build/`), que só gastariam tokens.
+- CLAUDE.md: seção curta de economia + instruções de compactação.
+- **O que testar**: nada no jogo.
+
 ## Organização (2026-10-31), estagiário de ideias: boas práticas e testes de regra
 - Pedido do Julio: revisar o projeto com o que aprendemos dos repositórios de
   agentes (BMAD, Spec Kit e outros; comparativo no Claude Doc do projeto) e aplicar.
