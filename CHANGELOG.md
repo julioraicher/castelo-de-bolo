@@ -5,6 +5,11 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4g (2026-10-31), Diretor de Jogabilidade: menos texto na tela
+- "ESQUIVA!" só aparece quando o jogador está na jogada (ele esquivou ou foi o golpe dele
+  que passou pelo dash). Bot contra bot continua ganhando o Chi, sem o texto.
+- **O que testar**: numa briga grande, a tela tem menos letreiro; o seu "ESQUIVA!" continua.
+
 ## Ciclo 2.4f (2026-10-31), Diretor Visual: revisão (fogo da Kitsune, trilha nos temas escuros)
 - Coluna de Fogo (poder da Kitsune) na cor do chapéu de quem lança: rosa na Kitsune,
   dourado na da Luz, roxo na Sombria (`area_effect.gd`, `fx_poder.gd`, chamada em `unit.gd`).
