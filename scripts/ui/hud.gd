@@ -19,6 +19,8 @@ var _hp_text: Label
 var _power_bar: ProgressBar
 var _power_key: Control
 var _power_label: Label
+var _madeira_label: Label
+var _madeira_visto := -1
 var _hint_box: PanelContainer
 var _hint_a: Label
 var _hint_key: PanelContainer
@@ -249,6 +251,20 @@ func _build_jogador(root: Control) -> void:
 	_power_label = Estilo.rotulo("", 15, Color(1, 0.8, 0.94), Estilo.FORTE)
 	chi_row.add_child(_power_label)
 
+	# Estoque de madeira do time (o que o Construtor trouxe para o depósito).
+	var mad_row := HBoxContainer.new()
+	mad_row.add_theme_constant_override("separation", 6)
+	v.add_child(mad_row)
+	var ic := TextureRect.new()
+	ic.texture = preload("res://assets/ui/icone_tora.png")
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	ic.custom_minimum_size = Vector2(26, 20)
+	mad_row.add_child(ic)
+	_madeira_label = Estilo.rotulo("", 15, Estilo.OURO, Estilo.FORTE)
+	mad_row.add_child(_madeira_label)
+	_madeira_label.pivot_offset = Vector2(0, 10)
+
 	card.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 20)
 	card.grow_vertical = Control.GROW_DIRECTION_BEGIN
 
@@ -367,7 +383,17 @@ func update_state(game: Game) -> void:
 		_power_key.visible = false
 		_power_label.text = "CHI %d%%" % int(u.power) if tem_poder else ""
 		_cor_texto(_power_label, Color(1, 0.8, 0.94))
-	if u.carried_princess:
+	var mad: int = game.madeira[u.team] if u.team < game.madeira.size() else 0
+	if mad != _madeira_visto:
+		if mad > _madeira_visto and _madeira_visto >= 0:
+			_madeira_label.scale = Vector2.ONE * 1.3
+			_madeira_label.create_tween().tween_property(_madeira_label, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK)
+		_madeira_visto = mad
+		_madeira_label.text = "Madeira do time: %d" % mad
+	if u.carried_tora:
+		_status_label.text = "LEVANDO TORA AO DEPÓSITO"
+		_cor_texto(_status_label, Estilo.OURO)
+	elif u.carried_princess:
 		_status_label.text = "CARREGANDO A MÁSCARA"
 		_cor_texto(_status_label, Estilo.OURO)
 	elif u.has_cake:

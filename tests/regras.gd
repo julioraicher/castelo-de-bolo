@@ -16,10 +16,13 @@ func _ready() -> void:
 	await get_tree().create_timer(0.5).timeout
 	_dados()
 	_dano()
+	_contra_golpe()
+	_carga()
 	await _empurrao()
 	_madeira()
 	_maquina()
 	await _obra()
+	_nivel2()
 	await _alma()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
@@ -110,6 +113,65 @@ func _dano() -> void:
 	u.hp = u.max_hp() - 5.0
 	u.heal(50.0)
 	_check(_perto(u.hp, u.max_hp(), 0.01), "cura passou do máximo")
+
+
+## Contra-golpe: bloqueio erguido há ≤ parry_janela s anula o golpe de perto,
+## atordoa quem bateu e devolve parry_mult × dano; erguido antes disso é só
+## bloqueio (reduz pela block_reduction).
+func _contra_golpe() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var d = null
+	var a = null
+	for u in game.units:
+		if u.alive and not u.is_player:
+			if d == null:
+				d = u
+			elif a == null and u.team != d.team:
+				a = u
+	if d == null or a == null:
+		_check(false, "contra-golpe: faltou boneco")
+		return
+	d.set_class(load("res://config/classes/guerreiro.tres"))
+	var dir := Vector3(1, 0, 0)  # golpe de a para d
+	d._visual.rotation.y = atan2(-dir.x, -dir.z)  # d de frente para a
+	for x in [d, a]:
+		x._dodge_t = 0.0
+		x._shield = 0.0
+		x.hp = x.max_hp()
+	d._blocking = true
+	d._block_t = cfg.parry_janela * 0.5
+	a._attack_cd = 0.0
+	d.take_damage(20.0, a, dir, 1.0, true)
+	_check(_perto(d.hp, d.max_hp(), 0.01), "contra-golpe: quem bloqueou na hora não deveria levar dano (levou %.1f)" % (d.max_hp() - d.hp))
+	var volta: float = d.stats.damage * cfg.parry_mult
+	_check(_perto(a.max_hp() - a.hp, volta, 0.5), "contra-golpe: devolvido esperado %.1f, deu %.1f" % [volta, a.max_hp() - a.hp])
+	_check(a._attack_cd >= cfg.parry_atordoa - 0.01, "contra-golpe: quem bateu deveria ficar atordoado")
+	# Bloqueio velho: só reduz.
+	d.hp = d.max_hp()
+	d._block_t = cfg.parry_janela + 0.5
+	d.take_damage(20.0, a, dir, 1.0, true)
+	_check(_perto(d.max_hp() - d.hp, 20.0 * (1.0 - d.stats.block_reduction), 0.01), "bloqueio fora da janela deveria só reduzir")
+	d._blocking = false
+	d.hp = d.max_hp()
+	a.hp = a.max_hp()
+
+
+## Carga máxima: flecha/shuriken atravessa carga_perfura; bomba fica maior.
+func _carga() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var u = _alvo()
+	if u == null:
+		return
+	var p = game.spawn_projectile(u, Vector3(0, -50, 0), Vector3.RIGHT, "shuriken")
+	p.set_physics_process(false)
+	p.carregar()
+	_check(p.perfura == cfg.carga_perfura, "carga: shuriken cheia deveria atravessar %d" % cfg.carga_perfura)
+	var b = game.spawn_projectile(u, Vector3(0, -50, 0), Vector3.RIGHT, "bomba")
+	b.set_physics_process(false)
+	b.carregar()
+	_check(_perto(b.raio_mult, cfg.carga_raio_bomba, 0.001), "carga: bomba cheia deveria crescer o raio")
+	p.queue_free()
+	b.queue_free()
 
 
 ## Empurrão: freia a KNOCK_DECAY m/s², logo |v| cai a/60 por quadro (d = v²/2a).
@@ -215,6 +277,9 @@ func _maquina() -> void:
 	var pad = game.hat_pads[0]
 	while pad.estoque < pad.estoque_max:
 		pad.avancar(pad.intervalo)
+	# O relógio pode ter sobra dos quadros que já rodaram (bot pegou chapéu
+	# no começo): zera para medir o intervalo inteiro.
+	pad._fab_t = 0.0
 	var cheio: int = pad.estoque
 	_check(cheio == cfg.maquina_estoque_max, "máquina deveria encher até maquina_estoque_max")
 	pad.take()
@@ -260,6 +325,54 @@ func _obra() -> void:
 	await get_tree().create_timer(0.3).timeout
 	_check(of.progresso >= p0 - 1e-6, "obra perdeu progresso parada: %.2f -> %.2f" % [p0, of.progresso])
 	_check(game.obra_do_time(team, game.arena.spawn_center[team]) == of, "Construtor deveria voltar para a obra começada do time")
+
+
+## Maquininha nível 2: oficina pronta sobe a maquininha da classe_base
+## (intervalo e estoque de nível 2, +1 chapéu na hora); só uma vez.
+func _nivel2() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var lista = cfg.oficina_classes
+	for of in game.oficinas:
+		if of.estado == 2:
+			continue
+		for i in lista.size():
+			for pad in game.hat_pads:
+				if pad.team == of.team and pad.nivel == 1 and lista[i].classe_base != &"" and pad.stats.id == lista[i].classe_base:
+					of.opcao_i = i
+					pad.take()
+					var e0: int = pad.estoque + 1
+					of.madeira_entregue = of.custo()
+					of.add_progress(1.0, null)
+					_check(of.estado == 2, "nível 2: oficina deveria ficar pronta")
+					_check(pad.nivel == 2 and pad.estoque_max == cfg.maquina_n2_estoque and _perto(pad.intervalo, cfg.maquina_n2_intervalo, 1e-4),
+						"nível 2: maquininha de %s não subiu (nivel %d, max %d)" % [pad.stats.id, pad.nivel, pad.estoque_max])
+					_check(pad.estoque == e0, "nível 2: deveria ganhar 1 chapéu na hora (%d -> %d)" % [e0, pad.estoque])
+					_check(not pad.subir_nivel(), "nível 2: não sobe duas vezes")
+					_nivel2_madeira(of.team)
+					return
+	_check(false, "nível 2: nenhuma oficina com classe_base para testar")
+
+
+## Nível 2 com madeira: maquina_n2_custo madeiras do estoque sobem a máquina.
+func _nivel2_madeira(team: int) -> void:
+	var cfg = get_node("/root/Config").cfg
+	var pad = null
+	for p in game.hat_pads:
+		if p.team == team and p.nivel == 1:
+			pad = p
+			break
+	if pad == null:
+		_check(false, "nível 2 (madeira): nenhuma máquina nível 1")
+		return
+	game.madeira[team] = cfg.maquina_n2_custo - 1
+	var ok := 0
+	for i in cfg.maquina_n2_custo:
+		if pad.puxar_madeira_n2(game):
+			ok += 1
+	_check(ok == cfg.maquina_n2_custo - 1 and pad.nivel == 1 and game.madeira[team] == 0,
+		"nível 2 (madeira): sem estoque não deveria subir (puxou %d, nível %d)" % [ok, pad.nivel])
+	game.madeira[team] = 1
+	_check(pad.puxar_madeira_n2(game) and pad.nivel == 2, "nível 2 (madeira): a última madeira deveria subir a máquina")
 
 
 ## Alma de abate: matar um inimigo deixa a máscara do time de quem matou mais

@@ -5,6 +5,43 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4b (2026-10-31), Diretor de Jogabilidade: bots com dash e botão direito "uau"
+- **Revisão dos bots** (pedido do Julio: "os bots usam dash e poderes?"): não usavam dash
+  nem bloqueio. Agora (`BotBrain._tatica`, a cada 0,2 s): dash para fechar distância
+  (corpo a corpo a 4-8 m), fugir com <35% de vida, recuar o atirador encurralado, sair
+  do combo de quem está batendo e correr com a tora; Samurai/Ronin erguem o bloqueio
+  contra quem golpeia de frente. ~1 dash a cada 12 s por bot.
+- **Botão direito mais forte e mais frequente** (quiz 2.4, perguntas 1 e 7):
+  - **Contra-golpe**: bloqueio erguido há ≤ `parry_janela` 0,3 s quando o golpe chega =
+    dano zero, quem bateu fica atordoado `parry_atordoa` 0,8 s e leva 1,5 × o seu dano
+    de volta ("CONTRA!", anel dourado, hitstop dobrado).
+  - **Tiro cheio** (Ninja, Yumi): atravessa `carga_perfura` 2 inimigos (−20% por
+    inimigo), maior e brilhante. **Bombardeiro** ganhou o tiro carregado: bomba
+    cheia explode `carga_raio_bomba` 1,5 × maior.
+  - Recargas: cura da Kitsune 5 -> 3,5 s, mina do Armadilheiro 5 -> 3,5 s.
+- Testes 98/98 (contra-golpe dentro e fora da janela, carga); 5 min sem erro
+  (5 contra-golpes e 8 perfurações entre os bots).
+- **O que testar**: de Samurai, segure o direito no instante do golpe do inimigo
+  (não antes): sai "CONTRA!". De Ninja, carregue o tiro até o fim numa fila de inimigos.
+
+## Ciclo 2.4a (2026-10-31), Diretor de Jogabilidade: maquininha nível 2 e madeira no HUD
+- **Maquininha nível 2** (quiz 2.4, pergunta 6): fabrica a cada `maquina_n2_intervalo` 12 s
+  até `maquina_n2_estoque` 4 e ganha 1 chapéu na hora. Sobe de dois jeitos:
+  1. a oficina pronta sobe a maquininha da classe de origem (`ClassStats.classe_base`:
+     Ronin Oni -> Samurai, Yumi -> Ninja de Shuriken, Armadilheiro/Bombardeiro -> Construtor);
+  2. o Construtor parado ao lado de uma maquininha nível 1 põe madeira nela
+     (`maquina_n2_custo` 8, guardada como a obra). Serve de destino para a madeira
+     depois das oficinas (antes sobravam ~22 no estoque no fim dos 5 min).
+- Contrato com o Visual: nós `N2_*` no `maquina_<classe>.scn` aparecem no nível 2;
+  animação `subir_nivel` se existir. Sem isso: pulinho, pilar dourado e "Nv2" no letreiro.
+- Bots Construtores: oficinas prontas -> levam a madeira para a maquininha mais adiantada.
+- HUD (toque na área do Visual, `hud.gd`): "Madeira do time: N" com o ícone de tora no
+  cartão do jogador; status "LEVANDO TORA AO DEPÓSITO".
+- Testes 92/92 (nível 2 pela oficina e pela madeira, sem subir duas vezes); 5 min sem erro.
+- **O que testar**: erga a oficina do Ronin Oni e veja a maquininha do Samurai virar Nv2
+  (12 s, 4 chapéus); de Construtor, pare ao lado da maquininha da Kitsune com madeira no
+  estoque e veja o contador "faltam N" até subir.
+
 ## Ciclo 2.3c (2026-10-31), Diretor de Jogabilidade: obra guardada e progresso à vista
 - Pedido do Julio: o progresso da construção não ficava claro e tinha de ser guardado.
   Causa: perto do terreno o [E] trocava a opção da oficina e **zerava a obra**. Agora a

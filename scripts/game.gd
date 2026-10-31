@@ -440,6 +440,13 @@ func _rules() -> void:
 				if player_brain != null and player_brain.interact_pressed:
 					of.trocar_opcao()
 
+	# Construtor perto de uma maquininha nível 1: ela sobe com madeira.
+	if player.alive and hint == "" and player.lenhador() and not player.carried_tora:
+		for pad in hat_pads:
+			if pad.team == player.team and pad.nivel == 1 and player.global_position.distance_to(pad.global_position) < HatPad.OBRA_RAIO:
+				hint = "Maquininha de %s → nível 2: faltam %d madeiras  ·  fique aqui" % [pad.stats.display_name, pad.faltam_n2()]
+				break
+
 	# Perto de uma planta: diz quem corta e como (a madeira não é óbvia).
 	if player.alive and hint == "" and not player.carried_tora and not player.carried_princess:
 		for p in plantas:
@@ -687,8 +694,29 @@ func obra_do_time(team: int, from: Vector3) -> Oficina:
 	return best if best else nearest_oficina(team, from, 1e9, true)
 
 
+## Maquininha nível 1 do time para o Construtor subir com madeira: a que já
+## tem mais madeira posta, depois a mais perto.
+func maquina_para_n2(team: int, from: Vector3) -> HatPad:
+	var best: HatPad = null
+	for pad in hat_pads:
+		if pad.team != team or pad.nivel >= 2:
+			continue
+		if best == null or pad.madeira_n2 > best.madeira_n2 or (pad.madeira_n2 == best.madeira_n2 \
+				and from.distance_to(pad.global_position) < from.distance_to(best.global_position)):
+			best = pad
+	return best
+
+
 func on_oficina_pronta(of: Oficina) -> void:
 	_log("oficina %s pronta: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.opcao().display_name, _time])
+	# A maquininha da classe de origem sobe para o nível 2 (Ronin Oni -> Samurai).
+	var base := of.opcao().classe_base
+	for pad in hat_pads:
+		if base != &"" and pad.team == of.team and pad.stats.id == base and pad.subir_nivel():
+			_log("maquininha %s nível 2: %s" % [Config.TEAM_NAMES[of.team], pad.stats.display_name])
+			if of.team == player.team:
+				hud.show_big("Oficina pronta: %s!\nMaquininha de %s no nível 2" % [of.opcao().display_name, pad.stats.display_name], of.opcao().hat_color.lightened(0.3), 2.4)
+				return
 	if of.team == player.team:
 		hud.show_big("Oficina pronta: %s!" % of.opcao().display_name, of.opcao().hat_color.lightened(0.3), 2.0)
 	else:
