@@ -42,7 +42,7 @@ func setup(game: Game, owner_unit: Unit, center: Vector3, kind: String, radius: 
 			Sfx.play("hit", center, 0.1)
 		"selo":
 			# Talismãs em pé formando o círculo + anel de raio.
-			_mat = Fx.unshaded(Color(1.6, 1.7, 2.0))
+			_mat = Fx.unshaded(col * 1.6)
 			var card := BoxMesh.new()
 			card.size = Vector3(0.35, 0.8, 0.02)
 			for i in 10:
@@ -52,7 +52,7 @@ func setup(game: Game, owner_unit: Unit, center: Vector3, kind: String, radius: 
 			for i in 10:
 				var a0 := TAU * i / 10.0
 				var a1 := TAU * (i + 1) / 10.0
-				Fx.zap(game, center + Vector3(cos(a0) * radius, 0.6, sin(a0) * radius), center + Vector3(cos(a1) * radius, 0.6, sin(a1) * radius), Color(0.6, 0.9, 1.0), 3)
+				Fx.zap(game, center + Vector3(cos(a0) * radius, 0.6, sin(a0) * radius), center + Vector3(cos(a1) * radius, 0.6, sin(a1) * radius), col, 3)
 			Sfx.play("magic", center)
 			_apply_seal()
 		"coluna_fogo":
@@ -77,7 +77,8 @@ func _color() -> Color:
 		"nuvem":
 			return Color(0.6, 0.55, 0.8)
 		"selo":
-			return Color(0.6, 0.9, 1.0)
+			# Cor do chapéu de quem lançou (Kitsune Sombria = roxo).
+			return _owner.stats.hat_color.lightened(0.25) if _owner else Color(0.6, 0.9, 1.0)
 	return Color(0.3, 0.95, 1.0)
 
 
