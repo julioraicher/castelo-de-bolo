@@ -5,6 +5,18 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Planejamento (2026-10-31), estagiário de ideias: Ciclo 2.3 aberto
+- Pedido do Julio (2 áudios): chapéus saindo de maquininhas animadas, limite
+  de chapéus, madeira/bambu com árvores de 3 estágios, Construtor simples
+  (coleta, volta, upa casinha) com contador "faltam X", QA automático do
+  mapa; sem poderes novos no chão.
+- Novo `docs/direcao-ciclo-2.3.md`: regras com números iniciais e o porquê
+  (vazão do Construtor, teoria de filas do estoque de chapéus), QA automático
+  do mapa, piloto e instruções/contrato para os dois diretores.
+- ROADMAP: Ciclo 2.3 e 2.4 na Fase 2; metal/pedra e Ninja vs Cowboys na Fase 3.
+  `docs/ideias.md`: Ninja vs Cowboys em C.
+- **O que testar**: nada no jogo (só documentos).
+
 ## Organização (2026-10-31), estagiário de ideias: economia de tokens
 - Pedido do Julio: rever boas práticas de economia de tokens para um projeto
   deste tamanho (modelo por agente, skills, organização) e aplicar.

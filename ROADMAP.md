@@ -33,8 +33,9 @@ Detalhes em [docs/design-jogo.md](docs/design-jogo.md) (classes, poderes, progre
 - [x] Papel Construtor (4º papel) e Clérigo → Monge (nomes provisórios)
 - [x] Itens no chão: poção, escudo, velocidade
 - [ ] Gatilhos de poder (sequência de abates, ao morrer, Hora do Caos)
-- [ ] Recursos: todos coletam madeira e metal; Construtor coleta mais rápido
-- [ ] Oficinas por papel: sobem de nível e liberam a versão 2 (subclasse à escolha)
+- [ ] **Ciclo 2.3: Economia do Construtor** (aberto 2026-10-31): madeira e bambu em 3 estágios, Construtor carrega toras, maquininhas de chapéu com estoque, casinhas custam madeira com contador, QA automático do mapa: [docs/direcao-ciclo-2.3.md](docs/direcao-ciclo-2.3.md)
+- [ ] Oficinas sobem de nível (nível 2 das maquininhas: Etapa 2 do Ciclo 2.3)
+- [ ] **Ciclo 2.4**: habilidade "uau" por personagem e interface nova
 - [ ] Catapulta (carregar, mirar, lançar aliados/pedras)
 - [ ] Portão do castelo que pode ser quebrado e consertado
 - [ ] Atalho que abre durante a partida
@@ -43,6 +44,8 @@ Detalhes em [docs/design-jogo.md](docs/design-jogo.md) (classes, poderes, progre
 
 ## Fase 3: depois
 
+- [ ] Metal e pedra (minério ninja) como recursos
+- [ ] Ninja vs Cowboys (mundo novo; ver docs/ideias.md C)
 - [ ] Multijogador (local com 2 teclados ou online)
 - [ ] Versão para celular (controles de toque)
 - [ ] Arte e sons próprios
