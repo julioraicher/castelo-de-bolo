@@ -406,20 +406,35 @@ func _fumaca(time: Color) -> void:
 
 
 func _kitsune(time: Color) -> void:
+	_raposa(Color(0.95, 0.94, 0.9), Color(1.0, 0.15, 0.2), CIANO, 4)
+
+
+## Opostos do Ciclo 2.4 (Jogabilidade; o Visual pode refinar): mesma raposa,
+## máscara e fogo trocados. Luz = máscara branca, marcas e chamas douradas
+## (6 chamas); Sombria = máscara negra, marcas e chamas roxas.
+func _kitsune_luz(time: Color) -> void:
+	_raposa(Color(1.0, 0.98, 0.92), Color(1.0, 0.75, 0.2), Color(1.0, 0.85, 0.35), 6)
+
+
+func _kitsune_sombria(time: Color) -> void:
+	_raposa(Color(0.12, 0.1, 0.16), Color(0.75, 0.3, 1.0), Color(0.6, 0.25, 1.0), 4)
+
+
+func _raposa(mascara: Color, marca: Color, fogo: Color, chamas: int) -> void:
 	var cab := "head"
-	# Máscara de raposa branca com marcas vermelhas e orelhas
-	_peca(cab, _esfera(0.45, 0.38), Vector3(0, 0.55, 0.3), Vector3.ZERO, Vector3(1, 1, 0.75), _plano(Color(0.95, 0.94, 0.9)))
-	_peca(cab, _cone(0.16, 0.35), Vector3(0, 0.45, 0.65), Vector3(90, 0, 0), Vector3.ONE, _plano(Color(0.95, 0.94, 0.9)))
+	# Máscara de raposa com marcas e orelhas
+	_peca(cab, _esfera(0.45, 0.38), Vector3(0, 0.55, 0.3), Vector3.ZERO, Vector3(1, 1, 0.75), _plano(mascara))
+	_peca(cab, _cone(0.16, 0.35), Vector3(0, 0.45, 0.65), Vector3(90, 0, 0), Vector3.ONE, _plano(mascara))
 	for s in [-1, 1]:
-		_peca(cab, _cone(0.15, 0.4), Vector3(0.3 * s, 1.05, 0.15), Vector3(0, 0, -15 * s), Vector3.ONE, _plano(Color(0.95, 0.94, 0.9)))
-		_peca(cab, _caixa(Vector3(0.18, 0.04, 0.02)), Vector3(0.17 * s, 0.68, 0.64), Vector3(0, 0, -20 * s), Vector3.ONE, _neon(Color(1.0, 0.15, 0.2), 1.6))
-	# Fogo de raposa (kitsunebi): chamas azuladas orbitando
+		_peca(cab, _cone(0.15, 0.4), Vector3(0.3 * s, 1.05, 0.15), Vector3(0, 0, -15 * s), Vector3.ONE, _plano(mascara))
+		_peca(cab, _caixa(Vector3(0.18, 0.04, 0.02)), Vector3(0.17 * s, 0.68, 0.64), Vector3(0, 0, -20 * s), Vector3.ONE, _neon(marca, 1.6))
+	# Fogo de raposa (kitsunebi): chamas orbitando
 	var peito := "chest"
-	for i in 4:
-		var a := TAU * i / 4.0 + 0.4
+	for i in chamas:
+		var a := TAU * i / chamas + 0.4
 		var p := Vector3(cos(a) * 0.8, 0.7 + 0.2 * (i % 2), sin(a) * 0.8)
-		_peca(peito, _esfera(0.12, 0.14), p, Vector3.ZERO, Vector3.ONE, _neon(CIANO, 2.4))
-		_peca(peito, _cone(0.1, 0.3), p + Vector3(0, 0.2, 0), Vector3.ZERO, Vector3.ONE, _neon(CIANO, 1.6))
+		_peca(peito, _esfera(0.12, 0.14), p, Vector3.ZERO, Vector3.ONE, _neon(fogo, 2.4))
+		_peca(peito, _cone(0.1, 0.3), p + Vector3(0, 0.2, 0), Vector3.ZERO, Vector3.ONE, _neon(fogo, 1.6))
 
 
 func _carpinteiro(time: Color) -> void:
