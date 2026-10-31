@@ -168,7 +168,7 @@ func _placa(team: int) -> PanelContainer:
 func _chip(team: int) -> PanelContainer:
 	var c := Config.team_color(team)
 	var p := PanelContainer.new()
-	var sb := Estilo.painel(Color(c.lightened(0.2), 0.7), false, Color(0.04, 0.035, 0.09, 0.78))
+	var sb := Estilo.painel(Color(c.lightened(0.2), 0.7), false, Estilo.PAINEL)
 	sb.shadow_size = 4
 	p.add_theme_stylebox_override("panel", sb)
 	p.custom_minimum_size = Vector2(290, 0)
@@ -203,7 +203,7 @@ func _chip(team: int) -> PanelContainer:
 
 func _build_jogador(root: Control) -> void:
 	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", Estilo.painel(Color(Estilo.CIANO, 0.55), true, Color(0.045, 0.04, 0.1, 0.82)))
+	card.add_theme_stylebox_override("panel", Estilo.painel(Color(1, 1, 1, 0.3), true, Estilo.PAINEL))
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(card)
 	var h := HBoxContainer.new()
@@ -271,7 +271,7 @@ func _build_jogador(root: Control) -> void:
 
 func _build_dica(root: Control) -> void:
 	_hint_box = PanelContainer.new()
-	var sb := Estilo.painel(Color(Estilo.OURO, 0.6), true, Color(0.05, 0.04, 0.1, 0.85))
+	var sb := Estilo.painel(Color(Estilo.OURO, 0.6), true, Estilo.PAINEL)
 	sb.shadow_size = 6
 	_hint_box.add_theme_stylebox_override("panel", sb)
 	_hint_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -293,7 +293,7 @@ func _build_dica(root: Control) -> void:
 
 func _build_fim(root: Control) -> void:
 	_end_panel = ColorRect.new()
-	_end_panel.color = Color(0.02, 0.01, 0.06, 0.72)
+	_end_panel.color = Color(0.02, 0.015, 0.025, 0.75)
 	_end_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_end_panel.visible = false
 	root.add_child(_end_panel)

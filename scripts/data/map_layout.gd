@@ -15,6 +15,11 @@ extends Resource
 ## Área (meia-largura x, meia-profundidade z) onde os bolos aparecem.
 @export var cake_area := Vector2(26, 28)
 @export var road_width := 7.0
+## Trilhas de terra da floresta (as duas, em |z| = trail_z); 0 = sem trilha.
+@export var trail_z := 0.0
+@export var trail_width := 3.0
+## As trilhas acabam em |x| = trail_x_max.
+@export var trail_x_max := 80.0
 
 @export_group("Castelo")
 @export var wall_back := -13.0

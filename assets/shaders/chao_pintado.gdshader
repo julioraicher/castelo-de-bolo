@@ -11,6 +11,9 @@ uniform vec3 terra_clara : source_color = vec3(0.82, 0.75, 0.6);
 uniform float rua_z = 5.6;       // centro da estrada (z, em metros)
 uniform float rua_meia = 1.6;    // meia-largura da estrada (0 = sem estrada)
 uniform float rua_x_max = 1000.0; // a estrada acaba em |x| = rua_x_max (portões)
+uniform float trilha_z = 30.0;    // trilhas da floresta em |z| = trilha_z
+uniform float trilha_meia = 0.0;  // meia-largura da trilha (0 = sem trilha)
+uniform float trilha_x_max = 80.0;
 
 float hash(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -49,6 +52,17 @@ void fragment() {
 	vec3 cor = mix(grama, terra, na_rua);
 	// Faixa de grama pisada / sombra na borda da estrada.
 	cor *= 1.0 - 0.18 * (1.0 - smoothstep(0.0, 0.35, abs(dz - borda))) * step(0.01, rua_meia);
+	// Trilhas da floresta: terra mais escura e estreita, serpenteando de leve,
+	// com tufos de grama no meio (caminho de pé, não de carroça).
+	if (trilha_meia > 0.01) {
+		float tz = abs(abs(p.y) - trilha_z + sin(p.x * 0.11) * 0.55) + max(abs(p.x) - trilha_x_max, 0.0) * 1.5;
+		float bt = trilha_meia + (ruido(vec2(p.x * 1.1, 5.0)) - 0.5) * 0.6;
+		float na_trilha = 1.0 - smoothstep(bt - 0.2, bt + 0.2, tz);
+		na_trilha *= 1.0 - 0.7 * smoothstep(0.6, 0.85, ruido(p * 2.2 + 31.0)) * (1.0 - smoothstep(0.0, 0.5, tz));
+		vec3 terra_t = mix(terra_escura, terra_clara, ruido(p * 1.3 + 41.0) * 0.6) * vec3(0.8, 0.68, 0.52);
+		cor = mix(cor, terra_t, na_trilha);
+		cor *= 1.0 - 0.15 * (1.0 - smoothstep(0.0, 0.4, abs(tz - bt)));
+	}
 	ALBEDO = cor;
 	ROUGHNESS = 1.0;
 }

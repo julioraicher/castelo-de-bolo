@@ -1632,6 +1632,10 @@ func _gerar_mapa_rio() -> void:
 	m.half_depth = 48.0
 	m.cake_area = Vector2(40, 40)
 	m.road_width = 7.0
+	if "trail_z" in m:  # trilhas de terra da floresta (as pontes laterais ficam em |z| = 30)
+		m.trail_z = 30.0
+		m.trail_width = 2.8
+		m.trail_x_max = 81.0
 	m.wall_back = -16.0
 	m.wall_front = 12.0
 	m.wall_half_width = 16.0
@@ -1645,7 +1649,7 @@ func _gerar_mapa_rio() -> void:
 	m.hat_spots = PackedVector2Array([Vector2(7, -9.2), Vector2(7, 9.2), Vector2(2.5, -9.2), Vector2(2.5, 9.2)])
 	# (z = ±7: mais perto da muralha, a escada da passarela tapa a frente da oficina.)
 	m.oficina_spots = PackedVector2Array([Vector2(-3.5, -7.0), Vector2(-3.5, 7.0)])
-	# Ciclo 2.3 (Economia do Construtor). Pilha de toras perto do portão, do lado
+	# Ciclo 2.3 (Economia do Construtor). Depósito de madeira no canto da frente (z = 12), do lado
 	# do bosque; bosque seguro (2 árvores) fora da muralha lateral, ~20 m de
 	# caminho da pilha; bambuzal de corte (6) nas margens do rio, onde há briga.
 	# Árvores e pilha em coordenadas do castelo (como hat_spots); bambu no mundo.
@@ -1653,7 +1657,7 @@ func _gerar_mapa_rio() -> void:
 	if "tree_spots" in m:
 		m.tree_spots = PackedVector2Array([Vector2(9.5, 21.0), Vector2(8.0, 25.0)])
 	if "pilha_spot" in m:
-		m.pilha_spot = Vector2(9.0, 7.4)
+		m.pilha_spot = Vector2(9.5, 12.0)  # canto da frente, boca virada para a câmera, longe da torre do portão
 	if "bamboo_spots" in m:
 		m.bamboo_spots = PackedVector2Array([Vector2(6.8, -16.2), Vector2(8.4, -16.9), Vector2(7.2, 16.4), Vector2(-6.8, -16.2), Vector2(-8.4, -16.9), Vector2(-7.2, 16.4)])
 	m.wall_height = ALT_MURO
@@ -1674,7 +1678,7 @@ func _gerar_mapa_rio() -> void:
 	_patio.append(_p("caixotes.scn", Vector3(-14, 0, -11.0), 29.0))
 	_patio.append(_p("sino.scn", Vector3(-12.6, 0, 5.8), 90.0, "cilindro", 1.6, 4.0))
 	_patio.append(_p("poco.scn", Vector3(9.0, 0, -12.0), 0.0, "cilindro", 1.0, 2.0))
-	_patio.append(_p("carroca.scn", Vector3(9.5, 0, 12.0), 75.0))
+	# (A carroça saiu: o depósito de madeira ocupa esse canto, ver pilha_spot.)
 	for z in [-4.6, 4.6]:
 		_patio.append(_p("lanterna_pedra.scn", Vector3(9.0, 0, z)))
 		_patio.append(_p("poste.scn", Vector3(4.25, 0, signf(z) * 11.8), 90.0))
