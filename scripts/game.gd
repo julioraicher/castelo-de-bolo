@@ -36,6 +36,7 @@ var _time := 0.0
 #                       morte) salvando um quadro a cada 2: prancha de animação
 #   --perf=N            mede o desempenho na qualidade N (0-3): a cada 5 s imprime
 #                       ms de CPU por quadro, draw calls, triângulos e objetos
+#   --testes            roda os testes de regra (tests/regras.gd) e sai com 0/1
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
 var _variacoes := false
@@ -53,6 +54,7 @@ var _perf_acc := {}
 var _perf_n := 0
 var _perf_t := 0.0
 var _perf_t0 := 0
+var _testes := false  # --testes: roda tests/regras.gd e sai
 var _shot_times: Array[float] = [4.0, 15.0, 30.0, 50.0, 75.0]
 
 const BOT_ROLES := [BotBrain.Role.ATTACK, BotBrain.Role.DEFEND, BotBrain.Role.ATTACK, BotBrain.Role.CAKE,
@@ -85,6 +87,8 @@ func _ready() -> void:
 			Settings.mapa = int(arg.trim_prefix("--mapa="))
 		elif arg.begins_with("--tema="):
 			Settings.theme = int(arg.trim_prefix("--tema="))
+		elif arg == "--testes":
+			_testes = true
 	if _print_poder:
 		_shot_times = [1e9, 1e9, 1e9, 1e9, 1e9, 1e9]  # quem marca a hora é o poder
 	arena = Arena.new()
@@ -171,6 +175,11 @@ func _ready() -> void:
 			camera.fov = 45
 			camera.position = Vector3(-22, 22, 26)
 			camera.look_at(Vector3(-40, 2, 0))
+
+	if _testes:
+		var t: Node = load("res://tests/regras.gd").new()
+		t.set("game", self)
+		add_child(t)
 
 	hud = Hud.new()
 	add_child(hud)

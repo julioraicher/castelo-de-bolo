@@ -1,6 +1,7 @@
 # CLAUDE.md
 
 Contexto enxuto para o Claude trabalhar neste repo sem reler conversas antigas.
+**Leia primeiro `docs/principios.md`** (o que não muda sem o Julio).
 Detalhes para humanos: GUIA.md. Plano: ROADMAP.md. O que mudou em cada rodada:
 CHANGELOG.md (leia a entrada mais nova). Regras do jogo: CONTROLES.md.
 
@@ -15,6 +16,8 @@ Dono: Julio (estudante de Engenharia Física). Respostas em português, diretas.
 ```bash
 # Depois de criar um script com class_name novo (senão "Identifier not declared"):
 godot --headless --import --path .
+# Testes de regra (dano, carregador, esquiva, escudo, cura, empurrão, dados); sai 0/1:
+godot --headless --path . --fixed-fps 60 -- --autoplay --testes
 # Partida simulada sem janela (bots jogam pelo jogador; eventos no stdout):
 godot --headless --path . --fixed-fps 60 --quit-after 18000 -- --autoplay
 # Prints (precisa de xvfb; renderizador do navegador):
@@ -25,8 +28,10 @@ godot --headless --path . --export-pack "Linux" x.pck
 godot --headless --main-pack x.pck -s diag.gd
 ```
 
-CI (`.github/workflows/build.yml`): todo push na `main` exporta Web (GitHub Pages)
-e Windows/Linux (release `ultima-versao`). Push direto na `main` é o fluxo combinado.
+CI (`.github/workflows/build.yml`): todo push roda os testes de regra e 5 min
+simulados; na `main`, se passarem, exporta Web (GitHub Pages) e Windows/Linux
+(release `ultima-versao`). Regra nova que importa = um `_check` em `tests/regras.gd`.
+Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/local/bin/godot.
 
 ## Arquitetura
 
@@ -73,22 +78,28 @@ Rodadas: Julio joga e manda feedback (áudio transcrito). Responder com lista
 curta do que entendeu, fazer tudo, publicar, adicionar entrada no CHANGELOG.md.
 Conversas curtas: a cada poucas rodadas, nova conversa a partir deste arquivo.
 
-## Frentes de trabalho (conversas em paralelo)
+## Organização (threads do projeto no Claude)
 
-Cada frente tem sua conversa e mexe só nas suas pastas:
+O Julio fala no chat principal (coordenador), que abre threads por ciclo. Cada
+thread é uma sessão separada: o que ela não escrever no repo/memória se perde.
 
-| Frente | Pastas |
+| Papel | Mexe em |
 |---|---|
-| Visual dos personagens (modelos por código + prancha de prints) | `config/classes/`, `assets/characters/`, `scripts/actors/ninja_visual.gd` |
-| Cenário (temas, mapas, construções) | `config/temas/`, `config/mapas/`, `assets/medieval/` e novas pastas de cenário |
-| Jogabilidade, polimento e desempenho | `scripts/`, `config/game_config.tres`, `project.godot` |
-| Identidade (nome, tema, estilo geral, logo, divulgação) | `docs/identidade.md`, futuras artes de divulgação |
+| Diretor Visual (personagens, cenário, efeitos, interface) | `config/classes/`, `config/temas/`, `config/mapas/`, `assets/`, `tools/gerar_*`, `scripts/actors/ninja_visual.gd` |
+| Diretor de Jogabilidade (combate, física, IA, desempenho, testes) | `scripts/`, `tests/`, `config/game_config.tres`, `project.godot` |
+| Estagiário de ideias (ideia solta → decisão → plano) | `docs/` (direção, ideias, princípios) |
+| Estagiários pontuais (tendências, vídeo) | `docs/ideias.md`, pasta do projeto |
 
-- Precisa mudar código ou pasta de outra frente? Faça a menor mudança possível
+Skills do Julio úteis aqui (carregam sozinhas): `estagiario-de-ideias`,
+`forjar-ideia`, `rodada-de-playtest`, `contexto-do-projeto`. Skills de Godot no
+repo: `.claude/skills/`.
+
+- Precisa mudar código ou pasta de outro papel? Faça a menor mudança possível
   e avise no CHANGELOG. Campo novo num `.tres` = campo novo no esquema em
   `scripts/data/`, com valor padrão que não quebre os arquivos existentes.
 - Sempre `git pull --rebase origin main` antes de `git push`; nunca force push.
-- Cada frente registra suas mudanças no CHANGELOG.md, com a frente no título.
+- Cada papel registra suas mudanças no CHANGELOG.md, com o papel no título
+  (entradas antigas em `docs/changelog-antigo.md`).
 - Cenário: `tools/gerar_cenario_ninja.gd` (+ `gerar_mapa_rio.gd`) gera tudo com o
   material `pintura.gdshader`: COLOR.a = oclusão, UV.x = vento, UV.y = desenho
   (0 liso, 1 tábuas, 2 telhas, 3 pedras, 4 reboco). Rode os dois depois de mudar.
@@ -99,7 +110,7 @@ Cada frente tem sua conversa e mexe só nas suas pastas:
 
 - A `main` é o que o Julio testa: precisa estar **sempre jogável**.
 - Coisa nova (cenário, poder, feature) vai num branch e só entra na `main`
-  com aprovação do Julio ou quando estiver estável (5 min simulados sem erro).
+  com aprovação do Julio ou quando estável (testes de regra + 5 min simulados).
 - Toda entrega na `main` ganha um bloco **"O que testar"** na entrada do CHANGELOG.
 - Ideias para futuras atualizações vão em `docs/ideias.md` (A = próxima, B = depois,
   C = talvez). Qualquer frente pode anotar; o Julio escolhe o que sobe.

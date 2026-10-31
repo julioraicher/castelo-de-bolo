@@ -23,6 +23,9 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 - **Ajuste dos poderes novos** depois do teste do Julio (dano, raio, recarga).
 
 ## B — depois
+- **Dividir `scripts/actors/unit.gd`** (1.469 linhas) em partes: movimento,
+  combate, animação/corpo, aura/poder. Antes, ampliar `tests/regras.gd` para
+  cobrir combo, bloqueio e poderes, que protegem a mudança (Jogabilidade).
 - **Bonecos mais leves** (frente Visual, medido na Rodada 19): cada boneco tem
   ~11 mil triângulos com o contorno (16 = ~180 mil por quadro). LOD simples
   (versão de menos polígonos de longe) e contorno desligado na qualidade Mínima.
@@ -50,3 +53,9 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 - Recursos no mapa (madeira, pólvora) para pagar oficinas.
 - Clima que muda durante a partida (a lua sobe, a névoa fecha).
 - Modo treino com alvos para testar cada classe sozinho.
+
+## Outros projetos (não cabem neste jogo)
+- **Espionagem e hackers** (2026-10-29, quiz 2): drones, espionagem e hackers
+  com visual "meio pixelado" (render em baixa resolução ampliado). Mecânicas:
+  drones de reconhecimento, hackear torretas/portas, silenciar poderes,
+  câmeras de segurança. O "silenciar" já entrou aqui como o **Selo** do mago.

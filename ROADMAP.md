@@ -4,7 +4,7 @@ Plano do jogo em fases. Cada item grande vira uma conversa própria com o
 Claude no projeto; esta lista é a fonte da verdade do que já foi feito e do
 que vem depois. Edite à vontade (mude a ordem, risque, acrescente).
 
-## Fase 1: protótipo jogável e polido (agora)
+## Fase 1: protótipo jogável e polido (feita)
 
 Objetivo: uma partida curta, sem bugs, gostosa de jogar no navegador e no .exe.
 Aqui só entram correções, sensação de jogo (*game feel*), equilíbrio e desempenho.
@@ -17,18 +17,19 @@ Aqui só entram correções, sensação de jogo (*game feel*), equilíbrio e des
 - [x] Empurrão dos golpes corrigido (era bug)
 - [x] Qualidade gráfica, contador de FPS, interpolação de física, MultiMesh
 - [x] Dificuldade Difícil suavizada
-- [ ] Jogo liso no navegador do Julio (medir FPS com Esc > Mostrar FPS)
+- [x] Jogo liso no PC do Julio (.exe ~50 FPS; Rodada 19 e 2b do Ciclo 2.2)
 - [x] Juntar as partes de cada personagem numa malha só (menos chamadas de desenho)
 - [x] Temas, mapa e classes em arquivos de dados (re-skin sem código)
 - [x] Qualidade automática
-- [ ] Tema "Sinistro" com modelos próprios (ex.: pack CC0 KayKit Halloween)
+- [x] ~~Tema "Sinistro"~~ substituído pelos temas ninja (Festival ao Sol, Crepúsculo, Floresta Oni, Templo ao Luar)
 - [ ] Revisão de equilíbrio depois de algumas partidas
+- [x] Testes de regra no CI (`tests/regras.gd`) além da partida simulada
 
 ## Fase 2: o "jogo de semanas" (mecânicas do estilo Fat Princess)
 
 Detalhes em [docs/design-jogo.md](docs/design-jogo.md) (classes, poderes, progressão).
 
-- [ ] Nova identidade v1: Clãs de Neon, Máscara Oni + espíritos no lugar de princesa + bolo ([docs/identidade.md](docs/identidade.md))
+- [x] Nova identidade v1: Clãs de Neon, Máscara Oni + espíritos no lugar de princesa + bolo ([docs/identidade.md](docs/identidade.md))
 - [x] Papel Construtor (4º papel) e Clérigo → Monge (nomes provisórios)
 - [x] Itens no chão: poção, escudo, velocidade
 - [ ] Gatilhos de poder (sequência de abates, ao morrer, Hora do Caos)
@@ -38,7 +39,7 @@ Detalhes em [docs/design-jogo.md](docs/design-jogo.md) (classes, poderes, progre
 - [ ] Portão do castelo que pode ser quebrado e consertado
 - [ ] Atalho que abre durante a partida
 - [ ] Segundo mapa
-- [ ] **Ciclo 2.2: jogo mais "completo"** (visual pintado estilo Fat Princess PS3, tom sombrio, poder no corpo, animação exagerada; piloto primeiro): [docs/direcao-ciclo-2.2.md](docs/direcao-ciclo-2.2.md)
+- [x] **Ciclo 2.2: jogo mais "completo"** (visual pintado estilo Fat Princess PS3, tom sombrio, poder no corpo, animação exagerada; piloto primeiro): [docs/direcao-ciclo-2.2.md](docs/direcao-ciclo-2.2.md)
 
 ## Fase 3: depois
 

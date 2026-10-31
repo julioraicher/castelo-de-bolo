@@ -70,7 +70,7 @@ Favoritos do quiz que já fazem isso: *Heavy Loot*, *Bring It Home*,
 segue como nome provisório do repositório até a escolha.
 
 **Ideia guardada para outro projeto:** espionagem/hackers com drones, visual
-pixelado. Ver `docs/ideias-futuras.md`.
+pixelado. Ver `docs/ideias.md` (Outros projetos).
 
 ## Bloco de estilo
 

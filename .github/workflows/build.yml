@@ -1,5 +1,6 @@
-# Todo push (qualquer branch) roda o teste de fumaça: 5 min de partida
-# simulada sem janela; qualquer erro de script reprova.
+# Todo push (qualquer branch) roda os testes de regra (tests/regras.gd: dano,
+# carregador, esquiva, escudo, cura, empurrão, conteúdo do game_config) e o
+# teste de fumaça (5 min de partida simulada sem janela); qualquer falha reprova.
 # Na main, só depois dele passar, exporta o jogo:
 #  - versão Web publicada no GitHub Pages (link para jogar no navegador)
 #  - .exe (Windows) e Linux anexados à release "ultima-versao"
@@ -36,6 +37,9 @@ jobs:
 
       - name: Importar assets
         run: ./godot --headless --import --path . || true
+
+      - name: Testes de regra
+        run: timeout 5m ./godot --headless --path . --fixed-fps 60 -- --autoplay --testes
 
       - name: Partida simulada de 5 min (bots jogam por todos)
         run: |
