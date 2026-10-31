@@ -20,9 +20,9 @@ static func _nome(u: Unit, cor: Color) -> void:
 	var l := Label3D.new()
 	l.text = u.stats.power_name.to_upper() + "!"
 	l.font = Estilo.TITULO
-	l.font_size = 96 if u.is_player else 64
+	l.font_size = 96 if u.is_player else 46  # bots: menor e mais curto, para não poluir a briga
 	l.pixel_size = 0.011
-	l.outline_size = 22
+	l.outline_size = 22 if u.is_player else 14
 	l.outline_modulate = Color(cor.darkened(0.8), 0.95)
 	l.modulate = cor
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -37,8 +37,9 @@ static func _nome(u: Unit, cor: Color) -> void:
 	tw.tween_property(l, "scale", Vector3.ONE, 0.08)
 	tw.set_parallel()
 	tw.tween_property(l, "global_position:y", l.global_position.y + 1.0, 0.9).set_delay(0.3)
-	tw.tween_property(l, "modulate:a", 0.0, 0.4).set_delay(0.8)
-	tw.tween_property(l, "outline_modulate:a", 0.0, 0.4).set_delay(0.8)
+	var some := 0.8 if u.is_player else 0.45
+	tw.tween_property(l, "modulate:a", 0.0, 0.4).set_delay(some)
+	tw.tween_property(l, "outline_modulate:a", 0.0, 0.4).set_delay(some)
 	tw.chain().tween_callback(l.queue_free)
 
 
