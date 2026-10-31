@@ -5,6 +5,13 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4e (2026-10-31), Diretor Visual: revisão (fogo da Kitsune, trilha nos temas escuros)
+- Coluna de Fogo (poder da Kitsune) na cor do chapéu de quem lança: rosa na Kitsune,
+  dourado na da Luz, roxo na Sombria (`area_effect.gd`, `fx_poder.gd`, chamada em `unit.gd`).
+- Trilha da floresta mais clara: no tema Oni ela quase sumia no chão roxo.
+- Conferido nos prints: depósito à vista também no Luar; HUD novo legível em jogo.
+- **O que testar**: jogue de Kitsune e solte o Q; troque o tema para Oni e siga a trilha.
+
 ## Ciclo 2.4d (2026-10-31), Diretor Visual: nível 2 à vista, elenco com cara própria, tela moderna
 - **Maquininha nível 2** (contrato `N2_*`): cada `maquina_<classe>.scn` ganhou degrau de pedra
   com quinas de ouro, dois estandartes na cor da classe com lanterna acesa e uma coroa
