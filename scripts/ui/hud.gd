@@ -24,6 +24,7 @@ var _quick_bar: ProgressBar
 var _quick_label: Label
 var _madeira_label: Label
 var _madeira_visto := -1
+var _carregando_label: Label  # "CARREGANDO 1/1" com tora nos braços
 var _hint_box: PanelContainer
 var _hint_a: Label
 var _hint_key: PanelContainer
@@ -276,6 +277,9 @@ func _build_jogador(root: Control) -> void:
 	_madeira_label = Estilo.rotulo("", Estilo.T_PEQUENO, Estilo.OURO, Estilo.FORTE)
 	mad_row.add_child(_madeira_label)
 	_madeira_label.pivot_offset = Vector2(0, 10)
+	_carregando_label = Estilo.rotulo("CARREGANDO 1/1", Estilo.T_PEQUENO, Color(1, 1, 1), Estilo.FORTE)
+	_carregando_label.visible = false
+	mad_row.add_child(_carregando_label)
 
 	card.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 20)
 	card.grow_vertical = Control.GROW_DIRECTION_BEGIN
@@ -414,6 +418,13 @@ func update_state(game: Game) -> void:
 			_madeira_label.create_tween().tween_property(_madeira_label, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK)
 		_madeira_visto = mad
 		_madeira_label.text = "Madeira do time: %d" % mad
+	var com_tora := u.carried_tora != null
+	if com_tora != _carregando_label.visible:
+		_carregando_label.visible = com_tora
+		if com_tora:
+			_carregando_label.pivot_offset = Vector2(0, 10)
+			_carregando_label.scale = Vector2.ONE * 1.3
+			_carregando_label.create_tween().tween_property(_carregando_label, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK)
 	if u.carried_tora:
 		_status_label.text = "LEVE A TORA AO DEPÓSITO"
 		_cor_texto(_status_label, Estilo.OURO)

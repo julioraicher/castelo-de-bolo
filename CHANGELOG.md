@@ -5,6 +5,24 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.5d (2026-10-31), Jogabilidade: corte do Bombardeiro, contador de tora e ritmo
+- **Bug**: Bombardeiro (e qualquer lenhador que ataca de longe) seguia a seta até a
+  árvore e o clique jogava bomba. Agora, com uma planta jovem/adulta à frente a até ~3 m,
+  o clique vira **machadada** (anim. de golpe, 1 tora). Longe dela, bomba normal. Bots do
+  Bombardeiro chegam a 3 m para cortar. Teste novo `_machadada` (161 testes).
+  O Armadilheiro já cortava (é corpo a corpo); agora o teste garante isso.
+- **HUD**: ao lado de "Madeira do time: N" aparece **CARREGANDO 1/1** enquanto há tora
+  nos braços (nó novo no `hud.gd`, nada movido).
+- **Ritmo**: `MapLayout.spawn_spots` (+ `spawn_jitter`): renascer no ponto menos lotado
+  entre 6 pontos do pátio (o mapa em ferradura vai trocar pelos pontos do arco).
+  `game_config.inicio_calmo = 30` s: atacantes e confeiteiros ficam espalhados na própria
+  metade (frente e laterais); depois invadem. Kitsunes atacantes andam ~6 m atrás do
+  guerreiro aliado mais adiantado; o Construtor segue no bosque.
+- **O que testar**: (1) pegue o chapéu de Construtor, suba para Bombardeiro, siga a seta
+  e clique colado na árvore: deve sair machadada e tora. (2) Com a tora nos braços, veja
+  "CARREGANDO 1/1" embaixo à esquerda. (3) Nos primeiros 30 s ninguém deve invadir seu
+  castelo; depois a briga começa. (4) Morra algumas vezes: o renascer muda de lugar.
+
 ## Limpeza 2.5c (2026-10-31), revisão de código: tirar o que sobrou de versões antigas
 - **Nada muda no jogo** (regras, números, visual e controles iguais). Testes 155/155 e 5 min
   simulados sem erro, antes e depois.
