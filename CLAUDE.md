@@ -80,6 +80,9 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
   + leitura por trecho. Testes/partida: subagente `testador` ou saída filtrada.
 - CHANGELOG: só a entrada mais nova. Uma imagem por rodada (JPG, ≤1280 px).
 - Avisar outra thread só quando ela depende disso, numa mensagem só.
+- Thread por tarefa (não por papel); quiz ≤5 perguntas com a recomendada
+  pré-marcada; resposta curta com o resto em arquivo; lote 3D com uma prancha
+  no fim. Regras 11-17 em docs/economia-de-tokens.md.
 
 # Compact instructions
 

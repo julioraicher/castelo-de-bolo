@@ -65,6 +65,16 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
   3. Pegue chapéus da mesma máquina até acabar (3): ela fabrica outro a cada 20 s.
   4. Apanhe carregando a tora: ela cai no chão.
   5. Mate inimigos e olhe a sua máscara: uma alminha voa até ela.
+  6. Mapa maior do Visual (entrada acima): flanqueie pelas trilhas de floresta
+     (|z| = 30). Com ele, 1 a 3 pontos por 5 min nos bots (antes 0 a 5).
+
+## Organização (2026-10-31), estagiário de economia: checkup de tokens
+- Pedido do Julio: checkup de onde o projeto gasta mais e aplicar as mudanças.
+- `docs/economia-de-tokens.md`: modelo de custo (N·C₀ + Δ·N²/2), tabela com
+  9 gastos medidos no histórico das threads e regras 11-17 (thread por tarefa,
+  quiz econômico, resposta curta, lotes 3D com uma prancha, coordenador curto).
+- `CLAUDE.md`: resumo das regras novas na seção de economia.
+- **O que testar**: nada no jogo (só documentos).
 
 ## Ciclo 2.3 (2026-10-31), Diretor Visual: modelos da Economia do Construtor (branch)
 - `tools/gerar_economia.gd` (rodar depois de `gerar_cenario_ninja.gd`): nos 4 temas,
