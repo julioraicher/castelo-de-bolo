@@ -447,7 +447,7 @@ func add_power(amount: float) -> void:
 	_power_idle = 0.0
 	if is_player and not was_ready and power >= POWER_MAX and stats.power != "nenhum":
 		Sfx.play_ui("power_ready")
-		game.hud.show_big("Chi cheio! Q: %s" % stats.power_name, Color(1, 0.75, 0.9), 1.4)
+		game.hud.show_big("Chi cheio! E: %s" % stats.power_name, Color(1, 0.75, 0.9), 1.4)
 
 
 # --- Loop principal -----------------------------------------------------------
@@ -917,7 +917,7 @@ func _tick_escudo_def(delta: float) -> void:
 	var alvo := 0.0
 	if _blocking:
 		# Janela do contra-golpe: brilha mais forte (dá para aprender o tempo).
-		alvo = 0.5 if _block_t <= Config.cfg.parry_janela else 0.22
+		alvo = 0.6 if _block_t <= Config.cfg.parry_janela else 0.3
 	mat2.albedo_color.a = move_toward(mat2.albedo_color.a, alvo, delta * 3.0)
 	_escudo_def.visible = mat2.albedo_color.a > 0.01
 
@@ -1055,23 +1055,35 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 	if _fury_t > 0.0:
 		knock_mult *= 0.2  # gigante: quase não é empurrado
 	_knock = dir * (attacker.stats.knockback if attacker else 4.0) * knock_mult
-	_flash_t = 0.1
 	var forte := knock_mult > 1.0
+	_flash_t = 0.14 if forte else 0.1
 	_mola(-5.0 if forte else -3.0, -3.0 if forte else -1.5)
 	_tremor_t = 0.22 if forte else 0.15
 	var col := Color(1, 0.9, 0.3) if attacker and attacker.is_player else Color(1, 1, 1)
 	if blocked:
 		col = Color(0.6, 0.8, 1.0)
-	Fx.damage_number(game, global_position, str(int(amount)), col)
+	Fx.damage_number(game, global_position, str(int(amount)), col, 0.6 if blocked else maxf(knock_mult, 1.0) * (1.25 if attacker and attacker.is_player else 1.0), dir)
 	if blocked:
 		Fx.burst(game, global_position + Vector3(0, 1.3, 0) - dir * 0.6, Color(0.8, 0.9, 1.0), 10, 6.0)
 		Sfx.play("block", global_position, 0.1)
 		_play_upper("Block_Hit", 1.5)
+		if melee and attacker and attacker.alive:
+			# Bateu no escudo: quem golpeou quica para trás e os dois travam um
+			# instante (o "clang"). Impulso de volta ~ metade do empurrão normal.
+			attacker._knock = -dir * attacker.stats.knockback * 0.5
+			attacker.hitstop(Config.cfg.hitstop_time * 0.7)
+			attacker._mola(-2.0, -3.0)
 	else:
 		Fx.burst(game, global_position + Vector3(0, 1.2, 0), Color(1, 0.85, 0.5), 8 if knock_mult <= 1.0 else 14, 5.0 * maxf(knock_mult, 1.0))
-		Sfx.play("hit", global_position)
+		# Golpe forte soa mais grave (mais "massa"); acerto de longe, mais agudo.
+		Sfx.play("hit", global_position, 0.08, 0.82 if forte else (1.12 if not melee else 1.0), 2.0 if forte else 0.0)
 	if melee:
 		hitstop(Config.cfg.hitstop_time * (1.6 if knock_mult > 1.0 else 1.0))
+	elif attacker and attacker.is_player and amount > 0.0:
+		# Tiro do jogador acertou: micro-pausa no alvo e um toque na câmera,
+		# senão o acerto de longe parece não ter peso.
+		hitstop(Config.cfg.hitstop_time * 0.5)
+		game.camera.add_trauma(0.08)
 	if is_player:
 		game.camera.add_trauma(0.2 if blocked else 0.45)
 		game.camera.kick(dir, 0.15 if blocked else 0.35)
@@ -1176,7 +1188,7 @@ func _contra_golpe(attacker: Unit, dir: Vector3) -> void:
 	var p := global_position + Vector3(0, 1.4, 0) - dir * 0.7
 	Fx.burst(game, p, Color(1.0, 0.95, 0.7), 22, 9.0)
 	Fx.ring(game, global_position, Color(1.0, 0.9, 0.5, 0.9), 2.2)
-	Fx.damage_number(game, global_position + Vector3(0, 0.6, 0), "CONTRA!", Color(1.0, 0.85, 0.3))
+	Fx.damage_number(game, global_position + Vector3(0, 0.6, 0), "CONTRA!", Color(1.0, 0.85, 0.3), 2.0)
 	Sfx.play("block", global_position, 0.05)
 	Sfx.play("hit", global_position, 0.1)
 	_play_upper("Block_Hit", 1.8)

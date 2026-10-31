@@ -19,6 +19,9 @@ var _hp_text: Label
 var _power_bar: ProgressBar
 var _power_key: Control
 var _power_label: Label
+var _quick_row: HBoxContainer
+var _quick_bar: ProgressBar
+var _quick_label: Label
 var _madeira_label: Label
 var _madeira_visto := -1
 var _hint_box: PanelContainer
@@ -241,14 +244,24 @@ func _build_jogador(root: Control) -> void:
 	var chi_row := HBoxContainer.new()
 	chi_row.add_theme_constant_override("separation", 8)
 	v.add_child(chi_row)
-	# Medidor de Chi: enche lutando; cheio libera o poder no Q.
+	# Medidor de Chi: enche lutando; cheio libera o poder no E.
 	_power_bar = Estilo.barra(Estilo.MAGENTA, Vector2(170, 10))
 	_power_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	chi_row.add_child(_power_bar)
-	_power_key = Estilo.tecla("Q", Estilo.T_MIN + 1)
+	_power_key = Estilo.tecla("E", Estilo.T_PEQUENO + 2)
 	chi_row.add_child(_power_key)
 	_power_label = Estilo.rotulo("", Estilo.T_PEQUENO, Color(1, 0.8, 0.94), Estilo.FORTE)
 	chi_row.add_child(_power_label)
+	# Habilidade rápida (Q): barra de recarga + nome / segundos que faltam.
+	_quick_row = HBoxContainer.new()
+	_quick_row.add_theme_constant_override("separation", 8)
+	v.add_child(_quick_row)
+	_quick_bar = Estilo.barra(Estilo.OURO, Vector2(170, 8))
+	_quick_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_quick_row.add_child(_quick_bar)
+	_quick_row.add_child(Estilo.tecla("Q", Estilo.T_PEQUENO + 2))
+	_quick_label = Estilo.rotulo("", Estilo.T_PEQUENO, Estilo.OURO, Estilo.NUMERO)
+	_quick_row.add_child(_quick_label)
 
 	# Estoque de madeira do time (o que o Construtor trouxe para o depósito).
 	var mad_row := HBoxContainer.new()
@@ -279,7 +292,7 @@ func _build_dica(root: Control) -> void:
 	h.add_theme_constant_override("separation", 8)
 	_hint_box.add_child(h)
 	_hint_a = Estilo.rotulo("", Estilo.T_MEDIO + 1, Color(1, 0.95, 0.75), Estilo.FORTE)
-	_hint_key = Estilo.tecla("E", Estilo.T_MEDIO - 1)
+	_hint_key = Estilo.tecla("F", Estilo.T_MEDIO - 1)
 	_hint_b = Estilo.rotulo("", Estilo.T_MEDIO + 1, Color(1, 0.95, 0.75), Estilo.FORTE)
 	h.add_child(_hint_a)
 	h.add_child(_hint_key)
@@ -376,13 +389,24 @@ func update_state(game: Game) -> void:
 	if u.power_ready():
 		_power_bar.modulate = Color(1, 1, 1).lerp(Color(1.7, 1.5, 1.7), pulso)
 		_power_key.visible = true
+		_power_key.modulate = Color.WHITE
 		_power_label.text = u.stats.power_name + "!"
 		_cor_texto(_power_label, Estilo.FANTASMA)
 	else:
 		_power_bar.modulate = Color(1, 1, 1, 0.85)
-		_power_key.visible = false
+		_power_key.visible = tem_poder
+		_power_key.modulate = Color(1, 1, 1, 0.4)  # apagada: mostra qual tecla, sem chamar
 		_power_label.text = "Chi %d%%" % int(u.power) if tem_poder else ""
 		_cor_texto(_power_label, Color(1, 0.8, 0.94))
+	_quick_row.visible = u.tem_rapida()
+	if _quick_row.visible:
+		_quick_bar.value = u.quick_ratio() * 100.0
+		if u.quick_ready():
+			_quick_label.text = u.stats.skill_name.to_upper()
+			_quick_row.modulate = Color.WHITE
+		else:
+			_quick_label.text = "%.1f s" % u.quick_restante()
+			_quick_row.modulate = Color(1, 1, 1, 0.6)
 	var mad: int = game.madeira[u.team] if u.team < game.madeira.size() else 0
 	if mad != _madeira_visto:
 		if mad > _madeira_visto and _madeira_visto >= 0:

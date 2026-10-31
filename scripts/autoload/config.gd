@@ -18,12 +18,13 @@ const CONTROLS := [
 	["W A S D", "andar"],
 	["Mouse", "mirar"],
 	["Clique esquerdo", "atacar (segure para golpear sem parar)"],
-	["Clique direito", "ação da classe (segure): bloquear (na hora do golpe, contra-ataca), carregar o tiro, curar ou armar minas"],
-	["Q", "poder especial, quando a barra de Chi enche"],
+	["Clique direito", "defender (segure). Erguido na hora do golpe, contra-ataca"],
+	["Q", "habilidade rápida da classe (recarga curta): investida, pisão, tiro perfurante, cura, mina ou corrida"],
+	["E", "poder especial, quando a barra de Chi enche"],
 	["Espaço ou Shift", "esquiva (rolamento rápido)"],
-	["E", "pegar chapéu ou máscara · escolher a oficina do terreno"],
+	["F", "pegar chapéu ou máscara · escolher a oficina do terreno"],
 	["Esc ou P", "pausa, controles e configurações"],
-	["F ou F11", "tela cheia"],
+	["F11", "tela cheia"],
 	["R", "reiniciar a partida"],
 ]
 

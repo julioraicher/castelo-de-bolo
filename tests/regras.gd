@@ -213,6 +213,16 @@ func _controles() -> void:
 		_check(u.tem_rapida(), "classe %s sem habilidade no Q" % c.id)
 		_check(c.skill_name != "", "classe %s sem skill_name (nome no HUD)" % c.id)
 		_check(c.power != "nenhum", "classe %s sem poder de Chi no E" % c.id)
+		# Solta o Q de verdade (pega erro de script em cada habilidade).
+		var pos0: Vector3 = u.global_position
+		u._quick_cd = 0.0
+		u._dodge_t = 0.0
+		u._equip_t = 0.0
+		u.wants_quick = true
+		u._update_skill(0.0, true)
+		_check(u._quick_cd > 0.0, "classe %s: o Q não saiu" % c.id)
+		u.global_position = pos0
+		u.reset_physics_interpolation()
 	# Defesa de uma classe que não é guerreiro: reduz pela block_reduction dela.
 	var a = null
 	for x in game.units:

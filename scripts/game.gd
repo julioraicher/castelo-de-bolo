@@ -389,10 +389,10 @@ func _rules() -> void:
 			u.drop_princess()
 			continue
 
-		# Pegar a princesa inimiga: bots pegam sozinhos, o jogador aperta E.
+		# Pegar a princesa inimiga: bots pegam sozinhos, o jogador aperta F.
 		if not u.carried_princess and enemy_p.can_be_taken() and pos.distance_to(enemy_p.global_position) < 2.8:
 			if u.is_player:
-				hint = "[E] pegar a máscara!"
+				hint = "[F] pegar a máscara!"
 			if not u.is_player or wants_interact:
 				u.pick_up_princess(enemy_p)
 				u.has_cake = false
@@ -437,14 +437,14 @@ func _rules() -> void:
 				it.queue_free()
 				break
 
-		# Chapéus: recruta veste ao encostar; quem já tem classe troca com E.
+		# Chapéus: recruta veste ao encostar; quem já tem classe troca com F.
 		for pad in hat_pads:
 			if pad.team != u.team or not pad.available or pad.stats == u.stats or u.is_equipping():
 				continue
 			if pos.distance_to(pad.global_position) < 2.0:
 				if u.is_player:
-					hint = "[E] pegar o chapéu de %s" % pad.stats.display_name
-				# Jogador: só com E. Bots recrutas (e o jogador no modo teste) pegam sozinhos.
+					hint = "[F] pegar o chapéu de %s" % pad.stats.display_name
+				# Jogador: só com F. Bots recrutas (e o jogador no modo teste) pegam sozinhos.
 				var bot_pega := u.brain is BotBrain and u.is_villager() and not (pad.stats.velocidade_obra > 0.0 \
 						and _bots_lenhadores(u.team, u) >= Config.cfg.bots_construtores_max)
 				if wants_interact or bot_pega:
@@ -452,17 +452,17 @@ func _rules() -> void:
 					u.start_equip(pad.take(), from)
 				break
 
-	# Oficina: o jogador troca a opção do terreno com E.
+	# Oficina: o jogador troca a opção do terreno com F.
 	if player.alive and not player.carried_princess and hint == "":
 		var of := nearest_oficina(player.team, player.global_position, Oficina.BUILD_RADIUS + 0.5, true)
 		if of:
 			var builder := "fique aqui para construir" if player.stats.velocidade_obra > 0.0 else "precisa de um Construtor"
 			if of.comecada():
-				# Obra começada: mostra o progresso guardado; [E] não troca nem apaga nada.
+				# Obra começada: mostra o progresso guardado; [F] não troca nem apaga nada.
 				var falta := "  ·  faltam %d madeiras" % of.faltam() if of.faltam() > 0 else ""
 				hint = "Obra de %s: %d%%%s  ·  %s" % [of.opcao().display_name, int(of.progresso * 100.0), falta, builder]
 			else:
-				hint = "[E] trocar oficina: %s  (%s)" % [of.opcao().display_name, builder]
+				hint = "[F] trocar oficina: %s  (%s)" % [of.opcao().display_name, builder]
 				if player_brain != null and player_brain.interact_pressed:
 					of.trocar_opcao()
 
@@ -482,7 +482,7 @@ func _rules() -> void:
 				break
 
 	if player.alive and player.carried_princess:
-		hint = "Leve-a até o SEU castelo!  ([E] soltar)"
+		hint = "Leve-a até o SEU castelo!  ([F] soltar)"
 	elif player.has_cake:
 		hint = "Leve o espírito até a sua máscara"
 	hud.set_hint(hint)

@@ -23,6 +23,22 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
   (-15, 12), (9, -6), (-9, -12), (-12, 21) e alvos no pedestal "inalcançáveis".
 - **Ajuste dos poderes novos** depois do teste do Julio (dano, raio, recarga).
 
+- **Sensação de porrada, próximos passos** (thread de controles, 2026-10-31; já feito
+  no 2.5: escudo que quica, número com "pop", som por peso, peso no acerto de longe):
+  1. Barra de vida com "rastro" branco que desce atrasado (lê quanto o golpe tirou).
+  2. Som em camadas por golpe (assobio + baque + estalo) e um som por arma; hoje é
+     um "hit" só com tom variando. Precisa gerar 4-6 sons novos (sfxr).
+  3. Respingo de tinta no chão onde o golpe acertou (decal que some em 2 s), na cor
+     do time de quem apanhou. Cuidar do orçamento de draw calls (MultiMesh).
+  4. Postura/"poise": golpes seguidos quebram a guarda (defesa cai, atordoa 0,6 s).
+     Dá contra-jogo à defesa nova, que hoje dá para segurar para sempre.
+  5. Borda vermelha na tela quando o jogador apanha forte (vinheta 0,2 s).
+  6. Abate em sequência (2+ em 3 s): zoom curto + letreiro "DUPLO!".
+- **Superpoder especial** (pedido do Julio, 2026-10-31; só anotado): um terceiro
+  poder, mais raro que o E, com medidor próprio (ex.: enche com abates e capturas)
+  e tecla própria (R ou a roda do mouse; o R hoje reinicia a partida). Cada classe
+  com um golpe de "virar a luta" (ex.: Samurai corta todos em linha num traço só).
+
 ## B — depois
 - **Dividir `scripts/actors/unit.gd`** (1.469 linhas) em partes: movimento,
   combate, animação/corpo, aura/poder. Antes, ampliar `tests/regras.gd` para
