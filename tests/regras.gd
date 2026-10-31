@@ -18,6 +18,7 @@ func _ready() -> void:
 	_dano()
 	_contra_golpe()
 	_carga()
+	_poderes_q()
 	await _empurrao()
 	_madeira()
 	_maquina()
@@ -184,6 +185,39 @@ func _carga() -> void:
 	_check(_perto(b.raio_mult, cfg.carga_raio_bomba, 0.001), "carga: bomba cheia deveria crescer o raio")
 	p.queue_free()
 	b.queue_free()
+
+
+## Q do 2.4: Campo Minado põe power_duration minas; Fúria deixa o Ronin
+## gigante e quase sem empurrão.
+func _poderes_q() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var u = _alvo()
+	if u == null:
+		return
+	u._dodge_t = 0.0
+	u._equip_t = 0.0
+	u._spin_t = 0.0
+	u.carried_princess = null
+	u.set_class(load("res://config/classes/armadilheiro.tres"))
+	var antes := get_tree().get_nodes_in_group("traps").size()
+	u.power = u.POWER_MAX
+	u._use_power()
+	var novas := get_tree().get_nodes_in_group("traps").size() - antes
+	_check(novas == int(u.stats.power_duration), "Campo Minado: esperadas %d minas, saíram %d" % [int(u.stats.power_duration), novas])
+	for t in get_tree().get_nodes_in_group("traps"):
+		if t.owner_unit == u:
+			t.queue_free()
+	u.set_class(load("res://config/classes/ronin_oni.tres"))
+	u._fury_t = 1.0
+	u._knock = Vector3.ZERO
+	u.hp = u.max_hp()
+	u._shield = 0.0
+	u.take_damage(1.0, null, Vector3.RIGHT, 1.0)
+	_check(u._knock.length() < 4.0 * 0.21, "Fúria: o Ronin gigante quase não deveria ser empurrado (%.2f)" % u._knock.length())
+	u._fury_t = 0.0
+	u._knock = Vector3.ZERO
+	u.hp = u.max_hp()
+	u.power = 0.0
 
 
 ## Empurrão: freia a KNOCK_DECAY m/s², logo |v| cai a/60 por quadro (d = v²/2a).

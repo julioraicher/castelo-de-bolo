@@ -106,6 +106,7 @@ var _slow_mult := 1.0
 var _trap_cd := 0.0
 var _silence_t := 0.0   # Selo do Onmyoji: sem ataque, botão direito nem poder
 var _fury_t := 0.0      # Fúria do Ronin: dano multiplicado
+var _gigante := 1.0     # Fúria: o Ronin cresce (poder no corpo); volta a 1 suave
 var _dmg_boost_t := 0.0 # item no chão "Dano dobrado"
 var _lean := 0.0
 # Corpo de desenho (animação exagerada por código, sem mexer nos clipes):
@@ -822,7 +823,7 @@ func _place_trap() -> void:
 	_trap_cd = stats.trap_cooldown
 	var mine: Array[Node] = []
 	for t in get_tree().get_nodes_in_group("traps"):
-		if t.owner_unit == self and not t.is_queued_for_deletion():
+		if t.owner_unit == self and not t.is_queued_for_deletion() and not t.has_meta("do_poder"):
 			mine.append(t)
 	while mine.size() >= stats.trap_max:
 		mine.pop_front().queue_free()
@@ -943,6 +944,8 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		attacker._calm_t = 0.0
 		attacker.add_power(amount * Config.cfg.power_per_damage)
 	add_power(amount * Config.cfg.power_per_damage_taken)
+	if _fury_t > 0.0:
+		knock_mult *= 0.2  # gigante: quase não é empurrado
 	_knock = dir * (attacker.stats.knockback if attacker else 4.0) * knock_mult
 	_flash_t = 0.1
 	var forte := knock_mult > 1.0
@@ -974,6 +977,18 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 ## Esquiva perfeita: um golpe passou por dentro do dash. O dash continua
 ## igual (pedido do Julio); só ganha recompensa e aviso: Chi, "ESQUIVA!",
 ## rastro e, para o jogador, um instante de câmera lenta.
+## Leque: segunda onda 0,25 s depois, nos vãos da primeira.
+func _leque_onda2(n: int, base: Vector3) -> void:
+	await get_tree().create_timer(0.25).timeout
+	if not alive or not is_inside_tree():
+		return
+	_play_upper("Throw", 1.8)
+	for i in maxi(n - 1, 1):
+		var t := (float(i) + 0.5) / maxf(n - 1, 1)
+		var ang := deg_to_rad(lerpf(-stats.power_radius, stats.power_radius, t) * 0.5)
+		_shoot_arrow(stats.power_value * Config.cfg.dano_poder_mult / maxf(stats.damage, 0.1), 1.2, base.rotated(Vector3.UP, ang))
+
+
 func _esquiva_perfeita(attacker: Unit) -> void:
 	var agora := Time.get_ticks_msec() / 1000.0
 	if agora - _esquiva_t < 0.6:
@@ -1064,6 +1079,7 @@ func _respawn() -> void:
 	_tremor_t = 0.0
 	_visual.position = Vector3.ZERO
 	_visual.scale = Vector3.ONE
+	_gigante = 1.0
 	set_class(Config.cfg.villager)  # quem morre perde o chapéu
 	Fx.ring(game, global_position, Config.team_color(team), 2.0)
 	_play_once("Lie_StandUp", 0.7)
@@ -1166,6 +1182,7 @@ func _use_power() -> void:
 				_shoot_arrow(stats.power_value * Config.cfg.dano_poder_mult / maxf(stats.damage, 0.1), 1.1, base.rotated(Vector3.UP, ang))
 			Fx.burst(game, global_position + Vector3(0, 1.4, 0) + base, Color(0.4, 1.0, 1.0), 16, 8.0)
 			FxPoder.leque(self, base)
+			_leque_onda2(n, base)
 		"nuvem", "selo", "coluna_fogo":
 			var to := aim_point - global_position
 			to.y = 0
@@ -1183,6 +1200,18 @@ func _use_power() -> void:
 					FxPoder.selo(game, center, stats.power_radius)
 				"coluna_fogo":
 					FxPoder.coluna_fogo(game, center, stats.power_radius, stats.power_duration, stats.hat_color)
+		"campo_minado":
+			# Armadilheiro: anel de minas em volta (power_duration = quantas).
+			_play_upper("Interact", 1.6)
+			Fx.ring(game, global_position, Color(1.0, 0.55, 0.15, 0.9), stats.power_radius)
+			var nm := int(stats.power_duration)
+			for i in nm:
+				var a := TAU * i / nm
+				var mina := Trap.new()
+				game.add_child(mina)
+				mina.set_meta("do_poder", true)  # não conta no trap_max do botão direito
+				mina.setup(game, self, global_position + Vector3(cos(a), 0, sin(a)) * stats.power_radius)
+			Sfx.play("pickup", global_position, 0.1)
 		"reforco":
 			# Pólvora: escudo de tábuas nos aliados em volta (não fere ninguém).
 			_play_upper("Cheer", 1.5)
@@ -1269,6 +1298,16 @@ func _tick_buffs(delta: float) -> void:
 	if _spin_t > 0.0:
 		_spin_t -= delta
 		_spin_tick -= delta
+		# Vórtice: puxa quem está perto para dentro do giro.
+		for other in game.units:
+			if not other.alive or other.team == team or other.carried_princess:
+				continue
+			var de := global_position - other.global_position
+			de.y = 0
+			var dist := de.length()
+			if dist > 0.9 and dist <= stats.power_radius * Config.cfg.redemoinho_puxa_raio \
+					and other._knock.length() < Config.cfg.redemoinho_puxa:
+				other._knock = de / dist * Config.cfg.redemoinho_puxa
 		if _spin_tick <= 0.0:
 			_spin_tick = SPIN_TICK
 			Fx.slash(game, global_position + Vector3(0, 0.9, 0), _facing(), stats.power_radius, 360.0, Color(1, 0.72, 0.2), 0.0, true)
@@ -1478,7 +1517,9 @@ func _tick_corpo(delta: float, horizontal: Vector3, congelado := false) -> void:
 	# (sx·sy·sz = 1), como massa de modelar.
 	var v := 1.0 + clampf(_sq, -0.45, 0.6)
 	var f := 1.0 + clampf(_st, -0.35, 0.55)
-	_visual.scale = Vector3(1.0 / sqrt(v * f), v / sqrt(f), f / sqrt(v))
+	var alvo_g: float = Config.cfg.furia_escala if _fury_t > 0.0 else 1.0
+	_gigante = move_toward(_gigante, alvo_g, delta * 2.5)
+	_visual.scale = Vector3(1.0 / sqrt(v * f), v / sqrt(f), f / sqrt(v)) * _gigante
 	# Tremor de quem apanha: chacoalho aleatório que some em ~0,2 s.
 	if _tremor_t > 0.0:
 		_tremor_t -= delta

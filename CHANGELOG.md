@@ -5,6 +5,23 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4i (2026-10-31), Diretor de Jogabilidade: mais pontos e Q com mais "uau"
+- **Ritmo de pontos** (opção recomendada do card, alvo 1 a 3 pontos a cada 5 min):
+  `carrier_damage_mult` 0,5 → 0,4 (quem leva a máscara aguenta mais) e
+  `princess_return_time` 15 → 25 s (dá tempo de o time do ladrão retomar a máscara caída).
+  Com bots: ~1,7 ponto por 5 min (antes ~0,5). **Você pode trocar**: são só esses dois
+  números em `config/game_config.tres` (0,35/25 já dá 3-5 pontos e a partida acaba cedo).
+- **Q com mais "uau"** (sem mudar o elenco do quiz):
+  - Fúria (Ronin Oni): ele cresce 35% (`furia_escala`) e quase não é empurrado.
+  - Redemoinho (Samurai): vira vórtice e puxa os inimigos em volta para dentro do giro
+    (`redemoinho_puxa` 4,5 m/s, raio ×2,2).
+  - Leque de Shuriken (Ninja): segunda onda 0,25 s depois.
+  - **Campo Minado** (Armadilheiro, no lugar do Reforço): anel de 6 minas em volta dele (não contam no
+    limite de armadilhas). Bots usam com 2+ inimigos perto ou defendendo o portão.
+- Testes 109/109; 5 min com poderes a cada 4 s sem erro.
+- **O que testar**: jogue de Ronin Oni e solte o Q no meio da briga; de Samurai, gire perto
+  de um grupo; pegue a máscara e veja se dá para chegar em casa.
+
 ## Ciclo 2.4h (2026-10-31), Diretor Visual: nome dos poderes dos bots mais discreto
 - Revisão por prints (Crepúsculo e Luar, com todos soltando poder): os nomes dos poderes
   dos bots ("REDEMOINHO!", "LEQUE DE SHURIKEN!") se empilhavam no meio da briga. Agora o
