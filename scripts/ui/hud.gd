@@ -1,6 +1,6 @@
 class_name Hud
 extends CanvasLayer
-## Interface da partida (estilo Clãs de Neon, peças em Estilo/Icone): placar
+## Interface da partida (peças em Estilo/Icone; fontes e tamanhos lá): placar
 ## com losangos, estado das duas máscaras, cartão do jogador (retrato do papel,
 ## vida, Chi), dica com tecla desenhada, mensagens grandes e tela de fim.
 
@@ -45,24 +45,23 @@ func _ready() -> void:
 	_build_jogador(root)
 	_build_dica(root)
 
-	# Ajuda (canto inferior direito).
+	# Ajuda (canto superior direito; o inferior direito é do minimapa).
 	var help := HBoxContainer.new()
 	help.add_theme_constant_override("separation", 8)
-	help.add_child(Estilo.tecla("Esc", 15))
-	help.add_child(Estilo.rotulo("pausar · controles · configurações", 15, Estilo.TEXTO_FRACO))
+	help.add_child(Estilo.tecla("Esc", Estilo.T_MIN + 1))
+	help.add_child(Estilo.rotulo("pausa e controles", Estilo.T_MIN + 1, Estilo.TEXTO_FRACO, Estilo.FORTE))
 	help.modulate.a = 0.8
 	root.add_child(help)
-	help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 18)
+	help.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 16)
 	help.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	help.grow_vertical = Control.GROW_DIRECTION_BEGIN
 
 	# Contador de FPS (Esc > Configurações > Mostrar FPS).
-	_fps = Estilo.rotulo("", 16, Estilo.OURO)
+	_fps = Estilo.rotulo("", Estilo.T_PEQUENO, Estilo.OURO, Estilo.NUMERO)
 	_fps.position = Vector2(16, 12)
 	root.add_child(_fps)
 
 	# Mensagem grande (centro).
-	_big = Estilo.titulo("", 50, Color.WHITE)
+	_big = Estilo.aviso("", 54, Color.WHITE)
 	_big.set_anchors_preset(Control.PRESET_CENTER)
 	_big.custom_minimum_size = Vector2(1100, 140)
 	_big.position = Vector2(-550, -230)
@@ -107,10 +106,10 @@ func _build_placar(root: Control) -> void:
 			var meio := VBoxContainer.new()
 			meio.alignment = BoxContainer.ALIGNMENT_CENTER
 			meio.add_theme_constant_override("separation", -4)
-			var vs := Estilo.rotulo("VS", 22, Estilo.TEXTO, Estilo.FORTE)
+			var vs := Estilo.rotulo("VS", 26, Estilo.OURO, Estilo.NUMERO)
 			vs.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			meio.add_child(vs)
-			var meta := Estilo.rotulo("%d resgates" % Config.cfg.score_to_win, 13, Estilo.TEXTO_FRACO)
+			var meta := Estilo.rotulo("até %d" % Config.cfg.score_to_win, Estilo.T_MIN, Estilo.TEXTO_FRACO, Estilo.FORTE)
 			meta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			meio.add_child(meta)
 			row.add_child(meio)
@@ -138,7 +137,7 @@ func _placa(team: int) -> PanelContainer:
 	var nome := VBoxContainer.new()
 	nome.alignment = BoxContainer.ALIGNMENT_CENTER
 	nome.add_theme_constant_override("separation", 2)
-	var titulo := Estilo.rotulo(Config.TEAM_NAMES[team].to_upper(), 20, c.lightened(0.45), Estilo.FORTE)
+	var titulo := Estilo.rotulo(Config.TEAM_NAMES[team].to_upper(), 22, c.lightened(0.45), Estilo.FORTE)
 	titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if team == 0 else HORIZONTAL_ALIGNMENT_LEFT
 	nome.add_child(titulo)
 	var pips := HBoxContainer.new()
@@ -150,8 +149,8 @@ func _placa(team: int) -> PanelContainer:
 		pips.add_child(i)
 		_pips[team].append(i)
 	nome.add_child(pips)
-	var num := Estilo.titulo("0", 48, Color.WHITE)
-	num.label_settings.font = Estilo.FORTE  # o zero da Shojumaru parece um redemoinho
+	var num := Estilo.titulo("0", 52, Color.WHITE)
+	num.label_settings.font = Estilo.NUMERO  # o zero da Shojumaru parece um redemoinho
 	num.label_settings.shadow_color = Color(c.lightened(0.3), 0.7)
 	num.custom_minimum_size = Vector2(44, 0)
 	_placar.append(num)
@@ -181,11 +180,11 @@ func _chip(team: int) -> PanelContainer:
 	v.add_theme_constant_override("separation", 0)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(v)
-	var dono := Estilo.rotulo("", 12, Estilo.TEXTO_FRACO, Estilo.FORTE, 3)
+	var dono := Estilo.rotulo("", Estilo.T_MIN, Estilo.TEXTO_FRACO, Estilo.espacada(Estilo.FORTE, 2), 3)
 	dono.name = "Dono"
 	v.add_child(dono)
 	_chip_dono.append(dono)
-	var estado := Estilo.rotulo("", 18, Estilo.TEXTO, Estilo.FORTE)
+	var estado := Estilo.rotulo("", 20, Estilo.TEXTO, Estilo.FORTE)
 	v.add_child(estado)
 	_chip_estado.append(estado)
 	var peso_row := HBoxContainer.new()
@@ -228,13 +227,13 @@ func _build_jogador(root: Control) -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 3)
 	h.add_child(v)
-	_class_label = Estilo.rotulo("Recruta", 26, Color.WHITE, Estilo.TITULO, 6)
+	_class_label = Estilo.rotulo("Recruta", Estilo.T_GRANDE, Color.WHITE, Estilo.TITULO, 6)
 	v.add_child(_class_label)
-	_status_label = Estilo.rotulo("", 15, Estilo.FANTASMA, Estilo.FORTE)
+	_status_label = Estilo.rotulo("", Estilo.T_PEQUENO + 1, Estilo.FANTASMA, Estilo.FORTE)
 	v.add_child(_status_label)
 	_hp_bar = Estilo.barra(Config.team_color(0).lightened(0.25), Vector2(300, 20))
 	v.add_child(_hp_bar)
-	_hp_text = Estilo.rotulo("", 14, Color.WHITE, Estilo.FORTE, 4)
+	_hp_text = Estilo.rotulo("", 15, Color.WHITE, Estilo.NUMERO, 4)
 	_hp_text.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hp_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -246,9 +245,9 @@ func _build_jogador(root: Control) -> void:
 	_power_bar = Estilo.barra(Estilo.MAGENTA, Vector2(170, 10))
 	_power_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	chi_row.add_child(_power_bar)
-	_power_key = Estilo.tecla("Q", 15)
+	_power_key = Estilo.tecla("Q", Estilo.T_MIN + 1)
 	chi_row.add_child(_power_key)
-	_power_label = Estilo.rotulo("", 15, Color(1, 0.8, 0.94), Estilo.FORTE)
+	_power_label = Estilo.rotulo("", Estilo.T_PEQUENO, Color(1, 0.8, 0.94), Estilo.FORTE)
 	chi_row.add_child(_power_label)
 
 	# Estoque de madeira do time (o que o Construtor trouxe para o depósito).
@@ -261,7 +260,7 @@ func _build_jogador(root: Control) -> void:
 	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	ic.custom_minimum_size = Vector2(26, 20)
 	mad_row.add_child(ic)
-	_madeira_label = Estilo.rotulo("", 15, Estilo.OURO, Estilo.FORTE)
+	_madeira_label = Estilo.rotulo("", Estilo.T_PEQUENO, Estilo.OURO, Estilo.FORTE)
 	mad_row.add_child(_madeira_label)
 	_madeira_label.pivot_offset = Vector2(0, 10)
 
@@ -279,9 +278,9 @@ func _build_dica(root: Control) -> void:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	_hint_box.add_child(h)
-	_hint_a = Estilo.rotulo("", 21, Color(1, 0.95, 0.75), Estilo.FORTE)
-	_hint_key = Estilo.tecla("E", 19)
-	_hint_b = Estilo.rotulo("", 21, Color(1, 0.95, 0.75), Estilo.FORTE)
+	_hint_a = Estilo.rotulo("", Estilo.T_MEDIO + 1, Color(1, 0.95, 0.75), Estilo.FORTE)
+	_hint_key = Estilo.tecla("E", Estilo.T_MEDIO - 1)
+	_hint_b = Estilo.rotulo("", Estilo.T_MEDIO + 1, Color(1, 0.95, 0.75), Estilo.FORTE)
 	h.add_child(_hint_a)
 	h.add_child(_hint_key)
 	h.add_child(_hint_b)
@@ -304,9 +303,10 @@ func _build_fim(root: Control) -> void:
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_theme_constant_override("separation", 18)
 	centro.add_child(v)
-	_end_title = Estilo.titulo("", 110, Estilo.OURO)
+	_end_title = Estilo.titulo("", Estilo.T_GIGANTE, Estilo.OURO)
 	v.add_child(_end_title)
-	_end_score = Estilo.rotulo("", 30, Estilo.TEXTO, Estilo.FORTE)
+	v.add_child(Estilo.ornamento(460.0))
+	_end_score = Estilo.rotulo("", 36, Estilo.TEXTO, Estilo.NUMERO)
 	_end_score.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_score)
 	var again := HBoxContainer.new()
@@ -345,13 +345,13 @@ func update_state(game: Game) -> void:
 		var cor := Estilo.TEXTO
 		match p.state:
 			Princess.State.HOME:
-				txt = "segura no castelo" if minha else "no castelo deles"
+				txt = "No castelo" if minha else "No castelo deles"
 				cor = Estilo.TEXTO_FRACO
 			Princess.State.CARRIED:
-				txt = "ROUBADA!" if minha else "com o seu time!"
+				txt = "ROUBADA!" if minha else "Com o seu time!"
 				cor = Estilo.PERIGO if minha else Estilo.CIANO
 			_:
-				txt = "caída no chão"
+				txt = "Caída no chão!"
 				cor = Estilo.OURO
 		_chip_estado[team].text = txt
 		_cor_texto(_chip_estado[team], cor)
@@ -381,7 +381,7 @@ func update_state(game: Game) -> void:
 	else:
 		_power_bar.modulate = Color(1, 1, 1, 0.85)
 		_power_key.visible = false
-		_power_label.text = "CHI %d%%" % int(u.power) if tem_poder else ""
+		_power_label.text = "Chi %d%%" % int(u.power) if tem_poder else ""
 		_cor_texto(_power_label, Color(1, 0.8, 0.94))
 	var mad: int = game.madeira[u.team] if u.team < game.madeira.size() else 0
 	if mad != _madeira_visto:
@@ -391,13 +391,13 @@ func update_state(game: Game) -> void:
 		_madeira_visto = mad
 		_madeira_label.text = "Madeira do time: %d" % mad
 	if u.carried_tora:
-		_status_label.text = "LEVANDO TORA AO DEPÓSITO"
+		_status_label.text = "LEVE A TORA AO DEPÓSITO"
 		_cor_texto(_status_label, Estilo.OURO)
 	elif u.carried_princess:
-		_status_label.text = "CARREGANDO A MÁSCARA"
+		_status_label.text = "LEVE A MÁSCARA PARA CASA"
 		_cor_texto(_status_label, Estilo.OURO)
 	elif u.has_cake:
-		_status_label.text = "levando um espírito"
+		_status_label.text = "LEVE O ESPÍRITO À SUA MÁSCARA"
 		_cor_texto(_status_label, Estilo.FANTASMA)
 	else:
 		_status_label.text = ""
@@ -431,11 +431,10 @@ func set_hint(text: String) -> void:
 
 
 func show_big(text: String, color := Color.WHITE, duration := 2.2) -> void:
-	_big.text = text
+	_big.text = text.to_upper()
 	var ls := _big.label_settings
 	ls.font_color = color
-	ls.outline_color = color.darkened(0.8)
-	ls.shadow_color = Color(color, 0.5)
+	ls.shadow_color = Color(color, 0.45)
 	if _big_tween:
 		_big_tween.kill()
 	_big.modulate.a = 1.0
@@ -449,8 +448,8 @@ func show_big(text: String, color := Color.WHITE, duration := 2.2) -> void:
 func show_end(won: bool) -> void:
 	_end_panel.visible = true
 	var cor := Estilo.OURO if won else Estilo.PERIGO
-	_end_title.text = "VITÓRIA!" if won else "DERROTA..."
+	_end_title.text = "Vitória!" if won else "Derrota..."
 	_end_title.label_settings.font_color = cor
 	_end_title.label_settings.outline_color = cor.darkened(0.8)
 	_end_title.label_settings.shadow_color = Color(cor, 0.55)
-	_end_score.text = "AZUL  %d  ×  %d  VERMELHO" % [_score[0], _score[1]]
+	_end_score.text = "AZUL   %d  ×  %d   VERMELHO" % [_score[0], _score[1]]
