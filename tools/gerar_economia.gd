@@ -5,12 +5,20 @@ extends "res://tools/gerar_cenario_ninja.gd"
 ##   pilha_toras                      pilha do castelo; nós Nivel_1..4 (3 toras cada) e Contador
 ##   maquina_chapeu                   maquininha: Prensa, Gira_engrenagem, Molde, Brilho,
 ##                                    Vapor, Enfeite, Estoque_1..4 e a animação "fabricar"
-##   emblema_<classe>                 enfeite da frente da máquina (guerreiro, arqueiro, monge, construtor)
+##   maquina_<classe>                 maquininha própria da classe (mesmos nós; ver MAQUINAS)
+##   emblema_<classe>                 enfeite da frente da máquina (nome do .tres da classe; armadilheiro e
+##                                    bombardeiro = ramos do Construtor no Ciclo 2.4)
 ## Rode depois de tools/gerar_cenario_ninja.gd:
 ##   godot --headless --path . -s tools/gerar_economia.gd
 ## Tudo de frente para +z (a câmera do jogo olha de +z).
 
 const FABRICAR := 2.0  # duração da animação "fabricar" (s)
+## Maquininha própria de cada classe (nome do .tres): maquina_<classe>.scn, com os
+## mesmos nós e a mesma animação da maquina_chapeu (que fica de reserva).
+const MAQUINAS := ["guerreiro", "arqueiro", "kitsune", "ronin_oni", "arqueiro_yumi", "construtor"]
+
+var _cor_brilho := Color(-1, 0, 0)  # brilho do molde da próxima máquina (-1 = luz1 do tema)
+var _cor_vapor := Color(-1, 0, 0)
 
 
 func _gerar_tudo() -> bool:
@@ -27,7 +35,9 @@ func _init() -> void:
 		_tora(Vector3.ZERO, 0.0); _salvar("tora")
 		_pilha_toras(); _salvar("pilha_toras"); _completar("pilha_toras", false)
 		_maquina(); _salvar("maquina_chapeu"); _completar("maquina_chapeu", true)
-		for c in ["guerreiro", "arqueiro", "monge", "construtor"]:
+		for c in MAQUINAS:
+			_maquina_classe(c); _salvar("maquina_" + c); _completar("maquina_" + c, true)
+		for c in ["guerreiro", "arqueiro", "monge", "construtor", "kitsune", "ronin_oni", "arqueiro_yumi", "armadilheiro", "bombardeiro"]:
 			_emblema(c); _salvar("emblema_" + c)
 	_ligar_temas()
 	print("triângulos (último tema): ", _tris)
@@ -249,6 +259,286 @@ func _maquina() -> void:
 	_vento_pendurado(m, yt + 0.1, 0.5, 0.8)
 
 
+# --- Maquininhas por classe -------------------------------------------------------
+
+const FERRO := Color(0.2, 0.18, 0.19)
+const YM := 0.95  # tampo da mesa (igual em todas: o código só usa os nós)
+
+
+## Parte comum: base, mesa, molde, prateleira de estoque e marcadores. Cada
+## classe veste isso com pórtico, prensa, peça que gira e enfeites próprios.
+func _maquina_base(cor_base: Color, cor_mesa: Color, cor_molde: Color) -> void:
+	_tipo = 3
+	_blocod(Vector3(2.3, 0.22, 1.5), Vector3(0, 0.11, 0), Vector3.ZERO, cor_base, 0.06)
+	_tipo = 1
+	_blocod(Vector3(1.3, 0.14, 0.9), Vector3(0, YM - 0.07, 0), Vector3.ZERO, cor_mesa, 0.04)
+	for x in [-0.55, 0.55]:
+		for z in [-0.35, 0.35]:
+			_blocod(Vector3(0.12, YM - 0.22, 0.12), Vector3(x, 0.22 + (YM - 0.36) / 2, z), Vector3.ZERO, cor_mesa.darkened(0.3), 0.02)
+	_blocod(Vector3(1.9, 0.08, 0.36), Vector3(0, 0.42, 0.9), Vector3.ZERO, cor_mesa.lightened(0.05), 0.03)
+	for x in [-0.88, 0.88]:
+		_blocod(Vector3(0.1, 0.2, 0.3), Vector3(x, 0.31, 0.9), Vector3.ZERO, cor_mesa.darkened(0.3), 0.02)
+	_tipo = 0
+	_cil(0.42, 0.46, 0.08, 12, Vector3(0, YM + 0.04, 0.05), Vector3.ZERO, FERRO)
+	_cil(0.47, 0.47, 0.04, 12, Vector3(0, YM + 0.08, 0.05), Vector3.ZERO, cor_molde)
+	for k in 4:
+		_pecas_marcador("Estoque_%d" % (k + 1), Vector3(-0.7 + k * 0.47, 0.47, 0.92))
+	_pecas_marcador("Molde", Vector3(0, YM + 0.1, 0.05))
+
+
+## Placa redonda do enfeite em `pos`, inclinada para a câmera.
+func _placa(pos: Vector3, fundo: Color, aro: Color, r := 0.34) -> void:
+	_cil(r, r, 0.07, 14, pos, Vector3(78, 0, 0), fundo)
+	_cil(r + 0.04, r + 0.04, 0.04, 14, pos - Vector3(0, 0, 0.03), Vector3(78, 0, 0), aro)
+	_pecas_marcador("Enfeite", pos + Vector3(0, 0.01, 0.05))
+
+
+## Prensa: o que for desenhado em `desenho` (em volta da origem) vira o nó que desce.
+func _prensa(desenho: Callable, y := 1.75) -> void:
+	var g := _inicio_peca()
+	desenho.call()
+	_viga(Vector3(0, 0.17, 0), Vector3(0, 0.55, 0), 0.04, P.corda)
+	_fim_peca(g, "Prensa", Transform3D(Basis(), Vector3(0, y, 0.05)))
+
+
+## Peça que gira (eixo z, de frente para a câmera), com mancal atrás.
+func _gira(nome: String, centro: Vector3, vel: float, desenho: Callable) -> void:
+	_cil(0.06, 0.06, 0.3, 6, centro - Vector3(0, 0, 0.12), Vector3(90, 0, 0), FERRO)
+	var g := _inicio_peca()
+	desenho.call()
+	_fim_peca(g, nome, Transform3D(Basis(), centro), Vector2(vel, 0.0))
+
+
+func _maquina_classe(c: String) -> void:
+	_rng.seed = 80 + c.length()
+	match c:
+		"guerreiro": _maq_forja()
+		"arqueiro": _maq_shuriken()
+		"kitsune": _maq_raposa()
+		"ronin_oni": _maq_oni()
+		"arqueiro_yumi": _maq_yumi()
+		"construtor": _maq_serraria()
+
+
+## Samurai: forja. Fornalha de pedra com a boca acesa, chaminé (fumaça),
+## martelo-pilão de ferro, bigorna sob o molde e um suporte com duas katanas.
+func _maq_forja() -> void:
+	_cor_brilho = Color(1.0, 0.45, 0.15)
+	_cor_vapor = Color(0.35, 0.32, 0.36)
+	var laca: Color = P.torii
+	_maquina_base(P.pedra2, P.madeira2, laca)
+	_cil(0.3, 0.42, 0.12, 8, Vector3(0, YM + 0.0, 0.05), Vector3.ZERO, FERRO.lightened(0.1))  # bigorna
+	# Pórtico de laca vermelha com trave curva (kasagi).
+	for x in [-0.85, 0.85]:
+		_viga(Vector3(x, 0.2, -0.15), Vector3(x, 2.35, -0.15), 0.18, laca.darkened(0.2))
+	for k in 5:
+		var x0 := -1.15 + k * 0.46
+		_blocod(Vector3(0.48, 0.16, 0.28), Vector3(x0 + 0.23, 2.42 + absf(x0 + 0.23) * 0.12, -0.15), Vector3(0, 0, -signf(x0 + 0.23) * 7), Color(0.1, 0.08, 0.1), 0.04)
+	_blocod(Vector3(1.8, 0.12, 0.22), Vector3(0, 2.18, -0.15), Vector3.ZERO, laca, 0.03)
+	_placa(Vector3(0, 2.15, 0.08), Color(0.1, 0.08, 0.12), P.ouro.darkened(0.3), 0.28)
+	# Fornalha à esquerda: pedras, boca acesa, chaminé.
+	_tipo = 3
+	_blocod(Vector3(0.7, 0.9, 0.8), Vector3(-1.15, 0.65, -0.05), Vector3(0, 0, 0), P.pedra, 0.08)
+	_tipo = 0
+	_caixa(Vector3(0.36, 0.28, 0.04), Vector3(-1.15, 0.6, 0.36), Vector3.ZERO, Color(1.0, 0.5, 0.15), true)
+	_cil(0.2, 0.26, 1.2, 7, Vector3(-1.2, 1.7, -0.1), Vector3.ZERO, P.pedra2)
+	_pecas_marcador("Vapor", Vector3(-1.2, 2.4, -0.1))
+	# Suporte de katanas à direita.
+	_blocod(Vector3(0.12, 0.9, 0.3), Vector3(1.2, 0.65, 0.2), Vector3.ZERO, Color(0.1, 0.08, 0.1), 0.02)
+	for k in 2:
+		_blocod(Vector3(0.9, 0.05, 0.05), Vector3(1.2, 0.75 + k * 0.28, 0.38), Vector3(0, 0, 8 - k * 4), Color(0.78, 0.8, 0.86), 0.01)
+		_blocod(Vector3(0.25, 0.06, 0.06), Vector3(0.82, 0.71 + k * 0.28, 0.39), Vector3(0, 0, 8 - k * 4), Color(0.12, 0.08, 0.1), 0.01)
+	_prensa(func() -> void:
+		_blocod(Vector3(0.6, 0.4, 0.5), Vector3.ZERO, Vector3.ZERO, FERRO.lightened(0.05), 0.06)
+		_blocod(Vector3(0.66, 0.08, 0.56), Vector3(0, 0.12, 0), Vector3.ZERO, laca, 0.02)
+		_cil(0.24, 0.3, 0.1, 8, Vector3(0, -0.24, 0), Vector3.ZERO, FERRO))
+	_gira("Gira_engrenagem", Vector3(0.95, 1.55, 0.05), 1.3, func() -> void:
+		_engrenagem(10, 0.22, 0.1, P.madeira2, 0.0))
+
+
+## Ninja de Shuriken: esmeril. Roda de afiar grande girando rápido (faíscas
+## no "vapor"), prensa que estampa a estrela, varal de pano preto e shurikens.
+func _maq_shuriken() -> void:
+	_cor_brilho = Color(0.55, 0.85, 1.0)
+	_cor_vapor = Color(1.0, 0.8, 0.45)
+	var preto := Color(0.1, 0.09, 0.12)
+	_maquina_base(P.pedra2, Color(0.22, 0.16, 0.16), Color(0.7, 0.72, 0.8))
+	for x in [-0.85, 0.85]:
+		_viga(Vector3(x, 0.2, -0.15), Vector3(x * 0.92, 2.3, -0.15), 0.14, preto)
+	_blocod(Vector3(1.95, 0.16, 0.24), Vector3(0, 2.35, -0.15), Vector3(0, 0, -1.5), preto, 0.04)
+	# Pano preto pendurado atrás (balança no vento).
+	var m := _marca()
+	for k in 3:
+		_blocod(Vector3(0.52, 0.9, 0.02), Vector3(-0.55 + k * 0.55, 1.85, -0.3), Vector3(0, 0, (k - 1) * 2), Color(0.14, 0.12, 0.2).lightened(k * 0.04), 0.01)
+	_vento_pendurado(m, 2.3, 0.9, 1.0)
+	_placa(Vector3(0, 2.62, 0.0), preto, Color(0.7, 0.72, 0.8), 0.3)
+	# Shurikens cravadas no poste esquerdo.
+	for k in 3:
+		_cil(0.11, 0.11, 0.02, 4, Vector3(-0.85, 0.9 + k * 0.4, 0.03), Vector3(90, k * 20.0, 0), Color(0.75, 0.78, 0.85))
+	_pecas_marcador("Vapor", Vector3(1.05, 1.0, 0.35))
+	_prensa(func() -> void:
+		_blocod(Vector3(0.55, 0.32, 0.5), Vector3.ZERO, Vector3.ZERO, preto.lightened(0.1), 0.05)
+		for k in 4:
+			var a := TAU * k / 4.0
+			_blocod(Vector3(0.12, 0.06, 0.36), Vector3(0, -0.2, 0), Vector3(0, rad_to_deg(a) + 45, 0), Color(0.75, 0.78, 0.85), 0.01))
+	# Roda de afiar (pedra) com eixo e manivela.
+	_blocod(Vector3(0.14, 0.75, 0.3), Vector3(1.15, 0.6, 0.05), Vector3.ZERO, Color(0.22, 0.16, 0.16), 0.02)
+	_gira("Gira_esmeril", Vector3(1.15, 1.25, 0.2), 4.0, func() -> void:
+		_cil(0.48, 0.48, 0.14, 14, Vector3.ZERO, Vector3(90, 0, 0), P.pedra)
+		_cil(0.22, 0.22, 0.16, 10, Vector3.ZERO, Vector3(90, 0, 0), P.pedra2)
+		_viga(Vector3(0, 0, 0.1), Vector3(0.3, 0.0, 0.1), 0.05, FERRO))
+
+
+## Kitsune (Mago): santuário da raposa. Mini torii, corda com papéis shide,
+## duas raposas de pedra, carimbo hanko gigante e um anel de fogo-raposa
+## girando atrás do molde.
+func _maq_raposa() -> void:
+	_cor_brilho = Color(0.45, 0.85, 1.0)
+	_cor_vapor = Color(0.75, 0.9, 1.0)
+	var vermelho: Color = P.torii
+	_maquina_base(P.pedra, Color(0.3, 0.12, 0.1), vermelho)
+	# Torii.
+	for x in [-0.88, 0.88]:
+		_cil(0.09, 0.11, 2.3, 8, Vector3(x, 1.35, -0.2), Vector3.ZERO, vermelho)
+	_blocod(Vector3(2.4, 0.14, 0.24), Vector3(0, 2.5, -0.2), Vector3.ZERO, Color(0.1, 0.08, 0.1), 0.04)
+	_blocod(Vector3(2.1, 0.12, 0.2), Vector3(0, 2.3, -0.2), Vector3.ZERO, vermelho, 0.03)
+	# Corda sagrada com shide.
+	var m := _marca()
+	_viga(Vector3(-0.85, 2.12, -0.05), Vector3(0.85, 2.12, -0.05), 0.07, P.corda)
+	for k in 4:
+		var x := -0.6 + k * 0.4
+		_blocod(Vector3(0.09, 0.3, 0.015), Vector3(x, 1.94, -0.03), Vector3(0, 0, 8 * (1 - 2 * (k % 2))), P.branco, 0.0)
+	_vento_pendurado(m, 2.15, 0.35, 1.2)
+	_placa(Vector3(0, 2.75, -0.1), Color(0.1, 0.08, 0.12), vermelho, 0.28)
+	# Raposas de pedra sentadas nas pontas da prateleira.
+	for s in [-1.0, 1.0]:
+		var b := Vector3(s * 1.2, 0.22, 0.45)
+		_esfera(0.2, b + Vector3(0, 0.25, 0), Vector3(0.9, 1.3, 0.8), P.pedra.lightened(0.15), false, 7, 4)
+		_esfera(0.13, b + Vector3(0, 0.62, 0.05), Vector3(1, 0.9, 1.1), P.pedra.lightened(0.15), false, 7, 4)
+		for o in [-1.0, 1.0]:
+			_cil(0.0, 0.05, 0.14, 4, b + Vector3(o * 0.07, 0.76, 0.03), Vector3.ZERO, P.pedra.lightened(0.15))
+		_caixa(Vector3(0.22, 0.08, 0.02), b + Vector3(0, 0.45, 0.17), Vector3.ZERO, vermelho)  # babador
+		_esfera(0.13, b + Vector3(-s * 0.18, 0.12, -0.1), Vector3(1.6, 0.6, 0.7), P.pedra.lightened(0.15), false, 6, 3)  # cauda
+	_pecas_marcador("Vapor", Vector3(0, 1.3, -0.25))
+	_prensa(func() -> void:  # carimbo hanko
+		_cil(0.3, 0.3, 0.42, 12, Vector3.ZERO, Vector3.ZERO, Color(0.85, 0.75, 0.55))
+		_cil(0.31, 0.31, 0.06, 12, Vector3(0, -0.22, 0), Vector3.ZERO, vermelho)
+		_cil(0.12, 0.16, 0.2, 8, Vector3(0, 0.28, 0), Vector3.ZERO, Color(0.1, 0.08, 0.1)), 1.8)
+	# Anel de fogo-raposa: 6 chamas girando atrás do molde.
+	_gira("Gira_fogo_raposa", Vector3(0, 1.45, -0.32), 1.6, func() -> void:
+		for k in 6:
+			var a := TAU * k / 6.0
+			_esfera(0.08, Vector3(cos(a), sin(a), 0) * 0.62, Vector3(1, 1.3, 1), Color(0.45, 0.85, 1.0), true, 6, 3)
+		_toro(0.58, 0.62, Vector3.ZERO, Vector3(1, 1, 0.3), P.corda.darkened(0.3)))
+
+
+## Ronin Oni: fornalha oni. Ferro preto e pedra, máscara oni no alto com
+## chifres, pontas nos postes, correntes e a prensa cravejada (kanabo).
+func _maq_oni() -> void:
+	_cor_brilho = Color(0.55, 1.0, 0.5)
+	_cor_vapor = Color(0.3, 0.2, 0.35)
+	var preto := Color(0.08, 0.07, 0.09)
+	var vermelho: Color = P.torii.darkened(0.15)
+	_maquina_base(P.pedra2.darkened(0.2), Color(0.18, 0.12, 0.12), Color(0.45, 1.0, 0.55))
+	for x in [-0.9, 0.9]:
+		_blocod(Vector3(0.3, 2.3, 0.3), Vector3(x, 1.35, -0.15), Vector3.ZERO, preto, 0.05)
+		for k in 3:
+			_cil(0.0, 0.06, 0.2, 5, Vector3(x - signf(x) * 0.0, 0.8 + k * 0.6, 0.06), Vector3(90, 0, 0), FERRO.lightened(0.2))
+	_blocod(Vector3(2.3, 0.3, 0.36), Vector3(0, 2.6, -0.15), Vector3.ZERO, preto, 0.06)
+	# Máscara oni em cima da trave: o enfeite fica na testa dela.
+	_esfera(0.42, Vector3(0, 2.95, -0.05), Vector3(1.0, 0.95, 0.5), vermelho, false, 9, 5)
+	for s in [-1.0, 1.0]:
+		_cil(0.0, 0.1, 0.45, 6, Vector3(s * 0.33, 3.35, -0.05), Vector3(0, 0, -s * 28), Color(0.9, 0.86, 0.75))
+		_caixa(Vector3(0.14, 0.05, 0.02), Vector3(s * 0.15, 2.92, 0.17), Vector3(0, 0, s * 15), Color(1.0, 0.85, 0.3), true)
+		_cil(0.0, 0.04, 0.12, 4, Vector3(s * 0.12, 2.7, 0.15), Vector3(180, 0, 0), P.branco)
+	_pecas_marcador("Enfeite", Vector3(0, 3.12, 0.2))
+	# Correntes penduradas.
+	for x in [-0.6, 0.6]:
+		for k in 4:
+			_toro(0.03, 0.06, Vector3(x, 2.35 - k * 0.12, 0.1), Vector3(1, 1.5, 1), FERRO.lightened(0.15))
+	_pecas_marcador("Vapor", Vector3(0.0, 2.9, 0.1))
+	_prensa(func() -> void:
+		_cil(0.3, 0.34, 0.45, 8, Vector3.ZERO, Vector3.ZERO, preto.lightened(0.08))
+		for k in 8:
+			var a := TAU * k / 8.0
+			_cil(0.0, 0.05, 0.12, 4, Vector3(cos(a) * 0.33, -0.05 + (k % 2) * 0.15, sin(a) * 0.33), Vector3(0, -rad_to_deg(a), 90), FERRO.lightened(0.25)), 1.8)
+	_gira("Gira_engrenagem", Vector3(1.2, 1.25, 0.05), 0.8, func() -> void:
+		_engrenagem(12, 0.22, 0.12, FERRO.lightened(0.1), 0.0)
+		_cil(0.08, 0.08, 0.16, 6, Vector3.ZERO, Vector3(90, 0, 0), vermelho))
+
+
+## Arqueiro Yumi: ateliê do arco. Pórtico alto e assimétrico de bambu, um yumi
+## gigante armado em cima, aljava com flechas e o alvo de palha (makiwara)
+## girando devagar.
+func _maq_yumi() -> void:
+	_cor_brilho = Color(1.0, 0.9, 0.5)
+	var bambu: Color = P.bambu
+	_maquina_base(P.pedra2, P.madeira2.lightened(0.05), P.corda)
+	_viga(Vector3(-0.9, 0.2, -0.15), Vector3(-0.85, 2.7, -0.15), 0.14, bambu)
+	_viga(Vector3(0.9, 0.2, -0.15), Vector3(0.88, 2.2, -0.15), 0.14, bambu)
+	_viga(Vector3(-1.0, 2.25, -0.15), Vector3(1.0, 2.25, -0.15), 0.12, bambu.darkened(0.15))
+	# Yumi gigante (2/3 acima do punho, como o de verdade) e a corda.
+	var pts := []
+	for k in 9:
+		var t := lerpf(-0.75, 1.35, k / 8.0)
+		pts.append(Vector3(-0.9 + t * 0.95, 2.55 + sin(t * 1.2) * 0.04 - 0.08 * t * t, -0.05))
+	for k in 8:
+		_viga(pts[k], pts[k + 1], 0.06, Color(0.25, 0.12, 0.08))
+	_viga(pts[0], pts[8], 0.012, P.branco)
+	_placa(Vector3(0.0, 2.35, 0.05), Color(0.1, 0.08, 0.12), bambu, 0.24)
+	# Aljava com flechas à esquerda.
+	_cil(0.14, 0.12, 0.7, 8, Vector3(-1.2, 0.6, 0.15), Vector3(0, 0, 10), Color(0.25, 0.12, 0.08))
+	for k in 4:
+		_viga(Vector3(-1.2 + k * 0.04, 0.9, 0.1 + k * 0.03), Vector3(-1.3 + k * 0.06, 1.3, 0.1 + k * 0.03), 0.02, bambu.lightened(0.2))
+		_caixa(Vector3(0.05, 0.12, 0.02), Vector3(-1.3 + k * 0.06, 1.33, 0.1 + k * 0.03), Vector3.ZERO, P.branco)
+	_pecas_marcador("Vapor", Vector3(1.2, 1.3, 0.3))
+	_prensa(func() -> void:  # viga de curvar o bambu
+		_blocod(Vector3(0.8, 0.18, 0.3), Vector3.ZERO, Vector3(0, 0, 0), P.madeira2.darkened(0.15), 0.04)
+		_cil(0.26, 0.3, 0.12, 10, Vector3(0, -0.15, 0), Vector3.ZERO, bambu.darkened(0.2)))
+	# Alvo de palha (makiwara) na direita.
+	_blocod(Vector3(0.12, 0.9, 0.12), Vector3(1.2, 0.6, 0.05), Vector3.ZERO, P.madeira, 0.02)
+	_gira("Gira_alvo", Vector3(1.2, 1.3, 0.15), 0.6, func() -> void:
+		_cil(0.42, 0.42, 0.12, 14, Vector3.ZERO, Vector3(90, 0, 0), P.corda)
+		_cil(0.3, 0.3, 0.13, 14, Vector3.ZERO, Vector3(90, 0, 0), P.branco)
+		_cil(0.18, 0.18, 0.14, 12, Vector3.ZERO, Vector3(90, 0, 0), Color(0.1, 0.08, 0.1))
+		_cil(0.07, 0.07, 0.15, 8, Vector3.ZERO, Vector3(90, 0, 0), P.torii)
+		_viga(Vector3(0.08, 0.05, 0.08), Vector3(0.3, 0.2, 0.5), 0.02, bambu.lightened(0.2)))
+
+
+## Construtor: serraria. Andaime de bambu amarrado, serra circular grande,
+## tora em cima da mesa lateral, serragem e a prensa-malho de madeira.
+func _maq_serraria() -> void:
+	_cor_brilho = Color(1.0, 0.8, 0.4)
+	_cor_vapor = Color(0.85, 0.7, 0.5)
+	var bambu: Color = P.bambu
+	_maquina_base(P.pedra2, P.madeira2, P.corda.darkened(0.2))
+	for x in [-0.88, 0.88]:
+		_viga(Vector3(x, 0.2, -0.15), Vector3(x, 2.35, -0.15), 0.13, bambu)
+		_toro(0.07, 0.11, Vector3(x, 2.15, -0.15), Vector3(1, 0.6, 1), P.corda)
+	_viga(Vector3(-1.05, 2.3, -0.15), Vector3(1.05, 2.3, -0.15), 0.12, bambu.darkened(0.15))
+	_viga(Vector3(-0.88, 0.6, -0.2), Vector3(0.88, 2.2, -0.2), 0.07, bambu.darkened(0.1))  # escora
+	_placa(Vector3(0, 2.6, -0.05), P.madeira2, P.corda.darkened(0.2), 0.28)
+	# Toras empilhadas à esquerda e serragem no chão.
+	for k in 3:
+		_tora(Vector3(-1.2, 0.36 + (k / 2) * 0.32, -0.25 + (k % 2) * 0.42 + (k / 2) * 0.2), 90.0, 0.9, 0.16)
+	for k in 6:
+		_esfera(0.12, Vector3(0.6 + k * 0.12, 0.24, 0.55 - (k % 2) * 0.2), Vector3(1.3, 0.3, 1), P.madeira2.lightened(0.35), false, 5, 2)
+	_pecas_marcador("Vapor", Vector3(1.1, 1.0, 0.4))
+	_prensa(func() -> void:  # malho
+		_cil(0.25, 0.25, 0.5, 10, Vector3.ZERO, Vector3(0, 0, 90), P.madeira2.darkened(0.1))
+		for s in [-1.0, 1.0]:
+			_cil(0.26, 0.26, 0.05, 10, Vector3(s * 0.2, 0, 0), Vector3(0, 0, 90), FERRO))
+	_blocod(Vector3(0.14, 0.75, 0.3), Vector3(1.15, 0.6, 0.0), Vector3.ZERO, P.madeira, 0.02)
+	_gira("Gira_serra", Vector3(1.15, 1.25, 0.15), 6.0, func() -> void:
+		_cil(0.45, 0.45, 0.03, 16, Vector3.ZERO, Vector3(90, 0, 0), Color(0.72, 0.74, 0.8))
+		for k in 16:
+			var a := TAU * k / 16.0
+			var d := Vector3(cos(a), sin(a), 0)
+			var l := Vector3(-sin(a), cos(a), 0)
+			_tri(d * 0.45 + l * 0.08, d * 0.55, d * 0.45 - l * 0.02, Color(0.72, 0.74, 0.8), Vector3(0, 0, 1))
+		_cil(0.1, 0.1, 0.06, 8, Vector3.ZERO, Vector3(90, 0, 0), FERRO))
+
+
 ## Depois de salvo: Marker3D e, na máquina, brilho do molde, vapor e a animação "fabricar".
 ## Prensa desce (0,25-0,45 s), molde brilha (0,45-1,1 s), chapéu sai do
 ## molde com estica e encolhe (0,8-1,2 s) e o vapor sopra (0,45 s).
@@ -285,7 +575,8 @@ func _efeitos_maquina(raiz: Node3D, marc: Dictionary) -> void:
 	brilho.mesh = anel
 	var mb := StandardMaterial3D.new()
 	mb.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mb.albedo_color = Color(P.luz1.r * 2.2, P.luz1.g * 2.0, P.luz1.b * 1.6)
+	var cb: Color = P.luz1 if _cor_brilho.r < 0 else _cor_brilho
+	mb.albedo_color = Color(cb.r * 2.2, cb.g * 2.0, cb.b * 1.6)
 	brilho.material_override = mb
 	brilho.position = marc["Molde"].position
 	brilho.scale = Vector3(1, 0.4, 1)
@@ -330,7 +621,9 @@ func _efeitos_maquina(raiz: Node3D, marc: Dictionary) -> void:
 	mv.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mv.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mv.vertex_color_use_as_albedo = true
-	mv.albedo_color = P.branco.lerp(P.sombra, 0.15)
+	mv.albedo_color = P.branco.lerp(P.sombra, 0.15) if _cor_vapor.r < 0 else _cor_vapor
+	_cor_brilho = Color(-1, 0, 0)
+	_cor_vapor = Color(-1, 0, 0)
 	bola.material = mv
 	vapor.mesh = bola
 	vapor.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -406,6 +699,39 @@ func _emblema(classe: String) -> void:
 				var a := TAU * k / 6.0 + PI / 2
 				_esfera(0.11, Vector3(cos(a) * 0.15, sin(a) * 0.15, 0), Vector3(1.0, 0.55, 0.4), P.branco if k % 2 else P.chao_folha2, false, 6, 3)
 			_esfera(0.08, Vector3(0, 0, 0.03), Vector3(1, 1, 0.6), ouro, false, 6, 3)
+		"kitsune":  # máscara de raposa com chama-fantasma entre as orelhas
+			var branco: Color = P.branco
+			_tri(Vector3(-0.2, 0.05, 0), Vector3(-0.08, 0.12, 0), Vector3(-0.2, 0.3, 0), branco, Vector3(0, 0, 1))
+			_tri(Vector3(0.08, 0.12, 0), Vector3(0.2, 0.05, 0), Vector3(0.2, 0.3, 0), branco, Vector3(0, 0, 1))
+			_esfera(0.17, Vector3(0, -0.02, 0), Vector3(1.15, 0.9, 0.4), branco, false, 8, 4)
+			_esfera(0.06, Vector3(0, -0.17, 0.04), Vector3(1, 0.8, 0.8), Color(0.1, 0.06, 0.08), false, 6, 3)
+			for sx in [-1.0, 1.0]:
+				_blocod(Vector3(0.09, 0.025, 0.03), Vector3(sx * 0.08, 0.0, 0.06), Vector3(0, 0, sx * 18), P.torii, 0.005)
+			_cil(0.0, 0.07, 0.18, 6, Vector3(0, 0.3, 0.02), Vector3.ZERO, P.luz1, true)
+		"ronin_oni":  # chifres de oni sobre um kanabo (clava cravejada)
+			_viga(Vector3(-0.2, -0.26, 0), Vector3(0.18, 0.2, 0), 0.1, Color(0.12, 0.08, 0.1))
+			for k in 4:
+				_esfera(0.03, Vector3(-0.08 + k * 0.08, -0.1 + k * 0.1, 0.05), Vector3.ONE, ouro, false, 4, 2)
+			for sx in [-1.0, 1.0]:
+				_cil(0.0, 0.06, 0.22, 5, Vector3(sx * 0.17, 0.18, 0), Vector3(0, 0, -sx * 25), P.torii.darkened(0.2))
+		"arqueiro_yumi":  # arco longo assimétrico com flecha
+			for k in 6:
+				var a0 := lerpf(-1.1, 1.1, k / 6.0)
+				var a1 := lerpf(-1.1, 1.1, (k + 1) / 6.0)
+				_viga(Vector3(-0.12 + cos(a0) * 0.06, sin(a0) * 0.3 + 0.02, 0), Vector3(-0.12 + cos(a1) * 0.06, sin(a1) * 0.3 + 0.02, 0), 0.035, P.madeira2)
+			_viga(Vector3(-0.08, 0.29, 0.01), Vector3(-0.08, -0.25, 0.01), 0.01, P.branco)
+			_viga(Vector3(-0.22, -0.05, 0.02), Vector3(0.26, -0.05, 0.02), 0.02, P.madeira2.lightened(0.2))
+			_tri(Vector3(0.26, 0.0, 0.03), Vector3(0.26, -0.1, 0.03), Vector3(0.34, -0.05, 0.03), aco, Vector3(0, 0, 1))
+		"armadilheiro":  # estrepe (makibishi): quatro pontas
+			for d in [Vector3(0, 1, 0), Vector3(-0.94, -0.33, 0.3), Vector3(0.94, -0.33, 0.3), Vector3(0, -0.33, -0.94)]:
+				var b := Basis(Vector3.UP.cross(d).normalized() if absf(d.y) < 0.99 else Vector3.RIGHT, Vector3.UP.angle_to(d))
+				_cil(0.0, 0.05, 0.22, 5, b * Vector3(0, 0.11, 0), b.get_euler() * 180.0 / PI, aco)
+			_esfera(0.05, Vector3.ZERO, Vector3.ONE, aco.darkened(0.3), false, 5, 3)
+		"bombardeiro":  # bomba de pólvora com pavio aceso
+			_esfera(0.17, Vector3(0, -0.04, 0), Vector3.ONE, Color(0.12, 0.1, 0.13), false, 8, 5)
+			_cil(0.05, 0.06, 0.06, 6, Vector3(0.08, 0.13, 0), Vector3(0, 0, -30), aco.darkened(0.3))
+			_viga(Vector3(0.1, 0.15, 0), Vector3(0.17, 0.25, 0), 0.02, P.corda)
+			_esfera(0.05, Vector3(0.18, 0.27, 0.02), Vector3.ONE, P.luz2, true, 5, 3)
 		"construtor":  # machado de lenhador
 			_viga(Vector3(-0.16, -0.24, 0), Vector3(0.12, 0.26, 0), 0.06, P.madeira2)
 			_blocod(Vector3(0.24, 0.17, 0.04), Vector3(0.0, 0.2, 0.01), Vector3(0, 0, -30), aco, 0.02)

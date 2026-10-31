@@ -4,7 +4,7 @@ extends SceneTree
 ## o contador de madeira. Também gera o ícone de tora (assets/ui/icone_tora.png).
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
 ##     --rendering-method gl_compatibility --audio-driver Dummy -s tools/prancha_economia.gd -- DIR [--icone]
-## --icone: só gera o ícone (rode antes do --import, o contador o pré-carrega).
+## --emblemas: só a fileira de enfeites das classes. --icone: só gera o ícone (rode antes do --import, o contador o pré-carrega).
 ## Salva DIR/plantas.png, DIR/maquina_N.png, DIR/contador.png; a montagem é tools/montar_economia.py.
 ## Sem tipos do jogo aqui (o script compila antes dos autoloads).
 
@@ -25,6 +25,41 @@ func _rodar() -> void:
 		quit()
 		return
 	var cfg: Resource = load("res://config/temas/%s.tres" % TEMA)
+	if args.has("--maquinas"):  # a maquininha de cada classe, no meio do "fabricar"
+		root.size = Vector2i(420, 470)
+		var hp0: Script = load("res://scripts/items/hat_pad.gd")
+		for c in ["guerreiro", "arqueiro", "kitsune", "ronin_oni", "arqueiro_yumi", "construtor"]:
+			var st: Resource = load("res://config/classes/%s.tres" % c)
+			var c0 := _cena(cfg)
+			var mq := _peca(c0, "maquina_" + c, Vector3.ZERO)
+			mq.get_node("Enfeite").add_child(_carregar("emblema_" + c))
+			var ch: Node3D = hp0.make_hat(st.hat_style, st.hat_color)
+			ch.scale = Vector3.ONE * 0.85
+			mq.get_node("Molde").add_child(ch)
+			for k in 2:
+				var h: Node3D = hp0.make_hat(st.hat_style, st.hat_color)
+				h.scale = Vector3.ONE * 0.62
+				mq.get_node("Estoque_%d" % (k + 1)).add_child(h)
+			var ap0: AnimationPlayer = mq.get_node("AnimationPlayer")
+			ap0.play("fabricar")
+			ap0.seek(1.0, true)
+			ap0.pause()
+			(mq.get_node("Vapor") as CPUParticles3D).emitting = true
+			for k in 14:
+				await process_frame
+			await _foto(c0, Vector3(0, 1.4, 0), Vector3(0.3, 0.45, 1), 7.0, 40.0, saida.path_join("maq_%s.png" % c))
+		quit()
+		return
+	if args.has("--emblemas"):  # só os enfeites do elenco do Ciclo 2.4, lado a lado
+		root.size = Vector2i(1280, 300)
+		var c0 := _cena(cfg)
+		var lista := ["guerreiro", "arqueiro", "kitsune", "ronin_oni", "arqueiro_yumi", "armadilheiro", "bombardeiro"]
+		for k in lista.size():
+			var e := _peca(c0, "emblema_" + lista[k], Vector3((k - 3) * 1.0, 1.0, 0))
+			e.scale = Vector3.ONE * 1.4
+		await _foto(c0, Vector3(0, 1.0, 0), Vector3(0, 0.15, 1), 6.2, 40.0, saida.path_join("emblemas.png"))
+		quit()
+		return
 	# 1. Plantas: árvore e bambu, broto -> jovem -> adulta.
 	root.size = Vector2i(1280, 440)
 	var cena := _cena(cfg)
