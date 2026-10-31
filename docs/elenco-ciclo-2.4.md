@@ -33,5 +33,8 @@ Entra no **Ciclo 2.4**, junto com as habilidades "uau". O 2.3 fecha a economia.
   Fumaça). +X% de velocidade por casinha erguida (`GameConfig`).
 - **Maquininha nível 2**: troca de modelo (Visual) + `maquina_n2_*` (os
   números já estão no `game_config.tres`).
-- **Visual**: emblemas e maquininhas para Kitsune, Ronin Oni, Yumi,
-  Armadilheiro e Bombardeiro (hoje existem guerreiro, arqueiro, monge e construtor).
+- **Visual**: emblemas já prontos no branch do Visual (commit 27227b1):
+  `emblema_kitsune`, `emblema_ronin_oni`, `emblema_arqueiro_yumi`,
+  `emblema_armadilheiro`, `emblema_bombardeiro`. O nome segue o arquivo da
+  classe: os ramos do Construtor devem se chamar `config/classes/armadilheiro.tres`
+  e `bombardeiro.tres`.
