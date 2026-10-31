@@ -30,6 +30,6 @@ func _process(delta: float) -> void:
 	Settings.apply()
 	Settings.save()
 	if hud:
-		hud.show_big("Qualidade: %s (%d FPS)\nmude em Esc > Configurações" % [Settings.QUALITIES[Settings.quality], int(fps)], Color(1, 0.9, 0.6), 2.0)
+		hud.show_big("Gráficos: %s (%d FPS)\nMude em Esc › Configurações" % [Settings.QUALITIES[Settings.quality], int(fps)], Color(1, 0.9, 0.6), 2.0)
 	_t = 0.0
 	_frames = 0

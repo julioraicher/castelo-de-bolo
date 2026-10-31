@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://b1u6wbxnnw51h"
-path="res://.godot/imported/ChakraPetch-Medium.ttf-78a016a08515eee6e20491208eeba7e4.fontdata"
+uid="uid://dqvsd0nfhvtwg"
+path="res://.godot/imported/BarlowCondensed-ExtraBold.ttf-7eb92c60cd4c391cd0c4a1ba64115416.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/ChakraPetch-Medium.ttf"
-dest_files=["res://.godot/imported/ChakraPetch-Medium.ttf-78a016a08515eee6e20491208eeba7e4.fontdata"]
+source_file="res://assets/fonts/BarlowCondensed-ExtraBold.ttf"
+dest_files=["res://.godot/imported/BarlowCondensed-ExtraBold.ttf-7eb92c60cd4c391cd0c4a1ba64115416.fontdata"]
 
 [params]
 
