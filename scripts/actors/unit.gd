@@ -917,7 +917,7 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		return
 	if _dodge_t > 0.0:
 		if attacker and amount > 0.0:
-			_esquiva_perfeita()
+			_esquiva_perfeita(attacker)
 		return
 	if attacker and attacker.team != Config.TEAM_BLUE:
 		amount *= Settings.bot_damage_mult()
@@ -974,13 +974,16 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 ## Esquiva perfeita: um golpe passou por dentro do dash. O dash continua
 ## igual (pedido do Julio); só ganha recompensa e aviso: Chi, "ESQUIVA!",
 ## rastro e, para o jogador, um instante de câmera lenta.
-func _esquiva_perfeita() -> void:
+func _esquiva_perfeita(attacker: Unit) -> void:
 	var agora := Time.get_ticks_msec() / 1000.0
 	if agora - _esquiva_t < 0.6:
 		return
 	_esquiva_t = agora
 	add_power(Config.cfg.chi_esquiva)
-	Fx.damage_number(game, global_position + Vector3(0, 0.5, 0), "ESQUIVA!", Color(0.55, 1.0, 1.0))
+	# O texto só quando o jogador está na jogada: bot contra bot já tem
+	# número de dano demais na tela.
+	if is_player or attacker.is_player:
+		Fx.damage_number(game, global_position + Vector3(0, 0.5, 0), "ESQUIVA!", Color(0.55, 1.0, 1.0))
 	Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(0.55, 1.0, 1.0), 10, 4.0)
 	Sfx.play("dodge", global_position, 0.2)
 	if is_player:
