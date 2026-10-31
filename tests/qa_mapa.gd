@@ -13,6 +13,7 @@ extends Node
 ## 3. Bot preso: TEMPO_PRESOS s de partida; quem quer andar e sai menos de
 ##    0,3 m em 3 s.
 ## Pontos vizinhos viram um problema só (células de CELULA m).
+## QA_DBG=1 no ambiente imprime cada amostra de bot preso (nome, classe, objetivo).
 
 const DESVIO_MAX := 2.5
 const BLOQUEIO_MAX := 0.4
@@ -23,15 +24,14 @@ const MAX_LINHAS := 30
 var game  # Game (sem tipo: o script é carregado em tempo de execução)
 var dir := ""
 var _problemas: Array = []  # [texto, Vector3, peso]
+var _n_pontos := 0
+var _n_alvos := 0
+var _n_amostras := 0
 
 
 func _ready() -> void:
 	game.get_node("/root/Config").cfg.score_to_win = 999  # a partida não acaba no meio
 	await get_tree().create_timer(1.0).timeout  # navegação sincronizada
-	if OS.has_environment("QA_BUSCA"):
-		_busca()
-		get_tree().quit(0)
-		return
 	var t0 := Time.get_ticks_msec()
 	_passagem()
 	_escondidos()
@@ -78,6 +78,7 @@ func _passagem() -> void:
 				var p := Vector3(x, 0, z)
 				var q := NavigationServer3D.map_get_closest_point(nav, p)
 				if Vector2(q.x - x, q.z - z).length() < 0.35 and q.y < 1.0 and _chao(space, p):
+					_n_pontos += 1
 					var path := NavigationServer3D.map_get_path(nav, origem, q, true)
 					if path.is_empty() or path[path.size() - 1].distance_to(q) > 1.0:
 						fora.append(q)
@@ -119,6 +120,7 @@ func _escondidos() -> void:
 	for team in 2:
 		alvos.append(["máscara", game.arena.princess_spot[team], 1.5])
 		alvos.append(["saída do castelo", game.arena.gate_spot[team], 1.5])
+	_n_alvos = alvos.size()
 	for a in alvos:
 		var alvo: Vector3 = a[1] + Vector3(0, 1.0, 0)
 		var bloq := 0
@@ -144,18 +146,22 @@ func _presos() -> void:
 		t += 3.0
 		for u in game.units:
 			var p: Vector3 = u.global_position
+			_n_amostras += 1
 			if antes.has(u) and u.alive and u.move_intent.length() > 0.1 and p.distance_to(antes[u]) < 0.3:
 				presos.append(p)
+				if OS.has_environment("QA_DBG"):
+					print("PRESO %s %s pos=(%.1f,%.1f) goal=%s tora=%s" % [u.name, u.stats.id, p.x, p.z, u.brain.get("_goal"), u.carried_tora != null])
 			antes[u] = p
 	for g in _agrupar(presos):
-		if g[1] >= 2:
+		if g[1] >= 4:  # até ~9 s parado é briga ou fila, não beco
 			_add("bot preso (%d vezes)" % g[1], g[0], g[1])
 
 
 func _salvar() -> void:
 	_problemas.sort_custom(func(a, b): return a[2] > b[2])
 	var linhas := PackedStringArray()
-	linhas.append("QA do mapa %s: %d problemas (mostrando até %d)" % [game.arena.map.display_name, _problemas.size(), MAX_LINHAS - 1])
+	linhas.append("QA do mapa %s: %d problemas (%d pontos x 2 castelos, %d objetos, %d amostras de bot)" % [
+		game.arena.map.display_name, _problemas.size(), _n_pontos / 2, _n_alvos, _n_amostras])
 	for i in mini(_problemas.size(), MAX_LINHAS - 1):
 		var p = _problemas[i]
 		linhas.append("%d. %s  x=%.0f z=%.0f" % [i + 1, p[0], p[1].x, p[1].z])
@@ -206,51 +212,3 @@ func _salvar() -> void:
 	if img.get_width() > 1280:
 		img.resize(1280, int(img.get_height() * 1280.0 / img.get_width()))
 	img.save_jpg(dir.path_join("qa_mapa.jpg"), 0.8)
-
-
-func _vis(space, pos: Vector3) -> int:
-	var cfg = game.get_node("/root/Config").cfg
-	var bloq := 0
-	for i in 8:
-		var ang := TAU * i / 8
-		var cam: Vector3 = pos + Vector3(cos(ang), 0, sin(ang)) * 3.0 + cfg.camera_offset
-		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(cam, pos + Vector3(0, 1, 0), 1))
-		if hit and hit.position.distance_to(pos + Vector3(0, 1, 0)) > 1.5:
-			bloq += 1
-	return bloq
-
-
-func _busca() -> void:
-	var arena = game.arena
-	var nav: RID = arena.get_world_3d().navigation_map
-	var space: PhysicsDirectSpaceState3D = arena.get_world_3d().direct_space_state
-	var origem := NavigationServer3D.map_get_closest_point(nav, arena.spawn_center[0])
-	for reg in [["patio", 0, 11, -14, 14], ["fora", -16, 24, 16, 34], ["fora", -16, 24, -34, -16], ["meio", 34, 46, -34, 34]]:
-		var res := []
-		var lx: float = reg[1]
-		while lx <= reg[2]:
-			var lz: float = reg[3]
-			while lz <= reg[4]:
-				var p: Vector3 = arena.to_world(0, lx, lz)
-				var ok := true
-				for k in 9:
-					var o := Vector3.ZERO if k == 8 else Vector3(cos(TAU * k / 8), 0, sin(TAU * k / 8)) * 2.0
-					var q := NavigationServer3D.map_get_closest_point(nav, p + o)
-					if Vector2(q.x - p.x - o.x, q.z - p.z - o.z).length() > 0.3 or not _chao(space, p + o):
-						ok = false
-						break
-				if ok:
-					var path := NavigationServer3D.map_get_path(nav, origem, NavigationServer3D.map_get_closest_point(nav, p), true)
-					var compr := 0.0
-					for i in range(1, path.size()):
-						compr += path[i - 1].distance_to(path[i])
-					var v := _vis(space, p)
-					if v == 0 and not path.is_empty():
-						res.append([compr, lx, lz])
-				lz += 1.0
-			lx += 1.0
-		res.sort()
-		var out := ""
-		for i in range(0, res.size(), maxi(1, res.size() / 25)):
-			out += " (%d,%d|%.0fm)" % [res[i][1], res[i][2], res[i][0]]
-		print("BUSCA ", reg[0], " ", reg[3], ":", out)

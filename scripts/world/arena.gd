@@ -21,7 +21,7 @@ var princess_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var hat_spots: Array = [[], []]          # [time] -> lista de Vector3
 var oficina_spots: Array = [[], []]      # [time] -> lista de Vector3
 var tree_spots: Array = [[], []]         # [time] -> lista de Vector3 (bosque seguro)
-var bamboo_spots: Array = [[], []]       # [time] -> lista de Vector3 (bambuzal do meio)
+var bamboo_spots: Array = [[], []]       # [time] -> bambus do lado desse castelo (mundo)
 var pilha_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var spawn_center: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var gate_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
@@ -51,7 +51,14 @@ func build() -> void:
 ## Acha os contornos de tinta que sobraram fora dos pedaços juntados (MultiMesh,
 ## peças animadas) e aplica a qualidade atual neles e no enfeite.
 func _registrar_contornos() -> void:
-	for n in find_children("*", "GeometryInstance3D", true, false):
+	registrar_contornos(self)
+
+
+## O mesmo para um modelo criado fora da Arena ou depois dela (maquininha,
+## planta que cresce, tora, pilha): sem isso o contorno fica ligado em toda
+## qualidade. Os materiais do .scn são compartilhados, então basta uma vez.
+func registrar_contornos(raiz: Node) -> void:
+	for n in raiz.find_children("*", "GeometryInstance3D", true, false):
 		var mesh: Mesh = null
 		if n is MeshInstance3D:
 			mesh = n.mesh
@@ -275,9 +282,11 @@ func _build_castle(team: int) -> void:
 	for p in m.tree_spots:
 		arv.append(to_world(team, p.x, p.y))
 	tree_spots[team] = arv
+	# Bambu está no mundo: cada castelo fica com os do seu lado do rio.
 	var bam := []
 	for p in m.bamboo_spots:
-		bam.append(to_world(team, p.x, p.y))
+		if (p.x < 0.0) == (team == Config.TEAM_BLUE):
+			bam.append(Vector3(p.x, 0, p.y))
 	bamboo_spots[team] = bam
 	pilha_spot[team] = to_world(team, m.pilha_spot.x, m.pilha_spot.y)
 	spawn_center[team] = to_world(team, (m.spawn_min.x + m.spawn_max.x) / 2.0, 0.0)

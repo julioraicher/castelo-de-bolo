@@ -1,6 +1,15 @@
 [gd_resource type="Resource" script_class="ThemeConfig" format=3]
 
 [ext_resource type="Script" path="res://scripts/data/theme_config.gd" id="1_35e3o"]
+[ext_resource type="PackedScene" path="res://assets/ninja/dia/arvore_e1.scn" id="1_aad6e"]
+[ext_resource type="PackedScene" path="res://assets/ninja/dia/arvore_e2.scn" id="2_lradd"]
+[ext_resource type="PackedScene" path="res://assets/ninja/dia/arvore_e3.scn" id="3_xodkm"]
+[ext_resource type="PackedScene" path="res://assets/ninja/dia/bambu_e1.scn" id="4_dyk2m"]
+[ext_resource type="PackedScene" path="res://assets/ninja/dia/bambu_e2.scn" id="5_ly4cs"]
+[ext_resource type="PackedScene" path="res://assets/ninja/dia/bambu_e3.scn" id="6_rn00q"]
+[ext_resource type="PackedScene" path="res://assets/ninja/dia/maquina_chapeu.scn" id="7_y1p34"]
+[ext_resource type="PackedScene" path="res://assets/ninja/dia/pilha_toras.scn" id="8_wmbpv"]
+[ext_resource type="PackedScene" path="res://assets/ninja/dia/tora.scn" id="10_6ot88"]
 
 [resource]
 script = ExtResource("1_35e3o")
@@ -32,6 +41,11 @@ flag_model = "bandeira_{cor}.scn"
 flag_scale = 1.0
 flag_height = 4.1
 oficina_model = "oficina_{cor}.scn"
+arvore_estagios = Array[PackedScene]([ExtResource("1_aad6e"), ExtResource("2_lradd"), ExtResource("3_xodkm")])
+bambu_estagios = Array[PackedScene]([ExtResource("4_dyk2m"), ExtResource("5_ly4cs"), ExtResource("6_rn00q")])
+maquina_model = ExtResource("7_y1p34")
+pilha_model = ExtResource("8_wmbpv")
+tora_model = ExtResource("10_6ot88")
 wall_model = "muro.scn"
 wall_scale = 1.0
 border_trees = PackedStringArray("borda_a.scn", "borda_a.scn", "borda_b.scn", "borda_c.scn")

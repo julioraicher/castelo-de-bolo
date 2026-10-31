@@ -49,3 +49,4 @@ tora_vel_mult = 0.7
 tora_tempo_chao = 40.0
 pilha_raio = 2.6
 bots_construtores_max = 2
+alma_por_abate = 0.15

@@ -5,6 +5,50 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.3 (2026-10-31), Diretor de Jogabilidade: Economia do Construtor, Etapa 1
+- **Madeira**: `Planta` (`scripts/items/planta.gd`): árvore e bambu em 3 estágios
+  (broto, jovem, adulta), um a cada `arvore_tempo_estagio` 40 s / `bambu_tempo_estagio`
+  15 s. Cada golpe de Construtor numa adulta solta 1 tora (`arvore_toras` 3,
+  `bambu_varas` 2) e no fim volta a broto; jovem rende 1. Só a linha do Construtor
+  (`velocidade_obra > 0`) corta.
+- **Tora** (`tora.gd`): o Construtor pega encostando, anda a `tora_vel_mult` 0,7 e não
+  ataca (dash vale). Apanhou, a tora cai e qualquer Construtor pega, até o inimigo.
+  Entregue na **pilha do castelo** (`pilha.gd`, a `pilha_raio` m) vira estoque do time.
+- **Maquininhas** (`hat_pad.gd`): 1 chapéu a cada `maquina_intervalo` 20 s até
+  `maquina_estoque_max` 3, começam cheias; pegar tira 1. Usam `maquina_chapeu.scn`
+  do Visual (chapéu sai do Molde e vai para a prateleira, emblema na frente).
+- **Oficinas** custam `oficina_custo_madeira` 6 e a obra caiu para 10 s: quem está na
+  obra puxa 1 madeira do estoque a cada 1,5 s; a obra não passa da madeira entregue.
+  Contador do Visual em cima ("faltam N", barra; grande para quem é Construtor,
+  pisca "falta madeira" sem estoque).
+- **Bot Construtor**: tora nos braços -> pilha; obra com estoque suficiente -> constrói;
+  tora solta perto -> pega; senão corta a adulta mais perto (bosque seguro primeiro,
+  sem dois aliados na mesma). Inimigo a 5 m: briga. No máximo `bots_construtores_max` 2.
+- **Alma de abate** (ideia do Julio): cada inimigo eliminado manda `alma_por_abate`
+  0,15 de espírito voando para a máscara do time de quem matou (~7 abates = 1
+  espírito). Quem só briga também deixa a máscara mais pesada para o inimigo.
+- **Bot preso perto do objetivo**: parado < 0,3 m em 3 s duas vezes seguidas dá a volta
+  (antes só valia longe do objetivo; o QA achou bots presos nos pátios do Rio).
+- **QA do mapa** (`tests/qa_mapa.gd`, flag `--qa-mapa=DIR`): passagem (grade de 1 m,
+  inalcançável e desvio > 2,5x), objetos escondidos da câmera (raios), bots presos
+  (3 min). Gera `qa_mapa.txt` (≤ 30 linhas) e, com tela, `qa_mapa.jpg`. No CI roda
+  como aviso. Hoje: 0 a 1 aviso (bot parado 2-3 amostras, briga).
+- Esquemas novos: `GameConfig` (grupo "Economia do Construtor", maquininha, oficina,
+  `alma_por_abate`), `MapLayout` (`tree_spots`, `pilha_spot` locais; `bamboo_spots` no
+  mundo), `ThemeConfig` (`arvore_estagios`, `bambu_estagios`, `maquina_model`,
+  `pilha_model`, `tora_model`). `Arena.registrar_contornos(no)` para modelos fora da Arena.
+- Elenco novo decidido no quiz: `docs/elenco-ciclo-2.4.md` (entra no 2.4).
+- Testes de regra 98/98 (novos: estágio, rendimento, tora, entrega, máquina, obra,
+  alma); 5 min simulados sem erro, 0 a 5 pontos por partida (igual a antes).
+- **O que testar**:
+  1. Jogue de **Armadilheiro** (chapéu laranja): corte a castanheira fora da muralha
+     lateral (perto do portão), leve a tora à pilha ao lado do portão e veja o número subir.
+  2. Fique na obra de uma casinha: o "faltam N" deve cair 1 a cada 1,5 s enquanto houver
+     madeira; sem madeira ele pisca.
+  3. Pegue chapéus da mesma máquina até acabar (3): ela fabrica outro a cada 20 s.
+  4. Apanhe carregando a tora: ela cai no chão.
+  5. Mate inimigos e olhe a sua máscara: uma alminha voa até ela.
+
 ## Ciclo 2.3 (2026-10-31), Diretor Visual: modelos da Economia do Construtor (branch)
 - `tools/gerar_economia.gd` (rodar depois de `gerar_cenario_ninja.gd`): nos 4 temas,
   `arvore_e1..3` (castanheira de corte; adulta com cunha no tronco e ofuda aceso

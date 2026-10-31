@@ -133,6 +133,8 @@ func _ready() -> void:
 				oficinas.append(of)
 		_montar_economia(team)
 
+	_registrar_modelos()
+
 	var cfg := Config.cfg
 	var start_classes: Array[ClassStats] = cfg.bot_start_classes if not cfg.bot_start_classes.is_empty() else [cfg.villager]
 	if _variacoes:
@@ -523,6 +525,20 @@ func _montar_economia(team: int) -> void:
 		_nova_planta("bambu", team, spot)
 
 
+## Contorno de tinta só na qualidade Alta também nos modelos da economia
+## (maquininha, pilha, plantas em todos os estágios, tora), que nascem fora da
+## Arena. Os materiais de cada .scn são compartilhados: registrar uma vez basta.
+func _registrar_modelos() -> void:
+	var th := arena.theme
+	var tmp := Node3D.new()
+	add_child(tmp)
+	for cena in th.arvore_estagios + th.bambu_estagios + [th.tora_model]:
+		if cena:
+			tmp.add_child(cena.instantiate())
+	arena.registrar_contornos(self)
+	tmp.queue_free()
+
+
 func _nova_planta(tipo: String, team: int, pos: Vector3) -> Planta:
 	var p := Planta.new()
 	add_child(p)
@@ -689,6 +705,8 @@ func _on_player_class_changed(u: Unit) -> void:
 
 
 func _on_unit_died(u: Unit, killer: Unit) -> void:
+	if killer and killer.team != u.team:
+		_alma_de_abate(u, killer.team)
 	if u == player:
 		hud.show_big("Você caiu! Voltando como recruta...", Color(1, 0.6, 0.6), 1.8)
 	elif killer == player:
@@ -698,6 +716,27 @@ func _on_unit_died(u: Unit, killer: Unit) -> void:
 		camera.add_trauma(0.3)
 		camera.punch_fov(3.0)
 		slowmo(0.35, 0.12)
+
+
+## A alma do abatido voa até a máscara do time de quem matou e a deixa mais
+## pesada (Princess.pesar_alma). Ela pesa ao chegar, não no abate.
+func _alma_de_abate(morto: Unit, team: int) -> void:
+	var mascara := princesses[team]
+	var alma := Cake.make_visual(0.45)
+	alma.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	add_child(alma)
+	var de := morto.global_position + Vector3(0, 1.4, 0)
+	alma.global_position = de
+	var tw := alma.create_tween()
+	# Arco: sobe e cai na máscara (que pode estar andando no colo de alguém).
+	tw.tween_method(func(k: float):
+		var ate := mascara.global_position + Vector3(0, 1.6, 0)
+		alma.global_position = de.lerp(ate, k) + Vector3(0, sin(k * PI) * 4.0, 0), 0.0, 1.0, 0.9) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_callback(func():
+		mascara.pesar_alma(Config.cfg.alma_por_abate)
+		_log("alma -> mascara %s peso=%.2f (t=%.0fs)" % [Config.TEAM_NAMES[team], mascara.fatness, _time])
+		alma.queue_free())
 
 
 ## Chamado quando o jogador usa o poder (para o print do --print-poder).

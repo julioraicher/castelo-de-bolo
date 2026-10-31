@@ -39,6 +39,7 @@ var _stuck_check_t := 3.0
 var _stuck_from := Vector3.INF
 var _unstuck_t := 0.0
 var _unstuck_goal := Vector3.ZERO
+var _parado_n := 0
 ## Planta que este bot está cortando (o _combat mira nela e golpeia).
 var _planta: Planta = null
 
@@ -65,7 +66,13 @@ func _check_stuck(delta: float) -> void:
 	var moved := me.distance_to(_stuck_from) if _stuck_from != Vector3.INF else 99.0
 	_stuck_from = me
 	var far := (_target.global_position if _target and _target.alive else _goal).distance_to(me) > 5.0
-	if moved < 1.5 and far and unit.move_intent.length() > 0.1 and unit.alive and not unit.carried_princess:
+	# Parado de vez (< 0,3 m em 3 s, duas vezes seguidas) mesmo perto do
+	# objetivo: ele está num lugar sem caminho (em cima da muralha, dentro de
+	# um colisor). O QA do mapa achou bots assim nos pátios do Rio.
+	var quer := unit.move_intent.length() > 0.1 and unit.alive
+	_parado_n = _parado_n + 1 if quer and moved < 0.3 else 0
+	if quer and not unit.carried_princess and ((moved < 1.5 and far) or _parado_n >= 2):
+		_parado_n = 0
 		_unstuck_t = 2.0
 		_unstuck_goal = me + Vector3(randf_range(-8, 8), 0, randf_range(-8, 8))
 		_target = null

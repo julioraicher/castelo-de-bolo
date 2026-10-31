@@ -2,13 +2,17 @@ class_name Pilha
 extends Node3D
 ## Pilha de madeira do castelo: onde o Construtor entrega as toras. A pilha
 ## cresce com o estoque do time (Game.madeira) e mostra o número em cima.
+## Modelo do tema (ThemeConfig.pilha_model): nós "Nivel_1".."Nivel_N" (cada um
+## vale TORAS_POR_NIVEL) e o marcador "Contador" onde fica o número.
 
-const MAX_VISIVEL := 12
+const TORAS_POR_NIVEL := 3
 
 var team := 0
 
 var _label: Label3D
-var _toras: Array[Node3D] = []
+var _toras: Array[Node3D] = []  # provisória: 1 por tora; modelo: 1 por nível
+var _por_item := 1
+var _alt_label := 2.4
 var _visto := -1
 
 
@@ -20,9 +24,15 @@ func setup(game: Game, p_team: int, pos: Vector3) -> void:
 	if th.pilha_model:
 		var m: Node3D = th.pilha_model.instantiate()
 		add_child(m)
-		for n in m.find_children("Tora_*", "Node3D", true, false):
+		for i in range(1, 20):
+			var n := m.find_child("Nivel_%d" % i, true, false) as Node3D
+			if n == null:
+				break
 			_toras.append(n)
-		_toras.sort_custom(func(a, b): return a.name.naturalnocasecmp_to(b.name) < 0)
+		_por_item = TORAS_POR_NIVEL
+		var c := m.find_child("Contador", true, false) as Node3D
+		if c:
+			_alt_label = c.position.y
 	else:
 		_provisoria()
 	_label = Label3D.new()
@@ -32,7 +42,7 @@ func setup(game: Game, p_team: int, pos: Vector3) -> void:
 	_label.outline_size = 12
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.no_depth_test = true
-	_label.position.y = 2.4
+	_label.position.y = _alt_label
 	add_child(_label)
 	atualizar(0)
 
@@ -64,8 +74,9 @@ func atualizar(n: int) -> void:
 		return
 	var cresceu := n > _visto and _visto >= 0
 	_visto = n
+	# Nível i aparece a partir da 1ª tora dele (ceil(n / por_item) níveis).
 	for i in _toras.size():
-		_toras[i].visible = i < n
+		_toras[i].visible = i * _por_item < n
 	_label.text = "Madeira %d" % n
 	_label.modulate = Color(1.0, 0.85, 0.55) if n > 0 else Color(0.8, 0.8, 0.8, 0.8)
 	if cresceu:

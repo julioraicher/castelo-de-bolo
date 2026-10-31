@@ -24,6 +24,10 @@ extends Resource
 ## Arrancada ao pegar a máscara (velocidade x mult por time segundos).
 @export var steal_boost_mult := 1.35
 @export var steal_boost_time := 3.0
+## Alma de abate: cada inimigo eliminado manda esta fração de um espírito
+## (fat_per_cake) direto para a máscara do time de quem matou. 0,15 ≈ 7 abates
+## valem um espírito entregue. 0 desliga.
+@export_range(0.0, 1.0) var alma_por_abate := 0.15
 @export var cake_spawn_interval := 5.0
 @export var max_cakes := 6
 
