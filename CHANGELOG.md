@@ -57,6 +57,8 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
   minimapa da outra thread).
 - Toque mínimo fora do Visual (só texto): `config.gd` (CONTROLS), `unit.gd` (aviso do Chi),
   `auto_quality.gd`, `project.godot` (fonte padrão). Testes 111/111; 5 min simulados sem erro.
+- Revisão das dicas novas do Construtor (thread do minimapa): ok; só a da maquininha nível 2
+  usava "→", que as fontes não têm (viraria quadradinho no navegador).
 - **O que testar**: tela inicial e Esc (leitura, nada cortado); placar e cartão do jogador
   durante a briga; avisos grandes (pegar chapéu, ponto, Chi cheio). Me diga se alguma letra
   ficou pequena demais no seu monitor.
