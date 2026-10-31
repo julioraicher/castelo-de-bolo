@@ -5,6 +5,24 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.3 (2026-10-31), Diretor Visual: modelos da Economia do Construtor (branch)
+- `tools/gerar_economia.gd` (rodar depois de `gerar_cenario_ninja.gd`): nos 4 temas,
+  `arvore_e1..3` (castanheira de corte; adulta com cunha no tronco e ofuda aceso
+  = "pronta"), `bambu_e1..3`, `tora` (centro na origem, eixo x), `pilha_toras`
+  (nós `Nivel_1..4`, 3 toras cada, e `Contador`), `maquina_chapeu` (`Prensa`,
+  `Gira_engrenagem`, `Molde`, `Brilho`, `Vapor`, `Enfeite`, `Estoque_1..4`,
+  animação `fabricar` de 2 s) e `emblema_{guerreiro,arqueiro,monge,construtor}`.
+  Liga os modelos nos temas sozinho quando o `ThemeConfig` ganhar os campos do contrato.
+- `scripts/ui/contador_madeira.gd` (`ContadorMadeira.mostrar(faltam, total, grande,
+  sem_estoque)`) + `assets/ui/icone_tora.png`: contador sobre a obra, por cima do telhado.
+- Rio das Lanternas: pontos do contrato (bosque local (9,5, 21) e (8, 25), pilha
+  local (9, 7,4), 6 bambus nas margens) gravados quando `MapLayout` tiver os campos;
+  saiu o bambuzal de enfeite em (±40,5, 24), que confundiria com o de corte.
+- Prancha: `tools/prancha_economia.gd` + `prancha_economia_mapa.gd` + `montar_economia.py`.
+- Testes de regra 68/68 e 5 min simulados sem erro de script.
+- **O que testar**: nada ainda (fora da main; o jogo usa os modelos quando a
+  Jogabilidade ligar as regras).
+
 ## Planejamento (2026-10-31), estagiário de ideias: Ciclo 2.3 aberto
 - Pedido do Julio (2 áudios): chapéus saindo de maquininhas animadas, limite
   de chapéus, madeira/bambu com árvores de 3 estágios, Construtor simples
