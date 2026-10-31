@@ -26,6 +26,7 @@ projetil = "bomba"
 explosao_raio = 2.3
 combo_anims = PackedStringArray()
 velocidade_obra = 1.0
+classe_base = &"construtor"
 power = "nuvem"
 power_name = "Nuvem de Fumaça"
 power_radius = 4.5

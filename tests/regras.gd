@@ -20,6 +20,7 @@ func _ready() -> void:
 	_madeira()
 	_maquina()
 	await _obra()
+	_nivel2()
 	await _alma()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
@@ -260,6 +261,54 @@ func _obra() -> void:
 	await get_tree().create_timer(0.3).timeout
 	_check(of.progresso >= p0 - 1e-6, "obra perdeu progresso parada: %.2f -> %.2f" % [p0, of.progresso])
 	_check(game.obra_do_time(team, game.arena.spawn_center[team]) == of, "Construtor deveria voltar para a obra começada do time")
+
+
+## Maquininha nível 2: oficina pronta sobe a maquininha da classe_base
+## (intervalo e estoque de nível 2, +1 chapéu na hora); só uma vez.
+func _nivel2() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var lista = cfg.oficina_classes
+	for of in game.oficinas:
+		if of.estado == 2:
+			continue
+		for i in lista.size():
+			for pad in game.hat_pads:
+				if pad.team == of.team and pad.nivel == 1 and lista[i].classe_base != &"" and pad.stats.id == lista[i].classe_base:
+					of.opcao_i = i
+					pad.take()
+					var e0: int = pad.estoque + 1
+					of.madeira_entregue = of.custo()
+					of.add_progress(1.0, null)
+					_check(of.estado == 2, "nível 2: oficina deveria ficar pronta")
+					_check(pad.nivel == 2 and pad.estoque_max == cfg.maquina_n2_estoque and _perto(pad.intervalo, cfg.maquina_n2_intervalo, 1e-4),
+						"nível 2: maquininha de %s não subiu (nivel %d, max %d)" % [pad.stats.id, pad.nivel, pad.estoque_max])
+					_check(pad.estoque == e0, "nível 2: deveria ganhar 1 chapéu na hora (%d -> %d)" % [e0, pad.estoque])
+					_check(not pad.subir_nivel(), "nível 2: não sobe duas vezes")
+					_nivel2_madeira(of.team)
+					return
+	_check(false, "nível 2: nenhuma oficina com classe_base para testar")
+
+
+## Nível 2 com madeira: maquina_n2_custo madeiras do estoque sobem a máquina.
+func _nivel2_madeira(team: int) -> void:
+	var cfg = get_node("/root/Config").cfg
+	var pad = null
+	for p in game.hat_pads:
+		if p.team == team and p.nivel == 1:
+			pad = p
+			break
+	if pad == null:
+		_check(false, "nível 2 (madeira): nenhuma máquina nível 1")
+		return
+	game.madeira[team] = cfg.maquina_n2_custo - 1
+	var ok := 0
+	for i in cfg.maquina_n2_custo:
+		if pad.puxar_madeira_n2(game):
+			ok += 1
+	_check(ok == cfg.maquina_n2_custo - 1 and pad.nivel == 1 and game.madeira[team] == 0,
+		"nível 2 (madeira): sem estoque não deveria subir (puxou %d, nível %d)" % [ok, pad.nivel])
+	game.madeira[team] = 1
+	_check(pad.puxar_madeira_n2(game) and pad.nivel == 2, "nível 2 (madeira): a última madeira deveria subir a máquina")
 
 
 ## Alma de abate: matar um inimigo deixa a máscara do time de quem matou mais

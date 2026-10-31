@@ -34,3 +34,4 @@ power_duration = 6.0
 anim_idle = "2H_Melee_Idle"
 anim_run = "Running_B"
 anim_attack = "2H_Melee_Attack_Chop"
+classe_base = &"guerreiro"

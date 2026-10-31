@@ -5,6 +5,24 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4a (2026-10-31), Diretor de Jogabilidade: maquininha nível 2 e madeira no HUD
+- **Maquininha nível 2** (quiz 2.4, pergunta 6): fabrica a cada `maquina_n2_intervalo` 12 s
+  até `maquina_n2_estoque` 4 e ganha 1 chapéu na hora. Sobe de dois jeitos:
+  1. a oficina pronta sobe a maquininha da classe de origem (`ClassStats.classe_base`:
+     Ronin Oni -> Samurai, Yumi -> Ninja de Shuriken, Armadilheiro/Bombardeiro -> Construtor);
+  2. o Construtor parado ao lado de uma maquininha nível 1 põe madeira nela
+     (`maquina_n2_custo` 8, guardada como a obra). Serve de destino para a madeira
+     depois das oficinas (antes sobravam ~22 no estoque no fim dos 5 min).
+- Contrato com o Visual: nós `N2_*` no `maquina_<classe>.scn` aparecem no nível 2;
+  animação `subir_nivel` se existir. Sem isso: pulinho, pilar dourado e "Nv2" no letreiro.
+- Bots Construtores: oficinas prontas -> levam a madeira para a maquininha mais adiantada.
+- HUD (toque na área do Visual, `hud.gd`): "Madeira do time: N" com o ícone de tora no
+  cartão do jogador; status "LEVANDO TORA AO DEPÓSITO".
+- Testes 92/92 (nível 2 pela oficina e pela madeira, sem subir duas vezes); 5 min sem erro.
+- **O que testar**: erga a oficina do Ronin Oni e veja a maquininha do Samurai virar Nv2
+  (12 s, 4 chapéus); de Construtor, pare ao lado da maquininha da Kitsune com madeira no
+  estoque e veja o contador "faltam N" até subir.
+
 ## Ciclo 2.3c (2026-10-31), Diretor de Jogabilidade: obra guardada e progresso à vista
 - Pedido do Julio: o progresso da construção não ficava claro e tinha de ser guardado.
   Causa: perto do terreno o [E] trocava a opção da oficina e **zerava a obra**. Agora a

@@ -192,6 +192,13 @@ func _lenhador(me: Vector3) -> bool:
 	if of and ((falta > 0 and game.madeira[unit.team] >= falta) or (falta == 0 and of.progresso < 1.0)):
 		_goal = of.global_position + (me - of.global_position).normalized() * 1.2
 		return true
+	# Oficinas prontas: a madeira sobe as maquininhas para o nível 2.
+	var maq: HatPad = game.maquina_para_n2(unit.team, me) if of == null else null
+	if maq and game.madeira[unit.team] >= mini(maq.faltam_n2(), 2):
+		var lado := me - maq.global_position
+		lado.y = 0
+		_goal = maq.global_position + (lado.normalized() if lado.length() > 0.1 else Vector3.BACK) * 1.8
+		return true
 	var tora := game.nearest_tora_solta(me, 30.0)
 	if tora:
 		_goal = tora.global_position
