@@ -119,6 +119,22 @@ sugestão de prioridade. Custo = rodadas de trabalho, não dinheiro (salvo dito)
 - **C · Estagiário automático**: uma rotina semanal que refaz esta pesquisa e
   anota aqui. Custo: gasta parte do limite semanal; só se o Julio quiser.
 
+### Canal Pragmatic Game Developer (radar fixo, visto 2026-10-31)
+YouTube @PragmaticGameDeveloper / Instagram pragmaticgamedeveloper (Godot,
+vídeos curtos "como funciona"). O que serve para nós:
+- **"Feel the Frost"** (Reel): mesmo dano, sensação outra. Uma bola lisa vira
+  feitiço de gelo em camadas: cor, formato (cristal), rastro de flocos que
+  nasce por onde passa, impacto (estilhaço), reação do alvo (casca de gelo,
+  lentidão) e som. É o pedido do Julio para os lançamentos de poder; o quiz
+  fica com o Estagiário de ideias.
+- **"Your game works. Why does it feel dead?"**: juice no golpe (hitstop,
+  squash/stretch, partículas, tremor). Já temos parte; conferir o que falta.
+- **"Why games don't draw what you can't see"**: culling. No Godot:
+  `visibility_range` (some de longe, barato) e OccluderInstance3D atrás de
+  casas/castelo. Ajuda o PC com Intel UHD. Frente Cenário/Desempenho.
+- Fora por agora: fumaça volumétrica do CS2 (custo, Julio descartou), lag
+  compensation e lockstep (só com multiplayer online), carro com rede neural.
+
 ## C — talvez
 - **Spotar inimigos no minimapa, estilo Battlefield** (Julio, 2026-10-31): marcar um
   inimigo (tecla ou ao acertar) e ele aparece no minimapa por alguns segundos para o
