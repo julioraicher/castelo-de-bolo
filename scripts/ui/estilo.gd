@@ -3,24 +3,40 @@ extends RefCounted
 ## Identidade visual da interface: fontes, cores e peças reaproveitadas pelo
 ## HUD e pelos menus. Tudo estático: Estilo.rotulo(...).
 ## Ciclo 2.4 ("tela mais moderna"): vidro escuro com cantos arredondados,
-## borda fina, sombra macia e destaque dourado; sem o corte inclinado e sem o
-## brilho neon dos Clãs de Neon (o jogo agora é pintado e sombrio).
-## Fontes livres (OFL) em assets/fonts: Shojumaru (títulos, pincel japonês)
-## e Chakra Petch (texto, cara de painel neon).
+## borda fina, sombra macia e destaque dourado.
+## Ciclo 2.4n ("letras encorpadas"): saiu a Chakra Petch (cara de painel neon,
+## sobra dos Clãs de Neon). Fontes livres (OFL) em assets/fonts:
+##   TITULO  Shojumaru: pincel japonês. Só títulos curtos (nome do jogo,
+##           Pausado, Vitória, nome da classe, nome do golpe). Nunca frase.
+##   FORTE   Barlow Condensed Bold: botões, rótulos, dicas, avisos.
+##   NUMERO  Barlow Condensed ExtraBold: placar, contadores e avisos grandes.
+##   CORPO   Barlow Semi Condensed Medium: texto corrido.
+## Escala de tamanhos (px na tela-base 1600x900): use as constantes T_*.
+## Nada abaixo de T_MIN: no navegador em tela pequena some.
 
 const TITULO := preload("res://assets/fonts/Shojumaru-Regular.ttf")
-const CORPO := preload("res://assets/fonts/ChakraPetch-Medium.ttf")
-const FORTE := preload("res://assets/fonts/ChakraPetch-Bold.ttf")
+const CORPO := preload("res://assets/fonts/BarlowSemiCondensed-Medium.ttf")
+const FORTE := preload("res://assets/fonts/BarlowCondensed-Bold.ttf")
+const NUMERO := preload("res://assets/fonts/BarlowCondensed-ExtraBold.ttf")
+
+const T_GIGANTE := 110  # fim de partida
+const T_TITULO := 56    # título de tela / aviso grande
+const T_GRANDE := 28    # nome da classe, placar secundário
+const T_MEDIO := 22     # botões, dicas, cabeçalhos de cartão
+const T_TEXTO := 20     # texto corrido
+const T_PEQUENO := 17   # rótulos de apoio
+const T_MIN := 15
 
 const NOITE := Color(0.035, 0.03, 0.08)
 const PAINEL := Color(0.045, 0.04, 0.055, 0.74)
-const CIANO := Color(0.3, 0.95, 1.0)
+const CIANO := Color(0.45, 0.88, 0.95)  # aliado / ligado (menos neon)
 const MAGENTA := Color(1.0, 0.32, 0.7)
 const OURO := Color(1.0, 0.82, 0.36)
 const FANTASMA := Color(0.45, 1.0, 0.62)  # fogo-fantasma (espíritos, chi pronto)
 const PERIGO := Color(1.0, 0.36, 0.36)
-const TEXTO := Color(0.94, 0.93, 1.0)
-const TEXTO_FRACO := Color(0.72, 0.7, 0.86)
+const TEXTO := Color(0.97, 0.93, 0.85)       # papel de arroz (antes branco-azulado neon)
+const TEXTO_FRACO := Color(0.78, 0.72, 0.63)  # tinta lavada
+const TINTA := Color(0.05, 0.035, 0.03)       # contorno: tinta sumi, não preto-azulado
 
 ## Inclinação dos painéis e botões (0 = reto; era 0,22 no "corte de lâmina").
 const INCLINA := Vector2(0.0, 0.0)
@@ -28,6 +44,19 @@ const INCLINA := Vector2(0.0, 0.0)
 const RAIO := 10
 
 static var _tema: Theme
+static var _espacadas := {}
+
+
+## Versão da fonte com espaço extra entre letras (subtítulos e rótulos em
+## caixa alta: "A GUERRA DA MÁSCARA ONI", "SUA MÁSCARA").
+static func espacada(fonte: Font, px := 3) -> FontVariation:
+	var k := "%s:%d" % [fonte.resource_path, px]
+	if not _espacadas.has(k):
+		var fv := FontVariation.new()
+		fv.base_font = fonte
+		fv.spacing_glyph = px
+		_espacadas[k] = fv
+	return _espacadas[k]
 
 
 static func rotulo(text: String, size: int, color := TEXTO, fonte: Font = CORPO, contorno := -1) -> Label:
@@ -41,17 +70,17 @@ static func rotulo(text: String, size: int, color := TEXTO, fonte: Font = CORPO,
 static func ajustes(size: int, color := TEXTO, fonte: Font = CORPO, contorno := -1) -> LabelSettings:
 	var ls := LabelSettings.new()
 	ls.font = fonte
-	ls.font_size = size
+	ls.font_size = maxi(size, T_MIN)
 	ls.font_color = color
 	ls.outline_size = contorno if contorno >= 0 else maxi(3, size / 8)
-	ls.outline_color = Color(0.02, 0.015, 0.03, 0.85)
+	ls.outline_color = Color(TINTA, 0.9)
 	ls.shadow_size = 4
 	ls.shadow_color = Color(0, 0, 0, 0.35)
 	ls.shadow_offset = Vector2(0, 2)
 	return ls
 
 
-## Título com brilho neon: contorno grosso escuro + "aura" colorida na sombra.
+## Título de pincel: contorno grosso de tinta + aura colorida na sombra.
 static func titulo(text: String, size: int, color: Color) -> Label:
 	var l := rotulo(text, size, color, TITULO, maxi(8, size / 7))
 	l.label_settings.outline_color = color.darkened(0.78)
@@ -60,6 +89,37 @@ static func titulo(text: String, size: int, color: Color) -> Label:
 	l.label_settings.shadow_offset = Vector2.ZERO
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return l
+
+
+## Aviso grande (meio da tela): letra larga e grossa, legível em frase de duas
+## linhas (a Shojumaru embola). Contorno de tinta + aura na cor.
+static func aviso(text: String, size: int, color: Color) -> Label:
+	var l := rotulo(text.to_upper(), size, color, NUMERO, maxi(8, size / 6))
+	l.label_settings.outline_color = Color(TINTA, 0.95)
+	l.label_settings.shadow_color = Color(color, 0.45)
+	l.label_settings.shadow_size = maxi(10, size / 4)
+	l.label_settings.shadow_offset = Vector2.ZERO
+	l.label_settings.line_spacing = -size * 0.12
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return l
+
+
+## Filete dourado com losango no meio, embaixo de títulos (cara de pergaminho).
+static func ornamento(largura := 360.0, cor := OURO) -> Control:
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(largura, 14)
+	c.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.draw.connect(func():
+		var w := c.size.x
+		var y := c.size.y * 0.5
+		var m := w * 0.5
+		c.draw_polyline_colors(PackedVector2Array([Vector2(0, y), Vector2(m - 14, y)]), PackedColorArray([Color(cor, 0.0), Color(cor, 0.85)]), 2.0, true)
+		c.draw_polyline_colors(PackedVector2Array([Vector2(m + 14, y), Vector2(w, y)]), PackedColorArray([Color(cor, 0.85), Color(cor, 0.0)]), 2.0, true)
+		c.draw_colored_polygon(PackedVector2Array([Vector2(m, y - 6), Vector2(m + 7, y), Vector2(m, y + 6), Vector2(m - 7, y)]), cor)
+		c.draw_circle(Vector2(m - 11, y), 1.8, cor)
+		c.draw_circle(Vector2(m + 11, y), 1.8, cor))
+	return c
 
 
 ## Painel de vidro escuro: borda fina na cor de destaque (mais forte embaixo),
@@ -100,7 +160,9 @@ static func tecla(text: String, size := 18) -> PanelContainer:
 	p.add_theme_stylebox_override("panel", sb)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER  # não esticar em linha alta
-	p.add_child(rotulo(text, size, Color(0.1, 0.08, 0.1), FORTE, 0))
+	var l := rotulo(text, size, Color(0.1, 0.08, 0.1), FORTE, 0)
+	l.label_settings.shadow_size = 0  # sombra borrava a letra escura na tecla clara
+	p.add_child(l)
 	return p
 
 
@@ -142,7 +204,7 @@ static func tema() -> Theme:
 		return _tema
 	var t := Theme.new()
 	t.default_font = CORPO
-	t.default_font_size = 19
+	t.default_font_size = T_TEXTO
 
 	var normal := painel(Color(1, 1, 1, 0.22), true, Color(0.07, 0.06, 0.08, 0.88))
 	normal.content_margin_left = 22
@@ -172,8 +234,8 @@ static func tema() -> Theme:
 		t.set_color("font_pressed_color", type, Color.WHITE)
 		t.set_color("font_focus_color", type, TEXTO)
 		t.set_font("font", type, FORTE)
-	t.set_font_size("font_size", "Button", 21)
-	t.set_font_size("font_size", "OptionButton", 18)
+	t.set_font_size("font_size", "Button", 23)
+	t.set_font_size("font_size", "OptionButton", 19)
 
 	# CheckButton: sem caixa, só o interruptor (ícone padrão, tingido).
 	var vazio := StyleBoxEmpty.new()
@@ -225,7 +287,7 @@ static func tema() -> Theme:
 	t.set_color("font_unselected_color", "TabContainer", TEXTO_FRACO)
 	t.set_color("font_hovered_color", "TabContainer", TEXTO)
 	t.set_font("font", "TabContainer", FORTE)
-	t.set_font_size("font_size", "TabContainer", 19)
+	t.set_font_size("font_size", "TabContainer", 21)
 
 	# Controle deslizante: trilho fino e preenchimento ciano.
 	var trilho := StyleBoxFlat.new()

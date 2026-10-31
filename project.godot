@@ -26,7 +26,7 @@ window/stretch/aspect="expand"
 
 [gui]
 
-theme/custom_font="res://assets/fonts/ChakraPetch-Medium.ttf"
+theme/custom_font="res://assets/fonts/BarlowSemiCondensed-Medium.ttf"
 
 [layer_names]
 
