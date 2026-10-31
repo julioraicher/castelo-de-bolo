@@ -55,12 +55,24 @@ extends Resource
 ## O último golpe do combo multiplica dano e empurrão por este valor.
 @export var combo_finisher_mult := 1.4
 
-@export_group("Botão direito")
-## cura = cura aliados em volta; bloqueio = segure para defender pela frente;
-## tiro_carregado = segure para carregar e solte para atirar;
-## armadilha = solta estrepes no chão (Construtor).
-@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha") var skill := "nenhum"
-## Fração do dano bloqueada (golpes de até 60° da frente).
+@export_group("Defesa (botão direito) e habilidade rápida (Q)")
+## Botão direito = DEFESA para todas as classes (bloqueio + contra-golpe).
+## Q = habilidade rápida com recarga curta:
+## cura = cura aliados em volta; tiro_carregado = tiro cheio na hora (atravessa /
+## bomba maior); armadilha = solta estrepes/mina; investida = corte em avanço
+## (skill_radius m); pisao = onda de choque curta em volta; corrida = acelera
+## você e quem estiver perto. "bloqueio" (antigo) = sem Q.
+@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha", "investida", "pisao", "corrida") var skill := "nenhum"
+## Nome mostrado no HUD ao lado da tecla Q.
+@export var skill_name := ""
+## Recarga do Q em s (cura usa heal_cooldown e armadilha usa trap_cooldown).
+@export var skill_cooldown := 5.0
+## Investida/pisão: dano. Corrida: multiplicador de velocidade.
+@export var skill_value := 10.0
+## Investida: distância (m). Pisão/corrida: raio (m).
+@export var skill_radius := 4.0
+## Corrida: duração (s).
+@export var skill_duration := 2.5
 @export_range(0.0, 1.0) var block_reduction := 0.7
 ## Segundos para carga máxima do tiro.
 @export var charge_time := 1.0
@@ -84,7 +96,7 @@ extends Resource
 ## nível 2. Vazio = nenhuma.
 @export var classe_base: StringName = &""
 
-@export_group("Poder (Q)")
+@export_group("Poder de Chi (E)")
 ## Poder especial, liberado quando o medidor de Glacê enche.
 @export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "corrida", "furia", "corte_relampago", "leque", "nuvem", "selo", "coluna_fogo", "reforco", "mutirao", "campo_minado", "bombardeio") var power := "nenhum"
 @export var power_name := ""
