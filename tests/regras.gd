@@ -24,6 +24,7 @@ func _ready() -> void:
 	_maquina()
 	await _obra()
 	_nivel2()
+	_caminho_magos()
 	await _alma()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
@@ -438,6 +439,59 @@ func _nivel2_madeira(team: int) -> void:
 		"nível 2 (madeira): sem estoque não deveria subir (puxou %d, nível %d)" % [ok, pad.nivel])
 	game.madeira[team] = 1
 	_check(pad.puxar_madeira_n2(game) and pad.nivel == 2, "nível 2 (madeira): a última madeira deveria subir a máquina")
+
+
+## Caminho dos magos: começar um terreno de mago sela o oposto do mesmo time;
+## pronto ele está no nível 2 e sobe com madeira até mago_nivel_max, dando
+## bônus só para a classe do caminho.
+func _caminho_magos() -> void:
+	var cfg = get_node("/root/Config").cfg
+	for t in 2:
+		if game.caminho[t] >= 0:
+			continue
+		var lotes := []
+		for of in game.oficinas:
+			if of.team == t and of.caminho >= 0:
+				lotes.append(of)
+		_check(lotes.size() == 2, "caminho: time %d deveria ter 2 terrenos de mago (tem %d)" % [t, lotes.size()])
+		if lotes.size() != 2:
+			return
+		var a = lotes[0]
+		var b = lotes[1]
+		_check(a.opcao() != b.opcao() and not a.trocar_opcao(), "caminho: terrenos de mago são fixos e diferentes")
+		game.madeira[t] = 1
+		_check(a.puxar_madeira() and game.caminho[t] == a.caminho, "caminho: a primeira madeira deveria escolher o caminho")
+		_check(b.selada and not a.selada, "caminho: o terreno oposto deveria ficar selado")
+		game.madeira[t] = 5
+		_check(not b.puxar_madeira() and game.madeira[t] == 5, "caminho: terreno selado não aceita madeira")
+		b.add_progress(1.0, null)
+		_check(b.progresso == 0.0 and b.estado == 0, "caminho: terreno selado não pode ser construído")
+		_check(game.nearest_oficina(t, b.global_position, 1.0, true) != b, "caminho: bots não deveriam ir ao terreno selado")
+		a.madeira_entregue = a.custo()
+		a.add_progress(1.0, null)
+		_check(a.estado == 2 and a.nivel == 2 and a.pad != null, "caminho: oficina pronta deveria estar no nível 2 com maquininha")
+		var id: StringName = a.opcao().id
+		_check(game.bonus_mago(t, id) == 0, "caminho: nível 2 ainda sem bônus")
+		var max0: int = a.pad.estoque_max
+		var gasto := 0
+		for c in cfg.mago_nivel_custo:
+			gasto += c
+		game.madeira[t] = gasto + 3
+		var n := 0
+		while a.puxar_madeira_nivel() and n < 100:
+			n += 1
+		_check(a.nivel == cfg.mago_nivel_max and n == gasto and game.madeira[t] == 3,
+			"caminho: deveria subir ao nível %d com %d madeiras (nível %d, puxou %d)" % [cfg.mago_nivel_max, gasto, a.nivel, n])
+		_check(not a.pode_subir() and game.bonus_mago(t, id) == cfg.mago_nivel_max - 2, "caminho: nível máximo com bônus de %d níveis" % (cfg.mago_nivel_max - 2))
+		_check(a.pad.estoque_max == max0 + cfg.mago_nivel_max - 2, "caminho: maquininha deveria ganhar estoque por nível")
+		_check(game.bonus_mago(t, b.opcao().id) == 0 and game.bonus_mago(1 - t, id) == 0, "caminho: bônus só para a classe e o time do caminho")
+		for u in game.units:
+			if u.team == t and u.alive and u.stats.id != id:
+				_check(_perto(u.damage_mult(), 1.0, 1e-4) or u._fury_t > 0.0 or u._dmg_boost_t > 0.0, "caminho: outra classe não ganha dano")
+				break
+		game.madeira[t] = 0
+		return
+	_check(false, "caminho: nenhum time sem caminho para testar")
 
 
 ## Alma de abate: matar um inimigo deixa a máscara do time de quem matou mais

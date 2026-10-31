@@ -147,7 +147,7 @@ func _ready() -> void:
 		# Terrenos de oficina: começam com opções diferentes, sorteadas. Os
 		# magos opostos ganham terrenos fixos, um de cada lado do castelo.
 		var magos := Config.cfg.magos_opostos
-		var com_caminho := magos.size() == 2 and arena.mago_spots[team].size() >= 2
+		var com_caminho: bool = magos.size() == 2 and arena.mago_spots[team].size() >= 2
 		var opts: Array[ClassStats] = Config.cfg.oficina_classes.duplicate()
 		if not com_caminho:
 			for m in magos:
