@@ -38,3 +38,21 @@ Calibração (3 partidas cada): 0,5/15 ~0,5; 0,5/25 ~1,7; 0,42/25 ~1; 0,4/25 ~1,
   feitiço): o padrão está pronto (`classe_base` + oficina). Cada par novo é um `.tres`.
 - **Equilíbrio das Kitsunes opostas**: números iniciais, sem teste com gente.
 - **Ritmo de pontos**: aplicado (acima); confirmar jogando.
+
+## Equilíbrio por classe (2026-10-31, 4 partidas de 5 min com `--variacoes`, bots)
+
+| Classe | Mortes | Abates |
+|---|---|---|
+| Yumi (`arqueiro_yumi`) | 2 | 66 |
+| Ninja de Shuriken (`arqueiro`) | 76 | 91 |
+| Samurai (`guerreiro`) | 46 | 41 |
+| Kitsune | 97 | 24 |
+| Ronin Oni | 9 | 6 |
+| Bombardeiro | 1 | 6 |
+| Armadilheiro | 6 | 4 |
+| Construtor | 5 | 4 |
+
+Leitura: a **Yumi está forte demais** (33 abates por morte, igual nas 4 partidas) e a
+**Kitsune fraca** (4 mortes por abate). Os números passam pelo jeito do bot jogar (a Yumi
+fica longe), então o próximo passo é testar alcance/dano da Yumi e vida da Kitsune com a
+mesma sonda (print `BAL` temporário em `Game._on_unit_died`, não commitado).
