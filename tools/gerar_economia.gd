@@ -16,7 +16,7 @@ extends "res://tools/gerar_cenario_ninja.gd"
 const FABRICAR := 2.0  # duração da animação "fabricar" (s)
 ## Maquininha própria de cada classe (nome do .tres): maquina_<classe>.scn, com os
 ## mesmos nós e a mesma animação da maquina_chapeu (que fica de reserva).
-const MAQUINAS := ["guerreiro", "arqueiro", "kitsune", "ronin_oni", "arqueiro_yumi", "construtor"]
+const MAQUINAS := ["guerreiro", "arqueiro", "kitsune", "ronin_oni", "arqueiro_yumi", "construtor", "kitsune_luz", "kitsune_sombria"]
 
 var _cor_brilho := Color(-1, 0, 0)  # brilho do molde da próxima máquina (-1 = luz1 do tema)
 var _cor_vapor := Color(-1, 0, 0)
@@ -39,7 +39,7 @@ func _init() -> void:
 		_maquina(); _salvar("maquina_chapeu"); _completar("maquina_chapeu", true)
 		for c in MAQUINAS:
 			_maquina_classe(c); _salvar("maquina_" + c); _completar("maquina_" + c, true)
-		for c in ["guerreiro", "arqueiro", "monge", "construtor", "kitsune", "ronin_oni", "arqueiro_yumi", "armadilheiro", "bombardeiro"]:
+		for c in ["guerreiro", "arqueiro", "monge", "construtor", "kitsune", "ronin_oni", "arqueiro_yumi", "armadilheiro", "bombardeiro", "kitsune_luz", "kitsune_sombria"]:
 			_emblema(c); _salvar("emblema_" + c)
 	_ligar_temas()
 	print("triângulos (último tema): ", _tris)
@@ -372,6 +372,8 @@ func _maquina_classe(c: String) -> void:
 		"guerreiro": _maq_forja()
 		"arqueiro": _maq_shuriken()
 		"kitsune": _maq_raposa()
+		"kitsune_luz": _maq_raposa("luz")
+		"kitsune_sombria": _maq_raposa("sombria")
 		"ronin_oni": _maq_oni()
 		"arqueiro_yumi": _maq_yumi()
 		"construtor": _maq_serraria()
@@ -493,15 +495,32 @@ func _maq_shuriken() -> void:
 ## Kitsune (Mago): santuário da raposa. Mini torii, corda com papéis shide,
 ## duas raposas de pedra, carimbo hanko gigante e um anel de fogo-raposa
 ## girando atrás do molde.
-func _maq_raposa() -> void:
-	_cor_brilho = Color(0.85, 0.5, 1.0)
-	_cor_vapor = Color(0.9, 0.75, 1.0)
+## Variações (magos opostos do Ciclo 2.4, classe_base kitsune): "luz" = torii
+## creme e dourado, raposas brancas, fogo dourado; "sombria" = torii negro com
+## laca roxa, raposas de pedra escura, fogo roxo.
+func _maq_raposa(variante := "") -> void:
+	var fogo := Color(1.0, 0.5, 0.78)
+	_cor_brilho = fogo
+	_cor_vapor = Color(1.0, 0.8, 0.9)
 	var vermelho: Color = P.torii
-	_maquina_base(P.pedra, Color(0.3, 0.12, 0.1), vermelho)
+	var pedra_raposa: Color = pedra_raposa
+	if variante == "luz":
+		fogo = Color(1.0, 0.85, 0.4)
+		_cor_brilho = fogo
+		_cor_vapor = Color(1.0, 0.97, 0.85)
+		vermelho = Color(0.95, 0.9, 0.78)
+		pedra_raposa = Color(0.97, 0.95, 0.9)
+	elif variante == "sombria":
+		fogo = Color(0.6, 0.3, 1.0)
+		_cor_brilho = fogo
+		_cor_vapor = Color(0.3, 0.2, 0.4)
+		vermelho = Color(0.35, 0.12, 0.5)
+		pedra_raposa = Color(0.16, 0.13, 0.2)
+	_maquina_base(P.pedra, Color(0.3, 0.12, 0.1) if variante == "" else vermelho.darkened(0.6), vermelho)
 	# Torii.
 	for x in [-0.88, 0.88]:
 		_cil(0.09, 0.11, 2.3, 8, Vector3(x, 1.35, -0.2), Vector3.ZERO, vermelho)
-	_blocod(Vector3(2.4, 0.14, 0.24), Vector3(0, 2.5, -0.2), Vector3.ZERO, Color(0.1, 0.08, 0.1), 0.04)
+	_blocod(Vector3(2.4, 0.14, 0.24), Vector3(0, 2.5, -0.2), Vector3.ZERO, P.ouro if variante == "luz" else Color(0.1, 0.08, 0.1), 0.04)
 	_blocod(Vector3(2.1, 0.12, 0.2), Vector3(0, 2.3, -0.2), Vector3.ZERO, vermelho, 0.03)
 	# Corda sagrada com shide.
 	var m := _marca()
@@ -514,12 +533,12 @@ func _maq_raposa() -> void:
 	# Raposas de pedra sentadas nas pontas da prateleira.
 	for s in [-1.0, 1.0]:
 		var b := Vector3(s * 1.2, 0.22, 0.45)
-		_esfera(0.2, b + Vector3(0, 0.25, 0), Vector3(0.9, 1.3, 0.8), P.pedra.lightened(0.15), false, 7, 4)
-		_esfera(0.13, b + Vector3(0, 0.62, 0.05), Vector3(1, 0.9, 1.1), P.pedra.lightened(0.15), false, 7, 4)
+		_esfera(0.2, b + Vector3(0, 0.25, 0), Vector3(0.9, 1.3, 0.8), pedra_raposa, false, 7, 4)
+		_esfera(0.13, b + Vector3(0, 0.62, 0.05), Vector3(1, 0.9, 1.1), pedra_raposa, false, 7, 4)
 		for o in [-1.0, 1.0]:
-			_cil(0.0, 0.05, 0.14, 4, b + Vector3(o * 0.07, 0.76, 0.03), Vector3.ZERO, P.pedra.lightened(0.15))
+			_cil(0.0, 0.05, 0.14, 4, b + Vector3(o * 0.07, 0.76, 0.03), Vector3.ZERO, pedra_raposa)
 		_caixa(Vector3(0.22, 0.08, 0.02), b + Vector3(0, 0.45, 0.17), Vector3.ZERO, vermelho)  # babador
-		_esfera(0.13, b + Vector3(-s * 0.18, 0.12, -0.1), Vector3(1.6, 0.6, 0.7), P.pedra.lightened(0.15), false, 6, 3)  # cauda
+		_esfera(0.13, b + Vector3(-s * 0.18, 0.12, -0.1), Vector3(1.6, 0.6, 0.7), pedra_raposa, false, 6, 3)  # cauda
 	_pecas_marcador("Vapor", Vector3(0, 1.3, -0.25))
 	_prensa(func() -> void:  # carimbo hanko
 		_cil(0.3, 0.3, 0.42, 12, Vector3.ZERO, Vector3.ZERO, Color(0.85, 0.75, 0.55))
@@ -529,7 +548,7 @@ func _maq_raposa() -> void:
 	_gira("Gira_fogo_raposa", Vector3(0, 1.45, -0.32), 1.6, func() -> void:
 		for k in 6:
 			var a := TAU * k / 6.0
-			_esfera(0.08, Vector3(cos(a), sin(a), 0) * 0.62, Vector3(1, 1.3, 1), Color(0.85, 0.5, 1.0), true, 6, 3)
+			_esfera(0.08, Vector3(cos(a), sin(a), 0) * 0.62, Vector3(1, 1.3, 1), fogo, true, 6, 3)
 		_toro(0.58, 0.62, Vector3.ZERO, Vector3(1, 1, 0.3), P.corda.darkened(0.3)))
 
 
@@ -842,15 +861,20 @@ func _emblema(classe: String) -> void:
 				var a := TAU * k / 6.0 + PI / 2
 				_esfera(0.11, Vector3(cos(a) * 0.15, sin(a) * 0.15, 0), Vector3(1.0, 0.55, 0.4), P.branco if k % 2 else P.chao_folha2, false, 6, 3)
 			_esfera(0.08, Vector3(0, 0, 0.03), Vector3(1, 1, 0.6), ouro, false, 6, 3)
-		"kitsune":  # máscara de raposa com chama-fantasma entre as orelhas
-			var branco: Color = P.branco
+		"kitsune", "kitsune_luz", "kitsune_sombria":  # máscara de raposa com chama entre as orelhas
+			var branco: Color = P.branco if classe != "kitsune_sombria" else Color(0.1, 0.08, 0.12)
+			var chama := Color(1.0, 0.5, 0.78)
+			if classe == "kitsune_luz":
+				chama = Color(1.0, 0.85, 0.4)
+			elif classe == "kitsune_sombria":
+				chama = Color(0.6, 0.3, 1.0)
 			_tri(Vector3(-0.2, 0.05, 0), Vector3(-0.08, 0.12, 0), Vector3(-0.2, 0.3, 0), branco, Vector3(0, 0, 1))
 			_tri(Vector3(0.08, 0.12, 0), Vector3(0.2, 0.05, 0), Vector3(0.2, 0.3, 0), branco, Vector3(0, 0, 1))
 			_esfera(0.17, Vector3(0, -0.02, 0), Vector3(1.15, 0.9, 0.4), branco, false, 8, 4)
 			_esfera(0.06, Vector3(0, -0.17, 0.04), Vector3(1, 0.8, 0.8), Color(0.1, 0.06, 0.08), false, 6, 3)
 			for sx in [-1.0, 1.0]:
-				_blocod(Vector3(0.09, 0.025, 0.03), Vector3(sx * 0.08, 0.0, 0.06), Vector3(0, 0, sx * 18), P.torii, 0.005)
-			_cil(0.0, 0.07, 0.18, 6, Vector3(0, 0.3, 0.02), Vector3.ZERO, Color(0.85, 0.5, 1.0), true)
+				_blocod(Vector3(0.09, 0.025, 0.03), Vector3(sx * 0.08, 0.0, 0.06), Vector3(0, 0, sx * 18), P.torii if classe == "kitsune" else chama, 0.005)
+			_cil(0.0, 0.07, 0.18, 6, Vector3(0, 0.3, 0.02), Vector3.ZERO, chama, true)
 		"ronin_oni":  # chifres de oni sobre um kanabo (clava cravejada)
 			_viga(Vector3(-0.2, -0.26, 0), Vector3(0.18, 0.2, 0), 0.1, Color(0.12, 0.08, 0.1))
 			for k in 4:

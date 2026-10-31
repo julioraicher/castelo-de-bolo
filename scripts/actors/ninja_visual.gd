@@ -20,7 +20,7 @@ const MAGENTA := Color(1.0, 0.25, 0.85)
 const FANTASMA := Color(0.45, 1.0, 0.45)
 const OURO := Color(1.0, 0.78, 0.3)
 const FOGO := Color(1.0, 0.45, 0.08)
-const KITSUNEBI := Color(0.85, 0.45, 1.0)  # fogo de raposa (violeta: o ciano é do Ninja de Shuriken)
+const KITSUNEBI := Color(1.0, 0.45, 0.75)  # fogo de raposa (rosa: ciano = Shuriken, roxo = Kitsune Sombria)
 
 static var _pecas_cache := {}   # "estilo|r,g,b" -> ArrayMesh
 static var _corpo_cache := {}   # "textura|time|contorno" -> ShaderMaterial
@@ -414,7 +414,7 @@ func _kitsune(time: Color) -> void:
 	for s in [-1, 1]:
 		_peca(cab, _cone(0.15, 0.4), Vector3(0.3 * s, 1.05, 0.15), Vector3(0, 0, -15 * s), Vector3.ONE, _plano(Color(0.95, 0.94, 0.9)))
 		_peca(cab, _caixa(Vector3(0.18, 0.04, 0.02)), Vector3(0.17 * s, 0.68, 0.64), Vector3(0, 0, -20 * s), Vector3.ONE, _neon(Color(1.0, 0.15, 0.2), 1.6))
-	# Fogo de raposa (kitsunebi): chamas violeta orbitando
+	# Fogo de raposa (kitsunebi): chamas rosadas orbitando
 	var peito := "chest"
 	for i in 4:
 		var a := TAU * i / 4.0 + 0.4

@@ -71,7 +71,7 @@ func setup(game: Game, shooter: Unit, origin: Vector3, dir: Vector3, p_kind: Str
 			orb.radial_segments = 10
 			orb.rings = 5
 			mi.mesh = orb
-			var cols := {"magia": Color(1.2, 0.9, 2.0), "chi": Color(0.7, 2.0, 0.8), "fogo": Color(1.7, 0.9, 2.2)}
+			var cols := {"magia": Color(1.2, 0.9, 2.0), "chi": Color(0.7, 2.0, 0.8), "fogo": Color(2.0, 0.8, 1.5)}
 			mi.material_override = Fx.unshaded(cols.get(kind, Color(1.2, 0.9, 2.0)))
 	add_child(mi)
 

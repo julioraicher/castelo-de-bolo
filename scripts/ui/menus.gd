@@ -6,8 +6,8 @@ extends CanvasLayer
 
 signal started
 
-const BG := Color(0.035, 0.03, 0.08, 0.93)
-const ACCENT := Estilo.MAGENTA
+const BG := Color(0.04, 0.035, 0.05, 0.94)
+const ACCENT := Estilo.OURO
 const GOLD := Estilo.OURO
 
 var _start_panel: Control
@@ -290,8 +290,8 @@ func _card(parent: Control, min_size: Vector2) -> VBoxContainer:
 	var panel := PanelContainer.new()
 	var sb := Estilo.painel(Color(ACCENT, 0.75), false, BG, 10)
 	sb.shadow_size = 24
-	sb.shadow_color = Color(ACCENT, 0.18)
-	sb.border_width_top = 4
+	sb.shadow_color = Color(0, 0, 0, 0.5)
+	sb.border_width_top = 3
 	sb.content_margin_left = 40
 	sb.content_margin_right = 40
 	sb.content_margin_top = 28
