@@ -3,7 +3,8 @@ extends SceneTree
 ## fotografa com câmera de cinema (baixa, perto, sem HUD).
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
 ##     --rendering-method gl_compatibility --audio-driver Dummy \
-##     -s tools/trailer/quadros.gd -- DIR --autoplay --tema=1 --perf=3
+##     --fixed-fps 30 -s tools/trailer/quadros.gd -- DIR --autoplay --tema=1
+## Qualidade Alta é ligada aqui (--perf encerra a partida sozinho).
 ## Salva DIR/NN_nome.png. Sem tipos do jogo aqui (compila antes dos autoloads).
 
 var g: Node
@@ -19,10 +20,11 @@ func _rodar() -> void:
 	saida = OS.get_cmdline_user_args()[0]
 	DirAccess.make_dir_recursive_absolute(saida)
 	root.size = Vector2i(1280, 720)
+	root.get_node("/root/Settings").quality = 3
 	var jogo: Node = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	root.add_child(jogo)
 	g = jogo if "units" in jogo else jogo.find_child("Game", true, false)
-	for k in 900:  # ~15 s de partida: bots espalhados, brigas no meio
+	for k in 300:  # ~10 s de partida: bots espalhados, brigas no meio
 		await process_frame
 	for u in g.units:
 		u.power = 1.0  # marcas e olhos acesos
@@ -31,8 +33,16 @@ func _rodar() -> void:
 	paused = true
 	if g.hud:
 		g.hud.visible = false
-	cam = root.get_viewport().get_camera_3d()
+	# câmera própria: a do jogo (CameraRig) volta sozinha para o jogador
+	var cam_jogo := root.get_viewport().get_camera_3d()
+	cam = Camera3D.new()
 	cam.process_mode = Node.PROCESS_MODE_ALWAYS
+	if cam_jogo:
+		cam.environment = cam_jogo.environment
+		cam.attributes = cam_jogo.attributes
+		cam.far = cam_jogo.far
+	root.add_child(cam)
+	cam.make_current()
 	cam.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	cam.fov = 38.0
 
