@@ -5,6 +5,22 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4o (2026-10-31), Jogabilidade: coleta de madeira clara + minimapa
+- **Guia do Construtor** (`scripts/fx/guia_construtor.gd`): quando você é Construtor, uma
+  **seta dourada no chão** aponta o próximo passo e um marcador quica em cima do alvo com o
+  verbo: **CORTE** (árvore pronta mais perto, a do seu bosque tem preferência), **PEGUE**
+  (tora no chão), **ENTREGUE** (depósito, quando a tora está nos braços) e **CONSTRUA**
+  (obra que já tem madeira no estoque). A dica de baixo repete o passo em texto.
+- Virar Construtor mostra na hora: "Corte árvores e leve as toras ao depósito".
+- **Depósito** (`pilha.gd`): ícone grande de tora flutuando, placa "DEPÓSITO · N" e um
+  **anel no chão do raio de entrega**, que acende e pulsa quando você chega com uma tora.
+- **Minimapa** no canto inferior direito (`scripts/ui/minimapa.gd`): castelos, máscaras,
+  árvores/bambus prontos (verde vivo; crescendo = apagado), toras soltas, depósitos,
+  oficinas, seu time e você (seta). Linha tracejada até o alvo da seta do Construtor.
+  **Inimigos não aparecem** (ideia "spotar" anotada em `docs/ideias.md`, C).
+- Regras e números intocados. Testes OK; 5 min simulados como Construtor sem erro.
+- **O que testar**: pegue o chapéu laranja e siga só a seta e o minimapa: dá para cortar,
+  entregar e construir sem ler mais nada? O minimapa atrapalha a visão em algum canto?
 ## Ciclo 2.4n (2026-10-31), Diretor Visual: letras e textos com identidade
 - **Fontes novas** (OFL, `assets/fonts`): sai a Chakra Petch (cara de painel neon, sobra dos
   Clãs de Neon); entra a família **Barlow Condensed** (texto, botões, números), mais grossa e
