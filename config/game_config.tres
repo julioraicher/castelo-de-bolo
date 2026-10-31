@@ -60,3 +60,6 @@ princess_return_time = 25.0
 furia_escala = 1.35
 redemoinho_puxa = 4.5
 redemoinho_puxa_raio = 2.2
+chuva_arremate_mult = 2.5
+bombardeio_intervalo = 0.16
+bombardeio_fumaca = 4.0
