@@ -5,6 +5,23 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.3 (2026-10-31), Diretor Visual: mapa maior e maquininha por classe (branch)
+- Pedido do Julio: peças muito juntas; quer caminhos pela floresta para flanquear,
+  mapa maior e mais espaçado. Rio das Lanternas passa de 136 x 72 para 168 x 96 m
+  (`castle_distance` 60): vila com uma fileira de cada lado e becos de ~5 m,
+  campo do meio solto (|z| 14 a 22), trilhas de floresta em |z| = 30 (pontes
+  laterais -> mata -> lado do castelo inimigo, onde fica o bosque de corte dele),
+  lanternas de pedra a cada ~12 m marcando a trilha, colinas viraram mirantes
+  (|z| = 41) e um corredor de ~6 m atrás de cada castelo para contorná-lo.
+- QA do mapa: nenhum bot preso; os "desvios" atrás dos castelos são o corredor
+  novo (só se chega por fora, de propósito).
+- `maquina_<classe>.scn` para guerreiro (forja), arqueiro (esmeril), kitsune
+  (santuário), ronin_oni (fornalha oni), arqueiro_yumi (ateliê do arco) e
+  construtor (serraria), com os mesmos nós da `maquina_chapeu`; emblemas do
+  elenco 2.4. `tools/planta_mapa.gd` + `.py`: planta numerada do mapa.
+- Testes 98/98, 5 min simulados sem erro.
+- **O que testar**: nada ainda (branch; espera o pitaco do Julio na planta).
+
 ## Ciclo 2.3 (2026-10-31), Diretor de Jogabilidade: Economia do Construtor, Etapa 1
 - **Madeira**: `Planta` (`scripts/items/planta.gd`): árvore e bambu em 3 estágios
   (broto, jovem, adulta), um a cada `arvore_tempo_estagio` 40 s / `bambu_tempo_estagio`
