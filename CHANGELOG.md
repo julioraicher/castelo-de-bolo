@@ -21,6 +21,9 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 - CHANGELOG encurtado: Rodadas 1 a 19 em `docs/changelog-antigo.md`.
   `docs/ideias-futuras.md` virou a seção "Outros projetos" de `docs/ideias.md`.
 - Outros papéis: `scripts/game.gd` ganhou só a flag `--testes` (não muda o jogo).
+  `projectile.gd`: projétil com velocidade zero não chama mais `look_at` (erro
+  "origin and target are in the same position" reprovou a partida simulada do
+  CI uma vez; raro, não reproduziu em 4 partidas locais).
 - **O que testar**: nada novo no jogo; jogue normal. Se quiser, veja o CI no
   GitHub (Actions): o passo "Testes de regra" aparece antes da partida simulada.
 
