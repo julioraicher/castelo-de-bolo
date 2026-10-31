@@ -122,8 +122,6 @@ extends Resource
 @export var redemoinho_puxa_raio := 2.2
 
 @export_group("Chapéus")
-## (Antigo, sem uso desde o Ciclo 2.3: as maquininhas têm estoque.)
-@export var hat_respawn_time := 6.0
 ## Maquininha de chapéu: fabrica 1 a cada maquina_intervalo s até o estoque
 ## máximo e começa cheia. Fila: μ = 60/intervalo chapéus/min por máquina; com
 ## procura λ > μ o estoque S₀ acaba em S₀/(λ − μ) e alguém troca de classe.

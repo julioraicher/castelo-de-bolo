@@ -1,6 +1,6 @@
 extends SceneTree
 ## Gera o cenário ninja por código: modelos (.scn) dos dois temas, os temas
-## (config/temas/*.tres) e o mapa (config/mapas/vale_ninja.tres).
+## (config/temas/*.tres). O mapa vem de tools/gerar_mapa_rio.gd.
 ##   godot --headless --path . -s tools/gerar_cenario_ninja.gd
 ## Cada modelo é UMA malha com até 2 superfícies (fosca com cor por vértice +
 ## brilho sem sombreamento), para o Arena juntar cópias num MultiMesh.
@@ -98,7 +98,6 @@ func _init() -> void:
 		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_dir))
 		_gerar_modelos()
 	_gerar_temas()
-	_gerar_mapa()
 	print("triângulos por modelo (oni): ", _tris)
 	quit()
 
@@ -1200,61 +1199,3 @@ func _gerar_temas() -> void:
 		for k in temas[nome]:
 			t.set(k, temas[nome][k])
 		ResourceSaver.save(t, "res://config/temas/%s.tres" % nome)
-
-
-func _gerar_mapa() -> void:
-	var ML: Script = load("res://scripts/data/map_layout.gd")
-	var MP: Script = load("res://scripts/data/map_prop.gd")
-	var m: Resource = ML.new()
-	m.display_name = "Vale dos Dois Clãs"
-	# [modelo, posição, rotação (-1 = aleatória), colisor, raio, altura, espelho x, espelho z]
-	var meio := [
-		["pedra_grande.scn", Vector3(16, 0, 0), -1.0, "cilindro", 1.7, 3.0, true, false],
-		["arvore_grande.scn", Vector3(26, 0, 19), -1.0, "cilindro", 2.6, 4.0, true, true],
-		["arvore_media.scn", Vector3(8, 0, 12), -1.0, "cilindro", 1.2, 2.0, true, true],
-		["arvore_alta.scn", Vector3(0, 0, 24), -1.0, "cilindro", 2.8, 4.0, false, true],
-		["torii.scn", Vector3(30, 0, 0), 0.0, "nenhuma", 1.0, 2.0, true, false],
-		["estatua.scn", Vector3(30, 0, 6.6), 0.0, "cilindro", 0.8, 2.0, true, true],
-		["varal.scn", Vector3(0, 0, 0), 0.0, "nenhuma", 1.0, 2.0, false, false],
-		["lanterna_pedra.scn", Vector3(8, 0, 4.6), 0.0, "nenhuma", 0.4, 2.0, true, true],
-		["lanterna_pedra.scn", Vector3(22, 0, 4.6), 0.0, "nenhuma", 0.4, 2.0, true, true],
-		["lanterna_pedra.scn", Vector3(34, 0, -4.6), 0.0, "nenhuma", 0.4, 2.0, true, true],
-		["santuario.scn", Vector3(17, 0, 15), 180.0, "cilindro", 1.3, 2.0, true, true],
-		["lago.scn", Vector3(40, 0, 26), 0.0, "cilindro", 3.2, 2.0, true, true],
-		["cerca.scn", Vector3(12, 0, 33.5), 0.0, "nenhuma", 1.0, 2.0, true, true],
-		["cerca.scn", Vector3(22, 0, 33.8), 8.0, "nenhuma", 1.0, 2.0, true, true],
-		["arvore_media.scn", Vector3(52, 0, 29), -1.0, "cilindro", 1.2, 2.0, true, true],
-		["arvore_grande.scn", Vector3(64, 0, -2), -1.0, "cilindro", 2.6, 4.0, true, false],
-		["pagode.scn", Vector3(0, 0, 13), 0.0, "cilindro", 1.9, 4.0, false, true],
-		["ruina.scn", Vector3(24, 0, 9.5), -1.0, "cilindro", 1.4, 2.0, true, true],
-		["arvore_media.scn", Vector3(19, 0, 27), -1.0, "cilindro", 1.2, 2.0, true, true],
-		["arvore_grande.scn", Vector3(33, 0, 31), -1.0, "cilindro", 2.6, 4.0, true, true],
-		["rochas.scn", Vector3(11, 0, 21), -1.0, "cilindro", 1.0, 2.0, true, true],
-		["rochas.scn", Vector3(46, 0, 17), -1.0, "cilindro", 1.0, 2.0, true, true],
-		["tronco_caido.scn", Vector3(9, 0, 7.5), 20.0, "nenhuma", 1.0, 1.0, true, true],
-		["lanterna_pedra.scn", Vector3(3, 0, 9), 0.0, "nenhuma", 0.4, 2.0, true, true],
-		["arvore_media.scn", Vector3(2, 0, 33), -1.0, "cilindro", 1.2, 2.0, true, true],
-		["santuario.scn", Vector3(56, 0, -20), 90.0, "cilindro", 1.3, 2.0, true, true],
-	]
-	var patio := [
-		["barril.scn", Vector3(-10.5, 0, 10.5), 17.0, false],
-		["caixotes.scn", Vector3(-10.8, 0, -10.5), 29.0, false],
-		["barraca.scn", Vector3(7.5, 0, -10.8), 90.0, false],
-		["lanterna_pedra.scn", Vector3(8.5, 0, 6.8), 0.0, true],
-		["lanterna_pedra.scn", Vector3(-4.5, 0, 2.6), 0.0, true],
-	]
-	var meios: Array[Resource] = []
-	for d in meio:
-		var p: Resource = MP.new()
-		p.model = d[0]; p.position = d[1]; p.scale = 1.0; p.rotation_deg = d[2]
-		p.collider = d[3]; p.collider_radius = d[4]; p.collider_height = d[5]
-		p.mirror_x = d[6]; p.mirror_z = d[7]
-		meios.append(p)
-	var patios: Array[Resource] = []
-	for d in patio:
-		var p: Resource = MP.new()
-		p.model = d[0]; p.position = d[1]; p.scale = 1.0; p.rotation_deg = d[2]; p.mirror_z = d[3]
-		patios.append(p)
-	m.middle_props.assign(meios)
-	m.courtyard_props.assign(patios)
-	ResourceSaver.save(m, "res://config/mapas/vale_ninja.tres")

@@ -419,25 +419,11 @@ func _should_use_power() -> bool:
 				if u.alive and u.team == unit.team and u.hp_ratio() < 0.7 and u.global_position.distance_to(me) <= r:
 					hurt += 1
 			return hurt >= 3 or unit.hp_ratio() < 0.35
-		"corrida":
-			if unit.carried_princess:
-				return true
-			# Construtor: corre com a tora ou quando a planta/obra está longe.
-			if unit.carried_tora or (unit.lenhador() and me.distance_to(_goal) > 30.0 and _nearest_enemy(12.0) == null):
-				return true
-			for u in game.units:
-				if u.alive and u.team == unit.team and u.carried_princess and u.global_position.distance_to(me) <= r:
-					return true
-			var mine := game.princesses[unit.team]
-			return mine.state == Princess.State.CARRIED and mine.carrier and me.distance_to(mine.carrier.global_position) < 25.0
 		"furia":
 			return _count(1 - unit.team, me, r) >= 2 or (_target != null and me.distance_to(_target.global_position) < 3.0)
-		"corte_relampago":
-			# Atravessa na direção do alvo se ele estiver no alcance do corte.
-			return _target != null and _target.alive and me.distance_to(_target.global_position) < r * 0.9
 		"leque":
 			return _target != null and _target.alive and me.distance_to(_target.global_position) < unit.stats.attack_range
-		"nuvem", "selo", "coluna_fogo":
+		"selo", "coluna_fogo":
 			if _target == null or not _target.alive or me.distance_to(_target.global_position) > unit.stats.attack_range:
 				return false
 			unit.aim_point = _target.global_position
@@ -449,8 +435,6 @@ func _should_use_power() -> bool:
 			return _count(1 - unit.team, _target.global_position, 4.0) >= 2 or _target.carried_princess != null
 		"campo_minado":
 			return _count(1 - unit.team, me, 7.0) >= 2 or (role == Role.DEFEND and unit.global_position.distance_to(game.arena.gate_spot[unit.team]) < 6.0)
-		"reforco":
-			return _count(unit.team, me, r) >= 3 and _count(1 - unit.team, me, 10.0) >= 2
 		"mutirao":
 			return game.nearest_oficina(unit.team, me, r * 2.0, true) != null
 	return false

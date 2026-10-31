@@ -1,8 +1,8 @@
 class_name AreaEffect
 extends Node3D
 ## Poderes de área dos ninjas, num círculo do chão:
-##   nuvem       (Bombas de Fumaça) inimigos dentro ficam lentos e levam dano em pulsos
-##   selo        (Onmyoji) talismãs fecham o círculo: dano e SELO (sem atacar/poder)
+##   nuvem       (fumaça do Bombardeio) inimigos dentro ficam lentos e levam dano em pulsos
+##   selo        (Kitsune Sombria) talismãs fecham o círculo: dano e SELO (sem atacar/poder)
 ##   coluna_fogo (Kitsune) colunas de fogo-raposa queimam em pulsos
 ## Visual barato: poucas malhas grandes, emissivas, animadas à mão.
 

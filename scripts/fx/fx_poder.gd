@@ -429,28 +429,6 @@ static func coluna_fogo(g: Node, centro: Vector3, r: float, dur: float, cor := C
 	tw.chain().tween_callback(n.queue_free)
 
 
-## Mestre da Pólvora: tábuas voam e se fecham no aliado (vira o escudo).
-static func reforco_em(alvo: Unit) -> void:
-	var g := alvo.game
-	var b := BoxMesh.new()
-	b.size = Vector3(0.18, 0.7, 0.05)
-	for k in 4:
-		var a := TAU * k / 4.0 + randf() * 0.4
-		var n := _no(g, alvo.global_position + Vector3(cos(a) * 2.2, 1.6 + k * 0.15, sin(a) * 2.2))
-		var mat := Fx.unshaded(Color(1.0, 0.6, 0.25, 1.0), true)
-		_malha(n, b, mat)
-		n.rotation = Vector3(randf() * PI, a, 0)
-		var tw := n.create_tween().set_parallel()
-		tw.tween_property(n, "global_position", alvo.global_position + Vector3(0, 1.1, 0), 0.3).set_ease(Tween.EASE_IN)
-		tw.tween_property(n, "rotation:y", a + PI, 0.3)
-		tw.chain().tween_property(mat, "albedo_color:a", 0.0, 0.1)
-		tw.chain().tween_callback(n.queue_free)
-	var tm := g.get_tree().create_timer(0.3, false)
-	tm.timeout.connect(func():
-		if is_instance_valid(alvo):
-			Fx.burst(g, alvo.global_position + Vector3(0, 1.1, 0), Color(1.0, 0.6, 0.2), 12, 6.0))
-
-
 ## Carpinteiro: feixe de trabalho até a oficina e faíscas douradas nela.
 static func mutirao(u: Unit, oficina: Node3D) -> void:
 	var g := u.game

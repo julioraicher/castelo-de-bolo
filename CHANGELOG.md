@@ -5,6 +5,32 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Limpeza 2.5c (2026-10-31), revisão de código: tirar o que sobrou de versões antigas
+- **Nada muda no jogo** (regras, números, visual e controles iguais). Testes 155/155 e 5 min
+  simulados sem erro, antes e depois.
+- Saíram (~2,9 MB, 93 arquivos): tema **Medieval** e os modelos KayKit de cenário
+  (`assets/medieval`), tema Sinistro, mapas **Vale** e **Vale Ninja** (o padrão agora é o
+  Rio das Lanternas), peças ninja que nenhum mapa usa (`casa_b`, `ponte_corda`,
+  `pilha_toras`, `emblema_monge`).
+- Código: poderes de classes descartadas no Ciclo 2.4 (Corrida como E, Corte Relâmpago
+  como E, Reforço, Nuvem como E) em `unit.gd`, `bot_brain.gd` e `fx_poder.gd`; estilos
+  `_monge`, `_onmyoji`, `_lamina_dupla`, `_fumaca`, `_carpinteiro` em `ninja_visual.gd`;
+  linha de mira sem uso e `is_busy_carrying` em `unit.gd`; campo `hat_respawn_time`.
+  Os padrões de `ThemeConfig`/`MapProp` passaram a apontar para as peças ninja.
+- Ferramentas (Diretor Visual, aviso): saíram `gerar_classes.gd` (estava velho: rodá-lo
+  sobrescreveria as classes atuais com números do Ciclo 2.2), os pilotos do 2.2
+  (`prancha_piloto`, `prancha_mecanica`, `prancha_cenario`, `prancha_poder`, `montar_*`) e
+  `minimapas.py` (mapa antigo). `gerar_cenario_ninja.gd` não gera mais o Vale Ninja;
+  `gerar_mapa_rio.gd`/`gerar_economia.gd` não geram as peças sem uso. `.tres` das classes =
+  fonte da verdade.
+- Docs: README, CONTROLES (chapéus, oficinas, caminho dos magos, tema) e GUIA (mapa dos
+  arquivos) atualizados para o jogo de hoje.
+- Pendente (ideia, não feito para não mexer antes do teste): renomear no código
+  `Princess` → máscara e `Cake` → espírito.
+- **O que testar**: jogue normalmente; tudo deve estar igual à 2.5b. Em Esc >
+  Configurações, troque os 4 temas (Festival ao Sol, Crepúsculo, Floresta Oni, Templo ao
+  Luar) e veja se o mapa monta inteiro em cada um.
+
 ## Ciclo 2.5b (2026-10-31), Jogabilidade + mapa: caminhos opostos dos magos
 - **Escolha de caminho** (pedido do Julio): cada castelo tem dois terrenos fixos de mago,
   **Luz em cima** (Kitsune da Luz) e **Sombra embaixo** (Kitsune Sombria), no meio do

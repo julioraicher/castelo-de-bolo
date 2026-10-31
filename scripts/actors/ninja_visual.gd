@@ -265,21 +265,6 @@ func _ninja(time: Color) -> void:
 	_peca(peito, _shuriken(), Vector3(-0.22, 0.25, -0.45), Vector3(0, 0, -20), Vector3.ONE, _neon(CIANO, 1.5))
 
 
-func _monge(time: Color) -> void:
-	var cab := "head"
-	# Kasa: chapéu de palha em cone largo e baixo (silhueta inconfundível de cima)
-	_peca(cab, _cone(0.98, 0.4), Vector3(0, 1.02, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.62, 0.46, 0.24)))
-	_peca(cab, _cilindro(0.5, 0.5, 0.06), Vector3(0, 0.86, 0), Vector3.ZERO, Vector3.ONE, _plano(time.darkened(0.2)))
-	# Colar de contas no peito
-	var peito := "chest"
-	for i in 12:
-		var a := TAU * i / 12.0
-		_peca(peito, _esfera(0.07, 0.07), Vector3(cos(a) * 0.4, 0.15 + sin(a) * 0.06, 0.12 + sin(a) * 0.28), Vector3.ZERO, Vector3.ONE, _plano(Color(0.35, 0.16, 0.1)))
-	# Esferas de chi (fogo-fantasma) orbitando as mãos
-	for lado in ["handslot.l", "handslot.r"]:
-		_peca(lado, _esfera(0.17, 0.17), Vector3(0, 0.15, 0.2), Vector3.ZERO, Vector3.ONE, _neon(FANTASMA, 2.5))
-
-
 func _armadilheiro(time: Color) -> void:
 	var cab := "head"
 	# Óculos de solda com lente de neon + bandana
@@ -342,20 +327,6 @@ func _arqueiro_yumi(time: Color) -> void:
 		_peca(peito, _cone(0.06, 0.2), Vector3(0.32 + i * 0.06, 0.92 - i * 0.03, -0.45), Vector3(0, 0, -25), Vector3.ONE, _neon(time.lightened(0.3), 1.4))
 
 
-func _onmyoji(time: Color) -> void:
-	var cab := "head"
-	# Eboshi: chapéu alto e preto, inclinado para trás
-	_peca(cab, _cilindro(0.28, 0.42, 0.9), Vector3(0, 1.15, -0.15), Vector3(-15, 0, 0), Vector3(1, 1, 0.7), _plano(Color(0.04, 0.04, 0.07)))
-	# Talismãs de papel (ofuda) flutuando em volta
-	var peito := "chest"
-	for i in 5:
-		var a := TAU * i / 5.0
-		_peca(peito, _caixa(Vector3(0.16, 0.36, 0.01)), Vector3(cos(a) * 0.85, 0.6 + 0.15 * sin(a * 2.0), sin(a) * 0.85), Vector3(0, -rad_to_deg(a) + 90, 0), Vector3.ONE, _neon(Color(0.9, 0.95, 1.0), 1.3))
-	# Leque na mão
-	var mao := "handslot.r"
-	_peca(mao, _cilindro(0.45, 0.45, 0.02), Vector3(0, 0.35, 0), Vector3(90, 0, 0), Vector3(1, 1, 1), _plano(time.lightened(0.2)))
-
-
 func _polvora(time: Color) -> void:
 	var cab := "head"
 	for s in [-1, 1]:
@@ -372,38 +343,6 @@ func _polvora(time: Color) -> void:
 	var mao := "handslot.r"
 	_peca(mao, _esfera(0.25, 0.25), Vector3(0, 0.2, 0.15), Vector3.ZERO, Vector3.ONE, _plano(Color(0.06, 0.06, 0.09)))
 	_peca(mao, _esfera(0.06, 0.06), Vector3(0, 0.5, 0.15), Vector3.ZERO, Vector3.ONE, _neon(FOGO, 3.0))
-
-
-func _lamina_dupla(time: Color) -> void:
-	var cab := "head"
-	# Meia-máscara escura + cachecol longo de neon esvoaçando
-	_peca(cab, _esfera(0.5, 0.3), Vector3(0, 0.38, 0.12), Vector3.ZERO, Vector3(1.0, 0.55, 0.95), _plano(Color(0.07, 0.07, 0.12)))
-	var peito := "chest"
-	_peca(peito, _cilindro(0.38, 0.4, 0.18), Vector3(0, 0.75, 0), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.25), 1.4))
-	for i in 2:
-		_peca(peito, _caixa(Vector3(0.18, 0.9, 0.04)), Vector3(-0.15 + i * 0.3, 0.45, -0.6 - i * 0.1), Vector3(60 - i * 15, 0, -10 + i * 25), Vector3.ONE, _neon(time.lightened(0.25), 1.4))
-	# Duas kodachi (lâminas curtas) de neon
-	for lado in ["handslot.l", "handslot.r"]:
-		var m: String = lado
-		_peca(m, _caixa(Vector3(0.05, 0.85, 0.1)), Vector3(0, 0.6, 0), Vector3.ZERO, Vector3.ONE, _neon(CIANO, 2.2))
-		_peca(m, _cilindro(0.04, 0.04, 0.25), Vector3(0, 0.05, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.1, 0.1, 0.12)))
-
-
-func _fumaca(time: Color) -> void:
-	var cab := "head"
-	# Máscara de pano com olhos de neon + capuz curto
-	_peca(cab, _esfera(0.62, 0.55), Vector3(0, 0.62, -0.05), Vector3.ZERO, Vector3(1, 1, 1), _plano(Color(0.07, 0.07, 0.12)))
-	for s in [-1, 1]:
-		_peca(cab, _caixa(Vector3(0.16, 0.05, 0.02)), Vector3(0.18 * s, 0.66, 0.6), Vector3(0, 0, 8 * s), Vector3.ONE, _neon(time.lightened(0.35), 2.2))
-	# Cinturão de bombas de fumaça + nuvem saindo da mão
-	var peito := "chest"
-	for i in 5:
-		var a := PI * (0.15 + 0.7 * i / 4.0)
-		_peca(peito, _esfera(0.11, 0.11), Vector3(cos(a) * 0.48, -0.12, sin(a) * 0.4), Vector3.ZERO, Vector3.ONE, _plano(Color(0.75, 0.78, 0.85)))
-	var mao := "handslot.r"
-	_peca(mao, _esfera(0.15, 0.15), Vector3(0, 0.15, 0.1), Vector3.ZERO, Vector3.ONE, _plano(Color(0.75, 0.78, 0.85)))
-	for i in 3:
-		_peca(mao, _esfera(0.2 + i * 0.07, 0.18 + i * 0.06), Vector3(0.1 * i, 0.45 + i * 0.25, 0.1), Vector3.ZERO, Vector3.ONE, _neon(Color(0.55, 0.5, 0.7), 0.8))
 
 
 func _kitsune(time: Color) -> void:
@@ -462,23 +401,6 @@ func _construtor(time: Color) -> void:
 	_peca(mao, _cilindro(0.2, 0.2, 0.5), Vector3(0, 0.92, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.7, 0.52, 0.3)))
 	for s in [-1, 1]:
 		_peca(mao, _cilindro(0.21, 0.21, 0.05), Vector3(0.23 * s, 0.92, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.15, 0.15, 0.18)))
-
-
-func _carpinteiro(time: Color) -> void:
-	var cab := "head"
-	# Hachimaki (faixa) com nó + toalha no pescoço
-	_peca(cab, _cilindro(0.56, 0.56, 0.1), Vector3(0, 0.75, 0), Vector3(-6, 0, 0), Vector3.ONE, _neon(time.lightened(0.25), 1.5))
-	_peca(cab, _esfera(0.1, 0.1), Vector3(0, 0.78, -0.56), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.25), 1.5))
-	# Prancha de madeira nas costas + cinto de ferramentas
-	var peito := "chest"
-	_peca(peito, _caixa(Vector3(0.28, 1.5, 0.08)), Vector3(0.1, 0.4, -0.45), Vector3(0, 0, 25), Vector3.ONE, _plano(Color(0.7, 0.52, 0.3)))
-	for i in 3:
-		_peca(peito, _caixa(Vector3(0.14, 0.18, 0.1)), Vector3(-0.3 + i * 0.3, -0.12, 0.42), Vector3.ZERO, Vector3.ONE, _plano(Color(0.35, 0.22, 0.12)))
-	# Kizuchi: marreta grande de madeira
-	var mao := "handslot.r"
-	_peca(mao, _cilindro(0.04, 0.04, 1.0), Vector3(0, 0.4, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.45, 0.3, 0.15)))
-	_peca(mao, _cilindro(0.2, 0.2, 0.55), Vector3(0, 0.95, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.7, 0.52, 0.3)))
-	_peca(mao, _cilindro(0.21, 0.21, 0.05), Vector3(0.25, 0.95, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.15, 0.15, 0.18)))
 
 
 # --- Formas ------------------------------------------------------------------

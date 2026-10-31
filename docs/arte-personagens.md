@@ -56,7 +56,7 @@ Gerar a prancha (corpo KayKit + peças primitivas + shader toon com cor do time)
 `tools/prancha_personagens.gd` (comando no topo do arquivo; usa as classes reais).
 As peças de cada estilo ficam em `scripts/actors/ninja_visual.gd` (funções
 `_samurai`, `_kitsune`...; o `.tres` aponta o estilo em `estilo_ninja`), fundidas
-numa malha só presa aos ossos. As 13 classes saem de `tools/gerar_classes.gd`.
+numa malha só presa aos ossos. Os números de cada classe ficam no próprio `.tres`.
 Shaders em `assets/shaders/toon_time.gdshader`
 (pele fica, cinza vira aço, resto vira cor do time) e `contorno.gdshader`.
 

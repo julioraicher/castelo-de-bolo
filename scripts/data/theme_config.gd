@@ -5,12 +5,12 @@ extends Resource
 ## Para criar um tema: duplique um .tres, mude os campos e adicione em
 ## game_config.tres > Mundo > themes. Ele aparece em Esc > Configurações > Tema.
 
-@export var display_name := "Medieval"
+@export var display_name := "Tema"
 
 @export_group("Times")
 @export var team_colors: Array[Color] = [Color(0.22, 0.45, 1.0), Color(1.0, 0.25, 0.25)]
-## Substitui "{cor}" nos nomes de modelos (ex.: building_castle_{cor}.gltf).
-@export var team_model_suffix: PackedStringArray = ["blue", "red"]
+## Substitui "{cor}" nos nomes de modelos (ex.: castelo_{cor}.scn).
+@export var team_model_suffix: PackedStringArray = ["azul", "vermelho"]
 
 @export_group("Luz e céu")
 @export var sun_rotation_deg := Vector3(-52, -35, 0)
@@ -39,12 +39,12 @@ extends Resource
 @export var pedestal_neutral := Color(0.5, 0.45, 0.5)
 
 @export_group("Modelos")
-@export_dir var models_dir := "res://assets/medieval"
-@export var keep_model := "building_castle_{cor}.gltf"
+@export_dir var models_dir := "res://assets/ninja/dia"
+@export var keep_model := "castelo_{cor}.scn"
 @export var keep_scale := 3.2
-@export var tower_model := "building_tower_A_{cor}.gltf"
+@export var tower_model := "torre_{cor}.scn"
 @export var tower_scale := 3.2
-@export var flag_model := "flag_{cor}.gltf"
+@export var flag_model := "bandeira_{cor}.scn"
 @export var flag_scale := 4.0
 ## Altura da bandeira em cima da torre.
 @export var flag_height := 7.0
@@ -62,13 +62,13 @@ extends Resource
 @export var pilha_model: PackedScene
 ## Tora solta/carregada.
 @export var tora_model: PackedScene
-@export var wall_model := "wall_straight.gltf"
+@export var wall_model := "muro.scn"
 @export var wall_scale := 3.0
 ## Comprimento de um módulo de muralha já escalado (2 m x escala 3).
 @export var wall_module_length := 6.0
 ## Paisagem fora da arena (só decoração, sem colisão).
-@export var border_trees: PackedStringArray = ["trees_A_large.gltf", "trees_B_large.gltf", "trees_A_medium.gltf", "hills_A_trees.gltf"]
-@export var border_mountains: PackedStringArray = ["mountain_A_grass_trees.gltf", "mountain_B_grass_trees.gltf"]
+@export var border_trees: PackedStringArray = ["borda_a.scn", "borda_b.scn", "borda_c.scn"]
+@export var border_mountains: PackedStringArray = ["montanha_a.scn", "montanha_b.scn"]
 
 @export_group("Detalhes do chão")
 ## Enfeites espalhados pelo campo, sem colisão nem sombra: {"capim.scn": 400}.
@@ -81,7 +81,7 @@ extends Resource
 @export var particulas := ""
 
 @export_group("Modelos")
-## Troca modelos dos objetos do mapa neste tema: {"trees_A_large.gltf": "rock_single_A.gltf"}.
+## Troca modelos dos objetos do mapa neste tema: {"arvore_grande.scn": "rochas.scn"}.
 @export var model_swaps: Dictionary = {}
 
 

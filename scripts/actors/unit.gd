@@ -92,7 +92,6 @@ var _hitstop_t := 0.0
 var _blocking := false
 var _block_t := 0.0  # há quanto tempo o bloqueio está erguido (contra-golpe)
 var _charge_t := 0.0
-var _aim_line: MeshInstance3D
 var _power_idle := 0.0
 var _power_active_t := 0.0  # enquanto o próprio poder age, ele não recarrega o medidor
 var _spin_t := 0.0
@@ -388,10 +387,6 @@ func lenhador() -> bool:
 func drop_tora() -> void:
 	if carried_tora:
 		carried_tora.largar()
-
-
-func is_busy_carrying() -> bool:
-	return carried_princess != null
 
 
 func hp_ratio() -> float:
@@ -975,31 +970,6 @@ func _cancel_skill() -> void:
 	if _charge_t > 0.0:
 		_charge_t = 0.0
 		_stop_upper("1H_Ranged_Aiming")
-	if _aim_line:
-		_aim_line.visible = false
-
-
-## Linha de mira do tiro carregado: cresce até o alcance e fica dourada na carga máxima.
-func _show_aim_line() -> void:
-	if not is_player:
-		return
-	if _aim_line == null:
-		_aim_line = MeshInstance3D.new()
-		var box := BoxMesh.new()
-		box.size = Vector3(0.12, 0.02, 1.0)
-		_aim_line.mesh = box
-		_aim_line.material_override = Fx.unshaded(Color(1, 1, 1, 0.6), true)
-		_aim_line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		_visual.add_child(_aim_line)
-	var c := charge_ratio()
-	var to := aim_point - global_position
-	to.y = 0
-	var length := clampf(to.length(), 6.0, stats.attack_range * 1.4 * (1.0 + 0.5 * c))
-	_aim_line.visible = true
-	_aim_line.scale = Vector3(1.0 + c, 1, length)
-	_aim_line.position = Vector3(0, 0.15, length * 0.5)
-	var mat := _aim_line.material_override as StandardMaterial3D
-	mat.albedo_color = Color(1, 1, 1, 0.35).lerp(Color(1, 0.8, 0.25, 0.9), c)
 
 
 func _heal() -> void:
@@ -1269,7 +1239,7 @@ func _tick_power(delta: float) -> void:
 func _use_power() -> void:
 	if not power_ready() or _dodge_t > 0.0 or _equip_t > 0.0 or _spin_t > 0.0:
 		return
-	if carried_princess and stats.power != "corrida":
+	if carried_princess:
 		return
 	power = 0.0
 	_cancel_skill()
@@ -1313,13 +1283,6 @@ func _use_power() -> void:
 					FxPoder.em_aliado(other, Color(1, 0.9, 0.5))
 					other.heal(other.max_hp() * stats.power_value)
 					other.give_shield(stats.power_shield, stats.power_duration)
-		"corrida":
-			_play_upper("Cheer", 1.5)
-			Fx.ring(game, global_position, Color(1, 0.8, 0.3, 0.9), stats.power_radius)
-			for other in game.units:
-				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
-					other.give_boost(stats.power_value, stats.power_duration)
-					FxPoder.rastro(other, Color(1, 0.8, 0.3), stats.power_duration)
 		"furia":
 			# Ronin Oni: pancada no chão (onda de choque) e dano x1,8 por um tempo.
 			_fury_t = stats.power_duration
@@ -1342,8 +1305,6 @@ func _use_power() -> void:
 					hit_any = true
 			if hit_any:
 				hitstop(Config.cfg.hitstop_time * 1.5)
-		"corte_relampago":
-			_corte_relampago()
 		"leque":
 			# Ninja: leque de shurikens (power_value = dano de cada uma).
 			_play_upper("Throw", 1.6)
@@ -1355,19 +1316,17 @@ func _use_power() -> void:
 			Fx.burst(game, global_position + Vector3(0, 1.4, 0) + base, Color(0.4, 1.0, 1.0), 16, 8.0)
 			FxPoder.leque(self, base)
 			_leque_onda2(n, base)
-		"nuvem", "selo", "coluna_fogo":
+		"selo", "coluna_fogo":
 			var to := aim_point - global_position
 			to.y = 0
 			var center := global_position + to.limit_length(stats.attack_range)
 			center.y = game.arena.ground_y(center.x, center.z, global_position.y + 3.0)
 			var fx := AreaEffect.new()
 			game.add_child(fx)
-			fx.setup(game, self, center, stats.power, stats.power_radius, stats.power_value * (Config.cfg.dano_poder_mult if stats.power != "nuvem" else 1.0), stats.power_duration)
+			fx.setup(game, self, center, stats.power, stats.power_radius, stats.power_value * Config.cfg.dano_poder_mult, stats.power_duration)
 			_power_active_t = stats.power_duration
-			_play_upper("Spellcast_Shoot" if stats.power != "nuvem" else "Throw", 1.2)
+			_play_upper("Spellcast_Shoot", 1.2)
 			match stats.power:
-				"nuvem":
-					FxPoder.nuvem(game, center, stats.power_radius)
 				"selo":
 					FxPoder.selo(game, center, stats.power_radius)
 				"coluna_fogo":
@@ -1389,14 +1348,6 @@ func _use_power() -> void:
 			Sfx.play("pickup", global_position, 0.1)
 		"bombardeio":
 			_bombardeio()
-		"reforco":
-			# Pólvora: escudo de tábuas nos aliados em volta (não fere ninguém).
-			_play_upper("Cheer", 1.5)
-			Fx.pillar(game, global_position, Color(1.0, 0.55, 0.15), stats.power_radius)
-			for other in game.units:
-				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
-					other.give_shield(stats.power_value, stats.power_duration)
-					FxPoder.reforco_em(other)
 		"mutirao":
 			# Carpinteiro: adianta a obra mais próxima e acelera os aliados.
 			_play_upper("Cheer", 1.5)

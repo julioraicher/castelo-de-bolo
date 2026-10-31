@@ -6,16 +6,16 @@ extends SceneTree
 ## Uso (precisa de janela; no servidor, xvfb):
 ##   xvfb-run -a -s "-screen 0 1600x900x24" godot --path . --rendering-driver opengl3 \
 ##     --rendering-method gl_compatibility --audio-driver Dummy -s tools/prancha_personagens.gd -- DIR
-## Fileiras próprias: -- DIR guerreiro,arqueiro,monge,construtor ronin_oni,...
+## Fileiras próprias: -- DIR guerreiro,arqueiro,kitsune,construtor ronin_oni,...
 
 const AZUL := Color(0.16, 0.45, 1.0)
 const VERMELHO := Color(1.0, 0.16, 0.1)
 const MAGENTA := Color(1.0, 0.25, 0.85)
 
 var fileiras := [
-	["guerreiro", "arqueiro", "monge", "construtor"],
-	["ronin_oni", "arqueiro_yumi", "onmyoji", "mestre_polvora"],
-	["lamina_dupla", "bombas_fumaca", "kitsune", "carpinteiro"],
+	["guerreiro", "arqueiro", "kitsune", "construtor"],
+	["ronin_oni", "arqueiro_yumi", "armadilheiro", "bombardeiro"],
+	["recruta", "kitsune_luz", "kitsune_sombria"],
 ]
 
 var dir := "user://prancha"
