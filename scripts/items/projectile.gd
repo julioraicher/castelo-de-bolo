@@ -17,6 +17,11 @@ var damage := 10.0
 var gravity := 0.0
 var _life := LIFETIME
 var _game: Game
+## Tiro carregado no máximo: quantos inimigos ainda atravessa (0 = para no
+## primeiro) e multiplicador do raio da bomba.
+var perfura := 0
+var raio_mult := 1.0
+var _acertados: Array[Unit] = []
 
 
 func setup(game: Game, shooter: Unit, origin: Vector3, dir: Vector3, p_kind: String) -> void:
@@ -99,6 +104,23 @@ static func _star_mesh() -> ArrayMesh:
 	return _star
 
 
+## Carga máxima: flecha/shuriken atravessa carga_perfura inimigos e fica maior
+## e mais brilhante; bomba explode carga_raio_bomba × maior.
+func carregar() -> void:
+	if kind == "bomba":
+		raio_mult = Config.cfg.carga_raio_bomba
+		scale = Vector3.ONE * 1.4
+	else:
+		perfura = Config.cfg.carga_perfura
+		scale = Vector3.ONE * 1.7
+		for mi: MeshInstance3D in find_children("*", "MeshInstance3D", false, false):
+			var m := mi.material_override as StandardMaterial3D
+			if m:
+				m = m.duplicate()
+				m.albedo_color = m.albedo_color * 1.6 + Color(0.3, 0.25, 0.0)
+				mi.material_override = m
+
+
 func _ready() -> void:
 	if velocity.length_squared() > 1e-6:  # look_at falha com alvo na mesma posição
 		look_at(global_position + velocity, Vector3.UP)
@@ -152,18 +174,24 @@ func _physics_process(delta: float) -> void:
 			var d := u.global_position - global_position
 			var dy := -d.y
 			d.y = 0
-			if d.length() < HIT_RADIUS and dy > -0.2 and dy < 2.1:
+			if d.length() < HIT_RADIUS and dy > -0.2 and dy < 2.1 and not _acertados.has(u):
 				if kind == "bomba":
 					_explode(global_position)
 				else:
 					u.take_damage(damage, owner_unit, velocity.normalized())
+					if perfura > 0:
+						perfura -= 1
+						damage *= 0.8
+						_acertados.append(u)
+						Fx.burst(_game, global_position, Color(1, 0.9, 0.5), 8, 5.0)
+						continue
 				queue_free()
 				return
 
 
 ## Bomba: dano em área, mais forte no centro (cai linearmente até 50% na borda).
 func _explode(at: Vector3) -> void:
-	var r := owner_unit.stats.explosao_raio
+	var r := owner_unit.stats.explosao_raio * raio_mult
 	Fx.burst(_game, at + Vector3(0, 0.6, 0), Color(1.0, 0.6, 0.2), 18, 8.0)
 	Fx.burst(_game, at + Vector3(0, 0.4, 0), Color(0.6, 0.6, 0.7), 10, 3.0)
 	Fx.ring(_game, at, Color(1.0, 0.55, 0.15, 0.9), r)

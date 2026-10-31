@@ -20,6 +20,12 @@ extends Node
 ##  8. Inimigo perto -> lutar.
 ##  9. Papel: ATAQUE vai buscar a princesa inimiga, DEFESA guarda o portão,
 ##     CONFEITEIRO busca bolos.
+##
+## Tática de luta (_tatica, a cada TATICA_INTERVALO s): dash para fechar
+## distância, fugir com pouca vida, recuar o atirador, sair do combo de quem
+## está batendo, correr com a tora; Samurai/Ronin seguram o bloqueio contra
+## quem está golpeando de frente. As chances valem para todos; a dificuldade
+## só muda o ritmo das checagens dos inimigos (bot_reaction_mult).
 
 enum Role { ATTACK, DEFEND, CAKE }
 
@@ -42,6 +48,10 @@ var _unstuck_goal := Vector3.ZERO
 var _parado_n := 0
 ## Planta que este bot está cortando (o _combat mira nela e golpeia).
 var _planta: Planta = null
+var _tatica_t := randf() * 0.2
+var _bloqueio_t := 0.0  # segurando o bloqueio por mais estes segundos
+
+const TATICA_INTERVALO := 0.2
 
 
 func tick(delta: float) -> void:
@@ -53,7 +63,57 @@ func tick(delta: float) -> void:
 		_think()
 	_steer(delta)
 	_combat()
+	_tatica(delta)
 	_check_stuck(delta)
+
+
+## Dash e bloqueio (ver cabeçalho). Roda depois do _steer/_combat e pode
+## trocar o move_intent deste quadro para dar a direção do dash.
+func _tatica(delta: float) -> void:
+	_bloqueio_t = maxf(_bloqueio_t - delta, 0.0)
+	if _bloqueio_t > 0.0:
+		unit.wants_skill = true
+		unit.wants_attack = false
+	_tatica_t -= delta
+	if _tatica_t > 0.0 or not unit.alive:
+		return
+	_tatica_t = TATICA_INTERVALO * (Settings.bot_reaction_mult() if unit.team != Config.TEAM_BLUE else 1.0)
+	var me := unit.global_position
+	var perto := _nearest_enemy(6.0)
+	# Bloqueio: inimigo de corpo a corpo golpeando de frente, a até 3 m.
+	if unit.stats.skill == "bloqueio" and perto and perto.atacando() and perto.stats.attack_kind == "melee" \
+			and me.distance_to(perto.global_position) < perto.stats.attack_range + 0.8 and randf() < 0.35:
+		_bloqueio_t = 0.45
+		var to := perto.global_position - me
+		to.y = 0
+		unit.aim_dir = to.normalized()
+		unit.wants_skill = true
+		unit.wants_attack = false
+		return
+	if not unit.dash_pronto():
+		return
+	var dir := Vector3.ZERO
+	if unit.carried_tora and perto and me.distance_to(perto.global_position) < 4.5 and randf() < 0.5:
+		dir = unit.move_intent  # foge para o depósito
+	elif perto and unit.hp_ratio() < 0.35 and me.distance_to(perto.global_position) < 3.5 and randf() < 0.5:
+		dir = me - perto.global_position  # pouca vida: sai da briga
+	elif perto and perto.atacando() and perto.stats.attack_kind == "melee" \
+			and me.distance_to(perto.global_position) < perto.stats.attack_range + 0.5 and randf() < 0.3:
+		var de := me - perto.global_position
+		de.y = 0
+		dir = de.normalized().rotated(Vector3.UP, PI / 2 * (1.0 if randf() < 0.5 else -1.0)) + de.normalized() * 0.4
+	elif _target and _target.alive and not unit.carried_princess:
+		var to := _target.global_position - me
+		to.y = 0
+		var d := to.length()
+		if unit.stats.attack_kind == "melee" and d > 4.0 and d < 8.0 and randf() < 0.25:
+			dir = to  # fecha a distância
+		elif unit.stats.attack_kind != "melee" and d < unit.stats.attack_range * 0.3 and randf() < 0.35:
+			dir = -to  # atirador encurralado: recua
+	dir.y = 0
+	if dir.length() > 0.1:
+		unit.move_intent = dir.normalized()
+		unit.wants_dodge = true
 
 
 func _check_stuck(delta: float) -> void:
@@ -192,6 +252,13 @@ func _lenhador(me: Vector3) -> bool:
 	if of and ((falta > 0 and game.madeira[unit.team] >= falta) or (falta == 0 and of.progresso < 1.0)):
 		_goal = of.global_position + (me - of.global_position).normalized() * 1.2
 		return true
+	# Oficinas prontas: a madeira sobe as maquininhas para o nível 2.
+	var maq: HatPad = game.maquina_para_n2(unit.team, me) if of == null else null
+	if maq and game.madeira[unit.team] >= mini(maq.faltam_n2(), 2):
+		var lado := me - maq.global_position
+		lado.y = 0
+		_goal = maq.global_position + (lado.normalized() if lado.length() > 0.1 else Vector3.BACK) * 1.8
+		return true
 	var tora := game.nearest_tora_solta(me, 30.0)
 	if tora:
 		_goal = tora.global_position
@@ -327,7 +394,7 @@ func _combat() -> void:
 	unit.aim_dir = to.normalized()
 	unit.aim_point = _target.global_position + lead
 	# Arqueiro de longe: segura o botão direito até a carga máxima e solta.
-	if unit.stats.skill == "tiro_carregado" and dist > 12.0 and dist <= unit.stats.attack_range:
+	if unit.stats.skill == "tiro_carregado" and dist > unit.stats.attack_range * 0.6 and dist <= unit.stats.attack_range:
 		unit.wants_skill = unit.charge_ratio() < 1.0
 		return
 	if dist <= unit.stats.attack_range + 0.3:
@@ -354,6 +421,9 @@ func _should_use_power() -> bool:
 			return hurt >= 3 or unit.hp_ratio() < 0.35
 		"corrida":
 			if unit.carried_princess:
+				return true
+			# Construtor: corre com a tora ou quando a planta/obra está longe.
+			if unit.carried_tora or (unit.lenhador() and me.distance_to(_goal) > 30.0 and _nearest_enemy(12.0) == null):
 				return true
 			for u in game.units:
 				if u.alive and u.team == unit.team and u.carried_princess and u.global_position.distance_to(me) <= r:

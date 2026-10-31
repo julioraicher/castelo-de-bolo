@@ -8,6 +8,13 @@ extends Node3D
 ## Modelo do tema (ThemeConfig.maquina_model): a engrenagem gira sozinha, a
 ## animação "fabricar" toca quando um chapéu fica pronto, ele salta do "Molde"
 ## e vai para a prateleira "Estoque_N". Sem modelo: pedestal com chapéu flutuando.
+##
+## Nível 2 (quiz do Ciclo 2.4, pergunta 6): quando o time ergue uma oficina cuja
+## `classe_base` é esta classe, a máquina sobe de nível: fabrica a cada
+## `maquina_n2_intervalo` s até `maquina_n2_estoque`. Modelo: os nós "N2_*"
+## ficam escondidos no nível 1 e aparecem no 2; toca "subir_nivel" se existir.
+## Também sobe com madeira: Construtores do time parados a OBRA_RAIO m puxam 1
+## madeira do estoque a cada oficina_puxar_intervalo / Σv s até maquina_n2_custo.
 
 var team := 0
 var stats: ClassStats
@@ -15,6 +22,11 @@ var available := true
 var estoque := 0
 var estoque_max := 3
 var intervalo := 20.0
+var nivel := 1
+## Madeira já posta no nível 2 (fica guardada, como a obra das oficinas).
+var madeira_n2 := 0
+
+const OBRA_RAIO := 2.8
 
 var _hat: Node3D          # sem modelo: o chapéu que flutua no pedestal
 var _fab_t := 0.0
@@ -26,6 +38,9 @@ var _anim: AnimationPlayer
 var _molde: Node3D
 var _slots: Array[Node3D] = []      # Estoque_1..N
 var _chapeus: Array[Node3D] = []    # um por chapéu em estoque, na ordem dos slots
+var _n2: Array[Node3D] = []         # nós "N2_*" do modelo (aparecem no nível 2)
+var _puxar_t := 0.0
+var _contador: ContadorMadeira
 
 
 func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
@@ -65,6 +80,10 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 	_label.position.y = 3.4 if _maquina else 2.6
 	_label.modulate = stats.hat_color.lightened(0.3)
 	add_child(_label)
+	_contador = ContadorMadeira.new()
+	_contador.position.y = _label.position.y + 0.9
+	add_child(_contador)
+	_contador.visible = false
 	_atualizar()
 
 
@@ -80,6 +99,9 @@ func _montar_maquina(th: ThemeConfig, cena: PackedScene) -> void:
 		if n == null:
 			break
 		_slots.append(n)
+	for n in _maquina.find_children("N2_*", "Node3D", true, false):
+		n.visible = false
+		_n2.append(n)
 	var enfeite := _maquina.find_child("Enfeite", true, false) as Node3D
 	var emblema := th.model_path("emblema_%s.scn" % stats.resource_path.get_file().get_basename())
 	if enfeite and ResourceLoader.exists(emblema):
@@ -110,6 +132,48 @@ func _process(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	avancar(delta)
+	if nivel == 1:
+		_obra_n2(delta)
+
+
+func faltam_n2() -> int:
+	return maxi(Config.cfg.maquina_n2_custo - madeira_n2, 0) if nivel == 1 else 0
+
+
+## Puxa 1 madeira do estoque do time para o nível 2; completa = sobe.
+func puxar_madeira_n2(game: Game) -> bool:
+	if nivel >= 2 or faltam_n2() <= 0 or not game.gastar_madeira(team, 1):
+		return false
+	madeira_n2 += 1
+	if is_inside_tree():
+		Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(0.7, 0.5, 0.25), 5, 2.5)
+		Sfx.play("swing", global_position, 0.3)
+	if faltam_n2() <= 0:
+		subir_nivel()
+	return true
+
+
+## Construtores do time em volta da máquina: puxam madeira para o nível 2.
+## O contador aparece com madeira já posta ou com o jogador Construtor perto.
+func _obra_n2(delta: float) -> void:
+	var game := get_parent() as Game
+	if game == null or game.game_over:
+		return
+	var rate := 0.0
+	for u in game.units:
+		if u.alive and u.team == team and u.stats.velocidade_obra > 0.0 and not u.carried_princess \
+				and not u.carried_tora and u.global_position.distance_to(global_position) < OBRA_RAIO:
+			rate += u.stats.velocidade_obra
+			u.building_t = 0.25
+	if rate > 0.0:
+		_puxar_t -= delta * rate
+		if _puxar_t <= 0.0 and puxar_madeira_n2(game):
+			_puxar_t = Config.cfg.oficina_puxar_intervalo
+	var p := game.player
+	var perto := p != null and p.team == team and p.lenhador() and p.global_position.distance_to(global_position) < OBRA_RAIO + 1.2
+	_contador.visible = nivel == 1 and (madeira_n2 > 0 or perto)
+	if _contador.visible:
+		_contador.mostrar(faltam_n2(), Config.cfg.maquina_n2_custo, perto, faltam_n2() > 0 and game.madeira[team] <= 0)
 
 
 ## Relógio da fábrica (separado do _physics_process para os testes).
@@ -155,11 +219,41 @@ func _fabricou() -> void:
 		Fx.burst(get_parent(), global_position + Vector3(0, 1.4, 0), Color(0.95, 0.95, 0.9), 6, 2.5)
 
 
+## Sobe para o nível 2 (uma vez). Ganha 1 chapéu na hora, de presente.
+func subir_nivel() -> bool:
+	if nivel >= 2:
+		return false
+	nivel = 2
+	if _contador:
+		_contador.visible = false
+	estoque_max = Config.cfg.maquina_n2_estoque
+	intervalo = Config.cfg.maquina_n2_intervalo
+	_fab_t = 0.0
+	for n in _n2:
+		n.visible = true
+	if estoque < estoque_max:
+		estoque += 1
+		_fabricou()
+	if _anim and _anim.has_animation("subir_nivel"):
+		_anim.play("subir_nivel")
+	if is_inside_tree():
+		Fx.pillar(get_parent(), global_position, Color(1.0, 0.82, 0.36), 2.5)
+		Fx.burst(get_parent(), global_position + Vector3(0, 1.6, 0), Color(1.0, 0.82, 0.36), 14, 4.5)
+		Sfx.play("score", global_position, 0.1)
+		# Sem peças "N2_*" no modelo: um pulinho mostra que mudou.
+		var alvo: Node3D = _maquina if _maquina else self
+		alvo.scale = Vector3(1.25, 0.75, 1.25)
+		alvo.create_tween().tween_property(alvo, "scale", Vector3.ONE * (1.0 if _n2.size() > 0 or alvo == self else 1.08), 0.5) \
+				.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_atualizar()
+	return true
+
+
 func _atualizar() -> void:
 	available = estoque > 0
 	if _hat:
 		_hat.visible = available
-	var txt := "%s  %d/%d" % [stats.display_name, estoque, estoque_max]
+	var txt := "%s%s  %d/%d" % [stats.display_name, "  Nv2" if nivel >= 2 else "", estoque, estoque_max]
 	if estoque < estoque_max:
 		txt += "\n%ds" % ceili(intervalo - _fab_t)
 	if _label.text != txt:

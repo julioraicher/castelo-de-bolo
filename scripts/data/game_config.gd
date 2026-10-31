@@ -91,6 +91,18 @@ extends Resource
 ## Antecipação do golpe (s): o corpo "carrega" antes do dano sair.
 @export_range(0.0, 0.1, 0.005) var antecipacao_golpe := 0.05
 
+@export_group("Botão direito (Ciclo 2.4)")
+## Contra-golpe: bloqueio erguido há no máximo parry_janela s quando o golpe
+## de perto chega = anula o dano, atordoa quem bateu por parry_atordoa s e
+## devolve um corte de parry_mult × o dano de quem bloqueou.
+@export var parry_janela := 0.3
+@export var parry_atordoa := 0.8
+@export var parry_mult := 1.5
+## Tiro carregado no máximo: atravessa até carga_perfura inimigos (a cada um
+## perde 20% do dano); bomba carregada explode carga_raio_bomba × maior.
+@export var carga_perfura := 2
+@export var carga_raio_bomba := 1.5
+
 @export_group("Chapéus")
 ## (Antigo, sem uso desde o Ciclo 2.3: as maquininhas têm estoque.)
 @export var hat_respawn_time := 6.0

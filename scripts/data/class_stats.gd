@@ -79,6 +79,10 @@ extends Resource
 @export_group("Construção")
 ## Velocidade de obra nas oficinas (0 = não constrói; Construtor 1 a 2).
 @export var velocidade_obra := 0.0
+## Classe de oficina: id da classe do pátio de onde ela vem (Ronin Oni ->
+## guerreiro). Com a oficina pronta, a maquininha dessa classe sobe para o
+## nível 2. Vazio = nenhuma.
+@export var classe_base: StringName = &""
 
 @export_group("Poder (Q)")
 ## Poder especial, liberado quando o medidor de Glacê enche.
