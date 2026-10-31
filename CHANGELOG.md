@@ -5,6 +5,32 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4d (2026-10-31), Diretor Visual: nível 2 à vista, elenco com cara própria, tela moderna
+- **Maquininha nível 2** (contrato `N2_*`): cada `maquina_<classe>.scn` ganhou degrau de pedra
+  com quinas de ouro, dois estandartes na cor da classe com lanterna acesa e uma coroa
+  dourada no topo; a animação `subir_nivel` (1,4 s) faz as peças brotarem uma a uma com o
+  anel aceso e uma baforada. Leitura de longe, estilo "prédio melhorado".
+- **Elenco 2.4 com cara própria** (`ninja_visual.gd`, `config/classes/`):
+  - Construtor: operário simples (`_construtor`): faixa branca, armação nas costas com
+    duas toras e marreta de madeira. Os ramos herdam a faixa e ganham óculos.
+  - Armadilheiro: visual de armadilhas (cesto de estrepes, mina verde), chapéu kasa verde.
+  - Bombardeiro: barril de pólvora com pavio aceso e bomba na mão, chapéu barril vermelho-fogo.
+  - Kitsune: fogo de raposa **rosa** (o ciano é do Ninja de Shuriken; roxo fica para a
+    Kitsune Sombria, dourado para a da Luz). Tiro "fogo" também rosa (`projectile.gd`,
+    toque na área da Jogabilidade).
+  - Kitsune da Luz / Kitsune Sombria: santuário próprio (creme e dourado / negro e roxo)
+    e emblema (`maquina_kitsune_luz/_sombria`, `emblema_kitsune_luz/_sombria`).
+- **Tela mais moderna** (`estilo.gd`, `menus.gd`): painéis de vidro escuro com cantos
+  arredondados, borda fina e sombra macia; destaque dourado no lugar do magenta; sem o
+  corte inclinado; teclas desenhadas como tecla clara de teclado; barras arredondadas.
+- **Mapa**: trilhas de terra na floresta (|z| = 30, `MapLayout.trail_*` -> `chao_pintado`);
+  depósito de madeira saiu de trás da torre do portão para o canto da frente do pátio
+  (`pilha_spot` (9,5; 12), no lugar da carroça), com a boca virada para a câmera.
+- Ferramenta: `--vista=px,py,pz,ax,ay,az` (câmera parada para prints); `--vista=patio`
+  segue o `castle_distance`. Prancha `tools/prancha_economia.gd --maquinas --n2`.
+- **O que testar**: suba uma maquininha para o nível 2 (oficina da classe ou 8 madeiras)
+  e veja os estandartes e a coroa brotarem; ande pela trilha da floresta até o castelo
+  inimigo; abra o Esc e veja os menus novos; jogue de Construtor e de Kitsune.
 ## Ciclo 2.4c (2026-10-31), Diretor de Jogabilidade: magos opostos
 - Pedido 2 do quiz ("mago do bem e do mal"): duas oficinas novas que sobem a
   maquininha da Kitsune para o nível 2 (`classe_base` kitsune). O time escolhe o lado no

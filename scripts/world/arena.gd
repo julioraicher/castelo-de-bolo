@@ -218,6 +218,9 @@ func _build_ground() -> void:
 	chao.set_shader_parameter("rua_z", 0.0)
 	chao.set_shader_parameter("rua_meia", map.road_width / 2.0)
 	chao.set_shader_parameter("rua_x_max", map.castle_distance - 5.0)
+	chao.set_shader_parameter("trilha_z", map.trail_z)
+	chao.set_shader_parameter("trilha_meia", map.trail_width / 2.0 if map.trail_z > 0.0 else 0.0)
+	chao.set_shader_parameter("trilha_x_max", map.trail_x_max)
 	mi.material_override = chao
 	add_child(mi)
 
