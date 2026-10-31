@@ -1002,7 +1002,7 @@ func _bombardeio() -> void:
 		var p := global_position + dir * lerpf(2.5, alcance, float(i) / maxf(n - 1, 1))
 		p.y = game.arena.ground_y(p.x, p.z, global_position.y + 3.0)
 		pontos.append(p)
-		Fx.ring(game, p, Color(1.0, 0.45, 0.1, 0.7), stats.power_radius)  # aviso
+	FxPoder.aviso_bombardeio(game, pontos, stats.power_radius, Config.cfg.bombardeio_intervalo)  # pavio
 	_power_active_t = Config.cfg.bombardeio_intervalo * n
 	for i in n:
 		await get_tree().create_timer(Config.cfg.bombardeio_intervalo).timeout
@@ -1020,6 +1020,7 @@ func _explosao(at: Vector3, dano: float, r: float) -> void:
 	Fx.burst(game, at + Vector3(0, 0.6, 0), Color(1.0, 0.6, 0.2), 18, 8.0)
 	Fx.burst(game, at + Vector3(0, 0.4, 0), Color(0.6, 0.6, 0.7), 10, 3.0)
 	Fx.ring(game, at, Color(1.0, 0.55, 0.15, 0.9), r)
+	FxPoder.explosao_polvora(game, at, r)
 	Sfx.play("hit", at, 0.15)
 	game.camera.shake_at(at, 0.45)
 	for u in game.units:

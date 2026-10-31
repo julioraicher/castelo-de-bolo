@@ -460,6 +460,96 @@ static func mutirao(u: Unit, oficina: Node3D) -> void:
 	_detritos(g, alvo + Vector3(0, 1.0, 0), Color(0.6, 0.4, 0.25), 10)
 
 
+## Bombardeiro: aviso com pavio em cada ponto. O anel encolhe até o centro no
+## tempo exato da explosão, então dá para ler a ordem da fila e fugir.
+static func aviso_bombardeio(g: Node, pontos: Array, r: float, intervalo: float) -> void:
+	for i in pontos.size():
+		var atraso := intervalo * (i + 1)
+		var n := _no(g, pontos[i] + Vector3(0, 0.08, 0))
+		# Mistura normal (não aditiva): aditivo laranja sobre grama vira amarelo.
+		var mat := Fx.unshaded(Color(1.0, 0.4, 0.06, 0.8), true)
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		var t := TorusMesh.new()
+		t.inner_radius = r - 0.12
+		t.outer_radius = r
+		_malha(n, t, mat).scale = Vector3(1, 0.05, 1)
+		var faisca := SphereMesh.new()
+		faisca.radius = 0.16
+		faisca.height = 0.32
+		faisca.radial_segments = 6
+		faisca.rings = 3
+		var fmat := _mat(Color(2.2, 1.3, 0.4, 1.0))
+		var fi := _malha(n, faisca, fmat)
+		fi.position = Vector3(0, 0.15, r)
+		var tw := n.create_tween().set_parallel()
+		tw.tween_property(n, "scale", Vector3(0.12, 1, 0.12), atraso).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.tween_property(n, "rotation:y", -TAU * (0.5 + i * 0.25), atraso)
+		tw.tween_property(mat, "albedo_color", Color(1.0, 0.15, 0.05, 0.95), atraso)
+		tw.chain().tween_callback(n.queue_free)
+
+
+## Explosão de pólvora: bola de fogo que incha, coluna curta, fumaça escura,
+## estilhaços e o chão queimado que fica uns segundos (lê onde caiu).
+static func explosao_polvora(g: Node, at: Vector3, r: float) -> void:
+	var n := _no(g, at + Vector3(0, 0.5, 0))
+	var bola := SphereMesh.new()
+	bola.radius = 1.0
+	bola.height = 2.0
+	bola.radial_segments = 10
+	bola.rings = 5
+	# Casca laranja opaca (mistura normal, lê laranja em qualquer chão) e
+	# miolo aditivo amarelo menor: fogo com volume sem estourar para branco.
+	var mat := Fx.unshaded(Color(1.0, 0.42, 0.08, 0.9), true)
+	_malha(n, bola, mat)
+	var miolo := _mat(Color(1.6, 1.1, 0.35, 1.0))
+	_malha(n, bola, miolo).scale = Vector3.ONE * 0.6
+	n.scale = Vector3.ONE * 0.3
+	var tw := n.create_tween().set_parallel()
+	tw.tween_property(n, "scale", Vector3(r * 0.8, r * 0.55, r * 0.8), 0.18).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.tween_property(mat, "albedo_color", Color(0.25, 0.08, 0.04, 0.0), 0.45).set_delay(0.08)
+	tw.tween_property(miolo, "albedo_color:a", 0.0, 0.25).set_delay(0.05)
+	tw.chain().tween_callback(n.queue_free)
+	_labareda(g, at, Color(1.0, 0.45, 0.08, 0.55), r * 0.45, 3.2, 0.45)
+	_detritos(g, at, Color(0.22, 0.18, 0.16), 8)
+	_poeira(g, at, Color(0.2, 0.18, 0.2), 10)
+	# Mancha queimada: material normal (não aditivo), some em 4 s.
+	var q := _no(g, at + Vector3(0, 0.04, 0))
+	var disco := CylinderMesh.new()
+	disco.top_radius = r * 0.75
+	disco.bottom_radius = r * 0.75
+	disco.height = 0.02
+	disco.radial_segments = 14
+	var qmat := Fx.unshaded(Color(0.05, 0.035, 0.03, 0.6), true)
+	_malha(q, disco, qmat)
+	q.rotation.y = randf() * TAU
+	var tq := q.create_tween()
+	tq.tween_property(qmat, "albedo_color:a", 0.0, 2.5).set_delay(1.5)
+	tq.tween_callback(q.queue_free)
+
+
+## Arremate da Chuva de Flechas: cinco lanças de luz caem juntas no centro e
+## abrem um clarão em cruz na cor do time (`cor` = cor pura, sem clarear).
+static func arremate_chuva(g: Node, centro: Vector3, r: float, cor: Color) -> void:
+	for k in 5:
+		var a := k * TAU / 5.0
+		var p: Vector3 = centro + Vector3(cos(a), 0, sin(a)) * r * 0.35 if k > 0 else centro
+		Fx.beam(g, p + Vector3(0, 12.0, 0), p + Vector3(0, 0.2, 0), cor, 0.18 if k == 0 else 0.1, 0.3)
+	# Cor pura do time e alfa baixo: aditivo forte em chão claro estoura para
+	# branco e vira um cone de gesso (visto no print do 2.4l).
+	_labareda(g, centro, Color(cor, 0.45), r * 0.35, 3.0, 0.35)
+	var n := _no(g, centro + Vector3(0, 0.1, 0))
+	var mat := _mat(Color(cor * 1.3, 0.9))
+	for k in 4:
+		var b := BoxMesh.new()
+		b.size = Vector3(0.22, 0.02, r * 1.6)
+		_malha(n, b, mat).rotation.y = k * PI / 4
+	n.scale = Vector3.ONE * 0.3
+	var tw := n.create_tween().set_parallel()
+	tw.tween_property(n, "scale", Vector3.ONE, 0.15).set_ease(Tween.EASE_OUT)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.45).set_delay(0.1)
+	tw.chain().tween_callback(n.queue_free)
+
+
 # --- Peças --------------------------------------------------------------------------
 
 static func _mat(cor: Color) -> StandardMaterial3D:
