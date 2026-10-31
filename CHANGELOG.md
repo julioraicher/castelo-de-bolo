@@ -5,6 +5,14 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4l (2026-10-31), Diretor de Jogabilidade: sonda de equilíbrio
+- `tools/sonda_equilibrio.sh`: 8 partidas simuladas com todas as classes, girando quem pega
+  cada papel de bot (`--variacoes=N`), e soma mortes/abates por classe (`--equilibrio`).
+- Resultado (tabela em docs/revisao-2.4.md): classes de oficina rendem mais que as do pátio,
+  como planejado; Samurai e Ninja perto de 1 abate por morte. **Não mexi em número.**
+- Só ferramenta de teste: nada muda na partida normal.
+- **O que testar**: nada novo para jogar; se achar alguma classe forte/fraca, me diga qual.
+
 ## Ciclo 2.4k (2026-10-31), Diretor Visual: efeitos do Campo Minado e do vórtice
 - **Campo Minado** (Q novo do Armadilheiro): cada mina sai voando da mão em arco até o
   lugar no anel e acende ao cair; o anel no chão usa o verde do chapéu (`FxPoder.campo_minado`).

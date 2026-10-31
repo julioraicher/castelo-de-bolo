@@ -32,6 +32,9 @@ var _time := 0.0
 #   --autoplay          o jogador também é controlado pela IA
 #   --shots=<pasta>     salva prints em alguns momentos e fecha o jogo
 #   --variacoes         bots começam com todas as variações (teste visual/poderes)
+#   --variacoes=N       idem, girando as classes N posições (cada classe pega outro papel)
+#   --equilibrio        imprime "ABATE <vítima> <matador>" (ids de classe) a cada morte;
+#                       tools/sonda_equilibrio.sh soma isso em 8 partidas
 #   --poderes           medidor de todo mundo enche a cada 4 s (vitrine de poderes)
 #   --tema=N            usa o tema N de GameConfig.themes (prints de cada tema)
 #   --mapa=N            usa o mapa N de GameConfig.maps
@@ -49,6 +52,8 @@ var _time := 0.0
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
 var _variacoes := false
+var _variacoes_giro := 0
+var _equilibrio := false
 var _poderes := false
 var _poderes_t := 2.0
 var _shots_dir := ""
@@ -79,6 +84,11 @@ func _ready() -> void:
 			_autoplay = true
 		elif arg == "--variacoes":
 			_variacoes = true
+		elif arg.begins_with("--variacoes="):
+			_variacoes = true
+			_variacoes_giro = int(arg.trim_prefix("--variacoes="))
+		elif arg == "--equilibrio":
+			_equilibrio = true
 		elif arg == "--poderes":
 			_poderes = true
 		elif arg.begins_with("--perf="):
@@ -146,7 +156,7 @@ func _ready() -> void:
 			u.name = "%s_%d" % [Config.TEAM_NAMES[team], i]
 			add_child(u)
 			var is_player := team == Config.TEAM_BLUE and i == 0
-			var cls: ClassStats = cfg.villager if is_player else start_classes[i % start_classes.size()]
+			var cls: ClassStats = cfg.villager if is_player else start_classes[(i + _variacoes_giro) % start_classes.size()]
 			u.setup(self, team, is_player, cls)
 			u.global_position = arena.random_spawn(team)
 			u.reset_physics_interpolation()
@@ -787,6 +797,8 @@ func _on_player_class_changed(u: Unit) -> void:
 
 
 func _on_unit_died(u: Unit, killer: Unit) -> void:
+	if _equilibrio:
+		print("ABATE %s %s" % [u.stats.id, killer.stats.id if killer else "nada"])
 	if killer and killer.team != u.team:
 		_alma_de_abate(u, killer.team)
 	if u == player:
