@@ -5,6 +5,14 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Organização (2026-10-31), estagiário de economia: checkup de tokens
+- Pedido do Julio: checkup de onde o projeto gasta mais e aplicar as mudanças.
+- `docs/economia-de-tokens.md`: modelo de custo (N·C₀ + Δ·N²/2), tabela com
+  9 gastos medidos no histórico das threads e regras 11-17 (thread por tarefa,
+  quiz econômico, resposta curta, lotes 3D com uma prancha, coordenador curto).
+- `CLAUDE.md`: resumo das regras novas na seção de economia.
+- **O que testar**: nada no jogo (só documentos).
+
 ## Planejamento (2026-10-31), estagiário de ideias: Ciclo 2.3 aberto
 - Pedido do Julio (2 áudios): chapéus saindo de maquininhas animadas, limite
   de chapéus, madeira/bambu com árvores de 3 estágios, Construtor simples
