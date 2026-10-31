@@ -59,7 +59,7 @@ void fragment() {
 		float bt = trilha_meia + (ruido(vec2(p.x * 1.1, 5.0)) - 0.5) * 0.6;
 		float na_trilha = 1.0 - smoothstep(bt - 0.2, bt + 0.2, tz);
 		na_trilha *= 1.0 - 0.7 * smoothstep(0.6, 0.85, ruido(p * 2.2 + 31.0)) * (1.0 - smoothstep(0.0, 0.5, tz));
-		vec3 terra_t = mix(terra_escura, terra_clara, ruido(p * 1.3 + 41.0) * 0.6) * vec3(0.8, 0.68, 0.52);
+		vec3 terra_t = mix(terra_escura, terra_clara, ruido(p * 1.3 + 41.0) * 0.6) * vec3(0.95, 0.84, 0.68);
 		cor = mix(cor, terra_t, na_trilha);
 		cor *= 1.0 - 0.15 * (1.0 - smoothstep(0.0, 0.4, abs(tz - bt)));
 	}

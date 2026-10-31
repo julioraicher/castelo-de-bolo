@@ -1182,7 +1182,7 @@ func _use_power() -> void:
 				"selo":
 					FxPoder.selo(game, center, stats.power_radius)
 				"coluna_fogo":
-					FxPoder.coluna_fogo(game, center, stats.power_radius, stats.power_duration)
+					FxPoder.coluna_fogo(game, center, stats.power_radius, stats.power_duration, stats.hat_color)
 		"reforco":
 			# Pólvora: escudo de tábuas nos aliados em volta (não fere ninguém).
 			_play_upper("Cheer", 1.5)
