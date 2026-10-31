@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" path="res://assets/ninja/dia/bambu_e2.scn" id="5_ly4cs"]
 [ext_resource type="PackedScene" path="res://assets/ninja/dia/bambu_e3.scn" id="6_rn00q"]
 [ext_resource type="PackedScene" path="res://assets/ninja/dia/maquina_chapeu.scn" id="7_y1p34"]
-[ext_resource type="PackedScene" path="res://assets/ninja/dia/pilha_toras.scn" id="8_wmbpv"]
+[ext_resource type="PackedScene" path="res://assets/ninja/dia/deposito_madeira.scn" id="8_aad6e"]
 [ext_resource type="PackedScene" path="res://assets/ninja/dia/tora.scn" id="10_6ot88"]
 
 [resource]
@@ -44,7 +44,7 @@ oficina_model = "oficina_{cor}.scn"
 arvore_estagios = Array[PackedScene]([ExtResource("1_aad6e"), ExtResource("2_lradd"), ExtResource("3_xodkm")])
 bambu_estagios = Array[PackedScene]([ExtResource("4_dyk2m"), ExtResource("5_ly4cs"), ExtResource("6_rn00q")])
 maquina_model = ExtResource("7_y1p34")
-pilha_model = ExtResource("8_wmbpv")
+pilha_model = ExtResource("8_aad6e")
 tora_model = ExtResource("10_6ot88")
 wall_model = "muro.scn"
 wall_scale = 1.0

@@ -119,6 +119,8 @@ extends Resource
 @export var tora_tempo_chao := 40.0
 ## Distância da pilha do castelo para entregar.
 @export var pilha_raio := 2.6
+## Velocidade extra da linha do Construtor por casinha pronta do time (0,05 = +5%).
+@export var construtor_vel_por_oficina := 0.05
 ## Bots Construtores por time (no máximo).
 @export var bots_construtores_max := 2
 

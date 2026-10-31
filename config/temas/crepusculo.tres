@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/bambu_e2.scn" id="5_jvbad"]
 [ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/bambu_e3.scn" id="6_8cbwj"]
 [ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/maquina_chapeu.scn" id="7_v5hlj"]
-[ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/pilha_toras.scn" id="8_sh6sy"]
+[ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/deposito_madeira.scn" id="8_ml1qw"]
 [ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/tora.scn" id="10_jqpiv"]
 
 [resource]
@@ -45,7 +45,7 @@ oficina_model = "oficina_{cor}.scn"
 arvore_estagios = Array[PackedScene]([ExtResource("1_ml1qw"), ExtResource("2_vkoqp"), ExtResource("3_560eg")])
 bambu_estagios = Array[PackedScene]([ExtResource("4_x37a4"), ExtResource("5_jvbad"), ExtResource("6_8cbwj")])
 maquina_model = ExtResource("7_v5hlj")
-pilha_model = ExtResource("8_sh6sy")
+pilha_model = ExtResource("8_ml1qw")
 tora_model = ExtResource("10_jqpiv")
 wall_model = "muro.scn"
 wall_scale = 1.0

@@ -400,6 +400,9 @@ func current_speed() -> float:
 	var s := stats.move_speed
 	if carried_princess:
 		s *= stats.carry_speed_mult * (1.0 - carried_princess.fatness * Config.cfg.fat_slowdown)
+	if lenhador():
+		# Cada casinha erguida pelo time deixa a linha do Construtor mais rápida.
+		s *= 1.0 + Config.cfg.construtor_vel_por_oficina * game.oficinas_prontas(team)
 	if carried_tora:
 		s *= Config.cfg.tora_vel_mult
 	if _boost_t > 0.0:

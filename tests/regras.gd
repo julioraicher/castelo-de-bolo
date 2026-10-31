@@ -19,7 +19,7 @@ func _ready() -> void:
 	await _empurrao()
 	_madeira()
 	_maquina()
-	_obra()
+	await _obra()
 	await _alma()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
@@ -251,6 +251,15 @@ func _obra() -> void:
 	of.add_progress(1.0, null)
 	_check(_perto(of.progresso, of.teto(), 0.001) and of.progresso < 1.0,
 		"obra passou da madeira entregue: progresso %.2f, teto %.2f" % [of.progresso, of.teto()])
+	# Progresso guardado: parar de construir não apaga, e [E] não troca a
+	# opção de uma obra começada (antes zerava tudo).
+	var p0: float = of.progresso
+	var op0: int = of.opcao_i
+	_check(not of.trocar_opcao(), "obra começada não deveria trocar de opção")
+	_check(of.opcao_i == op0 and _perto(of.progresso, p0, 1e-6), "trocar a opção apagou a obra: %.2f -> %.2f" % [p0, of.progresso])
+	await get_tree().create_timer(0.3).timeout
+	_check(of.progresso >= p0 - 1e-6, "obra perdeu progresso parada: %.2f -> %.2f" % [p0, of.progresso])
+	_check(game.obra_do_time(team, game.arena.spawn_center[team]) == of, "Construtor deveria voltar para a obra começada do time")
 
 
 ## Alma de abate: matar um inimigo deixa a máscara do time de quem matou mais
