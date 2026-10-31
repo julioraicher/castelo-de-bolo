@@ -37,8 +37,12 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 	estoque = estoque_max
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # chapéu animado em _process
 	var th: ThemeConfig = Config.theme()
-	if th.maquina_model:
-		_montar_maquina(th)
+	# Máquina própria da classe (maquina_<arquivo da classe>.scn na pasta do
+	# tema), senão a genérica do tema.
+	var propria := th.model_path("maquina_%s.scn" % stats.resource_path.get_file().get_basename())
+	var cena: PackedScene = load(propria) if ResourceLoader.exists(propria) else th.maquina_model
+	if cena:
+		_montar_maquina(th, cena)
 	else:
 		var base := MeshInstance3D.new()
 		var cyl := CylinderMesh.new()
@@ -66,8 +70,8 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 
 ## Maquininha do tema: emblema da classe no "Enfeite" e um chapéu em cada
 ## "Estoque_N" (o estoque fica à vista). Tudo de frente para +z (a câmera).
-func _montar_maquina(th: ThemeConfig) -> void:
-	_maquina = th.maquina_model.instantiate()
+func _montar_maquina(th: ThemeConfig, cena: PackedScene) -> void:
+	_maquina = cena.instantiate()
 	add_child(_maquina)
 	_anim = _maquina.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	_molde = _maquina.find_child("Molde", true, false) as Node3D
