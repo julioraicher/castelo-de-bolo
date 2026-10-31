@@ -21,6 +21,7 @@ var _t := 0.0
 var _pulse_t := 0.0
 var _spawn_t := 0.0
 var _arrows: Array[Vector3] = []
+var _arremate := false
 var _mm: MultiMesh
 var _marker_mat: ShaderMaterial
 
@@ -76,6 +77,9 @@ func _physics_process(delta: float) -> void:
 			_hit_inside()
 			Sfx.play("shoot", global_position, 0.25)
 	else:
+		if not _arremate:
+			_arremate = true
+			_salva_final()
 		_marker_mat.set_shader_parameter("alpha_geral", maxf(1.0 - (_t - WARN - _duration) * 2.0, 0.0))
 		if _arrows.is_empty():
 			queue_free()
@@ -104,3 +108,25 @@ func _hit_inside() -> void:
 		d.y = 0
 		if d.length() <= _radius + 0.5:
 			u.take_damage(_damage, _shooter, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.3)
+
+
+## Arremate: a última salva cai junta no centro, fere mais e arremessa.
+func _salva_final() -> void:
+	if not is_instance_valid(_shooter):
+		return
+	var r := _radius * 0.6
+	var col := Config.team_color(_shooter.team).lightened(0.5)
+	Fx.ring(_game, global_position, col, r)
+	Fx.burst(_game, global_position + Vector3(0, 0.5, 0), col, 22, 9.0)
+	Sfx.play("hit", global_position, 0.12)
+	_game.camera.shake_at(global_position, 0.4)
+	for u in _game.units:
+		if not u.alive or u.team == _shooter.team:
+			continue
+		var d := u.global_position - global_position
+		if absf(d.y) > 2.5:
+			continue
+		d.y = 0
+		if d.length() <= r:
+			u.take_damage(_damage * Config.cfg.chuva_arremate_mult, _shooter, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 1.2)
+			u.launch(5.0)

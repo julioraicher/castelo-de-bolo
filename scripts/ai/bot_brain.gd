@@ -442,6 +442,11 @@ func _should_use_power() -> bool:
 				return false
 			unit.aim_point = _target.global_position
 			return _count(1 - unit.team, _target.global_position, r) >= 2 or _target.carried_princess != null
+		"bombardeio":
+			if _target == null or not _target.alive or me.distance_to(_target.global_position) > unit.stats.attack_range * 1.2:
+				return false
+			unit.aim_point = _target.global_position
+			return _count(1 - unit.team, _target.global_position, 4.0) >= 2 or _target.carried_princess != null
 		"campo_minado":
 			return _count(1 - unit.team, me, 7.0) >= 2 or (role == Role.DEFEND and unit.global_position.distance_to(game.arena.gate_spot[unit.team]) < 6.0)
 		"reforco":

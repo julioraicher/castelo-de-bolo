@@ -111,6 +111,14 @@ extends Resource
 ## Redemoinho: puxa inimigos até power_radius × redemoinho_puxa_raio,
 ## a redemoinho_puxa m/s (vórtice; o empurrão normal ainda vence).
 @export var redemoinho_puxa := 4.5
+## Chuva de Flechas (Yumi): no fim cai o "arremate", uma salva no centro
+## (dano = dano do pulso × chuva_arremate_mult, raio = 60% do círculo, arremessa).
+@export var chuva_arremate_mult := 2.5
+## Bombardeio (Bombardeiro): N explosões em fila (power_duration = quantas,
+## power_radius = raio de cada, power_value = dano de cada), uma a cada
+## bombardeio_intervalo s; a última deixa fumaça por bombardeio_fumaca s.
+@export var bombardeio_intervalo := 0.16
+@export var bombardeio_fumaca := 4.0
 @export var redemoinho_puxa_raio := 2.2
 
 @export_group("Chapéus")

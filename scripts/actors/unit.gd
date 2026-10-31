@@ -989,6 +989,52 @@ func _leque_onda2(n: int, base: Vector3) -> void:
 		_shoot_arrow(stats.power_value * Config.cfg.dano_poder_mult / maxf(stats.damage, 0.1), 1.2, base.rotated(Vector3.UP, ang))
 
 
+## Bombardeiro: fila de explosões de pólvora até a mira; a última deixa fumaça.
+func _bombardeio() -> void:
+	_play_upper("Throw", 1.6)
+	var dir := aim_point - global_position
+	dir.y = 0
+	var alcance := clampf(dir.length(), 5.0, stats.attack_range * 1.2)
+	dir = dir.normalized() if dir.length() > 0.1 else _facing()
+	var n := maxi(int(stats.power_duration), 1)
+	var pontos: Array[Vector3] = []
+	for i in n:
+		var p := global_position + dir * lerpf(2.5, alcance, float(i) / maxf(n - 1, 1))
+		p.y = game.arena.ground_y(p.x, p.z, global_position.y + 3.0)
+		pontos.append(p)
+		Fx.ring(game, p, Color(1.0, 0.45, 0.1, 0.7), stats.power_radius)  # aviso
+	_power_active_t = Config.cfg.bombardeio_intervalo * n
+	for i in n:
+		await get_tree().create_timer(Config.cfg.bombardeio_intervalo).timeout
+		if not is_inside_tree():
+			return
+		_explosao(pontos[i], stats.power_value * Config.cfg.dano_poder_mult, stats.power_radius)
+	var fumaca := AreaEffect.new()
+	game.add_child(fumaca)
+	fumaca.setup(game, self, pontos[n - 1], "nuvem", stats.power_radius * 1.6, 5.0, Config.cfg.bombardeio_fumaca)
+	FxPoder.nuvem(game, pontos[n - 1], stats.power_radius * 1.6)
+
+
+## Explosão de pólvora (mesma conta da bomba: 100% no centro, 50% na borda).
+func _explosao(at: Vector3, dano: float, r: float) -> void:
+	Fx.burst(game, at + Vector3(0, 0.6, 0), Color(1.0, 0.6, 0.2), 18, 8.0)
+	Fx.burst(game, at + Vector3(0, 0.4, 0), Color(0.6, 0.6, 0.7), 10, 3.0)
+	Fx.ring(game, at, Color(1.0, 0.55, 0.15, 0.9), r)
+	Sfx.play("hit", at, 0.15)
+	game.camera.shake_at(at, 0.45)
+	for u in game.units:
+		if not u.alive or u.team == team:
+			continue
+		var d := u.global_position - at
+		if absf(d.y) > 2.5:
+			continue
+		d.y = 0
+		if d.length() <= r:
+			var f := 1.0 - 0.5 * d.length() / r
+			u.take_damage(dano * f, self, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, f)
+			u.launch(5.0 * f)
+
+
 func _esquiva_perfeita(attacker: Unit) -> void:
 	var agora := Time.get_ticks_msec() / 1000.0
 	if agora - _esquiva_t < 0.6:
@@ -1215,6 +1261,8 @@ func _use_power() -> void:
 				pontos.append(global_position + Vector3(cos(a), 0, sin(a)) * stats.power_radius)
 			FxPoder.campo_minado(self, pontos)
 			Sfx.play("pickup", global_position, 0.1)
+		"bombardeio":
+			_bombardeio()
 		"reforco":
 			# Pólvora: escudo de tábuas nos aliados em volta (não fere ninguém).
 			_play_upper("Cheer", 1.5)
