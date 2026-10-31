@@ -41,10 +41,11 @@ func setup(game: Game, p_team: int, pos: Vector3) -> void:
 	else:
 		_provisoria()
 	_label = Label3D.new()
-	_label.font = Estilo.FORTE
+	_label.font = Estilo.LETREIRO
 	_label.font_size = 56
 	_label.pixel_size = 0.012
 	_label.outline_size = 12
+	_label.outline_modulate = Estilo.TINTA
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.no_depth_test = true
 	_label.position.y = _alt_label

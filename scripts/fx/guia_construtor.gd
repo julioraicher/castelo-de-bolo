@@ -65,11 +65,11 @@ func setup(p_game: Game) -> void:
 	_cone.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_marca.add_child(_cone)
 	_texto = Label3D.new()
-	_texto.font = Estilo.FORTE
+	_texto.font = Estilo.LETREIRO
 	_texto.font_size = 60
 	_texto.pixel_size = 0.011
 	_texto.outline_size = 14
-	_texto.outline_modulate = Color(0.12, 0.07, 0.02)
+	_texto.outline_modulate = Estilo.TINTA
 	_texto.modulate = COR
 	_texto.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_texto.no_depth_test = true

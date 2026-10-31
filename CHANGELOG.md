@@ -5,6 +5,31 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.5e (2026-10-31), Interface: identidade "Festival sombrio" no jogo inteiro
+- **Fontes**: Lilita One (títulos, avisos, números, botões, letreiros 3D) com contorno
+  grosso de tinta e sombra sólida; Nunito Black no texto. Shojumaru e Barlow saíram
+  (OFL das novas em `assets/fonts`). Tudo passa por `scripts/ui/estilo.gd`; os nomes
+  antigos (`TITULO`, `FORTE`, `NUMERO`, `CORPO`) continuam valendo.
+- **Molduras**: placas de laca escura com borda de ouro e sombra sólida
+  (`Estilo.placa`); botões e aba escolhida em ouro com degradê (`Estilo.botao_ouro`,
+  um StyleBox desenhado à mão, porque o StyleBoxFlat não faz degradê). Paleta reduzida a
+  ouro, cor do time e laca.
+- **HUD cheio, preso nas bordas**: máscaras e placar numa faixa só no topo (antes eram
+  duas linhas descendo pela tela); **abates e quedas** novos no canto superior esquerdo;
+  aviso grande saiu do meio e fica logo abaixo do placar; dica colada embaixo. O centro
+  é da briga.
+- **Tela inicial**: controles em duas colunas; o botão JOGAR agora cabe na tela
+  (antes ficava cortado em 1280x720).
+- Mudanças pequenas em pastas de outros papéis (aviso): `game.gd` ganhou
+  `abates_jogador`/`quedas_jogador` e o modo de print `--menu=inicio|pausa`; Label3D de
+  `oficina`, `pilha`, `hat_pad`, `guia_construtor`, `fx`, `fx_poder` e
+  `contador_madeira` com Lilita e contorno de tinta. Guia atualizado:
+  `docs/estilo-textos.md`.
+- **O que testar**: abra o jogo e olhe a tela inicial (título, cartões, botão JOGAR de
+  ouro). Na partida, confira se dá para ler placar, vida, Chi e Q no meio de uma briga
+  com efeitos, e se o centro fica livre. Abata alguém e caia uma vez: os números no
+  canto superior esquerdo sobem. Esc: abas e botões de ouro; Configurações legíveis.
+
 ## Ciclo 2.5d (2026-10-31), Jogabilidade: corte do Bombardeiro, contador de tora e ritmo
 - **Bug**: Bombardeiro (e qualquer lenhador que ataca de longe) seguia a seta até a
   árvore e o clique jogava bomba. Agora, com uma planta jovem/adulta à frente a até ~3 m,

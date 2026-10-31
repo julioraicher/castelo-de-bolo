@@ -3,6 +3,8 @@ extends CanvasLayer
 ## Interface da partida (peças em Estilo/Icone; fontes e tamanhos lá): placar
 ## com losangos, estado das duas máscaras, cartão do jogador (retrato do papel,
 ## vida, Chi), dica com tecla desenhada, mensagens grandes e tela de fim.
+## "Festival sombrio": HUD cheio, mas tudo preso nas bordas. O centro da tela
+## é da briga e dos efeitos: nada fica lá, nem o aviso grande (vai para cima).
 
 var _placar: Array[Label] = []
 var _pips: Array = [[], []]  # Icone losango por time
@@ -31,6 +33,8 @@ var _hint_key: PanelContainer
 var _hint_b: Label
 var _big: Label
 var _fps: Label
+var _abates: Label
+var _quedas: Label
 var _flash: ColorRect
 var _end_panel: Control
 var _end_title: Label
@@ -53,22 +57,45 @@ func _ready() -> void:
 	var help := HBoxContainer.new()
 	help.add_theme_constant_override("separation", 8)
 	help.add_child(Estilo.tecla("Esc", Estilo.T_MIN + 1))
-	help.add_child(Estilo.rotulo("pausa e controles", Estilo.T_MIN + 1, Estilo.TEXTO_FRACO, Estilo.FORTE))
-	help.modulate.a = 0.8
+	help.add_child(Estilo.rotulo("pausa e controles", Estilo.T_MIN + 1, Estilo.TEXTO, Estilo.CORPO))
 	root.add_child(help)
 	help.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 16)
 	help.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 
+	# Canto superior esquerdo: abates e quedas do jogador, FPS embaixo.
+	var canto := VBoxContainer.new()
+	canto.add_theme_constant_override("separation", 6)
+	canto.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(canto)
+	canto.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT, Control.PRESET_MODE_MINSIZE, 16)
+	var kd := PanelContainer.new()
+	kd.add_theme_stylebox_override("panel", Estilo.placa())
+	kd.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	canto.add_child(kd)
+	var kd_h := HBoxContainer.new()
+	kd_h.add_theme_constant_override("separation", 8)
+	kd.add_child(kd_h)
+	kd_h.add_child(Icone.novo("katana", Estilo.OURO, 22))
+	_abates = Estilo.rotulo("0", Estilo.T_GRANDE, Estilo.TEXTO, Estilo.NUMERO)
+	kd_h.add_child(_abates)
+	kd_h.add_child(Estilo.rotulo("abates", Estilo.T_MIN, Estilo.TEXTO_FRACO, Estilo.CORPO))
+	var sep := Estilo.rotulo("·", Estilo.T_GRANDE, Estilo.OURO, Estilo.NUMERO)
+	kd_h.add_child(sep)
+	_quedas = Estilo.rotulo("0", Estilo.T_GRANDE, Estilo.TEXTO, Estilo.NUMERO)
+	kd_h.add_child(_quedas)
+	kd_h.add_child(Estilo.rotulo("quedas", Estilo.T_MIN, Estilo.TEXTO_FRACO, Estilo.CORPO))
+	for l in kd_h.get_children():
+		if l is Label:
+			(l as Label).size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	# Contador de FPS (Esc > Configurações > Mostrar FPS).
 	_fps = Estilo.rotulo("", Estilo.T_PEQUENO, Estilo.OURO, Estilo.NUMERO)
-	_fps.position = Vector2(16, 12)
-	root.add_child(_fps)
+	canto.add_child(_fps)
 
-	# Mensagem grande (centro).
-	_big = Estilo.aviso("", 54, Color.WHITE)
-	_big.set_anchors_preset(Control.PRESET_CENTER)
+	# Mensagem grande: faixa de cima, logo abaixo do placar (o centro é da briga).
+	_big = Estilo.aviso("", 50, Estilo.TEXTO)
+	_big.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	_big.custom_minimum_size = Vector2(1100, 140)
-	_big.position = Vector2(-550, -230)
+	_big.position = Vector2(-550, 96)
 	_big.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_big.pivot_offset = Vector2(550, 70)
 	_big.modulate.a = 0.0
@@ -94,45 +121,39 @@ func flash(color: Color, dur := 0.25) -> void:
 # --- Montagem -------------------------------------------------------------------
 
 func _build_placar(root: Control) -> void:
-	var top := VBoxContainer.new()
-	top.add_theme_constant_override("separation", 8)
-	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(top)
-	top.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE, 12)
-	top.grow_horizontal = Control.GROW_DIRECTION_BOTH
-
+	# Uma faixa só, colada no topo: máscara azul | placar azul | VS | placar
+	# vermelho | máscara vermelha. Antes eram duas linhas descendo pela tela.
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 14)
-	top.add_child(row)
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(row)
+	row.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE, 10)
+	row.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	var chips: Array[PanelContainer] = [_chip(0), _chip(1)]
+	row.add_child(chips[0])
 	for team in 2:
 		if team == 1:
 			var meio := VBoxContainer.new()
 			meio.alignment = BoxContainer.ALIGNMENT_CENTER
 			meio.add_theme_constant_override("separation", -4)
-			var vs := Estilo.rotulo("VS", 26, Estilo.OURO, Estilo.NUMERO)
+			var vs := Estilo.rotulo("VS", 30, Estilo.OURO, Estilo.NUMERO)
 			vs.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			meio.add_child(vs)
-			var meta := Estilo.rotulo("até %d" % Config.cfg.score_to_win, Estilo.T_MIN, Estilo.TEXTO_FRACO, Estilo.FORTE)
+			var meta := Estilo.rotulo("até %d" % Config.cfg.score_to_win, Estilo.T_MIN, Estilo.TEXTO_FRACO, Estilo.CORPO)
 			meta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			meio.add_child(meta)
 			row.add_child(meio)
 		row.add_child(_placa(team))
-
-	var chips := HBoxContainer.new()
-	chips.alignment = BoxContainer.ALIGNMENT_CENTER
-	chips.add_theme_constant_override("separation", 12)
-	top.add_child(chips)
-	for team in 2:
-		chips.add_child(_chip(team))
+	row.add_child(chips[1])
 
 
 ## Placa de um time: nome + losangos de pontos + número grande.
 func _placa(team: int) -> PanelContainer:
-	var c := Config.team_color(team)
+	var c := Estilo.cor_time(team)
 	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", Estilo.painel(c.lightened(0.25), true, Color(c.darkened(0.72), 0.92)))
-	p.custom_minimum_size = Vector2(230, 0)
+	p.add_theme_stylebox_override("panel", Estilo.placa(Color(c.darkened(0.72), 0.95)))
+	p.custom_minimum_size = Vector2(200, 0)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 14)
@@ -141,21 +162,19 @@ func _placa(team: int) -> PanelContainer:
 	var nome := VBoxContainer.new()
 	nome.alignment = BoxContainer.ALIGNMENT_CENTER
 	nome.add_theme_constant_override("separation", 2)
-	var titulo := Estilo.rotulo(Config.TEAM_NAMES[team].to_upper(), 22, c.lightened(0.45), Estilo.FORTE)
+	var titulo := Estilo.rotulo(Config.TEAM_NAMES[team].to_upper(), 24, c, Estilo.NUMERO)
 	titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if team == 0 else HORIZONTAL_ALIGNMENT_LEFT
 	nome.add_child(titulo)
 	var pips := HBoxContainer.new()
 	pips.alignment = BoxContainer.ALIGNMENT_END if team == 0 else BoxContainer.ALIGNMENT_BEGIN
 	pips.add_theme_constant_override("separation", 3)
 	for k in Config.cfg.score_to_win:
-		var i := Icone.novo("losango", c.lightened(0.45), 16)
+		var i := Icone.novo("losango", c, 16)
 		i.cheio = false
 		pips.add_child(i)
 		_pips[team].append(i)
 	nome.add_child(pips)
-	var num := Estilo.titulo("0", 52, Color.WHITE)
-	num.label_settings.font = Estilo.NUMERO  # o zero da Shojumaru parece um redemoinho
-	num.label_settings.shadow_color = Color(c.lightened(0.3), 0.7)
+	var num := Estilo.titulo("0", 54, Estilo.TEXTO)
 	num.custom_minimum_size = Vector2(44, 0)
 	_placar.append(num)
 	if team == 0:
@@ -169,26 +188,24 @@ func _placa(team: int) -> PanelContainer:
 
 ## Estado da máscara de um time: ícone, frase e peso (espíritos presos).
 func _chip(team: int) -> PanelContainer:
-	var c := Config.team_color(team)
+	var c := Estilo.cor_time(team)
 	var p := PanelContainer.new()
-	var sb := Estilo.painel(Color(c.lightened(0.2), 0.7), false, Estilo.PAINEL)
-	sb.shadow_size = 4
-	p.add_theme_stylebox_override("panel", sb)
-	p.custom_minimum_size = Vector2(290, 0)
+	p.add_theme_stylebox_override("panel", Estilo.placa())
+	p.custom_minimum_size = Vector2(250, 0)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 10)
 	p.add_child(h)
-	h.add_child(Icone.novo("mascara", c.lightened(0.3), 34))
+	h.add_child(Icone.novo("mascara", c, 34))
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 0)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(v)
-	var dono := Estilo.rotulo("", Estilo.T_MIN, Estilo.TEXTO_FRACO, Estilo.espacada(Estilo.FORTE, 2), 3)
+	var dono := Estilo.rotulo("", Estilo.T_MIN, Estilo.TEXTO_FRACO, Estilo.espacada(Estilo.CORPO, 2), 3)
 	dono.name = "Dono"
 	v.add_child(dono)
 	_chip_dono.append(dono)
-	var estado := Estilo.rotulo("", 20, Estilo.TEXTO, Estilo.FORTE)
+	var estado := Estilo.rotulo("", 20, Estilo.TEXTO, Estilo.NUMERO)
 	v.add_child(estado)
 	_chip_estado.append(estado)
 	var peso_row := HBoxContainer.new()
@@ -206,7 +223,7 @@ func _chip(team: int) -> PanelContainer:
 
 func _build_jogador(root: Control) -> void:
 	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", Estilo.painel(Color(1, 1, 1, 0.3), true, Estilo.PAINEL))
+	card.add_theme_stylebox_override("panel", Estilo.placa())
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(card)
 	var h := HBoxContainer.new()
@@ -231,13 +248,14 @@ func _build_jogador(root: Control) -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 3)
 	h.add_child(v)
-	_class_label = Estilo.rotulo("Recruta", Estilo.T_GRANDE, Color.WHITE, Estilo.TITULO, 6)
+	_class_label = Estilo.rotulo("Recruta", Estilo.T_GRANDE + 2, Estilo.TEXTO, Estilo.TITULO)
 	v.add_child(_class_label)
-	_status_label = Estilo.rotulo("", Estilo.T_PEQUENO + 1, Estilo.FANTASMA, Estilo.FORTE)
+	_status_label = Estilo.rotulo("", Estilo.T_PEQUENO + 1, Estilo.FANTASMA, Estilo.NUMERO)
 	v.add_child(_status_label)
-	_hp_bar = Estilo.barra(Config.team_color(0).lightened(0.25), Vector2(300, 20))
+	_hp_bar = Estilo.barra(Estilo.AZUL, Vector2(300, 22))
 	v.add_child(_hp_bar)
-	_hp_text = Estilo.rotulo("", 15, Color.WHITE, Estilo.NUMERO, 4)
+	_hp_text = Estilo.rotulo("", 17, Estilo.TEXTO, Estilo.NUMERO, 4)
+	_hp_text.label_settings.shadow_offset = Vector2(0, 1)
 	_hp_text.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hp_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -246,12 +264,12 @@ func _build_jogador(root: Control) -> void:
 	chi_row.add_theme_constant_override("separation", 8)
 	v.add_child(chi_row)
 	# Medidor de Chi: enche lutando; cheio libera o poder no E.
-	_power_bar = Estilo.barra(Estilo.MAGENTA, Vector2(170, 10))
+	_power_bar = Estilo.barra(Estilo.FANTASMA, Vector2(170, 10))
 	_power_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	chi_row.add_child(_power_bar)
 	_power_key = Estilo.tecla("E", Estilo.T_PEQUENO + 2)
 	chi_row.add_child(_power_key)
-	_power_label = Estilo.rotulo("", Estilo.T_PEQUENO, Color(1, 0.8, 0.94), Estilo.FORTE)
+	_power_label = Estilo.rotulo("", Estilo.T_PEQUENO, Estilo.TEXTO, Estilo.NUMERO)
 	chi_row.add_child(_power_label)
 	# Habilidade rápida (Q): barra de recarga + nome / segundos que faltam.
 	_quick_row = HBoxContainer.new()
@@ -274,10 +292,10 @@ func _build_jogador(root: Control) -> void:
 	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	ic.custom_minimum_size = Vector2(26, 20)
 	mad_row.add_child(ic)
-	_madeira_label = Estilo.rotulo("", Estilo.T_PEQUENO, Estilo.OURO, Estilo.FORTE)
+	_madeira_label = Estilo.rotulo("", Estilo.T_PEQUENO, Estilo.OURO, Estilo.NUMERO)
 	mad_row.add_child(_madeira_label)
 	_madeira_label.pivot_offset = Vector2(0, 10)
-	_carregando_label = Estilo.rotulo("CARREGANDO 1/1", Estilo.T_PEQUENO, Color(1, 1, 1), Estilo.FORTE)
+	_carregando_label = Estilo.rotulo("CARREGANDO 1/1", Estilo.T_PEQUENO, Estilo.TEXTO, Estilo.NUMERO)
 	_carregando_label.visible = false
 	mad_row.add_child(_carregando_label)
 
@@ -287,29 +305,27 @@ func _build_jogador(root: Control) -> void:
 
 func _build_dica(root: Control) -> void:
 	_hint_box = PanelContainer.new()
-	var sb := Estilo.painel(Color(Estilo.OURO, 0.6), true, Estilo.PAINEL)
-	sb.shadow_size = 6
-	_hint_box.add_theme_stylebox_override("panel", sb)
+	_hint_box.add_theme_stylebox_override("panel", Estilo.placa())
 	_hint_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_hint_box)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	_hint_box.add_child(h)
-	_hint_a = Estilo.rotulo("", Estilo.T_MEDIO + 1, Color(1, 0.95, 0.75), Estilo.FORTE)
+	_hint_a = Estilo.rotulo("", Estilo.T_MEDIO + 1, Estilo.TEXTO, Estilo.CORPO)
 	_hint_key = Estilo.tecla("F", Estilo.T_MEDIO - 1)
-	_hint_b = Estilo.rotulo("", Estilo.T_MEDIO + 1, Color(1, 0.95, 0.75), Estilo.FORTE)
+	_hint_b = Estilo.rotulo("", Estilo.T_MEDIO + 1, Estilo.TEXTO, Estilo.CORPO)
 	h.add_child(_hint_a)
 	h.add_child(_hint_key)
 	h.add_child(_hint_b)
 	_hint_box.visible = false
-	_hint_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 70)
+	_hint_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 22)
 	_hint_box.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_hint_box.grow_vertical = Control.GROW_DIRECTION_BEGIN
 
 
 func _build_fim(root: Control) -> void:
 	_end_panel = ColorRect.new()
-	_end_panel.color = Color(0.02, 0.015, 0.025, 0.75)
+	_end_panel.color = Color(Estilo.TINTA, 0.78)
 	_end_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_end_panel.visible = false
 	root.add_child(_end_panel)
@@ -330,7 +346,7 @@ func _build_fim(root: Control) -> void:
 	again.alignment = BoxContainer.ALIGNMENT_CENTER
 	again.add_theme_constant_override("separation", 10)
 	again.add_child(Estilo.tecla("R", 24))
-	again.add_child(Estilo.rotulo("jogar de novo", 24, Estilo.TEXTO, Estilo.FORTE))
+	again.add_child(Estilo.rotulo("jogar de novo", 24, Estilo.TEXTO, Estilo.CORPO))
 	v.add_child(again)
 
 
@@ -376,17 +392,21 @@ func update_state(game: Game) -> void:
 		_peso[team].value = p.fatness * 100.0
 
 	# Cartão do jogador.
-	var time_cor := Config.team_color(u.team)
+	var time_cor := Estilo.cor_time(u.team)
+	if _abates.text != str(game.abates_jogador):
+		_abates.text = str(game.abates_jogador)
+	if _quedas.text != str(game.quedas_jogador):
+		_quedas.text = str(game.quedas_jogador)
 	var disco: StyleBoxFlat = _retrato.get_theme_stylebox("panel")
 	if disco.bg_color != u.stats.hat_color.darkened(0.55):  # mexer no StyleBox redesenha o painel
 		disco.bg_color = u.stats.hat_color.darkened(0.55)
-		disco.border_color = time_cor.lightened(0.3)
+		disco.border_color = Estilo.OURO
 	_icone_papel.mudar(Icone.do_papel(u.stats), u.stats.hat_color.lightened(0.35))
 	_class_label.text = u.stats.display_name if u.alive else "Renascendo..."
 	var ratio := u.hp_ratio()
 	_hp_bar.value = ratio * 100.0
 	_hp_text.text = "%d / %d" % [ceili(u.hp), int(u.max_hp())] if u.alive else ""
-	Estilo.cor_barra(_hp_bar, time_cor.lightened(0.25) if ratio > 0.3 else Estilo.PERIGO.lerp(Color.WHITE, pulso * 0.4))
+	Estilo.cor_barra(_hp_bar, time_cor if ratio > 0.3 else Estilo.PERIGO.lerp(Color.WHITE, pulso * 0.4))
 	_power_bar.value = u.power
 	var tem_poder := u.stats.power != "nenhum"
 	_power_bar.visible = tem_poder
@@ -401,7 +421,7 @@ func update_state(game: Game) -> void:
 		_power_key.visible = tem_poder
 		_power_key.modulate = Color(1, 1, 1, 0.4)  # apagada: mostra qual tecla, sem chamar
 		_power_label.text = "Chi %d%%" % int(u.power) if tem_poder else ""
-		_cor_texto(_power_label, Color(1, 0.8, 0.94))
+		_cor_texto(_power_label, Estilo.TEXTO)
 	_quick_row.visible = u.tem_rapida()
 	if _quick_row.visible:
 		_quick_bar.value = u.quick_ratio() * 100.0
@@ -469,7 +489,6 @@ func show_big(text: String, color := Color.WHITE, duration := 2.2) -> void:
 	_big.text = text.to_upper()
 	var ls := _big.label_settings
 	ls.font_color = color
-	ls.shadow_color = Color(color, 0.45)
 	if _big_tween:
 		_big_tween.kill()
 	_big.modulate.a = 1.0
@@ -485,6 +504,4 @@ func show_end(won: bool) -> void:
 	var cor := Estilo.OURO if won else Estilo.PERIGO
 	_end_title.text = "Vitória!" if won else "Derrota..."
 	_end_title.label_settings.font_color = cor
-	_end_title.label_settings.outline_color = cor.darkened(0.8)
-	_end_title.label_settings.shadow_color = Color(cor, 0.55)
 	_end_score.text = "AZUL   %d  ×  %d   VERMELHO" % [_score[0], _score[1]]

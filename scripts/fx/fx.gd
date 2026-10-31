@@ -43,8 +43,8 @@ static func damage_number(parent: Node, pos: Vector3, text: String, color: Color
 	var label := Label3D.new()
 	label.text = text
 	label.modulate = color
-	label.outline_modulate = Color(0, 0, 0, 0.85)
-	label.outline_size = 10
+	label.outline_modulate = Estilo.TINTA
+	label.outline_size = 16
 	label.font = Estilo.NUMERO
 	label.font_size = 64
 	label.pixel_size = 0.012 * clampf(0.85 + 0.25 * forca, 0.85, 1.6)
