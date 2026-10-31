@@ -11,6 +11,13 @@ const ALT_COLINA := 2.4
 const ALT_PONTE := 1.4
 const RIO_MEIA := 4.5       # meia-largura do rio
 const CORVO := Color(0.07, 0.06, 0.09)
+# Ferradura (Ciclo 2.5e), coordenadas locais do castelo.
+const FC := Vector2(2, 0)          # centro do arco
+const FR := 22.0                   # raio da muralha (linha do meio)
+const F_BOCA := 42.0               # meia-abertura da saída larga (graus)
+const F_LADO := 100.0              # ângulo dos portões laterais
+const F_PORTAO := 16.0             # meia-abertura de cada portão lateral (graus)
+const F_TORRE := Vector2(-18.5, 0)
 
 var _props: Array = []      # MapProp do meio do mapa
 var _patio: Array = []      # MapProp do pátio (coordenadas locais do castelo)
@@ -71,6 +78,11 @@ func _gerar_modelos_rio() -> void:
 	_forja(); _salvar("forja")
 	_dojo(); _salvar("dojo")
 	_arrozal(); _salvar("arrozal")
+	# Ciclo 2.5e: castelo em ferradura.
+	for t in TIMES:
+		_torre_mascara(TIMES[t]); _salvar("torre_mascara_" + t); _animar_torre("torre_mascara_" + t)
+	_pilar_muralha(); _salvar("pilar_muralha")
+	_praca_patio(); _salvar("praca_patio")
 
 
 # --- Ferramentas de forma ------------------------------------------------------
@@ -1575,28 +1587,45 @@ func _gerar_mapa_rio() -> void:
 		m.trail_z = 30.0
 		m.trail_width = 2.8
 		m.trail_x_max = 81.0
-	m.wall_back = -16.0
-	m.wall_front = 12.0
-	m.wall_half_width = 16.0
-	m.gate_half_width = 6.8
-	m.keep_position = Vector2(-9, 0)
-	m.tower_spots = PackedVector2Array([Vector2(12, -7.6), Vector2(12, 7.6)])
+	# Ciclo 2.5e: pátio em ferradura (docs/direcao-patio-e-tutorial.md, item 1).
+	# Muralha em arco de raio FR em volta de FC, aberta para o inimigo (saída larga
+	# de 24 m entre duas torres), com dois portões laterais para as trilhas e a
+	# Torre da Máscara no fundo. As casinhas ficam num anel por dentro: as 4
+	# maquininhas no meio do arco, as oficinas depois, Luz (z-) e Sombra (z+) nas
+	# pontas. Entre peças sobram >= 3,4 m (vão mínimo do navmesh).
+	# wall_back/front/half_width = caixa em volta do arco (enfeites do chão,
+	# guarda do portão); a muralha de verdade sai dos campos wall_arc_*.
+	m.wall_back = FC.x - FR - 2.0
+	m.wall_front = 18.5
+	m.wall_half_width = FR + 2.0
+	m.gate_half_width = 12.0
+	m.wall_arc_radius = FR
+	m.wall_arc_center = FC
+	m.wall_arc_gaps = PackedVector2Array([Vector2(0, F_BOCA), Vector2(F_LADO, F_PORTAO), Vector2(-F_LADO, F_PORTAO), Vector2(180, 13.0)])
+	m.wall_arc_gates = PackedFloat32Array([F_LADO, -F_LADO])
+	m.wall_arc_gate_model = "portao.scn"
+	m.wall_arc_pillar_model = "pilar_muralha.scn"
+	m.keep_model = "torre_mascara_{cor}.scn"
+	m.keep_position = F_TORRE
+	m.keep_collider_size = Vector3(8.4, 9.0, 8.4)
+	m.princess_spot = Vector2(-9.5, 0)
+	var boca := deg_to_rad(F_BOCA)
+	m.tower_spots = PackedVector2Array([FC + Vector2(cos(boca), -sin(boca)) * (FR + 0.4), FC + Vector2(cos(boca), sin(boca)) * (FR + 0.4)])
 	m.tower_collider_radius = 2.0
-	# Nada de jogo atrás da torre principal (x de -12 a -6): a câmera olha de +z
-	# e o que fica em z < 0 atrás dela some. Oficinas ao lado da máscara, chapéus
-	# na frente, perto do portão.
-	m.hat_spots = PackedVector2Array([Vector2(7, -9.2), Vector2(7, 9.2), Vector2(2.5, -9.2), Vector2(2.5, 9.2)])
-	# (z = ±7: mais perto da muralha, a escada da passarela tapa a frente da oficina.)
-	m.oficina_spots = PackedVector2Array([Vector2(-3.5, -7.0), Vector2(-3.5, 7.0)])
-	# Ciclo 2.3 (Economia do Construtor). Depósito de madeira no canto da frente (z = 12), do lado
-	# do bosque; bosque seguro (2 árvores) fora da muralha lateral, ~20 m de
-	# caminho da pilha; bambuzal de corte (6) nas margens do rio, onde há briga.
-	# Árvores e pilha em coordenadas do castelo (como hat_spots); bambu no mundo.
-	# Só grava se o esquema já tiver os campos (quem cria é a Jogabilidade).
-	if "tree_spots" in m:
-		m.tree_spots = PackedVector2Array([Vector2(9.5, 21.0), Vector2(8.0, 25.0)])
-	if "pilha_spot" in m:
-		m.pilha_spot = Vector2(9.5, 12.0)  # canto da frente, boca virada para a câmera, longe da torre do portão
+	m.hat_spots = PackedVector2Array([_anel(-122, 15.0), _anel(122, 15.0), _anel(-148, 15.0), _anel(148, 15.0)])
+	m.oficina_spots = PackedVector2Array([_anel(-68, 16.0), _anel(68, 16.0)])
+	m.mago_spots = PackedVector2Array([_anel(-40, 16.0), _anel(40, 16.0)])
+	# Renascer espalhado (thread do Construtor, PR #22): pontos no arco, perto
+	# das saídas (frente e laterais), longe da torre.
+	if "spawn_spots" in m:
+		m.spawn_spots = PackedVector2Array([_anel(-25, 9.0), _anel(25, 9.0), _anel(-95, 11.5), _anel(95, 11.5), Vector2(6.0, -3.5), Vector2(6.0, 3.5)])
+		m.spawn_jitter = 1.0
+	m.spawn_min = Vector2(0, -5)
+	m.spawn_max = Vector2(8, 5)
+	if "tree_spots" in m:  # bosque seguro fora do portão de baixo, perto da trilha
+		m.tree_spots = PackedVector2Array([Vector2(-1.0, 27.5), Vector2(4.5, 28.5)])
+	if "pilha_spot" in m:  # depósito por dentro do portão de baixo, no caminho das árvores
+		m.pilha_spot = Vector2(3.0, 10.0)
 	if "bamboo_spots" in m:
 		m.bamboo_spots = PackedVector2Array([Vector2(6.8, -16.2), Vector2(8.4, -16.9), Vector2(7.2, 16.4), Vector2(-6.8, -16.2), Vector2(-8.4, -16.9), Vector2(-7.2, 16.4)])
 	m.wall_height = ALT_MURO
@@ -1606,21 +1635,12 @@ func _gerar_mapa_rio() -> void:
 	m.tower_model = "torre_alta_{cor}.scn"
 	m.flag_height = ALT_MURO + 0.3 + 4.5
 
-	# Pátio (coordenadas locais; +x aponta para o inimigo).
-	var zr := 16.0 - ESP_MURO / 2 - 1.5  # centro da escada, encostada na muralha lateral
-	for s in [-1.0, 1.0]:
-		_patio.append(_p("escada_muralha.scn", Vector3(-9, 0, s * zr)))
-		_patio.append(_rampa_col(Vector3(-9, 0, s * zr), 0.0, 7.0, ALT_MURO, 3.0))
-		_patio.append(_caixa_col(Vector3(-9, 0, s * zr), 0.0, Vector3(2.0, ALT_MURO, 3.0), Vector3(8.0, ALT_MURO / 2, 0)))
-	_patio.append(_p("portao.scn", Vector3(12, 0, 0)))
-	_patio.append(_p("barril.scn", Vector3(-14, 0, 11.0), 17.0))
-	_patio.append(_p("caixotes.scn", Vector3(-14, 0, -11.0), 29.0))
-	_patio.append(_p("sino.scn", Vector3(-12.6, 0, 5.8), 90.0, "cilindro", 1.6, 4.0))
-	_patio.append(_p("poco.scn", Vector3(9.0, 0, -12.0), 0.0, "cilindro", 1.0, 2.0))
-	# (A carroça saiu: o depósito de madeira ocupa esse canto, ver pilha_spot.)
-	for z in [-4.6, 4.6]:
-		_patio.append(_p("lanterna_pedra.scn", Vector3(9.0, 0, z)))
-		_patio.append(_p("poste.scn", Vector3(4.25, 0, signf(z) * 11.8), 90.0))
+	# Pátio (coordenadas locais; +x aponta para o inimigo). Só peças simétricas
+	# em z: o castelo vermelho gira meia volta em vez de espelhar.
+	_patio.append(_p("praca_patio.scn", Vector3(FC.x, 0, FC.y)))
+	for z in [-5.5, 5.5]:
+		_patio.append(_p("lanterna_pedra.scn", Vector3(12.0, 0, z)))
+		_patio.append(_p("lanterna_pedra.scn", Vector3(-11.0, 0, z * 0.75)))
 
 	# Ciclo 2.3, mapa maior (pedido do Julio: "muita peça junto", quer caminhos
 	# para flanquear pela floresta e tudo mais espaçado). Três faixas de jogo:
@@ -1779,6 +1799,19 @@ func _gerar_mapa_rio() -> void:
 			pr.collider_size = Vector3(7.0, 4.0, 3.0)
 			pr.collider_offset = Vector3(0, 2.0, 0)
 
+	# Nada do meio do mapa dentro da ferradura nova (nem colado na muralha).
+	var fora: Array = []
+	for pr in _props:
+		var dentro := false
+		for sx in [-1.0, 1.0]:
+			var cc := Vector2(sx * (m.castle_distance - FC.x), FC.y)
+			var lx: float = m.castle_distance - sx * pr.position.x  # x local do castelo daquele lado
+			if Vector2(pr.position.x, pr.position.z).distance_to(cc) < FR + ESP_MURO / 2 + 2.5 and lx < 17.0:
+				dentro = true
+		if not dentro:
+			fora.append(pr)
+	print("objetos do meio tirados pela ferradura: ", _props.size() - fora.size())
+	_props = fora
 	var meio: Array[Resource] = []
 	meio.assign(_props)
 	var patio: Array[Resource] = []
@@ -1787,3 +1820,324 @@ func _gerar_mapa_rio() -> void:
 	m.courtyard_props.assign(patio)
 	ResourceSaver.save(m, "res://config/mapas/rio_lanternas.tres")
 	print("mapa salvo: %d objetos no meio, %d no pátio" % [meio.size(), patio.size()])
+
+
+# --- Castelo em ferradura (Ciclo 2.5e) -----------------------------------------
+
+## Ponto do anel de dentro da ferradura: `graus` (0 = para o inimigo, + = z+)
+## a `r` m do centro FC.
+func _anel(graus: float, r: float) -> Vector2:
+	var a := deg_to_rad(graus)
+	return FC + Vector2(cos(a), sin(a)) * r
+
+
+## Pilar redondo de pedra nas juntas da muralha em arco (esconde a quina entre
+## dois módulos), com chapéu de telha e lanterna virada para dentro (-x).
+func _pilar_muralha() -> void:
+	_cil(1.45, 1.75, ALT_MURO + 1.6, 8, Vector3(0, (ALT_MURO + 1.6) / 2, 0), Vector3.ZERO, P.pedra)
+	for k in 3:
+		_cil(1.72 - k * 0.08, 1.74 - k * 0.08, 0.06, 8, Vector3(0, 0.6 + k * 1.2, 0), Vector3.ZERO, P.pedra2)
+	_cil(1.55, 1.55, 0.2, 8, Vector3(0, ALT_MURO + 1.7, 0), Vector3.ZERO, P.madeira)
+	_cil(0.2, 1.8, 0.8, 8, Vector3(0, ALT_MURO + 2.2, 0), Vector3.ZERO, P.telhado.darkened(0.25))
+	_esfera(0.16, Vector3(0, ALT_MURO + 2.7, 0), Vector3.ONE, P.ouro, true)
+	_lanterna_papel(Vector3(-1.6, ALT_MURO - 0.2, 0), P.papel, 0.24)
+
+
+## Chão do pátio (centro da ferradura na origem): praça redonda na frente da
+## torre, lajes até a saída larga e os portões laterais, calçada do anel.
+func _praca_patio() -> void:
+	var laje: Color = P.pedra.lerp(P.reboco, 0.25)
+	var c := Vector3(-6, 0, 0)
+	_cil(7.0, 7.0, 0.06, 28, c + Vector3(0, 0.03, 0), Vector3.ZERO, laje)
+	_cil(7.12, 7.12, 0.04, 28, c + Vector3(0, 0.02, 0), Vector3.ZERO, P.pedra2)
+	for k in 8:  # raios de pedra escura (rosa dos ventos)
+		var a := k * PI / 4
+		_caixa(Vector3(5.6, 0.07, 0.18), c + Vector3(cos(a) * 3.6, 0.04, sin(a) * 3.6), Vector3(0, -rad_to_deg(a), 0), P.pedra2)
+	_cil(1.6, 1.6, 0.08, 16, c + Vector3(0, 0.05, 0), Vector3.ZERO, P.pedra2)
+	var alvos := [Vector3(21, 0, 0), _v3(_anel(F_LADO, FR) - FC), _v3(_anel(-F_LADO, FR) - FC)]
+	for alvo: Vector3 in alvos:
+		var de := c
+		var n := 13
+		var ang := atan2(-(alvo - de).z, (alvo - de).x)
+		for k in n:
+			var p: Vector3 = de.lerp(alvo, (k + 2.6) / (n + 2.6))
+			_caixa(Vector3(1.0, 0.06, 3.0), p + Vector3(0, 0.03, 0), Vector3(0, rad_to_deg(ang), 0), laje.darkened(0.04 * (k % 2)))
+	for a in range(-174, 175, 6):
+		if absi(a) < 36:
+			continue
+		var ar := deg_to_rad(a)
+		_caixa(Vector3(2.8, 0.05, 1.5), Vector3(15.5 * cos(ar), 0.025, 15.5 * sin(ar)), Vector3(0, -a + 90, 0), laje.darkened(0.06 * (absi(a) / 6 % 2)))
+
+
+func _v3(v: Vector2) -> Vector3:
+	return Vector3(v.x, 0, v.y)
+
+
+## Torre da Máscara: base de pedra inclinada, 3 andares altos e estreitos, a
+## máscara Oni viva na frente (+x), portão, braseiros e lanternas. Peças à
+## parte (animadas em _animar_torre): Olhos, Mandibula, Boca_fogo, Chama_*.
+func _torre_mascara(time: Color) -> void:
+	var telha: Color = P.telhado.lerp(time, 0.35)
+	var escuro := Color(0.07, 0.06, 0.08)
+	_cil(4.95, 5.66, 4.4, 4, Vector3(0, 2.2, 0), Vector3(0, 45, 0), P.pedra)
+	for k in 5:
+		_cil(5.6 - k * 0.15, 5.63 - k * 0.15, 0.06, 4, Vector3(0, 0.45 + k * 0.85, 0), Vector3(0, 45, 0), P.pedra2)
+	for k in 6:
+		var ang := k * 1.05
+		_esfera(0.5, Vector3(cos(ang) * 4.3, 0.4, sin(ang) * 4.3), Vector3(1.4, 0.5, 1.0), P.musgo)
+	var andares := [[6.6, 4.6, 4.4], [5.0, 3.6, 10.0], [3.6, 2.8, 14.8]]
+	var tetos := [[8.6, 1.9, 0.9], [6.8, 1.6, 0.75], [5.2, 2.4, 0.6]]
+	for i in 3:
+		var a: Array = andares[i]
+		var w: float = a[0]
+		var h: float = a[1]
+		var y0: float = a[2]
+		_caixa(Vector3(w, h, w), Vector3(0, y0 + h / 2, 0), Vector3.ZERO, P.reboco)
+		_caixa(Vector3(w + 0.08, 0.28, w + 0.08), Vector3(0, y0 + 0.14, 0), Vector3.ZERO, P.madeira)
+		_caixa(Vector3(w + 0.08, 0.2, w + 0.08), Vector3(0, y0 + h - 0.1, 0), Vector3.ZERO, P.madeira)
+		for s in [-1, 1]:
+			for q in [-1, 1]:
+				_caixa(Vector3(0.3, h, 0.3), Vector3(s * w / 2, y0 + h / 2, q * w / 2), Vector3.ZERO, P.madeira)
+		for k in range(-1, 2):
+			if i == 2 and k != 0:
+				continue
+			for s in [-1, 1]:
+				_caixa(Vector3(0.6, 0.8, 0.06), Vector3(k * w * 0.28, y0 + h * 0.62, s * (w / 2 + 0.03)), Vector3.ZERO, P.papel, true)
+			_caixa(Vector3(0.06, 0.8, 0.6), Vector3(-(w / 2 + 0.03), y0 + h * 0.62, k * w * 0.28), Vector3.ZERO, P.papel, true)
+			if i > 0:
+				_caixa(Vector3(0.06, 0.8, 0.6), Vector3(w / 2 + 0.03, y0 + h * 0.62, k * w * 0.28), Vector3.ZERO, P.papel, true)
+		var t: Array = tetos[i]
+		_telhado(Vector3(0, y0 + h, 0), t[0], t[0], t[1], telha, t[2])
+		var lb: float = t[0] + 2 * t[2]
+		for q in [-1, 1]:
+			_caixa(Vector3(lb, 0.1, 0.1), Vector3(0, y0 + h + 0.08, q * lb / 2), Vector3.ZERO, time * 1.2, true)
+			_caixa(Vector3(0.1, 0.1, lb), Vector3(q * lb / 2, y0 + h + 0.08, 0), Vector3.ZERO, time * 1.2, true)
+	var yf := 9.0
+	_tri(Vector3(4.4, yf, -2.6), Vector3(4.4, yf, 2.6), Vector3(3.6, yf + 2.2, 0), telha, Vector3(1, 0.3, 0))
+	_viga(Vector3(4.45, yf + 0.05, -2.7), Vector3(3.65, yf + 2.25, 0), 0.14, P.ouro)
+	_viga(Vector3(4.45, yf + 0.05, 2.7), Vector3(3.65, yf + 2.25, 0), 0.14, P.ouro)
+	_caixa(Vector3(0.3, 0.3, 5.6), Vector3(4.4, yf - 0.05, 0), Vector3.ZERO, P.madeira)
+	var topo: float = 14.8 + 2.8 + 2.4
+	for s in [-1, 1]:
+		_cil(0.0, 0.22, 0.75, 6, Vector3(0, topo + 0.3, s * 0.75), Vector3(s * 25, 0, 0), P.ouro, true)
+	_mascara_oni(Vector3(3.45, 6.7, 0), time)
+	# Portão da torre e braseiros.
+	_caixa(Vector3(0.6, 3.4, 3.6), Vector3(5.1, 1.7, 0), Vector3.ZERO, P.madeira)
+	_caixa(Vector3(0.3, 2.7, 2.6), Vector3(5.42, 1.35, 0), Vector3.ZERO, escuro.lightened(0.08))
+	for zz in [-0.9, 0.0, 0.9]:
+		for yy in [0.6, 1.4, 2.2]:
+			_esfera(0.08, Vector3(5.58, yy, zz), Vector3.ONE, P.ouro, true, 5, 3)
+	for s in [-1, 1]:
+		var b: Vector3 = Vector3(5.8, 0, s * 2.6)
+		_cil(0.28, 0.4, 1.0, 8, b + Vector3(0, 0.5, 0), Vector3.ZERO, P.pedra2)
+		_cil(0.55, 0.3, 0.35, 8, b + Vector3(0, 1.15, 0), Vector3.ZERO, Color(0.2, 0.18, 0.18))
+		var g := _inicio_peca()
+		_cil(0.0, 0.42, 0.9, 6, Vector3(0, 0.45, 0), Vector3.ZERO, P.luz2 * 1.1, true)
+		_cil(0.0, 0.25, 0.7, 5, Vector3(0.06, 0.55, 0.04), Vector3.ZERO, P.luz1 * 1.15, true)
+		_fim_peca(g, "Chama_%d" % (s + 1), Transform3D(Basis(), b + Vector3(0, 1.3, 0)))
+	for i in 2:
+		var w2: float = [8.6, 6.8][i] / 2.0 + 0.3
+		var yl: float = [8.5, 13.1][i]
+		for s in [-1, 1]:
+			for q in [-1, 1]:  # (fixas: peça à parte custaria uma chamada de desenho cada)
+				var o := Vector3(s * w2, yl, q * w2)
+				_cil(0.02, 0.02, 0.7, 4, o + Vector3(0, -0.35, 0), Vector3.ZERO, escuro)
+				_lanterna_papel(o + Vector3(0, -0.95, 0), P.papel if (s + q) != 0 else time.lerp(P.papel, 0.4), 0.3)
+	for k in 3:
+		_caixa(Vector3(0.6, 0.18 * (3 - k), 4.2), Vector3(5.6 + k * 0.55, 0.09 * (3 - k), 0), Vector3.ZERO, P.pedra2)
+
+
+## x da superfície do rosto (elipsoide 0,85 x 2,4 x 2,2) em (dy, dz) do centro.
+func _sx(dy: float, dz: float) -> float:
+	return 0.85 * sqrt(maxf(0.0, 1.0 - pow(dy / 2.4, 2) - pow(dz / 2.2, 2)))
+
+
+## Máscara Oni "viva" virada para +x, centro do rosto em F: pele laqueada com
+## rugas, maçãs e vincos, órbitas fundas com olhos de fera (íris na cor do
+## time e pupila em fenda), narinas abertas, boca rosnando com fogo dentro,
+## mandíbula que respira, chifres curvos em gomos com anéis de ouro, juba e
+## barba que mexem com o vento, tiara de ouro com joia.
+func _mascara_oni(F: Vector3, time: Color) -> void:
+	var pele := Color(0.56, 0.09, 0.07)
+	var vinco := pele.darkened(0.55)
+	var osso := Color(0.93, 0.87, 0.72)
+	var escuro := Color(0.07, 0.05, 0.06)
+	# Rosto e volumes.
+	_esfera(1.0, F, Vector3(0.85, 2.4, 2.2), pele, false, 16, 10)
+	_esfera(1.0, F + Vector3(0.42, 1.0, 0), Vector3(0.5, 0.42, 2.0), pele.darkened(0.12), false, 12, 6)  # arco da testa
+	for s in [-1, 1]:
+		_esfera(0.5, F + Vector3(_sx(0.0, 1.3) - 0.12, -0.05, s * 1.3), Vector3(0.55, 0.8, 1.0), pele.lightened(0.03), false, 10, 6)  # maçãs
+		_esfera(0.42, F + Vector3(_sx(1.25, 1.55) - 0.05, 1.25, s * 1.55), Vector3(0.8, 1.0, 0.8), pele.darkened(0.05), false, 8, 5)  # têmporas
+	# Rugas da testa (três V rasos) e veias.
+	for k in 3:
+		var dy: float = 1.55 + k * 0.28
+		for s in [-1, 1]:
+			var dz := 0.55
+			_caixa(Vector3(0.12, 0.07, 1.0), F + Vector3(_sx(dy, dz) + 0.01, dy, s * dz), Vector3(s * (10 + k * 5), 0, 0), vinco)
+	for s in [-1, 1]:
+		_viga(F + Vector3(_sx(1.4, 1.2), 1.4, s * 1.2), F + Vector3(_sx(1.9, 0.95), 1.95, s * 0.95), 0.06, Color(0.32, 0.03, 0.05))
+		_viga(F + Vector3(_sx(1.6, 1.15), 1.6, s * 1.15), F + Vector3(_sx(1.75, 1.45), 1.8, s * 1.45), 0.05, Color(0.32, 0.03, 0.05))
+	# Sobrancelhas grossas em V, com pelos pontudos para fora.
+	for s in [-1, 1]:
+		_caixa(Vector3(0.5, 0.36, 1.5), F + Vector3(_sx(0.95, 0.85) + 0.18, 0.98, s * 0.85), Vector3(s * -24, 0, 0), escuro)
+		for k in 3:
+			var z: float = s * (1.2 + k * 0.2)
+			_cil(0.0, 0.12, 0.5, 4, F + Vector3(_sx(1.1, absf(z)) + 0.1, 1.15 + k * 0.08, z + s * 0.15), Vector3(s * -70, 0, 0), escuro)
+	# Órbitas fundas e vincos debaixo dos olhos.
+	for s in [-1, 1]:
+		_esfera(1.0, F + Vector3(_sx(0.5, 0.9) - 0.1, 0.5, s * 0.9), Vector3(0.17, 0.4, 0.62), Color(0.1, 0.01, 0.02), false, 10, 6)
+		_viga(F + Vector3(_sx(0.12, 0.55) + 0.02, 0.12, s * 0.55), F + Vector3(_sx(0.02, 1.25) + 0.02, 0.0, s * 1.25), 0.07, vinco)
+	# Nariz largo com narinas abertas e vincos até a boca.
+	_viga(F + Vector3(_sx(0.75, 0) + 0.02, 0.75, 0), F + Vector3(_sx(0.1, 0) + 0.25, 0.05, 0), 0.32, pele.darkened(0.08))
+	_esfera(1.0, F + Vector3(_sx(-0.1, 0) + 0.22, -0.12, 0), Vector3(0.38, 0.32, 0.55), pele.darkened(0.12), false, 10, 6)
+	for s in [-1, 1]:
+		_esfera(1.0, F + Vector3(_sx(-0.25, 0.25) + 0.45, -0.28, s * 0.27), Vector3(0.12, 0.09, 0.13), Color(0.08, 0.0, 0.01), false, 6, 4)
+		_viga(F + Vector3(_sx(-0.2, 0.6) + 0.04, -0.2, s * 0.6), F + Vector3(_sx(-0.95, 1.05) + 0.04, -0.95, s * 1.05), 0.08, vinco)
+	# Boca rosnando: lábio de cima arreganhado, buraco escuro, dentes e presas.
+	var bx := _sx(-0.95, 0) - 0.12
+	_esfera(1.0, F + Vector3(bx, -0.95, 0), Vector3(0.3, 0.42, 1.25), Color(0.14, 0.0, 0.02), false, 12, 6)
+	_caixa(Vector3(0.3, 0.16, 2.2), F + Vector3(bx + 0.2, -0.55, 0), Vector3.ZERO, pele.darkened(0.2))
+	for k in 7:
+		var z: float = -0.9 + k * 0.3
+		_caixa(Vector3(0.12, 0.2, 0.2), F + Vector3(bx + 0.22, -0.7, z), Vector3(0, 0, 0), osso)
+	for s in [-1, 1]:
+		_cil(0.0, 0.2, 1.05, 6, F + Vector3(bx + 0.28, -1.15, s * 0.82), Vector3(0, 0, 186), osso)
+	var g := _inicio_peca()
+	_esfera(1.0, Vector3.ZERO, Vector3(0.18, 0.28, 0.95), P.luz2 * 1.15, true, 10, 5)
+	_esfera(1.0, Vector3(0.05, 0, 0), Vector3(0.12, 0.16, 0.6), P.luz1 * 1.2, true, 8, 4)
+	_fim_peca(g, "Boca_fogo", Transform3D(Basis(), F + Vector3(bx + 0.05, -1.0, 0)))
+	# Mandíbula (gira no eixo z em volta da dobradiça): queixo, dentes de baixo,
+	# presas para cima e barba.
+	g = _inicio_peca()
+	_esfera(1.0, Vector3(0.6, -0.55, 0), Vector3(0.6, 0.5, 1.45), pele.darkened(0.06), false, 12, 6)
+	_caixa(Vector3(0.25, 0.14, 2.0), Vector3(0.95, -0.2, 0), Vector3.ZERO, Color(0.14, 0.0, 0.02))
+	for k in 6:
+		_caixa(Vector3(0.12, 0.16, 0.2), Vector3(1.0, -0.12, -0.75 + k * 0.3), Vector3.ZERO, osso)
+	for s in [-1, 1]:
+		_cil(0.0, 0.17, 0.8, 6, Vector3(1.0, 0.25, s * 0.48), Vector3(0, 0, -6), osso)
+	_vento = 0.7
+	for k in 9:
+		var z: float = -1.0 + k * 0.25
+		var comp: float = 1.1 + 0.5 * (1.0 - absf(z))
+		_viga(Vector3(0.6, -0.95, z), Vector3(0.75 + 0.2 * absf(z), -0.95 - comp, z * 1.25), 0.13, Color(0.82, 0.8, 0.76).darkened(0.1 * (k % 3)))
+	_vento = 0.0
+	_fim_peca(g, "Mandibula", Transform3D(Basis(), F + Vector3(-0.25, -0.75, 0)))
+	# Olhos de fera (acesos): esclera dourada, íris do time, pupila em fenda.
+	g = _inicio_peca()
+	for s in [-1, 1]:
+		_esfera(1.0, Vector3(0, 0, s * 0.9), Vector3(0.14, 0.24, 0.4), Color(1.0, 0.82, 0.3) * 1.15, true, 10, 6)
+		_esfera(1.0, Vector3(0.07, 0, s * 0.88), Vector3(0.1, 0.17, 0.17), time * 1.4, true, 8, 5)
+		_caixa(Vector3(0.05, 0.3, 0.06), Vector3(0.16, 0, s * 0.88), Vector3.ZERO, Color(0.02, 0.0, 0.0))
+	_fim_peca(g, "Olhos", Transform3D(Basis(), F + Vector3(_sx(0.5, 0.9) + 0.08, 0.5, 0)))
+	# Chifres em gomos, curvando para cima e para trás, anéis de ouro, ponta de ouro.
+	for s in [-1, 1]:
+		var p: Vector3 = F + Vector3(_sx(1.3, 1.75) - 0.15, 1.3, s * 1.75)
+		var d: Vector3 = Vector3(0.45, 0.02, s * 0.9).normalized()
+		var esp := 0.62
+		for k in 6:
+			var q: Vector3 = p + d * 0.7
+			_viga(p, q, esp, osso.darkened(0.04 * (k % 2)), 0.12)
+			if k == 1 or k == 3:
+				_viga(p + d * 0.24, p + d * 0.38, esp + 0.12, P.ouro, 0.05)
+			p = q
+			esp *= 0.82
+			d = (d + Vector3(-0.04, 0.26, -s * 0.03)).normalized()
+		_cil(0.0, esp * 0.8, 0.5, 5, p + d * 0.2, Vector3(0, 0, 0), P.ouro, true)
+	# Tiara de ouro com joia na cor do time.
+	for k in 9:
+		var z: float = -1.3 + k * 0.325
+		var dy: float = 2.05 - 0.12 * absf(z)
+		_caixa(Vector3(0.14, 0.2, 0.34), F + Vector3(_sx(dy, z) + 0.03, dy, z), Vector3(z * -18, 0, 0), P.ouro, k % 2 == 0)
+	_esfera(0.26, F + Vector3(_sx(2.15, 0) + 0.12, 2.15, 0), Vector3(0.6, 1.3, 1.0), time * 1.5, true, 8, 5)
+	# Borda escura atrás do rosto (silhueta) e juba em tufos (mexe com o vento).
+	_esfera(1.0, F + Vector3(-0.2, -0.05, 0), Vector3(0.6, 2.6, 2.4), Color(0.22, 0.03, 0.04), false, 14, 8)
+	_vento = 0.5
+	for k in 11:
+		var a := deg_to_rad(lerpf(40.0, 160.0, k / 10.0))  # 0° = topo, 180° = queixo
+		for s in [-1, 1]:
+			var dir := Vector3(0, cos(a), s * sin(a))
+			var comp := 1.0 + 0.3 * (k % 3)
+			var centro: Vector3 = F + Vector3(-0.3, 2.3 * cos(a), s * 2.15 * sin(a)) + dir * comp * 0.45
+			var cor := Color(0.09, 0.05, 0.06).lightened(0.06 * (k % 3))
+			_cil(0.04, 0.42, comp, 5, centro, Vector3(s * rad_to_deg(a), 0, 0), cor)
+	_vento = 0.0
+
+
+## AnimationPlayer da torre: "respirar" (sempre, 4 s) e "alarme" (máscara
+## roubada: olhos e fogo crescem, boca abre, fumaça engrossa).
+func _animar_torre(nome: String) -> void:
+	var caminho := _dir.path_join(nome + ".scn")
+	var raiz: Node3D = (load(caminho) as PackedScene).instantiate()
+	for n in raiz.get_children():
+		if n is Node3D and n.name != "Malha":
+			n.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	var ap := AnimationPlayer.new()
+	ap.name = "AnimationPlayer"
+	var lib := AnimationLibrary.new()
+	lib.add_animation("respirar", _anim_torre(raiz, 4.0, 1.0))
+	lib.add_animation("alarme", _anim_torre(raiz, 0.8, 2.6))
+	ap.add_animation_library("", lib)
+	ap.autoplay = "respirar"
+	raiz.add_child(ap)
+	ap.owner = raiz
+	var fum := CPUParticles3D.new()  # fumaça das narinas
+	fum.name = "Fumaca"
+	fum.position = Vector3(4.6, 6.4, 0)
+	fum.amount = 8
+	fum.lifetime = 2.2
+	fum.direction = Vector3(0.6, 1, 0)
+	fum.spread = 18.0
+	fum.initial_velocity_min = 0.5
+	fum.initial_velocity_max = 0.9
+	fum.gravity = Vector3(0, 0.3, 0)
+	fum.scale_amount_min = 0.5
+	fum.scale_amount_max = 0.9
+	var curva := Curve.new()
+	curva.add_point(Vector2(0, 0.3))
+	curva.add_point(Vector2(1, 1.6))
+	fum.scale_amount_curve = curva
+	var esf := SphereMesh.new()
+	esf.radius = 0.3
+	esf.height = 0.6
+	esf.radial_segments = 6
+	esf.rings = 3
+	var mf := StandardMaterial3D.new()
+	mf.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mf.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mf.albedo_color = Color(0.25, 0.22, 0.24, 0.35)
+	esf.material = mf
+	fum.mesh = esf
+	raiz.add_child(fum)
+	fum.owner = raiz
+	var ps := PackedScene.new()
+	ps.pack(raiz)
+	ResourceSaver.save(ps, caminho)
+	raiz.free()
+
+
+func _anim_torre(raiz: Node3D, dur: float, forca: float) -> Animation:
+	var an := Animation.new()
+	an.length = dur
+	an.loop_mode = Animation.LOOP_LINEAR
+	var faixa := func(no: String, prop: String, chaves: Array) -> void:
+		var t := an.add_track(Animation.TYPE_VALUE)
+		an.track_set_path(t, NodePath("%s:%s" % [no, prop]))
+		an.track_set_interpolation_type(t, Animation.INTERPOLATION_CUBIC)
+		for c in chaves:
+			an.track_insert_key(t, c[0] * dur, c[1])
+	var o := 1.0 + 0.08 * forca
+	faixa.call("Olhos", "scale", [[0.0, Vector3.ONE], [0.5, Vector3(1, o, o)], [0.62, Vector3(1, 0.15, 1)], [0.7, Vector3(1, o, o)], [1.0, Vector3.ONE]])
+	var jaw: Node3D = raiz.get_node("Mandibula")
+	var r0 := jaw.rotation
+	faixa.call("Mandibula", "rotation", [[0.0, r0], [0.45, r0 + Vector3(0, 0, -0.07 * forca)], [1.0, r0]])
+	var f := 1.0 + 0.25 * forca
+	faixa.call("Boca_fogo", "scale", [[0.0, Vector3.ONE], [0.45, Vector3(f, f, f)], [1.0, Vector3.ONE]])
+	for n in raiz.get_children():
+		if n.name.begins_with("Chama_"):
+			var a := 1.0 + 0.15 * forca
+			faixa.call(n.name, "scale", [[0.0, Vector3.ONE], [0.15, Vector3(0.9, a, 0.9)], [0.3, Vector3(1.05, 0.9, 1.05)], [0.55, Vector3(0.95, a * 1.05, 0.95)], [0.8, Vector3(1, 0.92, 1)], [1.0, Vector3.ONE]])
+		elif n.name.begins_with("Lanterna_"):
+			var amp := 0.08 * forca
+			var fase := float(n.name.hash() % 7) / 7.0
+			faixa.call(n.name, "rotation", [[0.0, Vector3(0, 0, amp * sin(TAU * fase))], [0.5, Vector3(0, 0, -amp * sin(TAU * fase) - amp * 0.5)], [1.0, Vector3(0, 0, amp * sin(TAU * fase))]])
+	return an
