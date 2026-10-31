@@ -40,6 +40,11 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
   com um golpe de "virar a luta" (ex.: Samurai corta todos em linha num traço só).
 
 ## B — depois
+- **Construtor mais simples e menos classes** (Julio, 2026-10-31): talvez só o
+  Construtor + 3 ou 4 classes. O Construtor faz quase tudo da economia (cortar,
+  levar, upar casinhas), e cada casinha upada deixa guerreiros, arqueiros etc.
+  mais fortes aos poucos ao longo da partida (progressão do time em vez de
+  variações). Avaliar depois de jogar com o pátio novo e o tutorial.
 - **Dividir `scripts/actors/unit.gd`** (1.469 linhas) em partes: movimento,
   combate, animação/corpo, aura/poder. Antes, ampliar `tests/regras.gd` para
   cobrir combo, bloqueio e poderes, que protegem a mudança (Jogabilidade).
