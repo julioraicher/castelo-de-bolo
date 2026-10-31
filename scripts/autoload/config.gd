@@ -17,12 +17,12 @@ const LAYER_PROJECTILES := 8
 const CONTROLS := [
 	["W A S D", "andar"],
 	["Mouse", "mirar"],
-	["Clique esquerdo", "atacar"],
-	["Clique direito (segurar)", "Samurai/Ronin bloqueiam (na hora do golpe = CONTRA-GOLPE) · Ninja/Yumi/Bombardeiro carregam o tiro (cheio atravessa / bomba maior) · Kitsune cura · Armadilheiro arma minas"],
-	["Q", "poder especial (quando o medidor de Chi enche)"],
-	["Espaço ou Shift", "esquivar (rolamento rápido)"],
-	["E", "pegar item de classe, pegar/soltar a máscara, trocar a oficina do terreno"],
-	["Esc ou P", "pausar, ver controles e configurações"],
+	["Clique esquerdo", "atacar (segure para golpear sem parar)"],
+	["Clique direito", "ação da classe (segure): bloquear (na hora do golpe, contra-ataca), carregar o tiro, curar ou armar minas"],
+	["Q", "poder especial, quando a barra de Chi enche"],
+	["Espaço ou Shift", "esquiva (rolamento rápido)"],
+	["E", "pegar chapéu ou máscara · escolher a oficina do terreno"],
+	["Esc ou P", "pausa, controles e configurações"],
 	["F ou F11", "tela cheia"],
 	["R", "reiniciar a partida"],
 ]

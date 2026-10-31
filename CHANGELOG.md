@@ -5,6 +5,26 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4n (2026-10-31), Diretor Visual: letras e textos com identidade
+- **Fontes novas** (OFL, `assets/fonts`): sai a Chakra Petch (cara de painel neon, sobra dos
+  Clãs de Neon); entra a família **Barlow Condensed** (texto, botões, números), mais grossa e
+  legível. **Shojumaru** (pincel) fica só para títulos curtos. Guia em `docs/estilo-textos.md`
+  (fontes, escala de tamanhos `Estilo.T_*`, cores, tom da escrita), para todas as threads.
+- Cores do texto quentes (papel de arroz e tinta), no lugar do branco-azulado neon.
+  Nada abaixo de 15 px. Filete dourado sob os títulos. Teclas desenhadas sem borrão.
+- **Avisos grandes** do meio da tela agora em letra larga e caixa alta (a de pincel embolava
+  em frase de duas linhas). Placar, vida e números de dano na fonte de números.
+- **Textos revistos**: tela inicial (subtítulo "A guerra da Máscara Oni"; lista de chapéus
+  certa, lida do `game_config`; dicas mais curtas), lista de controles enxuta, frases de status
+  no imperativo ("LEVE A TORA AO DEPÓSITO"), estado das máscaras, aviso de qualidade gráfica.
+- Ajuda "Esc pausa e controles" foi para o **canto superior direito** (o inferior direito é do
+  minimapa da outra thread).
+- Toque mínimo fora do Visual (só texto): `config.gd` (CONTROLS), `unit.gd` (aviso do Chi),
+  `auto_quality.gd`, `project.godot` (fonte padrão). Testes 111/111; 5 min simulados sem erro.
+- **O que testar**: tela inicial e Esc (leitura, nada cortado); placar e cartão do jogador
+  durante a briga; avisos grandes (pegar chapéu, ponto, Chi cheio). Me diga se alguma letra
+  ficou pequena demais no seu monitor.
+
 ## Ciclo 2.4m (2026-10-31), Diretor Visual: efeitos do Bombardeio e do arremate da Chuva
 - **Bombardeio**: os anéis de aviso viraram pavio: cada anel encolhe e gira até o centro no
   tempo exato da sua explosão (lê a ordem da fila). Cada explosão ganha bola de fogo que

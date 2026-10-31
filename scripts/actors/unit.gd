@@ -443,7 +443,7 @@ func add_power(amount: float) -> void:
 	_power_idle = 0.0
 	if is_player and not was_ready and power >= POWER_MAX and stats.power != "nenhum":
 		Sfx.play_ui("power_ready")
-		game.hud.show_big("Chi cheio! [Q] %s" % stats.power_name, Color(1, 0.75, 0.9), 1.4)
+		game.hud.show_big("Chi cheio! Q: %s" % stats.power_name, Color(1, 0.75, 0.9), 1.4)
 
 
 # --- Loop principal -----------------------------------------------------------

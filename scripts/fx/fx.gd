@@ -43,7 +43,7 @@ static func damage_number(parent: Node, pos: Vector3, text: String, color: Color
 	label.modulate = color
 	label.outline_modulate = Color(0, 0, 0, 0.85)
 	label.outline_size = 10
-	label.font = Estilo.FORTE
+	label.font = Estilo.NUMERO
 	label.font_size = 64
 	label.pixel_size = 0.012
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED

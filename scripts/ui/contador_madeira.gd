@@ -38,7 +38,7 @@ func _ready() -> void:
 	_icone.shaded = false
 	add_child(_icone)
 	_texto = Label3D.new()
-	_texto.font = preload("res://assets/fonts/ChakraPetch-Bold.ttf")
+	_texto.font = Estilo.NUMERO
 	_texto.font_size = 64
 	_texto.outline_size = 18
 	_texto.outline_modulate = Color(0.03, 0.02, 0.06)
