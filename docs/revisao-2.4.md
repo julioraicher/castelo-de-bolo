@@ -38,3 +38,27 @@ Calibração (3 partidas cada): 0,5/15 ~0,5; 0,5/25 ~1,7; 0,42/25 ~1; 0,4/25 ~1,
   feitiço): o padrão está pronto (`classe_base` + oficina). Cada par novo é um `.tres`.
 - **Equilíbrio das Kitsunes opostas**: números iniciais, sem teste com gente.
 - **Ritmo de pontos**: aplicado (acima); confirmar jogando.
+
+## Equilíbrio por classe (2026-10-31, `tools/sonda_equilibrio.sh`)
+
+8 partidas de 5 min com todas as classes; cada classe passa por todos os papéis de bot
+(`--variacoes=0..7`). Números atuais da main:
+
+| Classe | Mortes | Abates | Abates por morte |
+|---|---|---|---|
+| Ronin Oni | 14 | 47 | 3,4 |
+| Kitsune da Luz | 9 | 29 | 3,2 |
+| Kitsune Sombria | 11 | 25 | 2,3 |
+| Bombardeiro | 4 | 9 | 2,3 |
+| Yumi | 12 | 21 | 1,8 |
+| Samurai | 100 | 99 | 1,0 |
+| Ninja de Shuriken | 168 | 160 | 1,0 |
+| Kitsune | 179 | 133 | 0,7 (cura não conta) |
+| Armadilheiro | 7 | 5 | 0,7 |
+| Construtor | 13 | 6 | 0,5 (coleta) |
+
+Leitura: as classes de oficina rendem mais que as do pátio, como planejado (são o
+prêmio da madeira). As três do pátio que lutam ficam perto de 1. Nada gritante; as de
+oficina têm amostra pequena (menos de 15 mortes), então não mexi nos números.
+Correção: uma 1ª medição sem girar as classes dava "Yumi 33 abates por morte", mas era
+efeito do papel (a Yumi caía sempre no papel de defensor, em cima da muralha).

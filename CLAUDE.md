@@ -25,6 +25,7 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3
   --rendering-method gl_compatibility --audio-driver Dummy -- --autoplay --shots=DIR
 # QA do mapa (passagem, escondidos da câmera, bots presos): qa_mapa.txt (+ .jpg com tela)
 godot --headless --path . --fixed-fps 60 -- --qa-mapa=DIR
+# Equilíbrio por classe (8 partidas, mortes/abates por classe): tools/sonda_equilibrio.sh
 # Exportar só os dados, sem templates, e inspecionar como no jogo publicado:
 godot --headless --path . --export-pack "Linux" x.pck
 godot --headless --main-pack x.pck -s diag.gd
