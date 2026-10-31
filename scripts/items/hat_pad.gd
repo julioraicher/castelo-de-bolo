@@ -72,11 +72,12 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 		_hat.position.y = 1.2
 		add_child(_hat)
 	_label = Label3D.new()
-	_label.font = Estilo.FORTE
+	_label.font = Estilo.LETREIRO
 	_label.font_size = 40
 	_label.pixel_size = 0.011
 	_label.line_spacing = -6
 	_label.outline_size = 10
+	_label.outline_modulate = Estilo.TINTA
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.position.y = 3.4 if _maquina else 2.6
 	_label.modulate = stats.hat_color.lightened(0.3)

@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://c1svo852muu2l"
-path="res://.godot/imported/Shojumaru-Regular.ttf-f9932e1ac33bea41f7c3b67ddc8b87b0.fontdata"
+uid="uid://cnnw5htdioj5a"
+path="res://.godot/imported/LilitaOne-Regular.ttf-3fc5417b202255ea31131e19ae8ead4f.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/Shojumaru-Regular.ttf"
-dest_files=["res://.godot/imported/Shojumaru-Regular.ttf-f9932e1ac33bea41f7c3b67ddc8b87b0.fontdata"]
+source_file="res://assets/fonts/LilitaOne-Regular.ttf"
+dest_files=["res://.godot/imported/LilitaOne-Regular.ttf-3fc5417b202255ea31131e19ae8ead4f.fontdata"]
 
 [params]
 

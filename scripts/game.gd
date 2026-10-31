@@ -26,6 +26,8 @@ var caminho_classe: Array[StringName] = [&"", &""]
 var caminho_nivel := [0, 0]
 var _caminho_avisado := false
 var score := [0, 0]
+var abates_jogador := 0  # HUD (canto superior esquerdo)
+var quedas_jogador := 0
 var player: Unit
 var player_brain: PlayerBrain
 ## Guia do ciclo da madeira (seta/marcador) e minimapa do canto.
@@ -56,6 +58,8 @@ var _time := 0.0
 #                       morte) salvando um quadro a cada 2: prancha de animação
 #   --perf=N            mede o desempenho na qualidade N (0-3): a cada 5 s imprime
 #                       ms de CPU por quadro, draw calls, triângulos e objetos
+#   --menu=inicio|pausa com --autoplay: abre essa tela por cima da partida, sem
+#                       pausar (prints da interface)
 #   --testes            roda os testes de regra (tests/regras.gd) e sai com 0/1
 #   --qa-mapa=<pasta>   QA automático do mapa (tests/qa_mapa.gd): qa_mapa.txt
 #                       (até 30 linhas) e, com tela, qa_mapa.jpg; implica --autoplay
@@ -67,6 +71,7 @@ var _equilibrio := false
 var _poderes := false
 var _poderes_t := 2.0
 var _shots_dir := ""
+var _menu_print := ""
 var _vista := ""
 var _print_poder := false
 var _print_atraso := 0.15
@@ -117,6 +122,8 @@ func _ready() -> void:
 			_filme_dir = arg.trim_prefix("--filme=")
 		elif arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
+		elif arg.begins_with("--menu="):
+			_menu_print = arg.trim_prefix("--menu=")
 		elif arg.begins_with("--vista="):
 			_vista = arg.trim_prefix("--vista=")
 		elif arg.begins_with("--mapa="):
@@ -274,6 +281,8 @@ func _ready() -> void:
 	menus.started.connect(_on_started)
 	if _autoplay:
 		_on_started()
+		if _menu_print != "":
+			menus.mostrar_para_print(_menu_print)
 	else:
 		menus.show_start()
 
@@ -955,6 +964,10 @@ func _on_unit_died(u: Unit, killer: Unit) -> void:
 		print("ABATE %s %s" % [u.stats.id, killer.stats.id if killer else "nada"])
 	if killer and killer.team != u.team:
 		_alma_de_abate(u, killer.team)
+	if u == player:
+		quedas_jogador += 1
+	elif killer == player and u.team != player.team:
+		abates_jogador += 1
 	if u == player:
 		hud.show_big("Você caiu! Voltando como recruta...", Color(1, 0.6, 0.6), 1.8)
 	elif killer == player:
