@@ -5,6 +5,18 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4j (2026-10-31), Diretor de Jogabilidade: Q "uau" da Yumi e do Bombardeiro
+- **Bombardeio** (Bombardeiro, no lugar da Nuvem de Fumaça; quiz: "bombas de pólvora/fumaça"):
+  5 explosões em fila do pé dele até a mira, uma a cada 0,16 s (`bombardeio_intervalo`),
+  22 de dano cada (raio 2,6, arremessam); a última deixa fumaça por 4 s (`bombardeio_fumaca`).
+  Anéis laranja avisam onde vai cair.
+- **Arremate da Chuva de Flechas** (Yumi): quando a chuva acaba, a última salva cai junta no
+  centro (60% do círculo), com 2,5× o dano do pulso (`chuva_arremate_mult`) e arremessa.
+- Construtor fica com a Corrida (ele é o econômico; o "uau" dele é o upgrade).
+- Testes 111/111; 2,5 min com todas as classes soltando Q a cada 4 s sem erro.
+- **O que testar**: jogue de Bombardeiro e mire o Q num grupo; de Yumi, veja o estouro no
+  fim da chuva.
+
 ## Ciclo 2.4i (2026-10-31), Diretor de Jogabilidade: mais pontos e Q com mais "uau"
 - **Ritmo de pontos** (opção recomendada do card, alvo 1 a 3 pontos a cada 5 min):
   `carrier_damage_mult` 0,5 → 0,4 (quem leva a máscara aguenta mais) e

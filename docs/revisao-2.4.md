@@ -32,7 +32,8 @@ Calibração (3 partidas cada): 0,5/15 ~0,5; 0,5/25 ~1,7; 0,42/25 ~1; 0,4/25 ~1,
 
 - **HUD moderno**: o Visual entregou a 1ª versão (PR #6). Falta o seu pitaco.
 - **Poderes Q "uau"**: 2.4h deu Fúria gigante, Redemoinho vórtice, Leque em 2 ondas e
-  Campo Minado. Faltam Yumi, Bombardeiro e Construtor (e o seu pitaco nos novos).
+  Campo Minado. 2.4j: Bombardeio em fila (Bombardeiro) e arremate na Chuva (Yumi).
+  Construtor fica com a Corrida. Falta o seu pitaco nos novos.
 - **Opostos nas outras classes** (Samurai de honra x Ronin amaldiçoado, tecnológico x
   feitiço): o padrão está pronto (`classe_base` + oficina). Cada par novo é um `.tres`.
 - **Equilíbrio das Kitsunes opostas**: números iniciais, sem teste com gente.

@@ -218,6 +218,25 @@ func _poderes_q() -> void:
 	u._knock = Vector3.ZERO
 	u.hp = u.max_hp()
 	u.power = 0.0
+	# Bombardeio: cada explosão fere quem está no raio (inimigo), não o próprio time.
+	var inim = null
+	for x in game.units:
+		if x.alive and x.team != u.team and not x.is_player:
+			inim = x
+			break
+	if inim:
+		inim.hp = inim.max_hp()
+		inim._shield = 0.0
+		inim._dodge_t = 0.0
+		inim._block_t = 0.0
+		u.set_class(load("res://config/classes/bombardeiro.tres"))
+		u._explosao(inim.global_position, 20.0, u.stats.power_radius)
+		_check(inim.hp < inim.max_hp(), "Bombardeio: a explosão deveria ferir o inimigo no centro")
+		inim.hp = inim.max_hp()
+		inim._knock = Vector3.ZERO
+		u.hp = u.max_hp()
+		u._explosao(u.global_position, 20.0, 1.0)
+		_check(_perto(u.hp, u.max_hp(), 0.01), "Bombardeio: a explosão não fere o próprio time")
 
 
 ## Empurrão: freia a KNOCK_DECAY m/s², logo |v| cai a/60 por quadro (d = v²/2a).
