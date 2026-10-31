@@ -73,8 +73,9 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 		add_child(_hat)
 	_label = Label3D.new()
 	_label.font = Estilo.FORTE
-	_label.font_size = 48
-	_label.pixel_size = 0.012
+	_label.font_size = 40
+	_label.pixel_size = 0.011
+	_label.line_spacing = -6
 	_label.outline_size = 10
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.position.y = 3.4 if _maquina else 2.6
@@ -253,9 +254,11 @@ func _atualizar() -> void:
 	available = estoque > 0
 	if _hat:
 		_hat.visible = available
-	var txt := "%s%s  %d/%d" % [stats.display_name, "  Nv2" if nivel >= 2 else "", estoque, estoque_max]
+	# Nome em cima, contagem embaixo: as maquininhas vizinhas ficam a ~4,5 m e
+	# o letreiro numa linha só invadia o da lado.
+	var txt := "%s%s\n%d/%d" % [stats.display_name, " Nv2" if nivel >= 2 else "", estoque, estoque_max]
 	if estoque < estoque_max:
-		txt += "\n%ds" % ceili(intervalo - _fab_t)
+		txt += "  · %ds" % ceili(intervalo - _fab_t)
 	if _label.text != txt:
 		_label.text = txt
 	_label.modulate = stats.hat_color.lightened(0.3) if available else Color(0.7, 0.7, 0.7, 0.8)
