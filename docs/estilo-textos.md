@@ -1,5 +1,10 @@
 # Estilo dos textos (fontes, tamanhos, tom)
 
+> **Atualizado em 2026-10-31:** as fontes e as molduras agora seguem
+> `docs/identidade-interface.md` ("Festival sombrio": Lilita One + Nunito Black,
+> laca escura com borda de ouro). O tom da escrita e a escala de tamanhos daqui
+> continuam valendo.
+
 Fonte única de verdade: `scripts/ui/estilo.gd`. Ciclo 2.4n.
 
 ## Fontes (todas OFL, em assets/fonts)
