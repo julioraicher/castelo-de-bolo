@@ -5,6 +5,21 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4m (2026-10-31), Diretor Visual: efeitos do Bombardeio e do arremate da Chuva
+- **Bombardeio**: os anéis de aviso viraram pavio: cada anel encolhe e gira até o centro no
+  tempo exato da sua explosão (lê a ordem da fila). Cada explosão ganha bola de fogo que
+  incha, coluna curta, estilhaços, poeira escura e uma **mancha queimada** que fica ~4 s
+  (`FxPoder.aviso_bombardeio`, `FxPoder.explosao_polvora`).
+- **Arremate da Chuva**: cinco lanças de luz caem do céu no centro e abrem um clarão em cruz
+  na cor do time (`FxPoder.arremate_chuva`). Cor pura e alfa baixo: aditivo forte em chão
+  claro estourava para branco e parecia um cone de gesso.
+- Toque mínimo no código do Jogabilidade (avisado): `unit.gd` (troca o laço de anéis pelo
+  pavio e chama a explosão), `arrow_rain.gd` (chama o arremate). Dano, raio e tempo intocados.
+- Ferramenta de print: `--classe=<nome>` (jogador começa na classe) e `--print-poder=<s>`
+  (atraso do print depois do Q) em `game.gd`.
+- **O que testar**: de Bombardeiro, solte o Q num grupo e veja se dá para fugir pelo pavio;
+  de Yumi, veja o estouro no fim da chuva nos temas claro e escuro.
+
 ## Ciclo 2.4l (2026-10-31), Diretor de Jogabilidade: sonda de equilíbrio
 - `tools/sonda_equilibrio.sh`: 8 partidas simuladas com todas as classes, girando quem pega
   cada papel de bot (`--variacoes=N`), e soma mortes/abates por classe (`--equilibrio`).

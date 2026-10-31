@@ -41,7 +41,8 @@ var _time := 0.0
 #   --vista=mapa|alto|patio  câmera parada vendo o mapa todo / o castelo de cima /
 #                       o pátio azul no ângulo da câmera do jogo (prints)
 #   --vista=px,py,pz,ax,ay,az  câmera parada em p olhando para a (prints)
-#   --print-poder       com --shots: os prints saem logo depois de cada poder do jogador
+#   --print-poder[=s]   com --shots: os prints saem s segundos (0,15) depois de cada poder do jogador
+#   --classe=<nome>     o jogador começa nessa classe (config/classes/<nome>.tres), para prints
 #   --filme=<pasta>     roteiro fixo com o jogador (golpe, dash, pulo, pancada,
 #                       morte) salvando um quadro a cada 2: prancha de animação
 #   --perf=N            mede o desempenho na qualidade N (0-3): a cada 5 s imprime
@@ -59,6 +60,8 @@ var _poderes_t := 2.0
 var _shots_dir := ""
 var _vista := ""
 var _print_poder := false
+var _print_atraso := 0.15
+var _classe_jogador := ""
 var _perf := false
 var _filme_dir := ""
 var _filme_f := -1
@@ -95,8 +98,12 @@ func _ready() -> void:
 			_perf = true
 			Settings.auto_quality = false
 			Settings.quality = int(arg.trim_prefix("--perf="))
-		elif arg == "--print-poder":
+		elif arg.begins_with("--print-poder"):
 			_print_poder = true
+			if arg.contains("="):
+				_print_atraso = float(arg.get_slice("=", 1))
+		elif arg.begins_with("--classe="):
+			_classe_jogador = arg.trim_prefix("--classe=")
 		elif arg.begins_with("--filme="):
 			_filme_dir = arg.trim_prefix("--filme=")
 		elif arg.begins_with("--shots="):
@@ -157,6 +164,8 @@ func _ready() -> void:
 			add_child(u)
 			var is_player := team == Config.TEAM_BLUE and i == 0
 			var cls: ClassStats = cfg.villager if is_player else start_classes[(i + _variacoes_giro) % start_classes.size()]
+			if is_player and _classe_jogador != "":
+				cls = load("res://config/classes/%s.tres" % _classe_jogador)
 			u.setup(self, team, is_player, cls)
 			u.global_position = arena.random_spawn(team)
 			u.reset_physics_interpolation()
@@ -836,7 +845,7 @@ func _alma_de_abate(morto: Unit, team: int) -> void:
 ## Chamado quando o jogador usa o poder (para o print do --print-poder).
 func on_player_power() -> void:
 	if _print_poder and _shots_dir != "" and not _shot_times.is_empty():
-		_shot_times[0] = _time + 0.15
+		_shot_times[0] = _time + _print_atraso
 
 
 var _slowmo_id := 0

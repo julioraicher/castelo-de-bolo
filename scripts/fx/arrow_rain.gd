@@ -117,6 +117,7 @@ func _salva_final() -> void:
 	var r := _radius * 0.6
 	var col := Config.team_color(_shooter.team).lightened(0.5)
 	Fx.ring(_game, global_position, col, r)
+	FxPoder.arremate_chuva(_game, global_position, r, Config.team_color(_shooter.team))
 	Fx.burst(_game, global_position + Vector3(0, 0.5, 0), col, 22, 9.0)
 	Sfx.play("hit", global_position, 0.12)
 	_game.camera.shake_at(global_position, 0.4)
