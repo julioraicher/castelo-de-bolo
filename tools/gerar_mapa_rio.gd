@@ -1643,6 +1643,17 @@ func _gerar_mapa_rio() -> void:
 	m.hat_spots = PackedVector2Array([Vector2(7, -9.2), Vector2(7, 9.2), Vector2(2.5, -9.2), Vector2(2.5, 9.2)])
 	# (z = ±7: mais perto da muralha, a escada da passarela tapa a frente da oficina.)
 	m.oficina_spots = PackedVector2Array([Vector2(-3.5, -7.0), Vector2(-3.5, 7.0)])
+	# Ciclo 2.3 (Economia do Construtor). Pilha de toras perto do portão, do lado
+	# do bosque; bosque seguro (2 árvores) fora da muralha lateral, ~20 m de
+	# caminho da pilha; bambuzal de corte (6) nas margens do rio, onde há briga.
+	# Árvores e pilha em coordenadas do castelo (como hat_spots); bambu no mundo.
+	# Só grava se o esquema já tiver os campos (quem cria é a Jogabilidade).
+	if "tree_spots" in m:
+		m.tree_spots = PackedVector2Array([Vector2(9.5, 21.0), Vector2(8.0, 25.0)])
+	if "pilha_spot" in m:
+		m.pilha_spot = Vector2(9.0, 7.4)
+	if "bamboo_spots" in m:
+		m.bamboo_spots = PackedVector2Array([Vector2(6.8, -16.2), Vector2(8.4, -16.9), Vector2(7.2, 16.4), Vector2(-6.8, -16.2), Vector2(-8.4, -16.9), Vector2(-7.2, 16.4)])
 	m.wall_height = ALT_MURO
 	m.wall_thickness = ESP_MURO
 	m.wall_parapet = 1.0
@@ -1791,7 +1802,7 @@ func _gerar_mapa_rio() -> void:
 	_dois_lados(_props, "arvore_espirito.scn", Vector3(61.0, 0, -30.5), -1.0, "cilindro", 1.8, 5.0)
 	_dois_lados(_props, "dojo.scn", Vector3(47.0, 0, 28.5), 0.0, "caixa")
 	_dois_lados(_props, "lago.scn", Vector3(58.5, 0, 27.0), 0.0, "cilindro", 3.2, 2.0)
-	_dois_lados(_props, "bambuzal.scn", Vector3(40.5, 0, 24.0), 90.0, "caixa")
+	# (O bambuzal de enfeite em (40,5, 24) saiu: ali fica o bosque de corte.)
 	_dois_lados(_props, "bambuzal.scn", Vector3(62.0, 0, -24.0), 0.0, "caixa")
 	_dois_lados(_props, "santuario.scn", Vector3(41.0, 0, -29.0), 0.0, "cilindro", 1.3, 2.0)
 	_dois_lados(_props, "arvore_alta.scn", Vector3(64.5, 0, 31.5), -1.0, "cilindro", 2.0, 4.0)
