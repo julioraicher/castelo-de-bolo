@@ -5,6 +5,20 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4e (2026-10-31), Diretor de Jogabilidade: esquiva perfeita e letreiros
+- **Esquiva perfeita** (quiz 2.4, pergunta 7: "uau" também no dash): o dash continua
+  igual; quando um golpe passa por dentro dele, sai "ESQUIVA!", ganha `chi_esquiva` 8 de
+  Chi e, se for o jogador, um instante de câmera lenta (0,45× por 0,22 s).
+- Letreiros das maquininhas em duas linhas (nome / "2/3 · 15s") e menores: o "Construtor
+  3/3" não invade mais o "Ninja de Shuriken 3/3" ao lado (aviso do Visual).
+- Revisão: 6 partidas de 5 min, com e sem a alma de abate, deram 0-1 ponto nos dois
+  casos (5-20 roubos por partida). A alma não é a causa: o ladrão cai em 3-4 s dentro do
+  castelo inimigo. Fica como observação para o Julio (ver docs/revisao-2.4.md).
+- Testes 107/107; 5 min sem erro.
+- **O que testar**: dê dash no instante do golpe de um inimigo e veja "ESQUIVA!" com a
+  câmera lenta; olhe os letreiros das maquininhas lado a lado.
+
+
 ## Ciclo 2.4d (2026-10-31), Diretor Visual: nível 2 à vista, elenco com cara própria, tela moderna
 - **Maquininha nível 2** (contrato `N2_*`): cada `maquina_<classe>.scn` ganhou degrau de pedra
   com quinas de ouro, dois estandartes na cor da classe com lanterna acesa e uma coroa
