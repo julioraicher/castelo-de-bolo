@@ -20,6 +20,9 @@ var theme: ThemeConfig
 var princess_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var hat_spots: Array = [[], []]          # [time] -> lista de Vector3
 var oficina_spots: Array = [[], []]      # [time] -> lista de Vector3
+var tree_spots: Array = [[], []]         # [time] -> lista de Vector3 (bosque seguro)
+var bamboo_spots: Array = [[], []]       # [time] -> bambus do lado desse castelo (mundo)
+var pilha_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var spawn_center: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var gate_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 
@@ -42,6 +45,29 @@ func build() -> void:
 	_build_particles()
 	_bake_navigation()
 	_batch_static_meshes()
+	_registrar_contornos.call_deferred()
+
+
+## Acha os contornos de tinta que sobraram fora dos pedaços juntados (MultiMesh,
+## peças animadas) e aplica a qualidade atual neles e no enfeite.
+func _registrar_contornos() -> void:
+	registrar_contornos(self)
+
+
+## O mesmo para um modelo criado fora da Arena ou depois dela (maquininha,
+## planta que cresce, tora, pilha): sem isso o contorno fica ligado em toda
+## qualidade. Os materiais do .scn são compartilhados, então basta uma vez.
+func registrar_contornos(raiz: Node) -> void:
+	for n in raiz.find_children("*", "GeometryInstance3D", true, false):
+		var mesh: Mesh = null
+		if n is MeshInstance3D:
+			mesh = n.mesh
+		elif n is MultiMeshInstance3D and n.multimesh:
+			mesh = n.multimesh.mesh
+		if mesh:
+			for s in mesh.get_surface_count():
+				_mesclavel(mesh.surface_get_material(s))
+	_apply_quality()
 
 
 ## Converte coordenadas locais do castelo de `team` para o mundo.
@@ -141,6 +167,13 @@ func _build_environment() -> void:
 func _apply_quality() -> void:
 	if _particles:
 		_particles.visible = Settings.quality >= 2
+	# Contorno de tinta do cenário só na Alta: ele redesenha cada construção
+	# (dobra triângulos e chamadas de desenho). Enfeite: 100% / 60% / 35%.
+	for mat: ShaderMaterial in _contornos:
+		mat.next_pass = _contornos[mat] if Settings.quality >= 3 else null
+	var fracao := 1.0 if Settings.quality >= 3 else (0.6 if Settings.quality == 2 else 0.35)
+	for mm in _enfeites:
+		mm.visible_instance_count = int(mm.instance_count * fracao)
 	match Settings.quality:
 		0, 1:  # Mínima, Baixa (a diferença está na resolução 3D, em Settings)
 			_sun.shadow_enabled = false
@@ -174,36 +207,19 @@ func _build_ground() -> void:
 	grass.size = Vector2(map.half_width * 2 + 120, map.half_depth * 2 + 120)
 	var mi := MeshInstance3D.new()
 	mi.mesh = grass
-	mi.material_override = _noise_material(theme.grass_dark, theme.grass_light, 26.0)
+	# Chão pintado: grama em manchas e a estrada de terra ligando os dois portões
+	# (borda irregular desenhada no próprio shader).
+	var chao := ShaderMaterial.new()
+	chao.shader = preload("res://assets/shaders/chao_pintado.gdshader")
+	chao.set_shader_parameter("grama_escura", theme.grass_dark)
+	chao.set_shader_parameter("grama_clara", theme.grass_light)
+	chao.set_shader_parameter("terra_escura", theme.road_dark)
+	chao.set_shader_parameter("terra_clara", theme.road_light)
+	chao.set_shader_parameter("rua_z", 0.0)
+	chao.set_shader_parameter("rua_meia", map.road_width / 2.0)
+	chao.set_shader_parameter("rua_x_max", map.castle_distance - 5.0)
+	mi.material_override = chao
 	add_child(mi)
-
-	# Estrada de terra ligando os dois portões.
-	var road := PlaneMesh.new()
-	road.size = Vector2(map.castle_distance * 2 - 10, map.road_width)
-	var rmi := MeshInstance3D.new()
-	rmi.mesh = road
-	rmi.position.y = 0.02
-	rmi.material_override = _noise_material(theme.road_dark, theme.road_light, 8.0)
-	add_child(rmi)
-
-
-func _noise_material(dark: Color, light: Color, tiling: float) -> StandardMaterial3D:
-	var noise := FastNoiseLite.new()
-	noise.frequency = 0.03
-	var grad := Gradient.new()
-	grad.set_color(0, dark)
-	grad.set_color(1, light)
-	var tex := NoiseTexture2D.new()
-	tex.noise = noise
-	tex.seamless = true
-	tex.color_ramp = grad
-	tex.width = 256
-	tex.height = 256
-	var mat := StandardMaterial3D.new()
-	mat.albedo_texture = tex
-	mat.uv1_scale = Vector3(tiling, tiling, 1)
-	mat.roughness = 1.0
-	return mat
 
 
 # --- Castelos -----------------------------------------------------------------
@@ -262,6 +278,17 @@ func _build_castle(team: int) -> void:
 	for os in m.oficina_spots:
 		ofs.append(to_world(team, os.x, os.y))
 	oficina_spots[team] = ofs
+	var arv := []
+	for p in m.tree_spots:
+		arv.append(to_world(team, p.x, p.y))
+	tree_spots[team] = arv
+	# Bambu está no mundo: cada castelo fica com os do seu lado do rio.
+	var bam := []
+	for p in m.bamboo_spots:
+		if (p.x < 0.0) == (team == Config.TEAM_BLUE):
+			bam.append(Vector3(p.x, 0, p.y))
+	bamboo_spots[team] = bam
+	pilha_spot[team] = to_world(team, m.pilha_spot.x, m.pilha_spot.y)
 	spawn_center[team] = to_world(team, (m.spawn_min.x + m.spawn_max.x) / 2.0, 0.0)
 	gate_spot[team] = to_world(team, front + m.gate_guard_distance, 0.0)
 
@@ -387,9 +414,38 @@ func _build_borders() -> void:
 const CHUNK := 34.0
 
 
+## Material que dá para juntar num pedaço só: cor por vértice (StandardMaterial)
+## ou o material pintado do cenário (pintura.gdshader). Guarda o contorno de
+## tinta (next_pass) para ligar/desligar pela qualidade.
+func _mesclavel(mat: Material) -> bool:
+	if mat is StandardMaterial3D:
+		return (mat as StandardMaterial3D).vertex_color_use_as_albedo
+	if mat is ShaderMaterial and (mat as ShaderMaterial).shader == PINTURA:
+		if mat.next_pass and not _contornos.has(mat):
+			_contornos[mat] = mat.next_pass
+		return true
+	return false
+
+
+## Cada .scn salva a própria cópia do material: junta as cópias iguais numa só
+## (uma superfície por tipo de material em cada pedaço, não uma por modelo).
+var _unicos := {}
+
+
+func _material_unico(mat: Material) -> Material:
+	var k := ""
+	if mat is ShaderMaterial:
+		k = "pintura%s%s" % [mat.next_pass != null, (mat as ShaderMaterial).get_shader_parameter("cor_sombra")]
+	else:
+		k = "padrao%d" % (mat as StandardMaterial3D).shading_mode
+	if not _unicos.has(k):
+		_unicos[k] = mat
+	return _unicos[k]
+
+
 func _merge_vertex_color_models() -> void:
-	var chunks := {}  # Vector2i -> [SurfaceTool fosco, SurfaceTool brilho]
-	var mats: Array = [null, null]
+	var chunks := {}  # Vector2i -> {Material: SurfaceTool}
+	var giram: Array[MeshInstance3D] = []  # engrenagens, rodas d'água (ver pintura.gdshader)
 	for root in _static_models:
 		var mis := root.find_children("*", "MeshInstance3D", true, false)
 		if mis.is_empty() or root.find_children("*", "AnimationPlayer", true, false).size() > 0:
@@ -400,42 +456,68 @@ func _merge_vertex_color_models() -> void:
 				ok = false
 				break
 			for s in mi.mesh.get_surface_count():
-				var mat := mi.mesh.surface_get_material(s) as StandardMaterial3D
-				if mat == null or not mat.vertex_color_use_as_albedo:
+				if not _mesclavel(mi.mesh.surface_get_material(s)):
 					ok = false
 		if not ok:
 			continue
 		var key := Vector2i(floori(root.global_position.x / CHUNK), floori(root.global_position.z / CHUNK))
 		if not chunks.has(key):
-			chunks[key] = [null, null]
+			chunks[key] = {}
 		for mi: MeshInstance3D in mis:
+			if mi.name.begins_with("Gira_"):
+				# Peça que gira no shader em volta da própria origem: fica de fora.
+				var xf := mi.global_transform
+				mi.get_parent().remove_child(mi)
+				add_child(mi)
+				mi.global_transform = xf
+				giram.append(mi)
+				continue
 			for s in mi.mesh.get_surface_count():
-				var mat := mi.mesh.surface_get_material(s) as StandardMaterial3D
-				var k := 1 if mat.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED else 0
-				if mats[k] == null:
-					mats[k] = mat
-				if chunks[key][k] == null:
+				var mat := _material_unico(mi.mesh.surface_get_material(s))
+				if not chunks[key].has(mat):
 					var st := SurfaceTool.new()
 					st.begin(Mesh.PRIMITIVE_TRIANGLES)
-					chunks[key][k] = st
-				chunks[key][k].append_from(mi.mesh, s, mi.global_transform)
+					chunks[key][mat] = st
+				chunks[key][mat].append_from(mi.mesh, s, mi.global_transform)
 		root.queue_free()
 	for key in chunks:
 		var mesh := ArrayMesh.new()
-		for k in 2:
-			var st: SurfaceTool = chunks[key][k]
-			if st:
-				st.commit(mesh)
-				mesh.surface_set_material(mesh.get_surface_count() - 1, mats[k])
+		for mat: Material in chunks[key]:
+			chunks[key][mat].commit(mesh)
+			mesh.surface_set_material(mesh.get_surface_count() - 1, mat)
 		var mi := MeshInstance3D.new()
 		mi.name = "Cenario_%d_%d" % [key.x, key.y]
 		mi.mesh = mesh
 		add_child(mi)
+	# Peças iguais que giram: um MultiMesh por malha (uma chamada de desenho).
+	var por_malha := {}
+	for mi in giram:
+		if not por_malha.has(mi.mesh):
+			por_malha[mi.mesh] = []
+		por_malha[mi.mesh].append(mi)
+	for mesh: Mesh in por_malha:
+		var lista: Array = por_malha[mesh]
+		if lista.size() < 2:
+			continue
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = mesh
+		mm.instance_count = lista.size()
+		for i in lista.size():
+			mm.set_instance_transform(i, lista[i].global_transform)
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		add_child(mmi)
+		for mi: MeshInstance3D in lista:
+			mi.queue_free()
 
 
 # --- Detalhes do chão e partículas ------------------------------------------
 
 var _particles: CPUParticles3D
+var _enfeites: Array[MultiMesh] = []
+const PINTURA := preload("res://assets/shaders/pintura.gdshader")
+var _contornos := {}  # material pintado -> contorno (next_pass), só na Alta
 
 
 ## Espalha os enfeites do tema (capim, pedrinhas, folhas, lajotas...). Sem
@@ -500,6 +582,7 @@ func _build_decor() -> void:
 		mmi.multimesh = mm
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mmi)
+		_enfeites.append(mm)
 		inst.free()
 
 

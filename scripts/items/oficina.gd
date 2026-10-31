@@ -6,7 +6,10 @@ extends Node3D
 ## é assim que o time libera Ronin Oni, Kitsune etc.
 ##
 ## Obra: d(progresso)/dt = Σ velocidade_obra / oficina_build_time, somando
-## todos os Construtores do time a menos de BUILD_RADIUS.
+## todos os Construtores do time a menos de BUILD_RADIUS, mas o progresso não
+## passa de madeira_entregue / oficina_custo_madeira (Ciclo 2.3). Quem está na
+## obra puxa 1 madeira do estoque do time a cada oficina_puxar_intervalo / Σv s.
+## Em cima, o contador "faltam N" + barra (grande para quem joga de Construtor).
 
 enum Estado { VAZIO, OBRA, PRONTA }
 
@@ -17,6 +20,9 @@ var estado := Estado.VAZIO
 var progresso := 0.0
 var opcao_i := 0
 var pad: HatPad
+var madeira_entregue := 0
+## Obra parada porque o time não tem madeira (o contador pisca).
+var falta_madeira := false
 
 var _game: Game
 var _face := 0.0
@@ -25,6 +31,14 @@ var _casa: Node3D
 var _roof: Node3D
 var _walls: Node3D
 var _dust_t := 0.0
+## Casa do tema (ThemeConfig.oficina_model): as peças "Gira_*" giram pelo
+## relógio próprio (pintura.gdshader, `relogio`), que anda na velocidade da obra.
+var _mats_gira: Array[ShaderMaterial] = []
+var _relogio := 0.0
+var _ritmo := 0.0
+var _alt_label := 3.6
+var _puxar_t := 0.0
+var _contador: ContadorMadeira
 
 
 func setup(game: Game, p_team: int, pos: Vector3, opcao: int) -> void:
@@ -46,8 +60,10 @@ func setup(game: Game, p_team: int, pos: Vector3, opcao: int) -> void:
 	_label.pixel_size = 0.012
 	_label.outline_size = 10
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.position.y = 3.6
+	_label.position.y = _alt_label
 	add_child(_label)
+	_contador = ContadorMadeira.new()
+	add_child(_contador)
 	_update_label()
 
 
@@ -67,15 +83,39 @@ func trocar_opcao() -> void:
 	_update_label()
 
 
+func custo() -> int:
+	return Config.cfg.oficina_custo_madeira
+
+
+func faltam() -> int:
+	return maxi(custo() - madeira_entregue, 0)
+
+
+## Teto da obra: a fração de madeira já entregue.
+func teto() -> float:
+	return 1.0 if custo() <= 0 else float(madeira_entregue) / custo()
+
+
+## Puxa 1 madeira do estoque do time para a obra. false = sem estoque ou já cheia.
+func puxar_madeira() -> bool:
+	if estado == Estado.PRONTA or faltam() <= 0 or not _game.gastar_madeira(team, 1):
+		return false
+	madeira_entregue += 1
+	if is_inside_tree():
+		Fx.burst(_game, global_position + Vector3(0, 0.6, 0), Color(0.7, 0.5, 0.25), 5, 2.5)
+	return true
+
+
 func add_progress(frac: float, by: Unit) -> void:
 	if estado == Estado.PRONTA:
 		return
-	progresso = minf(progresso + frac, 1.0)
+	progresso = minf(progresso + frac, teto())
 	estado = Estado.OBRA
 	_casa.visible = true
 	if by:
 		by.building_t = 0.25
-	if progresso >= 1.0:
+	if progresso >= 1.0 - 1e-6:
+		progresso = 1.0
 		_finish()
 
 
@@ -85,11 +125,22 @@ func _physics_process(delta: float) -> void:
 	var rate := 0.0
 	for u in _game.units:
 		if u.alive and u.team == team and u.stats.velocidade_obra > 0.0 and not u.carried_princess \
-				and u.global_position.distance_to(global_position) < BUILD_RADIUS:
+				and not u.carried_tora and u.global_position.distance_to(global_position) < BUILD_RADIUS:
 			rate += u.stats.velocidade_obra
 			u.building_t = 0.25
+	_ritmo = rate
 	if rate <= 0.0:
+		falta_madeira = false
+		_update_label()
 		return
+	_puxar_t -= delta * rate
+	if _puxar_t <= 0.0 and faltam() > 0:
+		if puxar_madeira():
+			_puxar_t = Config.cfg.oficina_puxar_intervalo
+	falta_madeira = faltam() > 0 and progresso >= teto() - 1e-4 and _game.madeira[team] <= 0
+	if progresso >= teto() - 1e-4:
+		_update_label()
+		return  # esperando madeira: sem poeira nem martelada
 	add_progress(rate * delta / Config.cfg.oficina_build_time, null)
 	_walls.scale.y = maxf(progresso, 0.02)
 	_dust_t -= delta
@@ -112,25 +163,32 @@ func _finish() -> void:
 	Sfx.play("score", global_position, 0.05)
 	pad = HatPad.new()
 	_game.add_child(pad)
-	var to_center := _game.arena.spawn_center[team] - global_position
-	to_center.y = 0
-	pad.setup(team, opcao(), global_position + to_center.normalized() * 3.2)
+	# Ao lado da casa, do lado do portão: atrás dela (z menor) a câmera não vê.
+	var lado := signf(_game.arena.spawn_center[team].x - global_position.x)
+	pad.setup(team, opcao(), global_position + Vector3(lado * 3.0, 0, 0))
 	_game.hat_pads.append(pad)
-	_label.position.y = 4.6
+	_label.position.y = _alt_label + 1.0
 	_update_label()
 	_game.on_oficina_pronta(self)
 
 
 func _update_label() -> void:
 	var cls := opcao()
+	var txt := "Oficina: %s" % cls.display_name
+	if estado != Estado.PRONTA:
+		txt = "%s  %d%%" % [cls.display_name, int(progresso * 100.0)] if estado == Estado.OBRA \
+				else "Terreno: %s" % cls.display_name
+	if _label.text != txt:
+		_label.text = txt
 	_label.modulate = cls.hat_color.lightened(0.35)
-	match estado:
-		Estado.PRONTA:
-			_label.text = "Oficina: %s" % cls.display_name
-		Estado.OBRA:
-			_label.text = "Obra: %s  %d%%" % [cls.display_name, int(progresso * 100.0)]
-		_:
-			_label.text = "Terreno: %s\n(Construtor constrói)" % cls.display_name
+	# Contador de madeira: grande para quem joga de Construtor, pequeno nas
+	# outras classes; pisca "falta madeira" quando o time não tem estoque.
+	_contador.visible = estado != Estado.PRONTA
+	if _contador.visible:
+		var p := _game.player
+		var grande := p != null and p.team == team and p.lenhador()
+		_contador.position.y = _label.position.y + (1.0 if grande else 0.7)
+		_contador.mostrar(faltam(), custo(), grande, falta_madeira or (faltam() > 0 and _game.madeira[team] <= 0))
 
 
 ## Estacas nos cantos + chão de terra batida.
@@ -160,8 +218,54 @@ func _build_lot() -> void:
 		add_child(s)
 
 
+func _process(delta: float) -> void:
+	if _mats_gira.is_empty() or not _casa.visible:
+		return
+	# Pronta: gira devagar sozinha. Em obra: na velocidade dos Construtores.
+	_relogio += delta * (0.6 if estado == Estado.PRONTA else _ritmo)
+	for m in _mats_gira:
+		m.set_shader_parameter("relogio", _relogio)
+
+
+## Casa do tema: o corpo cresce com a obra, o "Telhado" cai no fim e as peças
+## "Gira_*" ganham material próprio (o relógio é desta oficina).
+func _casa_do_tema(path: String) -> Node3D:
+	var root := Node3D.new()
+	var casa: Node3D = (load(path) as PackedScene).instantiate()
+	root.add_child(casa)
+	_walls = casa
+	_roof = casa.get_node_or_null("Telhado")
+	if _roof:
+		casa.remove_child(_roof)  # não achata junto com as paredes
+		_roof.owner = null
+		for n in _roof.find_children("*", "", true, false):
+			n.owner = null
+	else:
+		_roof = Node3D.new()
+	root.add_child(_roof)
+	var contorno := Settings.quality >= 3
+	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
+		var gira := mi.name.begins_with("Gira_")
+		for s in mi.mesh.get_surface_count():
+			var mat := mi.mesh.surface_get_material(s) as ShaderMaterial
+			if mat == null or (not gira and (contorno or mat.next_pass == null)):
+				continue
+			var m: ShaderMaterial = mat.duplicate()
+			m.next_pass = (mat.next_pass.duplicate() as ShaderMaterial) if contorno and mat.next_pass else null
+			mi.set_surface_override_material(s, m)
+			if gira:
+				_mats_gira.append(m)
+				if m.next_pass:
+					_mats_gira.append(m.next_pass)
+	_alt_label = 5.6
+	return root
+
+
 ## Casinha de oficina japonesa: base de madeira, telhado na cor do time e lanterna.
 func _build_house() -> Node3D:
+	var th := _game.arena.theme
+	if th.oficina_model != "" and ResourceLoader.exists(th.model_path(th.oficina_model, team)):
+		return _casa_do_tema(th.model_path(th.oficina_model, team))
 	var root := Node3D.new()
 	var col := Config.team_color(team)
 	_walls = Node3D.new()

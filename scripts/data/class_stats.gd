@@ -23,8 +23,13 @@ extends Resource
 @export var estilo_ninja := ""
 ## Escala da cabeça (1 = KayKit original; menor = proporção mais realista).
 @export var escala_cabeca := 1.0
+## Escala de mãos e pés (golpe e passo leem de longe; Ciclo 2.2).
+@export var escala_extremidades := 1.0
 ## Escala do boneco inteiro (Ronin maior, Kitsune mais miúda).
 @export var escala_modelo := 1.0
+## Multiplicador da animação exagerada desta classe (GameConfig.exagero_animacao).
+## Pesados (Ronin) amassam menos; leves (Kitsune) mais.
+@export var exagero := 1.0
 
 @export_group("Atributos")
 @export var max_hp := 60.0

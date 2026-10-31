@@ -5,9 +5,10 @@ Lista viva. Qualquer frente anota aqui; o Julio escolhe o que sobe de nível.
 a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 
 ## A — próxima
-- **Ciclo 2.2** (aprovado 2026-10-30): piloto da direção nova em
-  `docs/direcao-ciclo-2.2.md`. As ideias de cenário abaixo passam a seguir o
-  estilo pintado e o tom sombrio de lá.
+- **Ciclo 2.3: Economia do Construtor** (2026-10-31): `docs/direcao-ciclo-2.3.md`.
+  Depois dele, o Ciclo 2.4: habilidade "uau" por personagem + interface nova.
+- As ideias de cenário abaixo seguem o estilo pintado e o tom sombrio do
+  Ciclo 2.2 (`docs/direcao-ciclo-2.2.md`).
 - **Peças do Rio das Lanternas**: prancha `cenario/06-pecas-rio.png`; o Julio
   diz por número o que detalhar mais, trocar ou repetir.
 - **Leva 2 de peças**: prancha `cenario/07-leva2-pecas.png` (templo, casa de chá,
@@ -23,6 +24,9 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 - **Ajuste dos poderes novos** depois do teste do Julio (dano, raio, recarga).
 
 ## B — depois
+- **Dividir `scripts/actors/unit.gd`** (1.469 linhas) em partes: movimento,
+  combate, animação/corpo, aura/poder. Antes, ampliar `tests/regras.gd` para
+  cobrir combo, bloqueio e poderes, que protegem a mudança (Jogabilidade).
 - **Bonecos mais leves** (frente Visual, medido na Rodada 19): cada boneco tem
   ~11 mil triângulos com o contorno (16 = ~180 mil por quadro). LOD simples
   (versão de menos polígonos de longe) e contorno desligado na qualidade Mínima.
@@ -37,16 +41,20 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 - Outros mapas da prancha `cenario/03-ideias-de-mapa.png` (Bambuzal de Três
   Trilhas, Templo Central) usando as peças do Rio.
 - Segundo poder por variação (o "forte", com gatilho), como no `docs/design-jogo.md`.
-- Oficina com nível 2 (o Construtor "upa" a casinha: chapéu sai mais rápido).
 - Efeito de chão por clima: poças que refletem o neon, pétalas caindo, névoa baixa.
 - Animação de vitória do time (todos comemoram em volta da máscara).
 - Sons próprios por poder (shuriken, talismã, fogo-raposa, explosão de pólvora).
 
 ## C — talvez
-- **Outro mundo, se um dia trocar o tema** (Julio, 2026-10-30): "minhas vs
-  cowboys" (transcrição de áudio; provavelmente mineiros vs cowboys, faroeste).
-  Por enquanto fica ninja.
+- **Ninja vs Cowboys** (Julio, 2026-10-31; antes anotado como "minhas vs
+  cowboys"): mudança grande para o futuro (Fase 3), um mundo/time novo contra
+  os ninjas. Por enquanto fica só ninja.
 - Catapulta / arma de cerco construída pelo Construtor (Fase 2).
-- Recursos no mapa (madeira, pólvora) para pagar oficinas.
 - Clima que muda durante a partida (a lua sobe, a névoa fecha).
 - Modo treino com alvos para testar cada classe sozinho.
+
+## Outros projetos (não cabem neste jogo)
+- **Espionagem e hackers** (2026-10-29, quiz 2): drones, espionagem e hackers
+  com visual "meio pixelado" (render em baixa resolução ampliado). Mecânicas:
+  drones de reconhecimento, hackear torretas/portas, silenciar poderes,
+  câmeras de segurança. O "silenciar" já entrou aqui como o **Selo** do mago.

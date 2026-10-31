@@ -1,11 +1,13 @@
-# Exporta o jogo a cada push na main:
+# Todo push (qualquer branch) roda os testes de regra (tests/regras.gd: dano,
+# carregador, esquiva, escudo, cura, empurrão, conteúdo do game_config) e o
+# teste de fumaça (5 min de partida simulada sem janela); qualquer falha reprova.
+# Na main, só depois dele passar, exporta o jogo:
 #  - versão Web publicada no GitHub Pages (link para jogar no navegador)
 #  - .exe (Windows) e Linux anexados à release "ultima-versao"
 name: Build e publicação
 
 on:
   push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -14,14 +16,60 @@ permissions:
   id-token: write
 
 concurrency:
-  group: build
+  group: build-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   GODOT_VERSION: "4.7.2"
 
 jobs:
+  fumaca:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Baixar Godot
+        run: |
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
+
+      - name: Importar assets
+        run: ./godot --headless --import --path . || true
+
+      - name: Testes de regra
+        run: timeout 5m ./godot --headless --path . --fixed-fps 60 -- --autoplay --testes
+
+      - name: Partida simulada de 5 min (bots jogam por todos)
+        run: |
+          set -o pipefail
+          timeout 20m ./godot --headless --path . --fixed-fps 60 --quit-after 18000 -- --autoplay --poderes 2>&1 | tee fumaca.log
+          # Vazamento ao fechar ("still in use at exit") é do motor, não do jogo.
+          if grep -E "SCRIPT ERROR|ERROR:" fumaca.log | grep -v "at exit"; then
+            echo "::error::A partida simulada teve erro (veja acima)."
+            exit 1
+          fi
+
+      # QA do mapa (tests/qa_mapa.gd): passagem, objetos escondidos atrás de
+      # estrutura e bots presos. Por enquanto só avisa, não reprova o build.
+      - name: QA automático do mapa (aviso)
+        continue-on-error: true
+        run: |
+          timeout 10m ./godot --headless --path . --fixed-fps 60 -- --qa-mapa=qa > /dev/null 2>&1 || true
+          if [ -f qa/qa_mapa.txt ]; then
+            cat qa/qa_mapa.txt
+            { echo '### QA do mapa'; echo '```'; cat qa/qa_mapa.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            if [ "$(wc -l < qa/qa_mapa.txt)" -gt 1 ]; then
+              echo "::warning::QA do mapa achou problemas: $(sed -n 2p qa/qa_mapa.txt)"
+            fi
+          else
+            echo "::warning::QA do mapa não gerou o relatório."
+          fi
+
   export:
+    needs: fumaca
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

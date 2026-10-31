@@ -126,3 +126,9 @@ A pasta `.claude/skills/` tem manuais de Godot e game design (de
 Apache-2.0). Qualquer sessão do Claude Code aberta nesta pasta os carrega
 quando a tarefa pede. Peça coisas como "adicione uma classe de mago de
 fogo" ou "faça os bots desviarem de flechas".
+
+Regras que não mudam: `docs/principios.md`. Para conferir que nada quebrou:
+`godot --headless --path . --fixed-fps 60 -- --autoplay --testes` (testes de
+regra em `tests/regras.gd`; o CI roda em todo push). Suas skills pessoais
+(`rodada-de-playtest`, `forjar-ideia`, `estagiario-de-ideias`,
+`contexto-do-projeto`) valem em qualquer projeto.

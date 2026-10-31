@@ -1,68 +1,184 @@
 class_name HatPad
 extends Node3D
-## Pedestal de chapéu no castelo. Pegar o chapéu troca a classe da unidade.
-## Depois de pego, um chapéu novo aparece após `hat_respawn_time` segundos.
+## Maquininha de chapéu no castelo (Ciclo 2.3). Pegar o chapéu troca a classe
+## da unidade e tira 1 do estoque. A máquina fabrica 1 chapéu a cada
+## `maquina_intervalo` s enquanto o estoque está abaixo de `maquina_estoque_max`,
+## e começa cheia. Estoque zero = "acabou o seu favorito": joga de outra coisa.
+##
+## Modelo do tema (ThemeConfig.maquina_model): a engrenagem gira sozinha, a
+## animação "fabricar" toca quando um chapéu fica pronto, ele salta do "Molde"
+## e vai para a prateleira "Estoque_N". Sem modelo: pedestal com chapéu flutuando.
 
 var team := 0
 var stats: ClassStats
 var available := true
+var estoque := 0
+var estoque_max := 3
+var intervalo := 20.0
 
-var _hat: Node3D
-var _respawn_t := 0.0
+var _hat: Node3D          # sem modelo: o chapéu que flutua no pedestal
+var _fab_t := 0.0
 var _t := randf() * TAU
+var _label: Label3D
+# Com modelo do tema:
+var _maquina: Node3D
+var _anim: AnimationPlayer
+var _molde: Node3D
+var _slots: Array[Node3D] = []      # Estoque_1..N
+var _chapeus: Array[Node3D] = []    # um por chapéu em estoque, na ordem dos slots
 
 
 func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 	team = p_team
 	stats = p_stats
 	position = pos
-	var base := MeshInstance3D.new()
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = 1.0
-	cyl.bottom_radius = 1.2
-	cyl.height = 0.5
-	base.mesh = cyl
-	base.material_override = Fx.lit(Color(0.55, 0.55, 0.6))
-	base.position.y = 0.25
-	add_child(base)
-	var label := Label3D.new()
-	label.text = stats.display_name
-	label.font = Estilo.FORTE
-	label.font_size = 48
-	label.pixel_size = 0.012
-	label.outline_size = 10
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.position.y = 2.6
-	label.modulate = stats.hat_color.lightened(0.3)
-	add_child(label)
+	estoque_max = Config.cfg.maquina_estoque_max
+	intervalo = Config.cfg.maquina_intervalo
+	estoque = estoque_max
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # chapéu animado em _process
-	_hat = make_hat(stats.hat_style, stats.hat_color)
-	_hat.position.y = 1.2
-	add_child(_hat)
+	var th: ThemeConfig = Config.theme()
+	# Máquina própria da classe (maquina_<arquivo da classe>.scn na pasta do
+	# tema), senão a genérica do tema.
+	var propria := th.model_path("maquina_%s.scn" % stats.resource_path.get_file().get_basename())
+	var cena: PackedScene = load(propria) if ResourceLoader.exists(propria) else th.maquina_model
+	if cena:
+		_montar_maquina(th, cena)
+	else:
+		var base := MeshInstance3D.new()
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 1.0
+		cyl.bottom_radius = 1.2
+		cyl.height = 0.5
+		base.mesh = cyl
+		base.material_override = Fx.lit(Color(0.55, 0.55, 0.6))
+		base.position.y = 0.25
+		add_child(base)
+		_hat = make_hat(stats.hat_style, stats.hat_color)
+		_hat.position.y = 1.2
+		add_child(_hat)
+	_label = Label3D.new()
+	_label.font = Estilo.FORTE
+	_label.font_size = 48
+	_label.pixel_size = 0.012
+	_label.outline_size = 10
+	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_label.position.y = 3.4 if _maquina else 2.6
+	_label.modulate = stats.hat_color.lightened(0.3)
+	add_child(_label)
+	_atualizar()
+
+
+## Maquininha do tema: emblema da classe no "Enfeite" e um chapéu em cada
+## "Estoque_N" (o estoque fica à vista). Tudo de frente para +z (a câmera).
+func _montar_maquina(th: ThemeConfig, cena: PackedScene) -> void:
+	_maquina = cena.instantiate()
+	add_child(_maquina)
+	_anim = _maquina.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	_molde = _maquina.find_child("Molde", true, false) as Node3D
+	for i in range(1, 9):
+		var n := _maquina.find_child("Estoque_%d" % i, true, false) as Node3D
+		if n == null:
+			break
+		_slots.append(n)
+	var enfeite := _maquina.find_child("Enfeite", true, false) as Node3D
+	var emblema := th.model_path("emblema_%s.scn" % stats.resource_path.get_file().get_basename())
+	if enfeite and ResourceLoader.exists(emblema):
+		enfeite.add_child((load(emblema) as PackedScene).instantiate())
+	for i in estoque:
+		_chapeus.append(_novo_chapeu(_slot(i), 0.62))
+
+
+func _slot(i: int) -> Node3D:
+	if _slots.is_empty():
+		return _molde if _molde else _maquina
+	return _slots[mini(i, _slots.size() - 1)]
+
+
+func _novo_chapeu(pai: Node3D, esc: float) -> Node3D:
+	var h := make_hat(stats.hat_style, stats.hat_color)
+	h.scale = Vector3.ONE * esc
+	pai.add_child(h)
+	return h
 
 
 func _process(delta: float) -> void:
 	_t += delta
-	_hat.rotation.y += delta * 1.8
-	_hat.position.y = 1.2 + sin(_t * 2.5) * 0.15
-	if not available:
-		_respawn_t -= delta
-		if _respawn_t <= 0.0:
-			available = true
-			_hat.visible = true
-			_hat.scale = Vector3.ONE * 0.01
-			create_tween().tween_property(_hat, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if _hat:
+		_hat.rotation.y += delta * 1.8
+		_hat.position.y = 1.2 + sin(_t * 2.5) * 0.15
 
 
-## Posição do chapéu flutuante no mundo (de onde ele "sai" ao ser pego).
+func _physics_process(delta: float) -> void:
+	avancar(delta)
+
+
+## Relógio da fábrica (separado do _physics_process para os testes).
+func avancar(delta: float) -> void:
+	if estoque >= estoque_max:
+		_fab_t = 0.0
+		return
+	_fab_t += delta
+	if _fab_t >= intervalo:
+		_fab_t -= intervalo
+		estoque += 1
+		_fabricou()
+	_atualizar()
+
+
+## Prensa desce, o chapéu salta do molde (0,8 a 1,2 s) e vai para a prateleira.
+func _fabricou() -> void:
+	if _maquina:
+		if _anim and _anim.has_animation("fabricar"):
+			_anim.stop()
+			_anim.play("fabricar")
+		var h := _novo_chapeu(_molde if _molde else _slot(estoque - 1), 0.85)
+		h.visible = false
+		_chapeus.append(h)
+		var tw := h.create_tween()  # morre junto com o chapéu se ele for pego antes
+		tw.tween_interval(0.8)
+		tw.tween_callback(func(): h.visible = true)
+		tw.tween_property(h, "position:y", 0.5, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_interval(0.4)
+		tw.tween_callback(func():
+			if not _chapeus.has(h):
+				return
+			var alvo := _slot(_chapeus.find(h))
+			h.reparent(alvo, true)
+			var t2 := h.create_tween().set_parallel()
+			t2.tween_property(h, "position", Vector3.ZERO, 0.3).set_trans(Tween.TRANS_BACK)
+			t2.tween_property(h, "scale", Vector3.ONE * 0.62, 0.3))
+	elif estoque == 1:
+		_hat.visible = true
+		_hat.scale = Vector3.ONE * 0.01
+		create_tween().tween_property(_hat, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if is_inside_tree():
+		Fx.burst(get_parent(), global_position + Vector3(0, 1.4, 0), Color(0.95, 0.95, 0.9), 6, 2.5)
+
+
+func _atualizar() -> void:
+	available = estoque > 0
+	if _hat:
+		_hat.visible = available
+	var txt := "%s  %d/%d" % [stats.display_name, estoque, estoque_max]
+	if estoque < estoque_max:
+		txt += "\n%ds" % ceili(intervalo - _fab_t)
+	if _label.text != txt:
+		_label.text = txt
+	_label.modulate = stats.hat_color.lightened(0.3) if available else Color(0.7, 0.7, 0.7, 0.8)
+
+
+## Posição do chapéu no mundo (de onde ele "sai" ao ser pego).
 func hat_world_position() -> Vector3:
-	return _hat.global_position
+	if not _chapeus.is_empty():
+		return _chapeus.back().global_position
+	return _hat.global_position if _hat else global_position + Vector3(0, 1.5, 0)
 
 
 func take() -> ClassStats:
-	available = false
-	_hat.visible = false
-	_respawn_t = Config.cfg.hat_respawn_time
+	estoque = maxi(estoque - 1, 0)
+	if not _chapeus.is_empty():
+		_chapeus.pop_back().queue_free()
+	_atualizar()
 	return stats
 
 

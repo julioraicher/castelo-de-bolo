@@ -100,7 +100,8 @@ static func _star_mesh() -> ArrayMesh:
 
 
 func _ready() -> void:
-	look_at(global_position + velocity, Vector3.UP)
+	if velocity.length_squared() > 1e-6:  # look_at falha com alvo na mesma posição
+		look_at(global_position + velocity, Vector3.UP)
 
 
 ## Balística: com velocidade horizontal v e distância d, o tempo de voo é
@@ -141,7 +142,7 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 		return
 	global_position = to
-	if gravity > 0.0:
+	if gravity > 0.0 and velocity.length_squared() > 1e-6:
 		look_at(to + velocity, Vector3.UP)
 	for u in _game.units:
 		if u.alive and u.team != owner_unit.team:

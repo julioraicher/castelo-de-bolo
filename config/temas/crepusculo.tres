@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="ThemeConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/theme_config.gd" id="1_7opif"]
+[ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/arvore_e1.scn" id="1_ml1qw"]
+[ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/arvore_e2.scn" id="2_vkoqp"]
+[ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/arvore_e3.scn" id="3_560eg"]
+[ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/bambu_e1.scn" id="4_x37a4"]
+[ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/bambu_e2.scn" id="5_jvbad"]
+[ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/bambu_e3.scn" id="6_8cbwj"]
+[ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/maquina_chapeu.scn" id="7_v5hlj"]
+[ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/pilha_toras.scn" id="8_sh6sy"]
+[ext_resource type="PackedScene" path="res://assets/ninja/crepusculo/tora.scn" id="10_jqpiv"]
+
+[resource]
+script = ExtResource("1_7opif")
+display_name = "Crepúsculo (sombrio)"
+team_model_suffix = PackedStringArray("azul", "vermelho")
+sun_rotation_deg = Vector3(-28, 40, 0)
+sun_color = Color(1, 0.62, 0.36, 1)
+sun_energy = 1.7
+sky_top = Color(0.17, 0.13, 0.32, 1)
+sky_horizon = Color(1, 0.5, 0.3, 1)
+ground_horizon = Color(0.55, 0.32, 0.35, 1)
+ground_bottom = Color(0.12, 0.1, 0.2, 1)
+ambient_energy = 1.0
+saturation = 1.1
+glow_intensity = 0.6
+fog_enabled = true
+fog_color = Color(0.45, 0.32, 0.5, 1)
+fog_density = 0.006
+grass_dark = Color(0.2, 0.32, 0.14, 1)
+grass_light = Color(0.34, 0.42, 0.18, 1)
+road_dark = Color(0.42, 0.33, 0.3, 1)
+road_light = Color(0.55, 0.43, 0.36, 1)
+pedestal_neutral = Color(0.45, 0.35, 0.35, 1)
+models_dir = "res://assets/ninja/crepusculo"
+keep_model = "castelo_{cor}.scn"
+keep_scale = 1.0
+tower_model = "torre_{cor}.scn"
+tower_scale = 1.0
+flag_model = "bandeira_{cor}.scn"
+flag_scale = 1.0
+flag_height = 4.1
+oficina_model = "oficina_{cor}.scn"
+arvore_estagios = Array[PackedScene]([ExtResource("1_ml1qw"), ExtResource("2_vkoqp"), ExtResource("3_560eg")])
+bambu_estagios = Array[PackedScene]([ExtResource("4_x37a4"), ExtResource("5_jvbad"), ExtResource("6_8cbwj")])
+maquina_model = ExtResource("7_v5hlj")
+pilha_model = ExtResource("8_sh6sy")
+tora_model = ExtResource("10_jqpiv")
+wall_model = "muro.scn"
+wall_scale = 1.0
+border_trees = PackedStringArray("borda_a.scn", "borda_a.scn", "borda_b.scn", "borda_c.scn")
+border_mountains = PackedStringArray("montanha_a.scn", "montanha_b.scn")
+decor_campo = {
+"broto.scn": 110,
+"capim.scn": 950,
+"cogumelos.scn": 70,
+"flores.scn": 110,
+"flores_b.scn": 80,
+"folhas.scn": 170,
+"lanterna_chao.scn": 16,
+"pedrinhas.scn": 110
+}
+decor_estrada = {
+"folhas.scn": 30,
+"lajota.scn": 150
+}
+particulas = "fantasmas"

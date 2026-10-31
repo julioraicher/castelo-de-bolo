@@ -2,6 +2,280 @@
 
 Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
+Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
+
+
+## Ciclo 2.3 (2026-10-31), Diretor Visual: mapa maior e maquininha por classe (branch)
+- Pedido do Julio: peças muito juntas; quer caminhos pela floresta para flanquear,
+  mapa maior e mais espaçado. Rio das Lanternas passa de 136 x 72 para 168 x 96 m
+  (`castle_distance` 60): vila com uma fileira de cada lado e becos de ~5 m,
+  campo do meio solto (|z| 14 a 22), trilhas de floresta em |z| = 30 (pontes
+  laterais -> mata -> lado do castelo inimigo, onde fica o bosque de corte dele),
+  lanternas de pedra a cada ~12 m marcando a trilha, colinas viraram mirantes
+  (|z| = 41) e um corredor de ~6 m atrás de cada castelo para contorná-lo.
+- QA do mapa: nenhum bot preso; os "desvios" atrás dos castelos são o corredor
+  novo (só se chega por fora, de propósito).
+- `maquina_<classe>.scn` para guerreiro (forja), arqueiro (esmeril), kitsune
+  (santuário), ronin_oni (fornalha oni), arqueiro_yumi (ateliê do arco) e
+  construtor (serraria), com os mesmos nós da `maquina_chapeu`; emblemas do
+  elenco 2.4. `tools/planta_mapa.gd` + `.py`: planta numerada do mapa.
+- Tema Dia: verdes mais escuros e menos saturados (grama, folhas, capim, bambu;
+  saturação 1,25 -> 1,0), pedido do Julio ("verde forte de joguinho bobinho").
+- Testes 98/98, 5 min simulados sem erro. Julio aprovou a planta (1ª versão).
+- **O que testar**: o mapa maior (trilhas da floresta pelas pontes laterais para
+  flanquear, corredor atrás do castelo inimigo), as maquininhas de cada classe
+  fabricando chapéu e o verde mais sóbrio do dia.
+
+## Ciclo 2.3 (2026-10-31), Diretor de Jogabilidade: Economia do Construtor, Etapa 1
+- **Madeira**: `Planta` (`scripts/items/planta.gd`): árvore e bambu em 3 estágios
+  (broto, jovem, adulta), um a cada `arvore_tempo_estagio` 40 s / `bambu_tempo_estagio`
+  15 s. Cada golpe de Construtor numa adulta solta 1 tora (`arvore_toras` 3,
+  `bambu_varas` 2) e no fim volta a broto; jovem rende 1. Só a linha do Construtor
+  (`velocidade_obra > 0`) corta.
+- **Tora** (`tora.gd`): o Construtor pega encostando, anda a `tora_vel_mult` 0,7 e não
+  ataca (dash vale). Apanhou, a tora cai e qualquer Construtor pega, até o inimigo.
+  Entregue na **pilha do castelo** (`pilha.gd`, a `pilha_raio` m) vira estoque do time.
+- **Maquininhas** (`hat_pad.gd`): 1 chapéu a cada `maquina_intervalo` 20 s até
+  `maquina_estoque_max` 3, começam cheias; pegar tira 1. Usam `maquina_chapeu.scn`
+  do Visual (chapéu sai do Molde e vai para a prateleira, emblema na frente).
+- **Oficinas** custam `oficina_custo_madeira` 6 e a obra caiu para 10 s: quem está na
+  obra puxa 1 madeira do estoque a cada 1,5 s; a obra não passa da madeira entregue.
+  Contador do Visual em cima ("faltam N", barra; grande para quem é Construtor,
+  pisca "falta madeira" sem estoque).
+- **Bot Construtor**: tora nos braços -> pilha; obra com estoque suficiente -> constrói;
+  tora solta perto -> pega; senão corta a adulta mais perto (bosque seguro primeiro,
+  sem dois aliados na mesma). Inimigo a 5 m: briga. No máximo `bots_construtores_max` 2.
+- **Alma de abate** (ideia do Julio): cada inimigo eliminado manda `alma_por_abate`
+  0,15 de espírito voando para a máscara do time de quem matou (~7 abates = 1
+  espírito). Quem só briga também deixa a máscara mais pesada para o inimigo.
+- **Bot preso perto do objetivo**: parado < 0,3 m em 3 s duas vezes seguidas dá a volta
+  (antes só valia longe do objetivo; o QA achou bots presos nos pátios do Rio).
+- **QA do mapa** (`tests/qa_mapa.gd`, flag `--qa-mapa=DIR`): passagem (grade de 1 m,
+  inalcançável e desvio > 2,5x), objetos escondidos da câmera (raios), bots presos
+  (3 min). Gera `qa_mapa.txt` (≤ 30 linhas) e, com tela, `qa_mapa.jpg`. No CI roda
+  como aviso. Hoje: 0 a 1 aviso (bot parado 2-3 amostras, briga).
+- Esquemas novos: `GameConfig` (grupo "Economia do Construtor", maquininha, oficina,
+  `alma_por_abate`), `MapLayout` (`tree_spots`, `pilha_spot` locais; `bamboo_spots` no
+  mundo), `ThemeConfig` (`arvore_estagios`, `bambu_estagios`, `maquina_model`,
+  `pilha_model`, `tora_model`). `Arena.registrar_contornos(no)` para modelos fora da Arena.
+- Elenco novo decidido no quiz: `docs/elenco-ciclo-2.4.md` (entra no 2.4).
+- Testes de regra 98/98 (novos: estágio, rendimento, tora, entrega, máquina, obra,
+  alma); 5 min simulados sem erro, 0 a 5 pontos por partida (igual a antes).
+- **O que testar**:
+  1. Jogue de **Armadilheiro** (chapéu laranja): corte a castanheira fora da muralha
+     lateral (perto do portão), leve a tora à pilha ao lado do portão e veja o número subir.
+  2. Fique na obra de uma casinha: o "faltam N" deve cair 1 a cada 1,5 s enquanto houver
+     madeira; sem madeira ele pisca.
+  3. Pegue chapéus da mesma máquina até acabar (3): ela fabrica outro a cada 20 s.
+  4. Apanhe carregando a tora: ela cai no chão.
+  5. Mate inimigos e olhe a sua máscara: uma alminha voa até ela.
+  6. Mapa maior do Visual (entrada acima): flanqueie pelas trilhas de floresta
+     (|z| = 30). Com ele, 1 a 3 pontos por 5 min nos bots (antes 0 a 5).
+
+## Organização (2026-10-31), estagiário de economia: checkup de tokens
+- Pedido do Julio: checkup de onde o projeto gasta mais e aplicar as mudanças.
+- `docs/economia-de-tokens.md`: modelo de custo (N·C₀ + Δ·N²/2), tabela com
+  9 gastos medidos no histórico das threads e regras 11-17 (thread por tarefa,
+  quiz econômico, resposta curta, lotes 3D com uma prancha, coordenador curto).
+- `CLAUDE.md`: resumo das regras novas na seção de economia.
+- **O que testar**: nada no jogo (só documentos).
+
+## Ciclo 2.3 (2026-10-31), Diretor Visual: modelos da Economia do Construtor (branch)
+- `tools/gerar_economia.gd` (rodar depois de `gerar_cenario_ninja.gd`): nos 4 temas,
+  `arvore_e1..3` (castanheira de corte; adulta com cunha no tronco e ofuda aceso
+  = "pronta"), `bambu_e1..3`, `tora` (centro na origem, eixo x), `pilha_toras`
+  (nós `Nivel_1..4`, 3 toras cada, e `Contador`), `maquina_chapeu` (`Prensa`,
+  `Gira_engrenagem`, `Molde`, `Brilho`, `Vapor`, `Enfeite`, `Estoque_1..4`,
+  animação `fabricar` de 2 s) e `emblema_{guerreiro,arqueiro,monge,construtor}`.
+  Liga os modelos nos temas sozinho quando o `ThemeConfig` ganhar os campos do contrato.
+- `scripts/ui/contador_madeira.gd` (`ContadorMadeira.mostrar(faltam, total, grande,
+  sem_estoque)`) + `assets/ui/icone_tora.png`: contador sobre a obra, por cima do telhado.
+- Rio das Lanternas: pontos do contrato (bosque local (9,5, 21) e (8, 25), pilha
+  local (9, 7,4), 6 bambus nas margens) gravados quando `MapLayout` tiver os campos;
+  saiu o bambuzal de enfeite em (±40,5, 24), que confundiria com o de corte.
+- Prancha: `tools/prancha_economia.gd` + `prancha_economia_mapa.gd` + `montar_economia.py`.
+- Testes de regra 68/68 e 5 min simulados sem erro de script.
+- **O que testar**: nada ainda (fora da main; o jogo usa os modelos quando a
+  Jogabilidade ligar as regras).
+
+## Planejamento (2026-10-31), estagiário de ideias: Ciclo 2.3 aberto
+- Pedido do Julio (2 áudios): chapéus saindo de maquininhas animadas, limite
+  de chapéus, madeira/bambu com árvores de 3 estágios, Construtor simples
+  (coleta, volta, upa casinha) com contador "faltam X", QA automático do
+  mapa; sem poderes novos no chão.
+- Novo `docs/direcao-ciclo-2.3.md`: regras com números iniciais e o porquê
+  (vazão do Construtor, teoria de filas do estoque de chapéus), QA automático
+  do mapa, piloto e instruções/contrato para os dois diretores.
+- ROADMAP: Ciclo 2.3 e 2.4 na Fase 2; metal/pedra e Ninja vs Cowboys na Fase 3.
+  `docs/ideias.md`: Ninja vs Cowboys em C.
+- **O que testar**: nada no jogo (só documentos).
+
+## Organização (2026-10-31), estagiário de ideias: economia de tokens
+- Pedido do Julio: rever boas práticas de economia de tokens para um projeto
+  deste tamanho (modelo por agente, skills, organização) e aplicar.
+- Novo `docs/economia-de-tokens.md`: o que gasta de verdade (contexto ×
+  mensagens), modelo e esforço recomendados por papel, 10 regras para agentes.
+  Fonte: documentação oficial do Claude Code (custos e modelos), lida hoje.
+- Subagentes baratos em `.claude/agents/` (Haiku, esforço baixo):
+  `explorador` (acha coisas em arquivos grandes sem lê-los inteiros) e
+  `testador` (roda testes/partida e devolve só as falhas).
+- `.claude/settings.json`: bloqueia leitura de binários e cache (`.godot/`,
+  `.glb`, `.bin`, `.scn`, `.wav`, `build/`), que só gastariam tokens.
+- CLAUDE.md: seção curta de economia + instruções de compactação.
+- **O que testar**: nada no jogo.
+
+## Organização (2026-10-31), estagiário de ideias: boas práticas e testes de regra
+- Pedido do Julio: revisar o projeto com o que aprendemos dos repositórios de
+  agentes (BMAD, Spec Kit e outros; comparativo no Claude Doc do projeto) e aplicar.
+- **Testes de regra** (`tests/regras.gd`, flag `--testes` em `game.gd`): 68
+  conferências dentro de uma partida real (dano, carregador leva metade, dash
+  anula dano, escudo absorve, cura não passa do máximo, empurrão freia
+  40 m/s² e 8 m/s → 0,8 m, todas as classes/temas/mapas do game_config válidos).
+  Rodam no CI antes da partida de 5 min; se uma regra quebrar, a main não publica.
+  Conferido que pegam erro: mudar KNOCK_DECAY para 30 reprova.
+- **`docs/principios.md`**: as regras que não mudam num arquivo só (ideia da
+  "constituição" do Spec Kit). CLAUDE.md manda ler primeiro.
+- CLAUDE.md com a organização atual (diretores/estagiários e o que cada um
+  mexe), comando de teste e skills; ROADMAP atualizado; GUIA seção 8.
+- CHANGELOG encurtado: Rodadas 1 a 19 em `docs/changelog-antigo.md`.
+  `docs/ideias-futuras.md` virou a seção "Outros projetos" de `docs/ideias.md`.
+- Outros papéis: `scripts/game.gd` ganhou só a flag `--testes` (não muda o jogo).
+  `projectile.gd`: projétil com velocidade zero não chama mais `look_at` (erro
+  "origin and target are in the same position" reprovou a partida simulada do
+  CI uma vez; raro, não reproduziu em 4 partidas locais).
+- **O que testar**: nada novo no jogo; jogue normal. Se quiser, veja o CI no
+  GitHub (Actions): o passo "Testes de regra" aparece antes da partida simulada.
+
+## Ciclo 2.2, rodada 3 + piloto 2 (2026-10-30), frente Visual: ninjas com poder no corpo, pátio à vista e casas que funcionam
+- Pedidos do Julio: "pegada mais sombria, ninjas com poder junto"; a oficina de
+  chapéus ficava atrás da torre principal e a câmera não via; casas "quadradas e
+  bobinhas", com vontade de manivelas, engrenagens e animação. Pranchas
+  personagens/07, cenario/12 e o vídeo cenario/12b aprovadas ("aplique tudo").
+- **Ninjas**: cabeça 0,58, mãos e pés 1,3, pernas +20% (~3,5 cabeças; o KayKit
+  tinha ~2,5). Marcas pelo corpo que ficam apagadas sem poder, acendem enquanto
+  a barra enche e, cheia, selos e olhos brilham na cor do time
+  (`toon_time.gdshader`: `usar_marcas`, posição de repouso em CUSTOM0; o
+  `poder_carga` da Jogabilidade não mudou). `ClassStats.escala_extremidades`.
+- **Pátio**: nada de jogo atrás da torre principal nem na frente da escada da
+  muralha (a câmera olha de cima a ~48°: uma torre de 6 m esconde ~5,5 m atrás
+  dela). Oficinas em (-3,5, ±7), chapéus em (7 e 2,5, ±9,2); o pedestal da
+  variação pronta aparece ao lado da oficina, do lado do portão.
+- **Peças que giram** sem custo de CPU: nós `Gira_*` nos modelos, girados no
+  shader (UV2 = velocidade e vaivém; `relogio` substitui o TIME). Engrenagens
+  com o mesmo passo engrenam de verdade (velocidade na razão dos dentes).
+  O Arena tira essas peças da junção do cenário e junta as iguais num MultiMesh.
+- **Oficina de chapéus nova** (`oficina_{cor}`, `ThemeConfig.oficina_model`):
+  martelo batendo no chapéu, engrenagens com manivela, catavento e chapéu-placa;
+  as engrenagens andam na velocidade da obra (mais Construtores, mais rápido) e
+  o telhado cai do céu quando fica pronta.
+- **Casa da roda d'água** (`casa_moinho` e `casa_moinho_esq`, espelhada) no lugar
+  da casa de fazenda na vila: caixa d'água, roda, engrenagens, manivela e pilão
+  de arroz. Poço com sarilho e manivela, forja com pedra de amolar e fole, loja
+  com catavento de papel. Toda caixa grande dos modelos ganhou quina chanfrada
+  (menos cara de bloco).
+- Outras frentes (mudança mínima, combinada com a Jogabilidade): `unit.gd`
+  (passa `escala_extremidades`), `oficina.gd` (modelo do tema, relógio das
+  engrenagens, posição do pedestal), `arena.gd` (peças `Gira_*`), `game.gd`
+  (`--vista=patio`). Ferramentas: `tools/prancha_poder.gd`, `prancha_patio.gd`
+  (`--alvo=X,Z`), `prancha_mecanica.gd`, `montar_mecanica.py`.
+- Testes: 5 min simulados sem erro de script; 22 destravadas de bot (antes 42).
+- **O que testar**:
+  - Os ninjas com cabeça menor e mãos/pés maiores: a silhueta ficou boa no jogo?
+    Encha o Chi e veja as marcas acenderem e os olhos brilharem quando está cheio.
+  - No pátio, as duas oficinas aparecem sem esconder nada? Com um Construtor,
+    as engrenagens giram mais rápido quanto mais gente trabalha?
+  - Na vila, a casa da roda d'água (dos dois lados do rio), o poço, a forja e o
+    catavento da loja estão girando? Algum lugar ficou apertado para passar?
+  - O FPS na Média ficou igual ao de antes?
+
+## Ciclo 2.2, rodada 2b (2026-10-30), frente Visual: desempenho do cenário pintado
+- A Jogabilidade mediu a rodada 2 na Média: +32% de chamadas de desenho e +93%
+  de triângulos (o orçamento da direção é ~10%).
+- Causas e correções (`scripts/world/arena.gd`, só cenário):
+  - O material pintado não entrava na junção do cenário em pedaços; agora entra,
+    e as cópias iguais do material (cada .scn salva a sua) viram uma só.
+  - O contorno de tinta do cenário desenhava tudo de novo, inclusive na sombra:
+    agora só na qualidade Alta.
+  - Enfeite (capim, flores...): 100% na Alta, 60% na Média, 35% na Baixa
+    (`visible_instance_count`, troca na hora).
+- Medida aqui (xvfb, Média, 26 s, mesma régua para as duas): antes desta correção
+  541 chamadas e 1,37 milhão de triângulos; depois 344 e 620 mil (−36% e −55%),
+  abaixo do que era antes do Ciclo 2.2 na mesma proporção.
+- **O que testar**: o FPS na Média voltou ao de antes? Na Alta, o contorno do
+  cenário aparece; na Média, não.
+
+## Ciclo 2.2, rodadas 1 e 2 (2026-10-30), frente Visual: estilo pintado em todo o cenário e mapa mexido
+- Pedido do Julio: o jogo estava "quadrado, liso e vazio"; o piloto (pranchas
+  cenario/10 e 10b) mostrou o caminho e ele pediu para "mudar bem o mapa" e
+  publicar tudo junto para jogar.
+- **Material pintado em todas as peças** (`assets/shaders/pintura.gdshader`):
+  pincel de baixa frequência em espaço de mundo, oclusão pintada (COLOR.a),
+  luz em faixas suaves, sombra fria, borda clara pro sol, vento por vértice
+  (UV.x) e desenho do material (UV.y: tábuas, telhas, pedras, reboco) com
+  antisserrilhado por `fwidth`. Peças antigas recebem o desenho pela cor da
+  paleta (`_desenho_pela_cor`).
+- **Contorno de tinta** nas construções e objetos (o `contorno.gdshader` dos
+  bonecos como next_pass); enfeite miúdo, água e paisagem distante ficam sem.
+- **Casa comum nova** (`casa_a`: chanfros, tábuas tortas, telhado curvo que cede,
+  porta baixa, barril, lenha, vaso, varal, corvo) e **lanterna de pedra nova**
+  (velha, inclinada, com musgo). Árvores, capim e flores balançam no vento.
+- **Chão pintado** (`assets/shaders/chao_pintado.gdshader`): grama em manchas e
+  a estrada desenhada com borda irregular (sai a malha de estrada separada).
+  Enfeite do Festival ao Sol quase dobrou.
+- **Tema novo Crepúsculo (sombrio)** em Esc > Configurações > Tema (paleta
+  `crepusculo` no gerador). Festival ao Sol continua o padrão.
+- **Mapa Rio das Lanternas mexido**: bosques de sakura no lugar dos jardins de
+  pedra, feira de barracas na boca da ponte grande e arrozais com espantalho nos
+  campos de fora das muralhas.
+- Ferramentas: todo o construtor (chanfro, viga, superfície curva, oclusão,
+  vento) está em `tools/gerar_cenario_ninja.gd`; prancha da casa em
+  `tools/prancha_piloto.gd` + `tools/montar_piloto.py`.
+- Outras frentes: `scripts/world/arena.gd` (só o material do chão) e
+  `config/game_config.tres` (tema na lista). Navegação: 42 destravadas de bot
+  em 5 min simulados (antes 33-58), sem erro de script.
+- **O que testar**:
+  1. Ainda parece quadrado, liso e vazio? Olhe as casas, telhados, pedras e chão.
+  2. O contorno de tinta no cenário combina com o dos ninjas?
+  3. Esc > Configurações > Tema > Crepúsculo: o clima sombrio funciona para jogar?
+  4. Bosques, feira e arrozais: atrapalham ou ajudam a luta e a fuga?
+  5. FPS comparado com antes (o contorno dobra as chamadas de desenho do cenário).
+
+## Rodada 21 (2026-10-30), frente Jogabilidade: animação exagerada e poder no corpo
+- Direção do Ciclo 2.2, seção 9 (Diretor de Jogabilidade, itens 1 e 3).
+- **Corpo de desenho** em `unit.gd` (`_tick_corpo`), sem mexer nos clipes: duas
+  molas amortecidas (ω = 26 rad/s, ζ = 0,32: passa do ponto e volta em ~0,3 s)
+  esticam/amassam o boneco na vertical e para a frente, com volume constante
+  (sx·sy·sz = 1, como massa de modelar). Recebem "petelecos" em:
+  - **Golpe**: antecipação de 50 ms (encolhe e recua; o dano sai depois dela,
+    alinhado com o braço) e esticão para a frente no golpe; o final do combo estica mais.
+  - **Dash**: esticão na saída, amassa no "pouso".
+  - **Pulo/lançamento**: sai esticado, pousa amassado na proporção da queda.
+  - **Andar**: quique de um pulinho por passo, em fase com o clipe de corrida.
+  - **Apanhar**: amassa e treme ~0,2 s (o tremor continua durante o hitstop).
+  - **Morte cômica**: "boing", pulinho girando uma volta, vira panqueca com
+    poeira e estrelinhas.
+  - Intensidade: `GameConfig.exagero_animacao` (1,4; 0 desliga) ×
+    `ClassStats.exagero` por classe (1 em todas por enquanto).
+- **Poder no corpo** (para o Visual usar): `toon_time.gdshader` ganhou
+  `instance uniform poder_carga` (0..1, mandado pelo `Unit._tick_aura` só
+  quando muda 2%) e `cor_poder` (= cor do chapéu). Por enquanto o contraluz
+  acende com o medidor, puxa para a cor da classe e pulsa quando o [Q] está pronto.
+- **Teste de fumaça no CI** (achado do estagiário, aprovado): todo push em
+  qualquer branch roda 5 min de partida simulada; erro de script reprova e,
+  na main, o export só sai se ele passar.
+- Ferramenta: `-- --autoplay --filme=PASTA` grava o jogador fazendo golpe,
+  dash, pulo, pancada e morte de lado, quadro a quadro (prancha 02 da Jogabilidade).
+- Desempenho (`--perf=1`, Média, mesmo trecho): sem diferença mensurável
+  (física 3,2 → 3,3 ms; draw calls e triângulos iguais dentro do ruído).
+- Teste: 5 min simulados com `--poderes`, sem erro.
+- Outras frentes: `assets/shaders/toon_time.gdshader` (2 uniforms novos,
+  padrão sem efeito visível com medidor vazio) e `.github/workflows/build.yml`.
+- **O que testar**:
+  1. Bater, dar dash e apanhar: o boneco estica e amassa? Está exagerado
+     demais, de menos ou no ponto? (dá para ajustar um número só)
+  2. O golpe ficou "atrasado"? A antecipação é de 50 ms.
+  3. Morrer: o pulinho girando com panqueca ficou engraçado ou atrapalha?
+  4. Encher o Chi: o contorno do boneco acende e pulsa quando o [Q] está pronto?
 
 ## Ciclo 2.2 (2026-10-30), estagiário de ideias: direção nova (só documentos)
 - Pedido do Julio: o jogo está "quadrado, liso, vazio"; aproximar do Fat
@@ -47,427 +321,3 @@ conversa saber o que mudou sem reler o histórico.
      a área, de quem é e quanto tempo falta?
   3. O mapa ficou menos apertado atrás das casas?
   4. FPS no tema de dia comparado com o de noite.
-
-## Rodada 19 (2026-10-29), frente Jogabilidade: medir e aliviar o desempenho
-- Pedido do Julio: deixar o jogo mais leve. Primeiro medir: flag nova
-  `--perf=N` (qualidade N, sem a automática) imprime a cada 5 s FPS, ms de CPU
-  e de física por quadro, draw calls, triângulos, objetos e nós.
-- O que a medição mostrou (Rio, luta com poderes, renderizador do navegador):
-  - Lógica do jogo é barata: física ~4 ms por quadro com 16 bonecos.
-  - Quem pesa é desenhar: na Média ~650-870 mil triângulos e 350-560 draw
-    calls por quadro; na Mínima ~285 mil e ~235. A **sombra** é quase metade do
-    custo (esconder o sol: 730 mil → 380 mil triângulos); os 16 bonecos são
-    ~180 mil triângulos e ~95 draw calls (~11 mil por boneco com o contorno).
-  - Testei sombra de 1 fatia na Média: não mudou nada mensurável, então voltei.
-- Otimizações (sem mudar o que se vê):
-  - HUD atualiza a 20 Hz em vez de 60 e só mexe em cor de texto/StyleBox
-    quando a cor muda (antes refazia o texto e redesenhava painéis todo quadro;
-    também saiu um `find_child` por quadro).
-  - Partículas (faíscas, detritos, motas, poeira) reaproveitam malha e
-    material por cor (`Fx.cached`) em vez de criar novos a cada golpe.
-  - Shaders dos efeitos são "esquentados" no começo da partida
-    (`Fx.prewarm`, embaixo do chão). No navegador, cada material novo compilava
-    na primeira vez que aparecia: era o engasgo no primeiro golpe/poder.
-  - A bolha de escudo usa um Shader só para todos (antes cada boneco compilava o seu).
-- Próximo passo com ganho grande (frente Visual, anotado em docs/ideias.md):
-  versão simplificada (LOD) dos bonecos e contorno desligado na Mínima.
-- Teste: 5 min simulados no Rio (com `--poderes`) e no Vale sem erro.
-- **O que testar**:
-  1. O engasgo no primeiro golpe/primeiro poder da partida sumiu?
-  2. FPS no navegador e no .exe comparado a antes (Esc > Configurações > Mostrar FPS).
-  3. Placar, vida e Chi continuam atualizando certinho?
-
-## Rodada 18 (2026-10-29), frente Visual: bots andam pela vila do Rio
-- Problema (medido pela Jogabilidade): no Rio os bots acionavam o "desempacar"
-  ~440 vezes em 5 min, contra 16 no Vale. Causa no mapa, não na IA: o navmesh
-  é assado com raio de agente 1 m, então um vão de 2 m entre colisores vira
-  largura zero. Os vãos entre as casas tinham exatamente 2 m, e o poço, o
-  festival, as estátuas, as barricadas e as pedras da margem fechavam o resto.
-  Resultado: a vila, as pontes laterais, as colinas e os campos atrás dos
-  castelos eram ilhas, alcançáveis só pela rua central (print 08).
-- `tools/gerar_mapa_rio.gd` (vila redistribuída, mesmas peças):
-  - Cada fileira tem um beco de 3,5 m no meio; as fileiras de trás foram para
-    z = ±18 (beco de trás com ~4 m) e todas terminam em x = 30,8, deixando um
-    corredor de 3,4 m junto à muralha do castelo.
-  - Barricada no pé da colina (norte) e festival no pé da colina (sul), em vez
-    de atravessados na saída das pontes laterais; poço e pilha foram para os
-    fundos perto do castelo; pedras da margem na boca dos becos.
-  - Saem as 2 estátuas da cabeceira da ponte central (fechavam o caminho da margem).
-  - Topo das colinas: pagode/vigia recuado para o fundo, sobra uma faixa livre
-    ligando as duas escadas. A árvore grande da margem saiu do pé da escada.
-  - Campos atrás dos castelos: estátua e árvore saíram do canto da muralha.
-- Medido (mesmo critério da IA, 5 min de bots): Rio Floresta Oni 33 e Templo
-  ao Luar 58 (antes ~440); Vale 9. O que sobrou é aglomeração de briga na
-  cabeceira da ponte e no portão, não geometria. Topo das colinas, escadas e
-  passarela da muralha agora têm caminho a partir do pátio.
-- Outras frentes: nenhuma mudança em `scripts/`.
-- **O que testar**:
-  1. No Rio, os bots entram nos becos da vila e usam as pontes laterais?
-  2. Ainda aparece bot parado esfregando em parede? Onde?
-  3. A vila ficou com cara de vila com os becos mais largos?
-
-## Rodada 17 (2026-10-29), frente Visual: cada poder [Q] com efeito próprio
-- `scripts/fx/fx_poder.gd` (`FxPoder`): todo poder agora mostra o **nome do
-  golpe no ar** (fonte de pincel, entra com "soco") e um **selo girando no
-  chão** na cor do chapéu. Mais um efeito só dele:
-  1. Samurai, Redemoinho: tornado dourado de anéis inclinados e rajadas girando.
-  2. Ronin Oni, Fúria: cúpula de choque vermelha, labareda, pedras voando e
-     aura de fogo enquanto a fúria dura.
-  3. Lâmina Dupla, Corte Relâmpago: 5 sombras pelo caminho, X de corte no fim
-     e o "corte atrasado" (0,28 s depois) em quem foi atravessado.
-  4. Ninja, Leque: leque de luz e shuriken gigante girando.
-  5. Yumi, Chuva de Flechas: rajada para o céu e mira que fecha no alvo.
-  6. Bombas de Fumaça: estouro roxo e bolas de fumaça arremessadas.
-  7. Monge, Bênção: lótus dourada abrindo; brilho subindo em cada aliado curado.
-  8. Onmyoji, Selo: estrela de 5 pontas de luz e pilares nos vértices.
-  9. Kitsune: erupção de fogo-raposa e orbes girando em volta das colunas.
-  10. Armadilheiro, Corrida: rastro de vento nos aliados acelerados.
-  11. Pólvora, Reforço: tábuas voam e se fecham em cada aliado.
-  12. Carpinteiro, Mutirão: feixe até a oficina, faíscas e lascas; rastro nos aliados.
-- Só visual: dano, raio e recarga não mudaram. Tudo aditivo, sem luz e sem
-  sombra, some sozinho (barato na GPU integrada).
-- Outras frentes: chamadas `FxPoder.*` em `Unit._use_power()` e
-  `_corte_relampago()` (que agora guarda a lista de atingidos).
-- Teste: 5 min simulados com `--variacoes --poderes` (poder a cada 4 s) sem erro.
-- **O que testar**:
-  1. Use o [Q] de várias classes (oficinas liberam as variações): dá para
-     saber qual poder foi usado só pelo efeito?
-  2. O nome do golpe no ar ajuda ou atrapalha?
-  3. FPS na hora de uma briga com vários poderes juntos.
-
-## Rodada 16 (2026-10-29), frente Jogabilidade: a máscara chega em casa
-- Problema: em 5 min de bots saíam 0 pontos (às vezes 2). Medindo onde o
-  ladrão caía: quase sempre a 5-30 m do pedestal inimigo (o caminho tem 98 m),
-  cercado por quem renasce ali; e a máscara caída voltava para casa em 1,5 s.
-- Regras novas (`game_config.gd`, grupo Máscara):
-  - `carrier_damage_mult = 0,5`: quem carrega a máscara inimiga leva metade do
-    dano (a máscara protege; ele já anda mais devagar pelo peso).
-  - Arrancada no roubo: x1,35 de velocidade por 3 s (`steal_boost_*`).
-  - Resgate da máscara caída: 3 s ao lado dela (antes 1,5 s) e **para** se
-    houver inimigo a até 4 m (disputa). Dá tempo do time do ladrão retomá-la.
-- Bots: atacantes a até 30 m da máscara inimiga caída correm para retomá-la
-  (revezamento); bot que quer andar e não sai do lugar em 3 s larga o alvo e dá
-  uma volta (no Rio eles ficavam presos atrás de muralhas/casas ~25% do tempo).
-- Medido (5 min, bots): antes 2-3 roubos e 0 pontos por partida; depois 4-14
-  roubos e 0-3 pontos (média ~2), metade das partidas termina 3 x algo antes dos 5 min.
-- Lado azul do Rio: o Visual rodou 7 partidas, e o total ficou parecido
-  (145 x 130). É efeito bola de neve, não o layout. Os pontos de navegação
-  ruins do Rio (onde os bots ficam presos) foram passados para a frente Cenário.
-- Teste: 5 min simulados no Rio, no Vale e com `--poderes`, sem erro.
-- **O que testar**:
-  1. Roube a máscara inimiga: sente a arrancada? Dá para fugir do pátio deles?
-  2. Carregando, você aguenta bem mais pancada. Ficou forte demais?
-  3. Se você cair com a máscara, seus aliados vão buscá-la?
-  4. As partidas estão terminando em um tempo bom (3 pontos)?
-
-## Rodada 15 (2026-10-29), frente Jogabilidade: personagens duram mais
-- Pedido do Julio: "a barrinha desce rápido demais". Conta do tempo para
-  matar: TTK = vida / (DPS · taxa de acerto). Com os números antigos, um
-  Samurai (combo 22+22+30,8 em 2,2 s = 34 de DPS) matava um Ninja de 80 de
-  vida em **2,4 s**, e dois juntos em ~1,2 s: nem dava tempo de usar o dash.
-- Três botões novos em `game_config.gd` (grupo "Vida e tempo para matar"),
-  sem mexer nos .tres de classe:
-  - `vida_mult = 1,4`: vida de todas as classes x1,4. Curas e escudos (números
-    absolutos) sobem junto, para valerem a mesma fração da vida.
-  - `dano_poder_mult = 1,2`: dano dos poderes do Q, para eles não ficarem
-    fracos perto da vida maior (Nuvem não muda: é lentidão).
-  - Regeneração fora de combate: 4 s sem bater nem apanhar, cura 6% da vida
-    por segundo (dH/dt = 0,06·Hmax). Uma briga perdida não vaza para a próxima.
-- TTK 1x1, antes → depois: Samurai em Ninja 2,4 → 3,3 s; Samurai em Samurai
-  4,1 → 5,8 s; Ronin em Samurai 3,7 → 5,2 s; Ninja de Shuriken em Ninja
-  5,3 → 7,5 s. Nas simulações o número de mortes caiu pouco (~10%), porque
-  quase toda morte é em grupo (3 contra 1); a diferença aparece no 1x1.
-- Bots: quem leva a máscara inimiga ganha **guarda-costas** (atacantes até
-  45 m brigam só com quem chega a 8 m do carregador). Pontos ainda são raros
-  (0 a 2 em 5 min): continua na lista.
-- Achado para a frente Cenário: no Rio das Lanternas o time Azul morre bem mais
-  que o Vermelho nas simulações (ex.: 32 x 21, 49 x 15); no Vale fica igual
-  (46 x 42). Algo no lado azul do Rio (caminho, ponte, spawn) favorece o vermelho.
-- Teste: 5 min simulados no Rio (com `--poderes`) e no Vale sem erro.
-- **O que testar**:
-  1. A vida ainda desce rápido demais, ou agora ficou lenta/esponja?
-     (dá para ajustar só o `vida_mult`)
-  2. Saia de uma briga e espere 4 s: a vida voltando ajuda ou deixa fácil?
-  3. Os poderes ainda matam/derrubam como antes?
-  4. Pegue a máscara inimiga: os aliados vêm te proteger?
-
-## Rodada 14 (2026-10-29), frente Cenário: leva 2 de peças e vila com moradores
-- Peças novas (`tools/gerar_mapa_rio.gd`, nos 2 temas): **templo** (dois
-  telhados, corda sagrada, altar dourado, incensário, barris de saquê), **casa
-  de chá** (janela redonda, bacia de pedra, bordo vermelho, mestre servindo),
-  **forja** (fornalha acesa, chaminé com fumaça, bigorna, ferreiro martelando,
-  rack de katanas), **dojo** (alunos treinando, pergaminho, bonecos de madeira,
-  estandartes), **barco** com barqueiro e **ponte de corda** pênsil.
-- **Moradores** (`_aldeao`): bonecos low-poly com poses (vender, varrer,
-  martelar, sentado, lanterna, remar, treinar, servir). Fazem parte do modelo
-  das casas: vendedor na loja, senhor sentado na varanda (com gato), moça com
-  lanterna na varanda da pousada, vendedores nas barracas; grupos conversando
-  perto da vila.
-- **Fundos e laterais** de todas as casas: janela acesa, porta com noren,
-  calha de bambu, barril de chuva, varal com roupas, lenha (a fileira de trás
-  mostra os fundos para a câmera).
-- No Rio das Lanternas: templo e dojo nos campos fora das muralhas, forja e
-  casa de chá na vila (no lugar do sino e do jardim), 4 barcos no rio, pontes
-  de corda sobre as cachoeiras. Prancha: `tools/prancha_pecas.gd` aceita
-  `peca@180` para mostrar os fundos.
-- Teste: 5 min simulados sem erro (8 roubos de máscara, 1 ponto).
-- **O que testar**:
-  1. Passeie pela vila: as casas parecem "habitadas"? Moradores no tamanho certo?
-  2. Templo (campo norte) e dojo (campo sul), perto dos castelos: atrapalham o caminho?
-  3. Bots se enroscam na forja, na casa de chá ou nos grupos de moradores?
-
-## Rodada 13 (2026-10-29), frente Jogabilidade: mira honesta com ajuda leve
-- Pergunta do Julio: "acertei muitas flechas meio na sorte, tem assistência?"
-  Não tinha assistência: o acerto era uma **esfera de 1,25 m** em volta do
-  peito, ou seja, um corredor de ~2,5 m de largura para a flecha passar.
-- Agora o acerto é a **cápsula do boneco** (0,7 m de raio já somando o
-  projétil, dos pés até 2,1 m): corredor de 1,4 m. Vale para todos os
-  projéteis (flecha, shuriken, bomba direta, chi, talismã, fogo-raposa).
-- **Assistência leve, só do jogador** (`Unit._aim_assist`): se um inimigo está
-  a até 7° da mira e no alcance, a mira gira 60% do caminho até ele (errar por
-  7° vira errar por ~3°; a 15 m isso ainda é ~0,7 m de erro e pode errar). Nos
-  tiros em arco, a flecha cai na distância do alvo assistido. O leque de
-  shuriken não tem ajuda.
-- Bots seguem com a mira deles (erro de propósito); a taxa de acerto deles
-  ficou parecida (~70-75% nas simulações, quase sempre de perto).
-- Teste: 5 min simulados no Rio e no Vale sem erro.
-- **O que testar**:
-  1. Atire em inimigos parados e correndo de longe: dá para errar quando a mira
-     está longe, e acertar quando ela está quase em cima?
-  2. Ainda parece "na sorte" ou ficou difícil demais? (dá para mexer no cone de
-     7° e na puxada de 60%)
-
-## Rodada 12 (2026-10-29), frente Jogabilidade: porradaria com mais peso
-- Pedido do Julio: "porradaria insana", mantendo dash e ritmo. Sem partícula
-  nova pesada: tudo é câmera, tempo e física (custo quase zero na Intel UHD).
-- **Lançar no ar** (`Unit.launch(vy)`): Fúria do Ronin (7 m/s), bomba (até 5,
-  cai com a distância), mina (6) e golpe final do combo (3,5) tiram o alvo do
-  chão. h = vy²/2g com g = 30: a Fúria sobe ~0,8 m. Quem morre no ar agora cai.
-- **Fúria** agora dá hit-stop nos atingidos e no Ronin, e ignora quem está em
-  outro andar (muralha/ponte), como os golpes normais.
-- **Câmera** (`camera_rig.gd`): coice direcional com mola amortecida
-  (x'' = −ω²x − 2ζωx', ζ = 0,45) nos golpes do jogador e quando ele apanha;
-  soco de zoom (FOV) no golpe final, no poder e no abate; `shake_at()` faz
-  explosões e poderes de bots perto tremerem a tela, caindo com 1/(1+(d/8)²).
-  A mola integra em passos de 8 ms: com FPS baixo ela explodia (ω·dt > 2).
-- **Poder do jogador**: clarão na cor do papel, zoom e 0,14 s em câmera lenta
-  (`Game.slowmo`, usa tempo real e volta sozinho). **Abate do jogador**:
-  espírito sobe, tranco e 0,12 s de câmera lenta.
-- Desligar "Tremor de câmera" nas Configurações desliga coice e zoom também.
-- Flag de print `--print-poder` (com `--shots`): prints logo após cada poder.
-- Ideias avaliadas (Hora do Caos, gatilhos de poder) foram para `docs/ideias.md` (B).
-- Teste: 5 min simulados no Rio e no Vale (com e sem `--poderes`) sem erro.
-- **O que testar**:
-  1. Use o Q com algumas classes: o "congela e explode" do poder ficou bom ou
-     enjoa? (dá para encurtar ou tirar a câmera lenta)
-  2. Pegue o Ronin Oni e use a Fúria no meio do grupo: os inimigos voam?
-  3. Bata o combo de 3 golpes: o último joga o alvo para cima e a tela dá tranco?
-  4. Leve uma bomba ou pise numa mina: o tremor perto de explosões incomoda?
-  5. No PC fraco, notou queda de FPS nos momentos de poder?
-
-## Rodada 11 (2026-10-29), frente Visual: interface no estilo Clãs de Neon
-- Pedido do Julio: textos, fontes e visual das informações na tela.
-- Fontes livres (OFL) em `assets/fonts/`: **Shojumaru** (pincel japonês) nos
-  títulos e mensagens grandes; **Chakra Petch** (painel neon) no resto, também
-  nos números de dano e nomes dos pedestais/oficinas. Fonte padrão do projeto
-  em `project.godot` (`gui/theme/custom_font`).
-- `scripts/ui/estilo.gd` (`Estilo`): cores (noite, ciano, magenta, ouro,
-  fogo-fantasma), painéis com borda neon e corte inclinado, tecla desenhada,
-  barras e o `Theme` dos menus. `scripts/ui/icone.gd` (`Icone`): ícones por
-  código (máscara oni, espírito, katana, shuriken, chi, martelo, losango).
-- HUD: placar em placas dos times com losangos de pontos; cartões das duas
-  máscaras com frase por situação ("ROUBADA!" pisca em vermelho, "com o seu
-  time!" em ciano) e peso em espíritos; cartão do jogador com retrato do papel
-  (cor do chapéu), vida com números (fica vermelha abaixo de 30%), Chi com
-  tecla [Q] quando cheio; dicas com a tecla desenhada; mensagens grandes
-  entram com "soco"; tela de fim com placar.
-- Menus: tela inicial com título neon, 3 cartões de dica e controles com
-  teclas desenhadas; pausa com abas, botões e listas no mesmo estilo.
-  Textos atualizados para as classes ninja.
-- Outras frentes: só a fonte nos `Label3D` de `fx.gd`, `hat_pad.gd`, `oficina.gd`.
-- Teste: partida simulada até o fim (vitória aos 140 s) sem erro; pacote exportado roda sem erro de fonte.
-- **O que testar**:
-  1. Dá para ler tudo rápido no meio da briga (placar, estado das máscaras, vida)?
-  2. A fonte de pincel nos títulos agrada? E a de texto?
-  3. Tela inicial e Esc: os botões e as listas ficaram claros?
-  4. Algo grande demais, pequeno demais ou cobrindo a ação?
-
-## Rodada 10 (2026-10-29), frente Cenário: mapa Rio das Lanternas com altura
-- Julio escolheu a ideia 1 (Rio das Lanternas) misturada com a Vila Neon, com
-  mais cobertura no meio e mais altura. Mapa novo `config/mapas/rio_lanternas.tres`
-  (padrão; o Vale Ninja continua em Esc > Configurações > Mapa).
-- Rio no meio (norte-sul) com **3 pontes arqueadas**: a grande no centro (8 m)
-  e duas laterais (4,6 m). O rio bloqueia; só se cruza pelas pontes.
-- **Vila neon** dos dois lados da estrada: casas, loja com toldo, pousada de 2
-  andares, armazém, barracas de festival, poço, sino, jardim zen, postes de
-  lanterna, varais e torii nas cabeceiras das pontes.
-- **Altura**: 4 colinas de 2,4 m (com escada dos dois lados, pagode ou torre de
-  vigia em cima); castelos com **muralha andável** (3,2 m) e escada no pátio
-  (`MapLayout.wall_height/wall_thickness/wall_parapet`).
-- Cobertura no meio: rochas, barricadas, jizos, pilhas de sacos, bambuzais.
-- 29 modelos novos por tema em `tools/gerar_mapa_rio.gd` (estende o gerador
-  base); prancha das peças: `tools/prancha_pecas.gd`.
-- **Mudanças em outras frentes** (pedidas para a altura funcionar):
-  `Arena.ground_y()` (chão real por raio), mira balística até a altura do
-  alvo, golpes/explosões/armadilhas/áreas ignoram quem está 2+ m acima ou
-  abaixo, câmera mira no chão real, máscara cai no chão de verdade;
-  `MapProp` com colisão "caixa" (tamanho, giro, deslocamento; modelo vazio =
-  só colisão); `MapLayout.wall_model/tower_model/flag_height`;
-  `GameConfig.maps` + opção Mapa no menu (`Settings.mapa`, flag `--mapa=N`);
-  modelos com cor por vértice são juntados em blocos de 34 m (2 draw calls por bloco).
-- Teste: 5 min simulados no Rio (Oni e Luar) e no Vale sem erro; roubos de
-  máscara no Rio parecidos com o Vale (4 x 5).
-- **O que testar**:
-  1. Atravesse o rio pelas 3 pontes. A briga fica concentrada nelas? A ponte do
-     meio é larga o bastante?
-  2. Suba na muralha pela escada do pátio e numa colina. Atirar lá de cima é
-     forte demais? (bomba e flecha miram no chão onde o alvo está)
-  3. Alguma casa/peça esconde demais a luta? Algum bot fica preso?
-  4. FPS no Rio comparado ao Vale (Esc > Configurações > Mapa).
-
-## Rodada 9 (2026-10-29), frente Cenário: mapa atual com cenário ninja
-- Julio escolheu os climas C (Floresta Oni) e B (Templo ao Luar), nessa ordem.
-  Viraram os 2 temas do jogo (`config/temas/oni.tres` padrão, `luar.tres`);
-  Medieval e Sinistro saíram da lista (arquivos continuam no repo).
-- Mapa `config/mapas/vale_ninja.tres`: mesmas posições de jogo do Vale (pedra no
-  meio da estrada, bosques, castelos), mais torii nos portões, estátuas oni /
-  komainu, varal de lanternas no centro, lanternas de pedra, santuários, pagodes,
-  ruínas, rochas, tronco caído, lagos e cercas de bambu.
-- Modelos por código: `tools/gerar_cenario_ninja.gd` gera `assets/ninja/{oni,luar}/*.scn`
-  (castelo japonês com telhados na cor do time, torres baixas no portão para não
-  esconder a briga, muros com telhadinho, estandartes nobori), os 2 temas e o mapa.
-  Cada modelo é 1 malha com 2 materiais (fosco + brilho), juntado em MultiMesh.
-- Chão rico: `ThemeConfig.decor_campo` / `decor_estrada` espalham capim, pedrinhas,
-  folhas/pétalas, cogumelos brilhantes/flores, brotos, lanternas de chão e lajotas
-  (semente fixa, sem colisão, sem sombra). `particulas`: fogo-fantasma subindo
-  (Oni) ou pétalas caindo (Luar); some na qualidade Baixa/Mínima.
-- `ThemeConfig.flag_height` (altura da bandeira na torre; padrão 7 mantém o antigo).
-- Flags de print: `--tema=N` e `--vista=mapa|alto` (câmera parada, sem HUD).
-- Teste: 5 min simulados nos 2 temas sem erro.
-- **O que testar**:
-  1. Jogue uma partida no tema padrão (Floresta Oni). Dá para ver bem os bonecos
-     e as brigas no portão? Alguma árvore/torre atrapalha a visão?
-  2. Esc > Configurações > Tema do mapa: troque para Templo ao Luar e compare.
-  3. FPS: o chão cheio de enfeites pesou? (se pesar, a qualidade Baixa tira as partículas)
-  4. Bots se enroscam em alguma peça nova (pagode, ruína, rochas, estátuas)?
-
-## Rodada 8 (2026-10-29), frente Visual dos personagens: mundo ninja no jogo
-- Visual: `scripts/actors/ninja_visual.gd` monta as peças de cada estilo (kabuto,
-  máscara oni, kasa, eboshi, orelhas de raposa...) numa malha só presa aos ossos
-  (1 draw call por boneco), shader toon com aro na cor do time
-  (`assets/shaders/toon_time.gdshader`) e contorno (`contorno.gdshader`).
-  Cabeça 0,8 via `EscalaOssos` (modificador de esqueleto).
-- 12 classes (4 papéis x 3 variações) + Recruta, geradas por `tools/gerar_classes.gd`.
-  Campos novos em `ClassStats`: `estilo_ninja`, `escala_cabeca`, `escala_modelo`,
-  `projetil`, `explosao_raio`, `trap_kind`, `velocidade_obra`; poderes novos
-  (fúria, corte relâmpago, leque, nuvem, selo, coluna de fogo, reforço, mutirão).
-  Poderes de área em `scripts/fx/area_effect.gd`; `Fx.beam/zap/cracks`.
-- Projéteis: shuriken (reto, gira), bomba (arco até o chão, explode com dano
-  que cai linearmente com a distância), talismã, fogo-raposa, chi.
-- Construtor simples: toda variação constrói; o poder é de apoio, não de dano.
-- Oficinas (`scripts/items/oficina.gd`): 2 terrenos por castelo
-  (`MapLayout.oficina_spots`), o time escolhe a variação ([E] no terreno),
-  construtores erguem (dP/dt = soma de `velocidade_obra` / `oficina_build_time`);
-  pronta, ganha pedestal da variação. Bots construtores vão até o terreno.
-- Animações: inclinação na corrida, achatamento ao levar golpe, machadadas na
-  obra, levantar do chão ao renascer, comemoração ao pontuar, gesto ao pegar item,
-  arremesso nos atiradores.
-- Itens no chão novos: kunai (dano 2x por 6 s) e chama de chi (enche o medidor).
-- Tema: princesa → Máscara Oni, bolo → espírito (hitodama), Glacê → Chi. Nomes
-  de classe no código ficaram (`Princess`, `Cake`), com comentário.
-- Outras frentes (mudanças em `scripts/`, `config/game_config.tres`,
-  `map_layout.gd`/`arena.gd`, HUD/menus, CONTROLES.md): feitas por esta frente
-  a pedido do Julio. Flags de teste: `--variacoes` (bots com todas as classes) e
-  `--poderes` (enche o medidor a cada 4 s).
-- Teste: 5 min simulados sem erro; oficinas prontas entre 22 e 90 s.
-  Prancha: `personagens/05-ninjas-no-jogo.png` nos arquivos do projeto.
-- Falta: cenário ninja (noite neon). Proposta vai para pitaco antes de montar.
-- **O que testar** (no navegador ou no .exe da main):
-  1. Pegue cada chapéu do pátio e olhe o visual e o ataque (shuriken, flechas, chi).
-  2. Vire Construtor, vá até um terreno do castelo, aperte E para escolher a
-     variação e fique perto até a casinha subir. Pegue a variação nova no pedestal.
-  3. Encha o Chi (Q) com cada classe e veja se o poder é claro e forte o bastante.
-  4. Kunai (dano 2x) e chama de chi no chão: dá para ver e pegar?
-  5. Leve a Máscara Oni inimiga ao seu pedestal; leve espíritos à sua máscara.
-
-## Rodada 7 (2026-10-29), frente Jogabilidade: Construtor, itens no chão, Monge e Recruta
-- Tema (princesa/bolo x Máscara Oni/espíritos) **não** mudou: o Julio ainda
-  compara 3 mundos. Os nomes de classe abaixo são provisórios.
-- Clérigo → Monge (`monge.tres`) e Aldeão → Recruta (`recruta.tres`, sem poder).
-- Construtor (`construtor.tres`, 4º chapéu, modelo Barbarian com machado,
-  chapéu cônico `kasa`): clique direito espalha estrepes (`scripts/items/trap.gd`):
-  quem pisa leva 15 de dano e fica 50% mais lento por 2 s; até 3, recarga 4 s.
-  Poder no Q: Corrida (o poder que era do Aldeão).
-- Itens no chão (`scripts/items/pickup.gd`): poção (50% da vida), escudo (40
-  por 8 s) e velocidade (1,35x por 6 s). Um a cada 15 s, no máximo 3.
-  Números em `game_config.tres` > Itens no chão.
-- Bots: Construtor arma estrepes com inimigo a até 7 m (ou na defesa do portão);
-  qualquer bot desvia até 10 m para pegar item se não houver inimigo colado.
-- Outras frentes (mudança mínima): `config/classes/` (renomes + construtor) e
-  `config/mapas/vale.tres` (4º lugar de chapéu em (-3, 8.5); mesmo padrão em
-  `map_layout.gd`).
-- Teste: 5 min simulados sem erro; até 6 estrepes simultâneas, itens sendo pegos.
-- Hora do Caos ficou para depois (precisa de relógio de partida).
-
-## 2026-10-29, frente Identidade: mundo ninja e variações
-- Mundo escolhido: Clãs de Neon (ninja). Cabeça menor, um pouco mais realista.
-- `docs/design-jogo.md`: 3 variações por papel com 2 poderes cada; o time
-  escolhe qual oficina construir (poucos terrenos por castelo).
-
-## 2026-10-29, frente Identidade: direção v1 depois do quiz 2
-- `docs/identidade.md`: direção v1 = Clãs de Neon com lado sombrio; Máscara Oni
-  + espíritos substituem princesa + bolo; Brawl Stars 1:3; noite neon; bloco de estilo.
-- `docs/design-jogo.md` (novo): 4 papéis com versões, progressão por oficinas,
-  poderes rápidos x fortes, gatilhos, itens no chão, mapa e partida.
-- `docs/ideias-futuras.md` (novo): jogo de espionagem/hackers pixelado.
-- ROADMAP: Fase 2 reescrita a partir do design. Nenhum código mudou ainda.
-
-## 2026-10-29, frente Identidade: diário e quiz
-- `docs/identidade.md`: diário de nome, tema, estilo geral, logo e divulgação,
-  com as restrições que qualquer estilo precisa respeitar e o bloco de estilo.
-- Prompt do Gemini descartado: conceitos serão pranchas 3D feitas aqui.
-  Quiz de identidade com 8 mundos candidatos (link no `docs/identidade.md`).
-- CLAUDE.md: frente Identidade na tabela de frentes.
-
-## Rodada 6 (2026-10-29), frente Jogabilidade: combate e poderes
-- Combate com peso: hitstop de 60 ms no impacto (atacante e alvo congelam),
-  golpe só no tronco (dá para bater correndo), rastro do golpe, reação
-  Hit_A/Hit_B e morte Death_A/Death_B ao acaso.
-- Combo de 3 golpes (Guerreiro: diagonal, horizontal, de cima; Aldeão: soco,
-  soco, chute). O 3º dá 1,4x dano e empurrão, rastro dourado e hitstop maior.
-- Botão direito (segurar): Guerreiro bloqueia 70% pela frente; Arqueiro
-  carrega o tiro (até 1,6x dano, 1,5x velocidade, linha de mira); Clérigo cura.
-- Flechas em parábola: caem na distância do mouse (6 m até 1,4x o alcance).
-- Medidor de Glacê (0 a 100, no HUD) e poder no Q: Redemoinho, Chuva de
-  flechas, Bênção (cura 40% + escudo 25), Corrida do bolo (+40% velocidade).
-  Números em `game_config.tres` (fontes do medidor) e nos `.tres` das classes.
-- Bots usam o tiro carregado e os poderes (`BotBrain._should_use_power`).
-- Tela cheia: tecla F ou F11 (também no navegador); no navegador o Esc fica
-  travado em tela cheia (Keyboard Lock); o jogo pausa sozinho ao perder o foco.
-- Sons novos: bloqueio, poder, medidor cheio (`tools/gerar_sons.py`, `combate()`).
-- Mexeu em `config/classes/*.tres` (só números de jogabilidade: combo, skill, power).
-
-## Rodada 5 (2026-10-29): reorganização para mudanças fáceis
-- Temas em `config/temas/` (luz, céu, neblina, chão, modelos, cores dos times).
-  Novo tema de exemplo "Sinistro (noite)". Troca em Esc > Configurações > Tema.
-- Mapa em `config/mapas/vale.tres` (arena, muralhas, torres, pedestais, objetos).
-- Classes: lista do pátio e classes iniciais dos bots em `game_config.tres`;
-  formato do chapéu (`hat_style`) no `.tres` de cada classe.
-- Qualidade gráfica com 4 níveis (Mínima = 3D a 50% da resolução) e
-  qualidade automática: baixa sozinha se o FPS ficar < 40 no começo.
-
-## Rodada 4: barra de vida, música, chapéu
-- Barra de vida voltou a diminuir (billboard sem `keep_scale`).
-- Música audível, com loop nativo e canais de áudio fixos.
-- Chapéu só com E, com animação de pegar e pôr na cabeça andando.
-- Corpo de cada personagem numa malha só (menos chamadas de desenho).
-
-## Rodada 3: fluidez e dificuldade
-- Interpolação de física; decoração repetida em MultiMesh; Difícil suavizado.
-
-## Rodada 2: combate e desempenho
-- Bug do empurrão (~45 m por golpe) corrigido; qualidade gráfica e contador de FPS.
-
-## Rodada 1: primeira versão pública
-- Personagens invisíveis no export corrigidos; tela inicial, pausa,
-  controles e configurações.

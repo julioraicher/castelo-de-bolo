@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.godot/**)",
+      "Read(./build/**)",
+      "Read(./assets/**/*.glb)",
+      "Read(./assets/**/*.bin)",
+      "Read(./assets/**/*.scn)",
+      "Read(./assets/**/*.wav)"
+    ]
+  }
+}

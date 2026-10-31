@@ -106,7 +106,7 @@ scale = 1.0
 [sub_resource type="Resource" id="Resource_on1di"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
-position = Vector3(1, 0, -10.12)
+position = Vector3(4.25, 0, -11.8)
 scale = 1.0
 rotation_deg = 90.0
 
@@ -119,109 +119,128 @@ scale = 1.0
 [sub_resource type="Resource" id="Resource_dtvb3"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
-position = Vector3(1, 0, 10.12)
+position = Vector3(4.25, 0, 11.8)
 scale = 1.0
 rotation_deg = 90.0
 
 [sub_resource type="Resource" id="Resource_r4itx"]
 script = ExtResource("1_ril8o")
 model = "rio_a.scn"
-position = Vector3(0, 0, -32)
+position = Vector3(0, 0, -44)
 scale = 1.0
 
 [sub_resource type="Resource" id="Resource_oogts"]
 script = ExtResource("1_ril8o")
 model = "rio_b.scn"
-position = Vector3(0, 0, -24)
+position = Vector3(0, 0, -36)
 scale = 1.0
 
 [sub_resource type="Resource" id="Resource_x76v3"]
 script = ExtResource("1_ril8o")
 model = "rio_a.scn"
-position = Vector3(0, 0, -16)
+position = Vector3(0, 0, -28)
 scale = 1.0
 
 [sub_resource type="Resource" id="Resource_by4fy"]
 script = ExtResource("1_ril8o")
 model = "rio_b.scn"
-position = Vector3(0, 0, -8)
+position = Vector3(0, 0, -20)
 scale = 1.0
 
 [sub_resource type="Resource" id="Resource_5aitp"]
 script = ExtResource("1_ril8o")
 model = "rio_a.scn"
+position = Vector3(0, 0, -12)
 scale = 1.0
 
 [sub_resource type="Resource" id="Resource_h1cbb"]
 script = ExtResource("1_ril8o")
 model = "rio_b.scn"
-position = Vector3(0, 0, 8)
+position = Vector3(0, 0, -4)
 scale = 1.0
 
 [sub_resource type="Resource" id="Resource_o66at"]
 script = ExtResource("1_ril8o")
 model = "rio_a.scn"
-position = Vector3(0, 0, 16)
+position = Vector3(0, 0, 4)
 scale = 1.0
 
 [sub_resource type="Resource" id="Resource_dlar5"]
 script = ExtResource("1_ril8o")
 model = "rio_b.scn"
-position = Vector3(0, 0, 24)
+position = Vector3(0, 0, 12)
 scale = 1.0
 
 [sub_resource type="Resource" id="Resource_w1mt1"]
 script = ExtResource("1_ril8o")
 model = "rio_a.scn"
-position = Vector3(0, 0, 32)
+position = Vector3(0, 0, 20)
 scale = 1.0
 
 [sub_resource type="Resource" id="Resource_sgpl6"]
 script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(0, 0, -30.4)
+model = "rio_b.scn"
+position = Vector3(0, 0, 28)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(10, 3, 12.2)
-collider_offset = Vector3(0, 1.5, 0)
 
 [sub_resource type="Resource" id="Resource_5gowx"]
 script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(0, 0, -11.85)
+model = "rio_a.scn"
+position = Vector3(0, 0, 36)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(10, 3, 15.7)
-collider_offset = Vector3(0, 1.5, 0)
 
 [sub_resource type="Resource" id="Resource_memhr"]
 script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(0, 0, 11.85)
+model = "rio_b.scn"
+position = Vector3(0, 0, 44)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(10, 3, 15.7)
-collider_offset = Vector3(0, 1.5, 0)
 
 [sub_resource type="Resource" id="Resource_ik7bi"]
 script = ExtResource("1_ril8o")
 model = ""
-position = Vector3(0, 0, 30.4)
+position = Vector3(0, 0, -40.65)
 scale = 1.0
 collider = "caixa"
-collider_size = Vector3(10, 3, 12.2)
+collider_size = Vector3(10, 3, 16.7)
 collider_offset = Vector3(0, 1.5, 0)
 
 [sub_resource type="Resource" id="Resource_m5y7b"]
 script = ExtResource("1_ril8o")
 model = ""
-position = Vector3(0, 0, -22)
+position = Vector3(0, 0, -15.85)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(10, 3, 23.7)
+collider_offset = Vector3(0, 1.5, 0)
+
+[sub_resource type="Resource" id="Resource_w4ha3"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(0, 0, 15.85)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(10, 3, 23.7)
+collider_offset = Vector3(0, 1.5, 0)
+
+[sub_resource type="Resource" id="Resource_doqxb"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(0, 0, 40.65)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(10, 3, 16.7)
+collider_offset = Vector3(0, 1.5, 0)
+
+[sub_resource type="Resource" id="Resource_yu1vu"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(0, 0, -30)
 scale = 1.0
 collider = "caixa"
 collider_size = Vector3(10, 0.9, 4.6)
 collider_offset = Vector3(0, 0.45, 0)
 
-[sub_resource type="Resource" id="Resource_w4ha3"]
+[sub_resource type="Resource" id="Resource_0n0so"]
 script = ExtResource("1_ril8o")
 model = ""
 scale = 1.0
@@ -229,21 +248,21 @@ collider = "caixa"
 collider_size = Vector3(10, 0.9, 8)
 collider_offset = Vector3(0, 0.45, 0)
 
-[sub_resource type="Resource" id="Resource_doqxb"]
+[sub_resource type="Resource" id="Resource_267x4"]
 script = ExtResource("1_ril8o")
 model = ""
-position = Vector3(0, 0, 22)
+position = Vector3(0, 0, 30)
 scale = 1.0
 collider = "caixa"
 collider_size = Vector3(10, 0.9, 4.6)
 collider_offset = Vector3(0, 0.45, 0)
 
-[sub_resource type="Resource" id="Resource_yu1vu"]
+[sub_resource type="Resource" id="Resource_30rd4"]
 script = ExtResource("1_ril8o")
 model = "ponte_grande.scn"
 scale = 1.0
 
-[sub_resource type="Resource" id="Resource_0n0so"]
+[sub_resource type="Resource" id="Resource_w2rpu"]
 script = ExtResource("1_ril8o")
 model = ""
 position = Vector3(-9, 0, 0)
@@ -253,7 +272,7 @@ collider_size = Vector3(4.7127485, 0.6, 8)
 collider_rot = Vector3(0, 0, 17.281498)
 collider_offset = Vector3(2.33912, 0.41354296, 0)
 
-[sub_resource type="Resource" id="Resource_267x4"]
+[sub_resource type="Resource" id="Resource_2kcs5"]
 script = ExtResource("1_ril8o")
 model = ""
 position = Vector3(9, 0, 0)
@@ -264,7 +283,7 @@ collider_size = Vector3(4.7127485, 0.6, 8)
 collider_rot = Vector3(0, 0, 17.281498)
 collider_offset = Vector3(2.33912, 0.41354296, 0)
 
-[sub_resource type="Resource" id="Resource_30rd4"]
+[sub_resource type="Resource" id="Resource_806kd"]
 script = ExtResource("1_ril8o")
 model = ""
 scale = 1.0
@@ -272,7 +291,7 @@ collider = "caixa"
 collider_size = Vector3(9.2, 0.5, 8)
 collider_offset = Vector3(0, 1.15, 0)
 
-[sub_resource type="Resource" id="Resource_w2rpu"]
+[sub_resource type="Resource" id="Resource_e0mos"]
 script = ExtResource("1_ril8o")
 model = ""
 scale = 1.0
@@ -280,7 +299,7 @@ collider = "caixa"
 collider_size = Vector3(18, 2.6, 0.3)
 collider_offset = Vector3(0, 1.3, -3.88)
 
-[sub_resource type="Resource" id="Resource_2kcs5"]
+[sub_resource type="Resource" id="Resource_inaxi"]
 script = ExtResource("1_ril8o")
 model = ""
 scale = 1.0
@@ -288,80 +307,26 @@ collider = "caixa"
 collider_size = Vector3(18, 2.6, 0.3)
 collider_offset = Vector3(0, 1.3, 3.88)
 
-[sub_resource type="Resource" id="Resource_806kd"]
-script = ExtResource("1_ril8o")
-model = "ponte_lateral.scn"
-position = Vector3(0, 0, -22)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_e0mos"]
-script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(-9, 0, -22)
-scale = 1.0
-collider = "caixa"
-collider_size = Vector3(4.7127485, 0.6, 4.6)
-collider_rot = Vector3(0, 0, 17.281498)
-collider_offset = Vector3(2.33912, 0.41354296, 0)
-
-[sub_resource type="Resource" id="Resource_inaxi"]
-script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(9, 0, -22)
-scale = 1.0
-rotation_deg = 180.0
-collider = "caixa"
-collider_size = Vector3(4.7127485, 0.6, 4.6)
-collider_rot = Vector3(0, 0, 17.281498)
-collider_offset = Vector3(2.33912, 0.41354296, 0)
-
 [sub_resource type="Resource" id="Resource_ygw44"]
 script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(0, 0, -22)
+model = "ponte_lateral.scn"
+position = Vector3(0, 0, -30)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(9.2, 0.5, 4.6)
-collider_offset = Vector3(0, 1.15, 0)
 
 [sub_resource type="Resource" id="Resource_vhqg1"]
 script = ExtResource("1_ril8o")
 model = ""
-position = Vector3(0, 0, -22)
-scale = 1.0
-collider = "caixa"
-collider_size = Vector3(18, 2.6, 0.3)
-collider_offset = Vector3(0, 1.3, -2.18)
-
-[sub_resource type="Resource" id="Resource_uoif1"]
-script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(0, 0, -22)
-scale = 1.0
-collider = "caixa"
-collider_size = Vector3(18, 2.6, 0.3)
-collider_offset = Vector3(0, 1.3, 2.18)
-
-[sub_resource type="Resource" id="Resource_08ge4"]
-script = ExtResource("1_ril8o")
-model = "ponte_lateral.scn"
-position = Vector3(0, 0, 22)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_demho"]
-script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(-9, 0, 22)
+position = Vector3(-9, 0, -30)
 scale = 1.0
 collider = "caixa"
 collider_size = Vector3(4.7127485, 0.6, 4.6)
 collider_rot = Vector3(0, 0, 17.281498)
 collider_offset = Vector3(2.33912, 0.41354296, 0)
 
-[sub_resource type="Resource" id="Resource_t0b2j"]
+[sub_resource type="Resource" id="Resource_uoif1"]
 script = ExtResource("1_ril8o")
 model = ""
-position = Vector3(9, 0, 22)
+position = Vector3(9, 0, -30)
 scale = 1.0
 rotation_deg = 180.0
 collider = "caixa"
@@ -369,100 +334,132 @@ collider_size = Vector3(4.7127485, 0.6, 4.6)
 collider_rot = Vector3(0, 0, 17.281498)
 collider_offset = Vector3(2.33912, 0.41354296, 0)
 
-[sub_resource type="Resource" id="Resource_1ya6n"]
+[sub_resource type="Resource" id="Resource_08ge4"]
 script = ExtResource("1_ril8o")
 model = ""
-position = Vector3(0, 0, 22)
+position = Vector3(0, 0, -30)
 scale = 1.0
 collider = "caixa"
 collider_size = Vector3(9.2, 0.5, 4.6)
 collider_offset = Vector3(0, 1.15, 0)
 
-[sub_resource type="Resource" id="Resource_xm87d"]
+[sub_resource type="Resource" id="Resource_demho"]
 script = ExtResource("1_ril8o")
 model = ""
-position = Vector3(0, 0, 22)
+position = Vector3(0, 0, -30)
 scale = 1.0
 collider = "caixa"
 collider_size = Vector3(18, 2.6, 0.3)
 collider_offset = Vector3(0, 1.3, -2.18)
 
-[sub_resource type="Resource" id="Resource_0ohag"]
+[sub_resource type="Resource" id="Resource_t0b2j"]
 script = ExtResource("1_ril8o")
 model = ""
-position = Vector3(0, 0, 22)
+position = Vector3(0, 0, -30)
 scale = 1.0
 collider = "caixa"
 collider_size = Vector3(18, 2.6, 0.3)
 collider_offset = Vector3(0, 1.3, 2.18)
 
+[sub_resource type="Resource" id="Resource_1ya6n"]
+script = ExtResource("1_ril8o")
+model = "ponte_lateral.scn"
+position = Vector3(0, 0, 30)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_xm87d"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(-9, 0, 30)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(4.7127485, 0.6, 4.6)
+collider_rot = Vector3(0, 0, 17.281498)
+collider_offset = Vector3(2.33912, 0.41354296, 0)
+
+[sub_resource type="Resource" id="Resource_0ohag"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(9, 0, 30)
+scale = 1.0
+rotation_deg = 180.0
+collider = "caixa"
+collider_size = Vector3(4.7127485, 0.6, 4.6)
+collider_rot = Vector3(0, 0, 17.281498)
+collider_offset = Vector3(2.33912, 0.41354296, 0)
+
 [sub_resource type="Resource" id="Resource_bwwq3"]
 script = ExtResource("1_ril8o")
-model = "cachoeira.scn"
-position = Vector3(0, 0, -37.5)
+model = ""
+position = Vector3(0, 0, 30)
 scale = 1.0
+collider = "caixa"
+collider_size = Vector3(9.2, 0.5, 4.6)
+collider_offset = Vector3(0, 1.15, 0)
 
 [sub_resource type="Resource" id="Resource_i1snh"]
 script = ExtResource("1_ril8o")
-model = "cachoeira.scn"
-position = Vector3(0, 0, 37.5)
+model = ""
+position = Vector3(0, 0, 30)
 scale = 1.0
-rotation_deg = 180.0
+collider = "caixa"
+collider_size = Vector3(18, 2.6, 0.3)
+collider_offset = Vector3(0, 1.3, -2.18)
 
 [sub_resource type="Resource" id="Resource_66ptv"]
 script = ExtResource("1_ril8o")
-model = "ponte_corda.scn"
-position = Vector3(0, 0, -35.2)
+model = ""
+position = Vector3(0, 0, 30)
 scale = 1.0
+collider = "caixa"
+collider_size = Vector3(18, 2.6, 0.3)
+collider_offset = Vector3(0, 1.3, 2.18)
 
 [sub_resource type="Resource" id="Resource_ism2g"]
 script = ExtResource("1_ril8o")
-model = "ponte_corda.scn"
-position = Vector3(0, 0, 35.2)
+model = "cachoeira.scn"
+position = Vector3(0, 0, -49.5)
 scale = 1.0
-rotation_deg = 180.0
 
 [sub_resource type="Resource" id="Resource_67avl"]
 script = ExtResource("1_ril8o")
-model = "barco.scn"
-position = Vector3(1.5, 0, -11)
+model = "cachoeira.scn"
+position = Vector3(0, 0, 49.5)
 scale = 1.0
-rotation_deg = 90.0
+rotation_deg = 180.0
 
 [sub_resource type="Resource" id="Resource_yjw0m"]
 script = ExtResource("1_ril8o")
 model = "barco.scn"
-position = Vector3(-1.5, 0, 12)
+position = Vector3(1.5, 0, -12)
 scale = 1.0
-rotation_deg = -90.0
+rotation_deg = 90.0
 
 [sub_resource type="Resource" id="Resource_ja3p1"]
 script = ExtResource("1_ril8o")
 model = "barco.scn"
-position = Vector3(1.4, 0, -30)
+position = Vector3(-1.5, 0, 13)
 scale = 1.0
-rotation_deg = 90.0
+rotation_deg = -90.0
 
 [sub_resource type="Resource" id="Resource_yfkcp"]
 script = ExtResource("1_ril8o")
 model = "barco.scn"
-position = Vector3(-1.4, 0, 30)
+position = Vector3(1.4, 0, -40)
 scale = 1.0
-rotation_deg = -90.0
+rotation_deg = 90.0
 
 [sub_resource type="Resource" id="Resource_abl5w"]
 script = ExtResource("1_ril8o")
-model = "casa_a.scn"
-position = Vector3(12.5, 0, -9)
+model = "barco.scn"
+position = Vector3(-1.4, 0, 40)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(5, 4.8, 4.5)
-collider_offset = Vector3(0, 2.4, 0)
+rotation_deg = -90.0
 
 [sub_resource type="Resource" id="Resource_4oqlk"]
 script = ExtResource("1_ril8o")
 model = "casa_a.scn"
-position = Vector3(-12.5, 0, -9)
+position = Vector3(14, 0, -10)
 scale = 1.0
 collider = "caixa"
 collider_size = Vector3(5, 4.8, 4.5)
@@ -470,17 +467,17 @@ collider_offset = Vector3(0, 2.4, 0)
 
 [sub_resource type="Resource" id="Resource_foog8"]
 script = ExtResource("1_ril8o")
-model = "loja.scn"
-position = Vector3(18.5, 0, -9)
+model = "casa_a.scn"
+position = Vector3(-14, 0, -10)
 scale = 1.0
 collider = "caixa"
-collider_size = Vector3(5, 4.4, 4.5)
-collider_offset = Vector3(0, 2.2, 0)
+collider_size = Vector3(5, 4.8, 4.5)
+collider_offset = Vector3(0, 2.4, 0)
 
 [sub_resource type="Resource" id="Resource_v3ngt"]
 script = ExtResource("1_ril8o")
 model = "loja.scn"
-position = Vector3(-18.5, 0, -9)
+position = Vector3(24, 0, -10)
 scale = 1.0
 collider = "caixa"
 collider_size = Vector3(5, 4.4, 4.5)
@@ -488,17 +485,17 @@ collider_offset = Vector3(0, 2.2, 0)
 
 [sub_resource type="Resource" id="Resource_a7kwe"]
 script = ExtResource("1_ril8o")
-model = "pousada.scn"
-position = Vector3(27.6, 0, -9)
+model = "loja.scn"
+position = Vector3(-24, 0, -10)
 scale = 1.0
 collider = "caixa"
-collider_size = Vector3(6, 7, 5)
-collider_offset = Vector3(0, 3.5, 0)
+collider_size = Vector3(5, 4.4, 4.5)
+collider_offset = Vector3(0, 2.2, 0)
 
 [sub_resource type="Resource" id="Resource_ps725"]
 script = ExtResource("1_ril8o")
 model = "pousada.scn"
-position = Vector3(-27.6, 0, -9)
+position = Vector3(35, 0, -10)
 scale = 1.0
 collider = "caixa"
 collider_size = Vector3(6, 7, 5)
@@ -506,18 +503,17 @@ collider_offset = Vector3(0, 3.5, 0)
 
 [sub_resource type="Resource" id="Resource_qrwfe"]
 script = ExtResource("1_ril8o")
-model = "loja.scn"
-position = Vector3(12.5, 0, 9)
+model = "pousada.scn"
+position = Vector3(-35, 0, -10)
 scale = 1.0
-rotation_deg = 180.0
 collider = "caixa"
-collider_size = Vector3(5, 4.4, 4.5)
-collider_offset = Vector3(0, 2.2, 0)
+collider_size = Vector3(6, 7, 5)
+collider_offset = Vector3(0, 3.5, 0)
 
 [sub_resource type="Resource" id="Resource_7a5ev"]
 script = ExtResource("1_ril8o")
 model = "loja.scn"
-position = Vector3(-12.5, 0, 9)
+position = Vector3(14, 0, 10)
 scale = 1.0
 rotation_deg = 180.0
 collider = "caixa"
@@ -526,38 +522,36 @@ collider_offset = Vector3(0, 2.2, 0)
 
 [sub_resource type="Resource" id="Resource_rpjbi"]
 script = ExtResource("1_ril8o")
-model = "casa_b.scn"
-position = Vector3(19, 0, 9)
+model = "loja.scn"
+position = Vector3(-14, 0, 10)
 scale = 1.0
 rotation_deg = 180.0
 collider = "caixa"
-collider_size = Vector3(6, 5, 5)
-collider_offset = Vector3(0, 2.5, 0)
+collider_size = Vector3(5, 4.4, 4.5)
+collider_offset = Vector3(0, 2.2, 0)
 
 [sub_resource type="Resource" id="Resource_btvdj"]
 script = ExtResource("1_ril8o")
-model = "casa_b.scn"
-position = Vector3(-19, 0, 9)
+model = "casa_moinho.scn"
+position = Vector3(23, 0, 10)
 scale = 1.0
-rotation_deg = 180.0
 collider = "caixa"
-collider_size = Vector3(6, 5, 5)
+collider_size = Vector3(4.4, 5, 4.2)
 collider_offset = Vector3(0, 2.5, 0)
 
 [sub_resource type="Resource" id="Resource_m6bd5"]
 script = ExtResource("1_ril8o")
-model = "armazem.scn"
-position = Vector3(27.9, 0, 9)
+model = "casa_moinho_esq.scn"
+position = Vector3(-23, 0, 10)
 scale = 1.0
-rotation_deg = 180.0
 collider = "caixa"
-collider_size = Vector3(4.5, 4.8, 4)
-collider_offset = Vector3(0, 2.4, 0)
+collider_size = Vector3(4.4, 5, 4.2)
+collider_offset = Vector3(0, 2.5, 0)
 
 [sub_resource type="Resource" id="Resource_7yrpr"]
 script = ExtResource("1_ril8o")
 model = "armazem.scn"
-position = Vector3(-27.9, 0, 9)
+position = Vector3(36, 0, 10)
 scale = 1.0
 rotation_deg = 180.0
 collider = "caixa"
@@ -566,541 +560,311 @@ collider_offset = Vector3(0, 2.4, 0)
 
 [sub_resource type="Resource" id="Resource_pjnqr"]
 script = ExtResource("1_ril8o")
-model = "forja.scn"
-position = Vector3(19.6, 0, -18)
+model = "armazem.scn"
+position = Vector3(-36, 0, 10)
 scale = 1.0
+rotation_deg = 180.0
 collider = "caixa"
-collider_size = Vector3(5.2, 4, 4.2)
-collider_offset = Vector3(0, 2, 0)
+collider_size = Vector3(4.5, 4.8, 4)
+collider_offset = Vector3(0, 2.4, 0)
 
 [sub_resource type="Resource" id="Resource_of4su"]
 script = ExtResource("1_ril8o")
-model = "forja.scn"
-position = Vector3(-19.6, 0, -18)
+model = ""
+position = Vector3(23, 0, 10)
 scale = 1.0
 collider = "caixa"
-collider_size = Vector3(5.2, 4, 4.2)
-collider_offset = Vector3(0, 2, 0)
+collider_size = Vector3(2.4, 2.6, 1.5)
+collider_offset = Vector3(3.3, 1.3, 2.45)
 
 [sub_resource type="Resource" id="Resource_a77i1"]
 script = ExtResource("1_ril8o")
-model = "jardim.scn"
-position = Vector3(12.5, 0, -18.5)
+model = ""
+position = Vector3(-23, 0, 10)
 scale = 1.0
+collider = "caixa"
+collider_size = Vector3(2.4, 2.6, 1.5)
+collider_offset = Vector3(-3.3, 1.3, 2.45)
 
 [sub_resource type="Resource" id="Resource_w00r8"]
 script = ExtResource("1_ril8o")
-model = "jardim.scn"
-position = Vector3(-12.5, 0, -18.5)
+model = "barraca.scn"
+position = Vector3(19, 0, -5.4)
 scale = 1.0
 
 [sub_resource type="Resource" id="Resource_bbbjw"]
 script = ExtResource("1_ril8o")
-model = "arvore_media.scn"
-position = Vector3(28.5, 0, -18.5)
+model = "barraca.scn"
+position = Vector3(-19, 0, -5.4)
 scale = 1.0
-rotation_deg = -1.0
-collider = "cilindro"
 
 [sub_resource type="Resource" id="Resource_j3j7v"]
 script = ExtResource("1_ril8o")
-model = "arvore_media.scn"
-position = Vector3(-28.5, 0, -18.5)
+model = "barraca.scn"
+position = Vector3(29.5, 0, 5.4)
 scale = 1.0
-rotation_deg = -1.0
-collider = "cilindro"
+rotation_deg = 180.0
 
 [sub_resource type="Resource" id="Resource_3ig3r"]
 script = ExtResource("1_ril8o")
-model = "jardim.scn"
-position = Vector3(28, 0, 18.5)
+model = "barraca.scn"
+position = Vector3(-29.5, 0, 5.4)
 scale = 1.0
 rotation_deg = 180.0
 
 [sub_resource type="Resource" id="Resource_nch16"]
-script = ExtResource("1_ril8o")
-model = "jardim.scn"
-position = Vector3(-28, 0, 18.5)
-scale = 1.0
-rotation_deg = 180.0
-
-[sub_resource type="Resource" id="Resource_4a825"]
-script = ExtResource("1_ril8o")
-model = "arvore_media.scn"
-position = Vector3(12.5, 0, 18.5)
-scale = 1.0
-rotation_deg = -1.0
-collider = "cilindro"
-
-[sub_resource type="Resource" id="Resource_vv6fm"]
-script = ExtResource("1_ril8o")
-model = "arvore_media.scn"
-position = Vector3(-12.5, 0, 18.5)
-scale = 1.0
-rotation_deg = -1.0
-collider = "cilindro"
-
-[sub_resource type="Resource" id="Resource_p0d0s"]
-script = ExtResource("1_ril8o")
-model = "casa_de_cha.scn"
-position = Vector3(20.3, 0, 18)
-scale = 1.0
-collider = "caixa"
-collider_size = Vector3(3.6, 3.2, 3.4)
-collider_offset = Vector3(0, 1.6, -0.6)
-
-[sub_resource type="Resource" id="Resource_fmqpb"]
-script = ExtResource("1_ril8o")
-model = "casa_de_cha.scn"
-position = Vector3(-20.3, 0, 18)
-scale = 1.0
-collider = "caixa"
-collider_size = Vector3(3.6, 3.2, 3.4)
-collider_offset = Vector3(0, 1.6, -0.6)
-
-[sub_resource type="Resource" id="Resource_tuhf6"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
 position = Vector3(10.5, 0, -4.3)
 scale = 1.0
 rotation_deg = 90.0
 
-[sub_resource type="Resource" id="Resource_h3bf5"]
+[sub_resource type="Resource" id="Resource_4a825"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
 position = Vector3(-10.5, 0, -4.3)
 scale = 1.0
 rotation_deg = 90.0
 
-[sub_resource type="Resource" id="Resource_lgune"]
+[sub_resource type="Resource" id="Resource_vv6fm"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
 position = Vector3(10.5, 0, 4.3)
 scale = 1.0
 rotation_deg = -90.0
 
-[sub_resource type="Resource" id="Resource_uj3af"]
+[sub_resource type="Resource" id="Resource_p0d0s"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
 position = Vector3(-10.5, 0, 4.3)
 scale = 1.0
 rotation_deg = -90.0
 
+[sub_resource type="Resource" id="Resource_fmqpb"]
+script = ExtResource("1_ril8o")
+model = "poste.scn"
+position = Vector3(19, 0, -4.3)
+scale = 1.0
+rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_tuhf6"]
+script = ExtResource("1_ril8o")
+model = "poste.scn"
+position = Vector3(-19, 0, -4.3)
+scale = 1.0
+rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_h3bf5"]
+script = ExtResource("1_ril8o")
+model = "poste.scn"
+position = Vector3(19, 0, 4.3)
+scale = 1.0
+rotation_deg = -90.0
+
+[sub_resource type="Resource" id="Resource_lgune"]
+script = ExtResource("1_ril8o")
+model = "poste.scn"
+position = Vector3(-19, 0, 4.3)
+scale = 1.0
+rotation_deg = -90.0
+
+[sub_resource type="Resource" id="Resource_uj3af"]
+script = ExtResource("1_ril8o")
+model = "poste.scn"
+position = Vector3(29.5, 0, -4.3)
+scale = 1.0
+rotation_deg = 90.0
+
 [sub_resource type="Resource" id="Resource_70kba"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
-position = Vector3(16, 0, -4.3)
+position = Vector3(-29.5, 0, -4.3)
 scale = 1.0
 rotation_deg = 90.0
 
 [sub_resource type="Resource" id="Resource_7p5qo"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
-position = Vector3(-16, 0, -4.3)
+position = Vector3(29.5, 0, 4.3)
 scale = 1.0
-rotation_deg = 90.0
+rotation_deg = -90.0
 
 [sub_resource type="Resource" id="Resource_kn00s"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
-position = Vector3(16, 0, 4.3)
+position = Vector3(-29.5, 0, 4.3)
 scale = 1.0
 rotation_deg = -90.0
 
 [sub_resource type="Resource" id="Resource_soxy4"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
-position = Vector3(-16, 0, 4.3)
+position = Vector3(40, 0, -4.3)
 scale = 1.0
-rotation_deg = -90.0
+rotation_deg = 90.0
 
 [sub_resource type="Resource" id="Resource_wripl"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
-position = Vector3(23, 0, -4.3)
+position = Vector3(-40, 0, -4.3)
 scale = 1.0
 rotation_deg = 90.0
 
 [sub_resource type="Resource" id="Resource_aq3h8"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
-position = Vector3(-23, 0, -4.3)
+position = Vector3(40, 0, 4.3)
 scale = 1.0
-rotation_deg = 90.0
+rotation_deg = -90.0
 
 [sub_resource type="Resource" id="Resource_6ln8b"]
 script = ExtResource("1_ril8o")
 model = "poste.scn"
-position = Vector3(23, 0, 4.3)
+position = Vector3(-40, 0, 4.3)
 scale = 1.0
 rotation_deg = -90.0
 
 [sub_resource type="Resource" id="Resource_vsyrq"]
 script = ExtResource("1_ril8o")
-model = "poste.scn"
-position = Vector3(-23, 0, 4.3)
+model = "varal.scn"
+position = Vector3(24, 0, 0)
 scale = 1.0
-rotation_deg = -90.0
 
 [sub_resource type="Resource" id="Resource_mt20c"]
 script = ExtResource("1_ril8o")
-model = "poste.scn"
-position = Vector3(30.5, 0, -4.3)
+model = "varal.scn"
+position = Vector3(-24, 0, 0)
 scale = 1.0
-rotation_deg = 90.0
 
 [sub_resource type="Resource" id="Resource_qmxnv"]
-script = ExtResource("1_ril8o")
-model = "poste.scn"
-position = Vector3(-30.5, 0, -4.3)
-scale = 1.0
-rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_wb8f6"]
-script = ExtResource("1_ril8o")
-model = "poste.scn"
-position = Vector3(30.5, 0, 4.3)
-scale = 1.0
-rotation_deg = -90.0
-
-[sub_resource type="Resource" id="Resource_5rnkr"]
-script = ExtResource("1_ril8o")
-model = "poste.scn"
-position = Vector3(-30.5, 0, 4.3)
-scale = 1.0
-rotation_deg = -90.0
-
-[sub_resource type="Resource" id="Resource_nlg6r"]
-script = ExtResource("1_ril8o")
-model = "varal.scn"
-position = Vector3(19, 0, 0)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_4kcae"]
-script = ExtResource("1_ril8o")
-model = "varal.scn"
-position = Vector3(-19, 0, 0)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_1cjor"]
 script = ExtResource("1_ril8o")
 model = "torii.scn"
 position = Vector3(10.5, 0, 0)
 scale = 1.0
 
-[sub_resource type="Resource" id="Resource_1qh2v"]
+[sub_resource type="Resource" id="Resource_wb8f6"]
 script = ExtResource("1_ril8o")
 model = "torii.scn"
 position = Vector3(-10.5, 0, 0)
 scale = 1.0
 
+[sub_resource type="Resource" id="Resource_5rnkr"]
+script = ExtResource("1_ril8o")
+model = "forja.scn"
+position = Vector3(22, 0, -18.5)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(5.2, 4, 4.2)
+collider_offset = Vector3(0, 2, 0)
+
+[sub_resource type="Resource" id="Resource_nlg6r"]
+script = ExtResource("1_ril8o")
+model = "forja.scn"
+position = Vector3(-22, 0, -18.5)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(5.2, 4, 4.2)
+collider_offset = Vector3(0, 2, 0)
+
+[sub_resource type="Resource" id="Resource_4kcae"]
+script = ExtResource("1_ril8o")
+model = "casa_de_cha.scn"
+position = Vector3(31, 0, 18.5)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(3.6, 3.2, 3.4)
+collider_offset = Vector3(0, 1.6, -0.6)
+
+[sub_resource type="Resource" id="Resource_1cjor"]
+script = ExtResource("1_ril8o")
+model = "casa_de_cha.scn"
+position = Vector3(-31, 0, 18.5)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(3.6, 3.2, 3.4)
+collider_offset = Vector3(0, 1.6, -0.6)
+
+[sub_resource type="Resource" id="Resource_1qh2v"]
+script = ExtResource("1_ril8o")
+model = "jardim.scn"
+position = Vector3(15, 0, 18.5)
+scale = 1.0
+
 [sub_resource type="Resource" id="Resource_rq71n"]
 script = ExtResource("1_ril8o")
-model = "carroca.scn"
-position = Vector3(23.5, 0, -13)
+model = "jardim.scn"
+position = Vector3(-15, 0, 18.5)
 scale = 1.0
-rotation_deg = 10.0
 
 [sub_resource type="Resource" id="Resource_op7yx"]
 script = ExtResource("1_ril8o")
-model = "carroca.scn"
-position = Vector3(-23.5, 0, -13)
+model = "barricada.scn"
+position = Vector3(32, 0, -19)
 scale = 1.0
-rotation_deg = 10.0
+collider = "caixa"
+collider_size = Vector3(6, 1.6, 1.4)
+collider_offset = Vector3(0, 0.8, 0)
 
 [sub_resource type="Resource" id="Resource_bkvlt"]
 script = ExtResource("1_ril8o")
-model = "colina.scn"
-position = Vector3(20, 0, 30)
+model = "barricada.scn"
+position = Vector3(-32, 0, -19)
 scale = 1.0
 collider = "caixa"
-collider_size = Vector3(12, 2.4, 8)
-collider_offset = Vector3(0, 1.2, 0)
+collider_size = Vector3(6, 1.6, 1.4)
+collider_offset = Vector3(0, 0.8, 0)
 
 [sub_resource type="Resource" id="Resource_84568"]
 script = ExtResource("1_ril8o")
-model = "escada_colina.scn"
-position = Vector3(8.5, 0, 28.5)
+model = "carroca.scn"
+position = Vector3(40, 0, -15.5)
 scale = 1.0
+rotation_deg = 10.0
 
 [sub_resource type="Resource" id="Resource_lgs38"]
 script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(8.5, 0, 28.5)
+model = "carroca.scn"
+position = Vector3(-40, 0, -15.5)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(6.0008335, 0.6, 3.2)
-collider_rot = Vector3(0, 0, 23.574707)
-collider_offset = Vector3(2.8699834, 0.92503816, 0)
+rotation_deg = 10.0
 
 [sub_resource type="Resource" id="Resource_sww2x"]
 script = ExtResource("1_ril8o")
-model = "escada_colina.scn"
-position = Vector3(31.5, 0, 31)
+model = "festival.scn"
+position = Vector3(40.5, 0, 20)
 scale = 1.0
 rotation_deg = 180.0
+collider = "cilindro"
+collider_radius = 1.2
 
 [sub_resource type="Resource" id="Resource_msrjx"]
 script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(31.5, 0, 31)
+model = "festival.scn"
+position = Vector3(-40.5, 0, 20)
 scale = 1.0
 rotation_deg = 180.0
-collider = "caixa"
-collider_size = Vector3(6.0008335, 0.6, 3.2)
-collider_rot = Vector3(0, 0, 23.574707)
-collider_offset = Vector3(2.8699834, 0.92503816, 0)
+collider = "cilindro"
+collider_radius = 1.2
 
 [sub_resource type="Resource" id="Resource_w3bkq"]
 script = ExtResource("1_ril8o")
-model = "vigia.scn"
-position = Vector3(20.5, 2.4, 32.2)
+model = "pilha.scn"
+position = Vector3(14.5, 0, -18.5)
 scale = 1.0
+rotation_deg = -1.0
 collider = "cilindro"
-collider_radius = 1.9
-collider_height = 6.0
+collider_radius = 1.2
 
 [sub_resource type="Resource" id="Resource_wqwuc"]
 script = ExtResource("1_ril8o")
-model = "arvore_media.scn"
-position = Vector3(16.5, 2.4, 32)
+model = "pilha.scn"
+position = Vector3(-14.5, 0, -18.5)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
-collider_height = 3.0
+collider_radius = 1.2
 
 [sub_resource type="Resource" id="Resource_cw11u"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(18.5, 2.4, 27.4)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_rwyli"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(24.5, 2.4, 27.4)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_o1623"]
-script = ExtResource("1_ril8o")
-model = "colina.scn"
-position = Vector3(20, 0, -30)
-scale = 1.0
-collider = "caixa"
-collider_size = Vector3(12, 2.4, 8)
-collider_offset = Vector3(0, 1.2, 0)
-
-[sub_resource type="Resource" id="Resource_hjtlw"]
-script = ExtResource("1_ril8o")
-model = "escada_colina.scn"
-position = Vector3(8.5, 0, -28.5)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_gji1g"]
-script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(8.5, 0, -28.5)
-scale = 1.0
-collider = "caixa"
-collider_size = Vector3(6.0008335, 0.6, 3.2)
-collider_rot = Vector3(0, 0, 23.574707)
-collider_offset = Vector3(2.8699834, 0.92503816, 0)
-
-[sub_resource type="Resource" id="Resource_s3l5j"]
-script = ExtResource("1_ril8o")
-model = "escada_colina.scn"
-position = Vector3(31.5, 0, -31)
-scale = 1.0
-rotation_deg = 180.0
-
-[sub_resource type="Resource" id="Resource_6cdk5"]
-script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(31.5, 0, -31)
-scale = 1.0
-rotation_deg = 180.0
-collider = "caixa"
-collider_size = Vector3(6.0008335, 0.6, 3.2)
-collider_rot = Vector3(0, 0, 23.574707)
-collider_offset = Vector3(2.8699834, 0.92503816, 0)
-
-[sub_resource type="Resource" id="Resource_vjtk1"]
-script = ExtResource("1_ril8o")
-model = "pagode.scn"
-position = Vector3(20.5, 2.4, -32.2)
-scale = 1.0
-collider = "cilindro"
-collider_radius = 1.9
-collider_height = 6.0
-
-[sub_resource type="Resource" id="Resource_71rjb"]
-script = ExtResource("1_ril8o")
-model = "arvore_media.scn"
-position = Vector3(16.5, 2.4, -32)
-scale = 1.0
-rotation_deg = -1.0
-collider = "cilindro"
-collider_height = 3.0
-
-[sub_resource type="Resource" id="Resource_ttuid"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(18.5, 2.4, -27.4)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_drmcr"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(24.5, 2.4, -27.4)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_4fqi7"]
-script = ExtResource("1_ril8o")
-model = "colina.scn"
-position = Vector3(-20, 0, 30)
-scale = 1.0
-collider = "caixa"
-collider_size = Vector3(12, 2.4, 8)
-collider_offset = Vector3(0, 1.2, 0)
-
-[sub_resource type="Resource" id="Resource_7c8dh"]
-script = ExtResource("1_ril8o")
-model = "escada_colina.scn"
-position = Vector3(-8.5, 0, 28.5)
-scale = 1.0
-rotation_deg = 180.0
-
-[sub_resource type="Resource" id="Resource_au76l"]
-script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(-8.5, 0, 28.5)
-scale = 1.0
-rotation_deg = 180.0
-collider = "caixa"
-collider_size = Vector3(6.0008335, 0.6, 3.2)
-collider_rot = Vector3(0, 0, 23.574707)
-collider_offset = Vector3(2.8699834, 0.92503816, 0)
-
-[sub_resource type="Resource" id="Resource_vnte5"]
-script = ExtResource("1_ril8o")
-model = "escada_colina.scn"
-position = Vector3(-31.5, 0, 31)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_wd6qs"]
-script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(-31.5, 0, 31)
-scale = 1.0
-collider = "caixa"
-collider_size = Vector3(6.0008335, 0.6, 3.2)
-collider_rot = Vector3(0, 0, 23.574707)
-collider_offset = Vector3(2.8699834, 0.92503816, 0)
-
-[sub_resource type="Resource" id="Resource_l2apr"]
-script = ExtResource("1_ril8o")
-model = "vigia.scn"
-position = Vector3(-20.5, 2.4, 32.2)
-scale = 1.0
-collider = "cilindro"
-collider_radius = 1.9
-collider_height = 6.0
-
-[sub_resource type="Resource" id="Resource_6maac"]
-script = ExtResource("1_ril8o")
-model = "arvore_media.scn"
-position = Vector3(-16.5, 2.4, 32)
-scale = 1.0
-rotation_deg = -1.0
-collider = "cilindro"
-collider_height = 3.0
-
-[sub_resource type="Resource" id="Resource_20hkc"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(-18.5, 2.4, 27.4)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_qx2r1"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(-24.5, 2.4, 27.4)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_26jhn"]
-script = ExtResource("1_ril8o")
-model = "colina.scn"
-position = Vector3(-20, 0, -30)
-scale = 1.0
-collider = "caixa"
-collider_size = Vector3(12, 2.4, 8)
-collider_offset = Vector3(0, 1.2, 0)
-
-[sub_resource type="Resource" id="Resource_1v16w"]
-script = ExtResource("1_ril8o")
-model = "escada_colina.scn"
-position = Vector3(-8.5, 0, -28.5)
-scale = 1.0
-rotation_deg = 180.0
-
-[sub_resource type="Resource" id="Resource_lh11q"]
-script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(-8.5, 0, -28.5)
-scale = 1.0
-rotation_deg = 180.0
-collider = "caixa"
-collider_size = Vector3(6.0008335, 0.6, 3.2)
-collider_rot = Vector3(0, 0, 23.574707)
-collider_offset = Vector3(2.8699834, 0.92503816, 0)
-
-[sub_resource type="Resource" id="Resource_og1tq"]
-script = ExtResource("1_ril8o")
-model = "escada_colina.scn"
-position = Vector3(-31.5, 0, -31)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_celrn"]
-script = ExtResource("1_ril8o")
-model = ""
-position = Vector3(-31.5, 0, -31)
-scale = 1.0
-collider = "caixa"
-collider_size = Vector3(6.0008335, 0.6, 3.2)
-collider_rot = Vector3(0, 0, 23.574707)
-collider_offset = Vector3(2.8699834, 0.92503816, 0)
-
-[sub_resource type="Resource" id="Resource_sw2rq"]
-script = ExtResource("1_ril8o")
-model = "pagode.scn"
-position = Vector3(-20.5, 2.4, -32.2)
-scale = 1.0
-collider = "cilindro"
-collider_radius = 1.9
-collider_height = 6.0
-
-[sub_resource type="Resource" id="Resource_jikrm"]
-script = ExtResource("1_ril8o")
-model = "arvore_media.scn"
-position = Vector3(-16.5, 2.4, -32)
-scale = 1.0
-rotation_deg = -1.0
-collider = "cilindro"
-collider_height = 3.0
-
-[sub_resource type="Resource" id="Resource_yyd01"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(-18.5, 2.4, -27.4)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_vk656"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(-24.5, 2.4, -27.4)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_khrbp"]
 script = ExtResource("1_ril8o")
 model = "rochas.scn"
 position = Vector3(6, 0, -13.2)
@@ -1108,7 +872,7 @@ scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
 
-[sub_resource type="Resource" id="Resource_ouc7q"]
+[sub_resource type="Resource" id="Resource_rwyli"]
 script = ExtResource("1_ril8o")
 model = "rochas.scn"
 position = Vector3(-6, 0, -13.2)
@@ -1116,7 +880,7 @@ scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
 
-[sub_resource type="Resource" id="Resource_bau8b"]
+[sub_resource type="Resource" id="Resource_o1623"]
 script = ExtResource("1_ril8o")
 model = "rochas.scn"
 position = Vector3(6, 0, 13.3)
@@ -1124,7 +888,7 @@ scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
 
-[sub_resource type="Resource" id="Resource_yirtp"]
+[sub_resource type="Resource" id="Resource_hjtlw"]
 script = ExtResource("1_ril8o")
 model = "rochas.scn"
 position = Vector3(-6, 0, 13.3)
@@ -1132,448 +896,1623 @@ scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
 
+[sub_resource type="Resource" id="Resource_gji1g"]
+script = ExtResource("1_ril8o")
+model = "aldeoes.scn"
+position = Vector3(44, 0, -22)
+scale = 1.0
+rotation_deg = 200.0
+collider = "cilindro"
+
+[sub_resource type="Resource" id="Resource_s3l5j"]
+script = ExtResource("1_ril8o")
+model = "aldeoes.scn"
+position = Vector3(-44, 0, -22)
+scale = 1.0
+rotation_deg = 200.0
+collider = "cilindro"
+
+[sub_resource type="Resource" id="Resource_6cdk5"]
+script = ExtResource("1_ril8o")
+model = "aldeoes.scn"
+position = Vector3(26, 0, 22)
+scale = 1.0
+rotation_deg = 20.0
+collider = "cilindro"
+
+[sub_resource type="Resource" id="Resource_vjtk1"]
+script = ExtResource("1_ril8o")
+model = "aldeoes.scn"
+position = Vector3(-26, 0, 22)
+scale = 1.0
+rotation_deg = 20.0
+collider = "cilindro"
+
+[sub_resource type="Resource" id="Resource_71rjb"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(12.5, 0, -24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_ttuid"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-12.5, 0, -24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_drmcr"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(14.9, 0, -23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_4fqi7"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-14.9, 0, -23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_7c8dh"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(16, 0, -35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_au76l"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-16, 0, -35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_vnte5"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(18.4, 0, -37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_wd6qs"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(-18.4, 0, -37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_l2apr"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(23.5, 0, -24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_6maac"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-23.5, 0, -24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_20hkc"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(25.9, 0, -23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_qx2r1"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-25.9, 0, -23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_26jhn"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(27, 0, -35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_1v16w"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-27, 0, -35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_lh11q"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(29.4, 0, -37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_og1tq"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(-29.4, 0, -37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_celrn"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(35.5, 0, -24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_sw2rq"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-35.5, 0, -24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_jikrm"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(37.9, 0, -23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_yyd01"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-37.9, 0, -23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_vk656"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(39, 0, -35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_khrbp"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-39, 0, -35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_ouc7q"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(41.4, 0, -37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_bau8b"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(-41.4, 0, -37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_yirtp"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(47.5, 0, -24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
 [sub_resource type="Resource" id="Resource_elk7n"]
 script = ExtResource("1_ril8o")
-model = "barricada.scn"
-position = Vector3(17.5, 0, -25.2)
+model = "arvore_media.scn"
+position = Vector3(-47.5, 0, -24.8)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(6, 1.6, 1.4)
-collider_offset = Vector3(0, 0.8, 0)
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_50c32"]
 script = ExtResource("1_ril8o")
-model = "barricada.scn"
-position = Vector3(-17.5, 0, -25.2)
+model = "arvore_media.scn"
+position = Vector3(49.9, 0, -23.4)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(6, 1.6, 1.4)
-collider_offset = Vector3(0, 0.8, 0)
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_x0my7"]
 script = ExtResource("1_ril8o")
-model = "festival.scn"
-position = Vector3(20, 0, 25)
+model = "arvore_media.scn"
+position = Vector3(-49.9, 0, -23.4)
 scale = 1.0
-rotation_deg = 180.0
+rotation_deg = -1.0
 collider = "cilindro"
-collider_radius = 1.2
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_t4av4"]
 script = ExtResource("1_ril8o")
-model = "festival.scn"
-position = Vector3(-20, 0, 25)
+model = "arvore_media.scn"
+position = Vector3(51, 0, -35.6)
 scale = 1.0
-rotation_deg = 180.0
+rotation_deg = -1.0
 collider = "cilindro"
-collider_radius = 1.2
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_rw46m"]
 script = ExtResource("1_ril8o")
-model = "jizos.scn"
-position = Vector3(28.5, 0, -22)
+model = "arvore_media.scn"
+position = Vector3(-51, 0, -35.6)
 scale = 1.0
-rotation_deg = 90.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_4yv6x"]
 script = ExtResource("1_ril8o")
-model = "jizos.scn"
-position = Vector3(-28.5, 0, -22)
+model = "arvore_grande.scn"
+position = Vector3(53.4, 0, -37)
 scale = 1.0
-rotation_deg = 90.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_04hm5"]
 script = ExtResource("1_ril8o")
-model = "poco.scn"
-position = Vector3(31.5, 0, -24.8)
+model = "arvore_grande.scn"
+position = Vector3(-53.4, 0, -37)
 scale = 1.0
+rotation_deg = -1.0
 collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_wpa4b"]
 script = ExtResource("1_ril8o")
-model = "poco.scn"
-position = Vector3(-31.5, 0, -24.8)
+model = "arvore_media.scn"
+position = Vector3(59.5, 0, -24.8)
 scale = 1.0
+rotation_deg = -1.0
 collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_kmm1s"]
 script = ExtResource("1_ril8o")
-model = "pilha.scn"
-position = Vector3(28.5, 0, 24)
+model = "arvore_media.scn"
+position = Vector3(-59.5, 0, -24.8)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
-collider_radius = 1.2
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_4p1ah"]
 script = ExtResource("1_ril8o")
-model = "pilha.scn"
-position = Vector3(-28.5, 0, 24)
+model = "arvore_media.scn"
+position = Vector3(61.9, 0, -23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_k1u0s"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-61.9, 0, -23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_ea0iu"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(63, 0, -35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_jxu1v"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-63, 0, -35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_ncu0p"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(65.4, 0, -37)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
 collider_radius = 1.2
-
-[sub_resource type="Resource" id="Resource_k1u0s"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(10, 0, -19.5)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_ea0iu"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(-10, 0, -19.5)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_jxu1v"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(10, 0, -24.5)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_ncu0p"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(-10, 0, -24.5)
-scale = 1.0
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_kpaaq"]
 script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(10, 0, 19.5)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_pa5s8"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(-10, 0, 19.5)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_qobaj"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(10, 0, 24.5)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_qa32l"]
-script = ExtResource("1_ril8o")
-model = "lanterna_pedra.scn"
-position = Vector3(-10, 0, 24.5)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_0geo3"]
-script = ExtResource("1_ril8o")
-model = "estatua.scn"
-position = Vector3(34.5, 0, -34)
-scale = 1.0
-collider = "cilindro"
-collider_radius = 0.8
-
-[sub_resource type="Resource" id="Resource_tl8h5"]
-script = ExtResource("1_ril8o")
-model = "estatua.scn"
-position = Vector3(-34.5, 0, -34)
-scale = 1.0
-collider = "cilindro"
-collider_radius = 0.8
-
-[sub_resource type="Resource" id="Resource_eqs7o"]
-script = ExtResource("1_ril8o")
 model = "arvore_grande.scn"
-position = Vector3(6.5, 0, -34)
+position = Vector3(-65.4, 0, -37)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
-collider_radius = 2.0
-collider_height = 4.0
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_pa5s8"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(70.5, 0, -24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_qobaj"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-70.5, 0, -24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_qa32l"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(72.9, 0, -23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_0geo3"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-72.9, 0, -23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_tl8h5"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(74, 0, -35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_eqs7o"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-74, 0, -35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_hn0b5"]
 script = ExtResource("1_ril8o")
 model = "arvore_grande.scn"
-position = Vector3(-6.5, 0, -34)
+position = Vector3(76.4, 0, -37)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
-collider_radius = 2.0
-collider_height = 4.0
+collider_radius = 1.2
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_wj8jk"]
 script = ExtResource("1_ril8o")
 model = "arvore_grande.scn"
-position = Vector3(6.5, 0, 34)
+position = Vector3(-76.4, 0, -37)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
-collider_radius = 2.0
-collider_height = 4.0
+collider_radius = 1.2
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_j67j7"]
 script = ExtResource("1_ril8o")
-model = "arvore_grande.scn"
-position = Vector3(-6.5, 0, 34)
+model = "lanterna_pedra.scn"
+position = Vector3(12, 0, -32.6)
 scale = 1.0
-rotation_deg = -1.0
-collider = "cilindro"
-collider_radius = 2.0
-collider_height = 4.0
 
 [sub_resource type="Resource" id="Resource_0prya"]
 script = ExtResource("1_ril8o")
-model = "templo.scn"
-position = Vector3(50, 0, -28.5)
+model = "lanterna_pedra.scn"
+position = Vector3(-12, 0, -32.6)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(8.4, 5, 6.6)
-collider_offset = Vector3(0, 2.5, 0)
 
 [sub_resource type="Resource" id="Resource_l8gb5"]
 script = ExtResource("1_ril8o")
-model = "templo.scn"
-position = Vector3(-50, 0, -28.5)
+model = "lanterna_pedra.scn"
+position = Vector3(24, 0, -27.4)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(8.4, 5, 6.6)
-collider_offset = Vector3(0, 2.5, 0)
 
 [sub_resource type="Resource" id="Resource_dtt7l"]
 script = ExtResource("1_ril8o")
-model = "arvore_espirito.scn"
-position = Vector3(61, 0, -30.5)
+model = "lanterna_pedra.scn"
+position = Vector3(-24, 0, -27.4)
 scale = 1.0
-rotation_deg = -1.0
-collider = "cilindro"
-collider_radius = 1.8
-collider_height = 5.0
 
 [sub_resource type="Resource" id="Resource_iicny"]
 script = ExtResource("1_ril8o")
-model = "arvore_espirito.scn"
-position = Vector3(-61, 0, -30.5)
+model = "lanterna_pedra.scn"
+position = Vector3(36, 0, -32.6)
 scale = 1.0
-rotation_deg = -1.0
-collider = "cilindro"
-collider_radius = 1.8
-collider_height = 5.0
 
 [sub_resource type="Resource" id="Resource_divst"]
 script = ExtResource("1_ril8o")
-model = "dojo.scn"
-position = Vector3(47, 0, 28.5)
+model = "lanterna_pedra.scn"
+position = Vector3(-36, 0, -32.6)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(8.3, 4.5, 6.3)
-collider_offset = Vector3(0, 2.25, 0)
 
 [sub_resource type="Resource" id="Resource_cyopn"]
 script = ExtResource("1_ril8o")
-model = "dojo.scn"
-position = Vector3(-47, 0, 28.5)
+model = "lanterna_pedra.scn"
+position = Vector3(48, 0, -27.4)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(8.3, 4.5, 6.3)
-collider_offset = Vector3(0, 2.25, 0)
 
 [sub_resource type="Resource" id="Resource_0l8q8"]
 script = ExtResource("1_ril8o")
-model = "lago.scn"
-position = Vector3(58.5, 0, 27)
+model = "lanterna_pedra.scn"
+position = Vector3(-48, 0, -27.4)
 scale = 1.0
-collider = "cilindro"
-collider_radius = 3.2
 
 [sub_resource type="Resource" id="Resource_hkuxc"]
 script = ExtResource("1_ril8o")
-model = "lago.scn"
-position = Vector3(-58.5, 0, 27)
+model = "lanterna_pedra.scn"
+position = Vector3(60, 0, -32.6)
 scale = 1.0
-collider = "cilindro"
-collider_radius = 3.2
 
 [sub_resource type="Resource" id="Resource_6l4wm"]
 script = ExtResource("1_ril8o")
-model = "bambuzal.scn"
-position = Vector3(40.5, 0, 24)
+model = "lanterna_pedra.scn"
+position = Vector3(-60, 0, -32.6)
 scale = 1.0
-rotation_deg = 90.0
-collider = "caixa"
-collider_size = Vector3(7, 4, 3)
-collider_offset = Vector3(0, 2, 0)
 
 [sub_resource type="Resource" id="Resource_x4s0c"]
 script = ExtResource("1_ril8o")
-model = "bambuzal.scn"
-position = Vector3(-40.5, 0, 24)
+model = "lanterna_pedra.scn"
+position = Vector3(72, 0, -27.4)
 scale = 1.0
-rotation_deg = 90.0
-collider = "caixa"
-collider_size = Vector3(7, 4, 3)
-collider_offset = Vector3(0, 2, 0)
 
 [sub_resource type="Resource" id="Resource_taft7"]
 script = ExtResource("1_ril8o")
-model = "bambuzal.scn"
-position = Vector3(62, 0, -24)
+model = "lanterna_pedra.scn"
+position = Vector3(-72, 0, -27.4)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(7, 4, 3)
-collider_offset = Vector3(0, 2, 0)
 
 [sub_resource type="Resource" id="Resource_la5u6"]
 script = ExtResource("1_ril8o")
-model = "bambuzal.scn"
-position = Vector3(-62, 0, -24)
+model = "arvore_media.scn"
+position = Vector3(12.5, 0, 24.8)
 scale = 1.0
-collider = "caixa"
-collider_size = Vector3(7, 4, 3)
-collider_offset = Vector3(0, 2, 0)
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_thmgk"]
 script = ExtResource("1_ril8o")
-model = "santuario.scn"
-position = Vector3(41, 0, -29)
+model = "arvore_media.scn"
+position = Vector3(-12.5, 0, 24.8)
 scale = 1.0
+rotation_deg = -1.0
 collider = "cilindro"
-collider_radius = 1.3
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_kdg34"]
 script = ExtResource("1_ril8o")
-model = "santuario.scn"
-position = Vector3(-41, 0, -29)
+model = "arvore_media.scn"
+position = Vector3(14.9, 0, 23.4)
 scale = 1.0
+rotation_deg = -1.0
 collider = "cilindro"
-collider_radius = 1.3
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_tgkdp"]
 script = ExtResource("1_ril8o")
-model = "arvore_alta.scn"
-position = Vector3(64.5, 0, 31.5)
+model = "arvore_media.scn"
+position = Vector3(-14.9, 0, 23.4)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
-collider_radius = 2.0
-collider_height = 4.0
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_d1w33"]
 script = ExtResource("1_ril8o")
-model = "arvore_alta.scn"
-position = Vector3(-64.5, 0, 31.5)
+model = "arvore_media.scn"
+position = Vector3(16, 0, 35.6)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
-collider_radius = 2.0
-collider_height = 4.0
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_s8vfe"]
 script = ExtResource("1_ril8o")
 model = "arvore_media.scn"
-position = Vector3(44, 0, -34.5)
+position = Vector3(-16, 0, 35.6)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_dlvvi"]
 script = ExtResource("1_ril8o")
-model = "arvore_media.scn"
-position = Vector3(-44, 0, -34.5)
+model = "arvore_grande.scn"
+position = Vector3(18.4, 0, 37)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_igt1k"]
 script = ExtResource("1_ril8o")
-model = "ruina.scn"
-position = Vector3(44, 0, 20.5)
+model = "arvore_grande.scn"
+position = Vector3(-18.4, 0, 37)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
-collider_radius = 1.4
+collider_radius = 1.2
+collider_height = 3.0
 
 [sub_resource type="Resource" id="Resource_ml6ru"]
 script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(23.5, 0, 24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_s0085"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-23.5, 0, 24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_s0nlu"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(25.9, 0, 23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_1iabd"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-25.9, 0, 23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_cxjy5"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(27, 0, 35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_ihs7b"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-27, 0, 35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_iq4nw"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(29.4, 0, 37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_mvv5o"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(-29.4, 0, 37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_nnr8l"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(35.5, 0, 24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_2huiy"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-35.5, 0, 24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_svheg"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(37.9, 0, 23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_5k5mj"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-37.9, 0, 23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_cxoxx"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(39, 0, 35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_m68qr"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-39, 0, 35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_rqvpg"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(41.4, 0, 37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_aalll"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(-41.4, 0, 37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_55kub"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(51, 0, 35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_qwt8f"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-51, 0, 35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_ikyy4"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(53.4, 0, 37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_8mqjg"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(-53.4, 0, 37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_t371n"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(59.5, 0, 24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_62dgg"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-59.5, 0, 24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_fiq73"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(61.9, 0, 23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_8tv4v"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-61.9, 0, 23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_lkxkt"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(63, 0, 35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_ygerw"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-63, 0, 35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_m2w0k"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(65.4, 0, 37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_ujxd5"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(-65.4, 0, 37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_50428"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(70.5, 0, 24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_5d8gx"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-70.5, 0, 24.8)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_384y0"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(72.9, 0, 23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_foais"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-72.9, 0, 23.4)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_snkw2"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(74, 0, 35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_xjiwv"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-74, 0, 35.6)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 0.8
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_svhgu"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(76.4, 0, 37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_853dn"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(-76.4, 0, 37)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.2
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_t8xvw"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(12, 0, 32.6)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_vkxui"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(-12, 0, 32.6)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_65qls"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(24, 0, 27.4)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_s7r6l"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(-24, 0, 27.4)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_ym7an"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(36, 0, 32.6)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_umtyj"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(-36, 0, 32.6)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_q1v2q"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(48, 0, 27.4)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_2kcy5"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(-48, 0, 27.4)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_6b58r"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(60, 0, 32.6)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_2h78h"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(-60, 0, 32.6)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_htw3i"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(72, 0, 27.4)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_f6is2"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(-72, 0, 27.4)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_h8aqo"]
+script = ExtResource("1_ril8o")
+model = "jizos.scn"
+position = Vector3(17, 0, -26.6)
+scale = 1.0
+rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_balk0"]
+script = ExtResource("1_ril8o")
+model = "jizos.scn"
+position = Vector3(-17, 0, -26.6)
+scale = 1.0
+rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_t1cc1"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(6.5, 0, -40)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 2.0
+collider_height = 4.0
+
+[sub_resource type="Resource" id="Resource_ctrfv"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(-6.5, 0, -40)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 2.0
+collider_height = 4.0
+
+[sub_resource type="Resource" id="Resource_oci86"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(6.5, 0, 40)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 2.0
+collider_height = 4.0
+
+[sub_resource type="Resource" id="Resource_8v4go"]
+script = ExtResource("1_ril8o")
+model = "arvore_grande.scn"
+position = Vector3(-6.5, 0, 40)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 2.0
+collider_height = 4.0
+
+[sub_resource type="Resource" id="Resource_ighe8"]
+script = ExtResource("1_ril8o")
+model = "colina.scn"
+position = Vector3(24, 0, 41.5)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(12, 2.4, 8)
+collider_offset = Vector3(0, 1.2, 0)
+
+[sub_resource type="Resource" id="Resource_h6qcy"]
+script = ExtResource("1_ril8o")
+model = "escada_colina.scn"
+position = Vector3(12.5, 0, 40)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_dqq7c"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(12.5, 0, 40)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(6.0008335, 0.6, 3.2)
+collider_rot = Vector3(0, 0, 23.574707)
+collider_offset = Vector3(2.8699834, 0.92503816, 0)
+
+[sub_resource type="Resource" id="Resource_h0863"]
+script = ExtResource("1_ril8o")
+model = "escada_colina.scn"
+position = Vector3(35.5, 0, 42.5)
+scale = 1.0
+rotation_deg = 180.0
+
+[sub_resource type="Resource" id="Resource_r4fcs"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(35.5, 0, 42.5)
+scale = 1.0
+rotation_deg = 180.0
+collider = "caixa"
+collider_size = Vector3(6.0008335, 0.6, 3.2)
+collider_rot = Vector3(0, 0, 23.574707)
+collider_offset = Vector3(2.8699834, 0.92503816, 0)
+
+[sub_resource type="Resource" id="Resource_noqno"]
+script = ExtResource("1_ril8o")
+model = "vigia.scn"
+position = Vector3(24.5, 2.4, 43.7)
+scale = 1.0
+collider = "cilindro"
+collider_radius = 1.9
+collider_height = 6.0
+
+[sub_resource type="Resource" id="Resource_0rfxx"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(20.5, 2.4, 43.5)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_mcuc2"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(22.5, 2.4, 38.9)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_ifb2b"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(28.5, 2.4, 38.9)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_si1ws"]
+script = ExtResource("1_ril8o")
+model = "colina.scn"
+position = Vector3(24, 0, -41.5)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(12, 2.4, 8)
+collider_offset = Vector3(0, 1.2, 0)
+
+[sub_resource type="Resource" id="Resource_1rpob"]
+script = ExtResource("1_ril8o")
+model = "escada_colina.scn"
+position = Vector3(12.5, 0, -40)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_4psvm"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(12.5, 0, -40)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(6.0008335, 0.6, 3.2)
+collider_rot = Vector3(0, 0, 23.574707)
+collider_offset = Vector3(2.8699834, 0.92503816, 0)
+
+[sub_resource type="Resource" id="Resource_xna2v"]
+script = ExtResource("1_ril8o")
+model = "escada_colina.scn"
+position = Vector3(35.5, 0, -42.5)
+scale = 1.0
+rotation_deg = 180.0
+
+[sub_resource type="Resource" id="Resource_osayq"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(35.5, 0, -42.5)
+scale = 1.0
+rotation_deg = 180.0
+collider = "caixa"
+collider_size = Vector3(6.0008335, 0.6, 3.2)
+collider_rot = Vector3(0, 0, 23.574707)
+collider_offset = Vector3(2.8699834, 0.92503816, 0)
+
+[sub_resource type="Resource" id="Resource_evoib"]
+script = ExtResource("1_ril8o")
+model = "pagode.scn"
+position = Vector3(24.5, 2.4, -43.7)
+scale = 1.0
+collider = "cilindro"
+collider_radius = 1.9
+collider_height = 6.0
+
+[sub_resource type="Resource" id="Resource_df5kh"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(20.5, 2.4, -43.5)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_r4b5h"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(22.5, 2.4, -38.9)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_7tfg8"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(28.5, 2.4, -38.9)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_v88mq"]
+script = ExtResource("1_ril8o")
+model = "colina.scn"
+position = Vector3(-24, 0, 41.5)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(12, 2.4, 8)
+collider_offset = Vector3(0, 1.2, 0)
+
+[sub_resource type="Resource" id="Resource_0laqv"]
+script = ExtResource("1_ril8o")
+model = "escada_colina.scn"
+position = Vector3(-12.5, 0, 40)
+scale = 1.0
+rotation_deg = 180.0
+
+[sub_resource type="Resource" id="Resource_1m7s6"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(-12.5, 0, 40)
+scale = 1.0
+rotation_deg = 180.0
+collider = "caixa"
+collider_size = Vector3(6.0008335, 0.6, 3.2)
+collider_rot = Vector3(0, 0, 23.574707)
+collider_offset = Vector3(2.8699834, 0.92503816, 0)
+
+[sub_resource type="Resource" id="Resource_08geg"]
+script = ExtResource("1_ril8o")
+model = "escada_colina.scn"
+position = Vector3(-35.5, 0, 42.5)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_nbs6b"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(-35.5, 0, 42.5)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(6.0008335, 0.6, 3.2)
+collider_rot = Vector3(0, 0, 23.574707)
+collider_offset = Vector3(2.8699834, 0.92503816, 0)
+
+[sub_resource type="Resource" id="Resource_tako0"]
+script = ExtResource("1_ril8o")
+model = "vigia.scn"
+position = Vector3(-24.5, 2.4, 43.7)
+scale = 1.0
+collider = "cilindro"
+collider_radius = 1.9
+collider_height = 6.0
+
+[sub_resource type="Resource" id="Resource_5r6wy"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-20.5, 2.4, 43.5)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_m8mim"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(-22.5, 2.4, 38.9)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_2vfju"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(-28.5, 2.4, 38.9)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_38e0b"]
+script = ExtResource("1_ril8o")
+model = "colina.scn"
+position = Vector3(-24, 0, -41.5)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(12, 2.4, 8)
+collider_offset = Vector3(0, 1.2, 0)
+
+[sub_resource type="Resource" id="Resource_folw2"]
+script = ExtResource("1_ril8o")
+model = "escada_colina.scn"
+position = Vector3(-12.5, 0, -40)
+scale = 1.0
+rotation_deg = 180.0
+
+[sub_resource type="Resource" id="Resource_coesw"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(-12.5, 0, -40)
+scale = 1.0
+rotation_deg = 180.0
+collider = "caixa"
+collider_size = Vector3(6.0008335, 0.6, 3.2)
+collider_rot = Vector3(0, 0, 23.574707)
+collider_offset = Vector3(2.8699834, 0.92503816, 0)
+
+[sub_resource type="Resource" id="Resource_m6bth"]
+script = ExtResource("1_ril8o")
+model = "escada_colina.scn"
+position = Vector3(-35.5, 0, -42.5)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_0ti2i"]
+script = ExtResource("1_ril8o")
+model = ""
+position = Vector3(-35.5, 0, -42.5)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(6.0008335, 0.6, 3.2)
+collider_rot = Vector3(0, 0, 23.574707)
+collider_offset = Vector3(2.8699834, 0.92503816, 0)
+
+[sub_resource type="Resource" id="Resource_rcodi"]
+script = ExtResource("1_ril8o")
+model = "pagode.scn"
+position = Vector3(-24.5, 2.4, -43.7)
+scale = 1.0
+collider = "cilindro"
+collider_radius = 1.9
+collider_height = 6.0
+
+[sub_resource type="Resource" id="Resource_gcj3b"]
+script = ExtResource("1_ril8o")
+model = "arvore_media.scn"
+position = Vector3(-20.5, 2.4, -43.5)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_height = 3.0
+
+[sub_resource type="Resource" id="Resource_psl74"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(-22.5, 2.4, -38.9)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_4ep0u"]
+script = ExtResource("1_ril8o")
+model = "lanterna_pedra.scn"
+position = Vector3(-28.5, 2.4, -38.9)
+scale = 1.0
+
+[sub_resource type="Resource" id="Resource_syxse"]
+script = ExtResource("1_ril8o")
+model = "templo.scn"
+position = Vector3(58, 0, -42)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(8.4, 5, 6.6)
+collider_offset = Vector3(0, 2.5, 0)
+
+[sub_resource type="Resource" id="Resource_i804u"]
+script = ExtResource("1_ril8o")
+model = "templo.scn"
+position = Vector3(-58, 0, -42)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(8.4, 5, 6.6)
+collider_offset = Vector3(0, 2.5, 0)
+
+[sub_resource type="Resource" id="Resource_hgl4x"]
+script = ExtResource("1_ril8o")
+model = "dojo.scn"
+position = Vector3(58, 0, 42)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(8.3, 4.5, 6.3)
+collider_offset = Vector3(0, 2.25, 0)
+
+[sub_resource type="Resource" id="Resource_3pjb1"]
+script = ExtResource("1_ril8o")
+model = "dojo.scn"
+position = Vector3(-58, 0, 42)
+scale = 1.0
+collider = "caixa"
+collider_size = Vector3(8.3, 4.5, 6.3)
+collider_offset = Vector3(0, 2.25, 0)
+
+[sub_resource type="Resource" id="Resource_mjaa1"]
+script = ExtResource("1_ril8o")
+model = "santuario.scn"
+position = Vector3(46, 0, -42)
+scale = 1.0
+collider = "cilindro"
+collider_radius = 1.3
+
+[sub_resource type="Resource" id="Resource_uyv7x"]
+script = ExtResource("1_ril8o")
+model = "santuario.scn"
+position = Vector3(-46, 0, -42)
+scale = 1.0
+collider = "cilindro"
+collider_radius = 1.3
+
+[sub_resource type="Resource" id="Resource_pbu5m"]
+script = ExtResource("1_ril8o")
 model = "ruina.scn"
-position = Vector3(-44, 0, 20.5)
+position = Vector3(46, 0, 42)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
 collider_radius = 1.4
 
-[sub_resource type="Resource" id="Resource_s0085"]
+[sub_resource type="Resource" id="Resource_ihh14"]
 script = ExtResource("1_ril8o")
-model = "rochas.scn"
-position = Vector3(57, 0, 20)
+model = "ruina.scn"
+position = Vector3(-46, 0, 42)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
+collider_radius = 1.4
 
-[sub_resource type="Resource" id="Resource_s0nlu"]
+[sub_resource type="Resource" id="Resource_4l75m"]
 script = ExtResource("1_ril8o")
-model = "rochas.scn"
-position = Vector3(-57, 0, 20)
+model = "arvore_espirito.scn"
+position = Vector3(74, 0, -42)
 scale = 1.0
 rotation_deg = -1.0
 collider = "cilindro"
+collider_radius = 1.8
+collider_height = 5.0
 
-[sub_resource type="Resource" id="Resource_1iabd"]
+[sub_resource type="Resource" id="Resource_j11br"]
 script = ExtResource("1_ril8o")
-model = "cerca.scn"
-position = Vector3(57, 0, 34)
+model = "arvore_espirito.scn"
+position = Vector3(-74, 0, -42)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 1.8
+collider_height = 5.0
+
+[sub_resource type="Resource" id="Resource_w0gfa"]
+script = ExtResource("1_ril8o")
+model = "lago.scn"
+position = Vector3(73, 0, 41)
+scale = 1.0
+collider = "cilindro"
+collider_radius = 3.2
+
+[sub_resource type="Resource" id="Resource_aavt6"]
+script = ExtResource("1_ril8o")
+model = "lago.scn"
+position = Vector3(-73, 0, 41)
+scale = 1.0
+collider = "cilindro"
+collider_radius = 3.2
+
+[sub_resource type="Resource" id="Resource_lfqqf"]
+script = ExtResource("1_ril8o")
+model = "arrozal.scn"
+position = Vector3(66, 0, -22)
 scale = 1.0
 
-[sub_resource type="Resource" id="Resource_cxjy5"]
+[sub_resource type="Resource" id="Resource_1grqe"]
 script = ExtResource("1_ril8o")
-model = "cerca.scn"
-position = Vector3(-57, 0, 34)
+model = "arrozal.scn"
+position = Vector3(-66, 0, -22)
 scale = 1.0
 
-[sub_resource type="Resource" id="Resource_ihs7b"]
+[sub_resource type="Resource" id="Resource_ku5yc"]
 script = ExtResource("1_ril8o")
-model = "cerca.scn"
-position = Vector3(54, 0, -33.5)
+model = "poco.scn"
+position = Vector3(72, 0, 21)
 scale = 1.0
-
-[sub_resource type="Resource" id="Resource_iq4nw"]
-script = ExtResource("1_ril8o")
-model = "cerca.scn"
-position = Vector3(-54, 0, -33.5)
-scale = 1.0
-
-[sub_resource type="Resource" id="Resource_mvv5o"]
-script = ExtResource("1_ril8o")
-model = "aldeoes.scn"
-position = Vector3(32, 0, -27.5)
-scale = 1.0
-rotation_deg = 200.0
 collider = "cilindro"
 
-[sub_resource type="Resource" id="Resource_nnr8l"]
+[sub_resource type="Resource" id="Resource_xxo4u"]
 script = ExtResource("1_ril8o")
-model = "aldeoes.scn"
-position = Vector3(-32, 0, -27.5)
+model = "poco.scn"
+position = Vector3(-72, 0, 21)
 scale = 1.0
-rotation_deg = 200.0
 collider = "cilindro"
 
-[sub_resource type="Resource" id="Resource_2huiy"]
+[sub_resource type="Resource" id="Resource_4q85i"]
 script = ExtResource("1_ril8o")
-model = "aldeoes.scn"
-position = Vector3(32, 0, 27.5)
+model = "estatua.scn"
+position = Vector3(36, 0, -46)
 scale = 1.0
-rotation_deg = 20.0
 collider = "cilindro"
+collider_radius = 0.8
 
-[sub_resource type="Resource" id="Resource_svheg"]
+[sub_resource type="Resource" id="Resource_yybwp"]
 script = ExtResource("1_ril8o")
-model = "aldeoes.scn"
-position = Vector3(-32, 0, 27.5)
+model = "estatua.scn"
+position = Vector3(-36, 0, -46)
 scale = 1.0
-rotation_deg = 20.0
 collider = "cilindro"
+collider_radius = 0.8
+
+[sub_resource type="Resource" id="Resource_hfr88"]
+script = ExtResource("1_ril8o")
+model = "arvore_alta.scn"
+position = Vector3(81, 0, 46)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 2.0
+collider_height = 4.0
+
+[sub_resource type="Resource" id="Resource_6g1hg"]
+script = ExtResource("1_ril8o")
+model = "arvore_alta.scn"
+position = Vector3(-81, 0, 46)
+scale = 1.0
+rotation_deg = -1.0
+collider = "cilindro"
+collider_radius = 2.0
+collider_height = 4.0
 
 [resource]
 script = ExtResource("2_e1w3p")
 display_name = "Rio das Lanternas"
-cake_area = Vector2(30, 30)
+castle_distance = 60.0
+half_width = 84.0
+half_depth = 48.0
+cake_area = Vector2(40, 40)
 wall_back = -16.0
 wall_front = 12.0
 wall_half_width = 16.0
@@ -1581,12 +2520,15 @@ gate_half_width = 6.8
 keep_position = Vector2(-9, 0)
 tower_spots = PackedVector2Array(12, -7.6, 12, 7.6)
 tower_collider_radius = 2.0
-hat_spots = PackedVector2Array(5, -8.5, 5, 8.5, -3, -8.5, -3, 8.5)
-oficina_spots = PackedVector2Array(-8.5, -8.3, -8.5, 8.3)
+hat_spots = PackedVector2Array(7, -9.2, 7, 9.2, 2.5, -9.2, 2.5, 9.2)
+oficina_spots = PackedVector2Array(-3.5, -7, -3.5, 7)
+tree_spots = PackedVector2Array(9.5, 21, 8, 25)
+bamboo_spots = PackedVector2Array(6.8, -16.2, 8.4, -16.9, 7.2, 16.4, -6.8, -16.2, -8.4, -16.9, -7.2, 16.4)
+pilha_spot = Vector2(9, 7.4)
 wall_height = 3.2
 wall_thickness = 3.6
 wall_model = "muralha.scn"
 tower_model = "torre_alta_{cor}.scn"
 flag_height = 8.0
 courtyard_props = Array[ExtResource("1_ril8o")]([SubResource("Resource_4163d"), SubResource("Resource_e8n2q"), SubResource("Resource_oxdmy"), SubResource("Resource_ufae6"), SubResource("Resource_k1oph"), SubResource("Resource_sj05m"), SubResource("Resource_jyk32"), SubResource("Resource_bh77e"), SubResource("Resource_f8mvd"), SubResource("Resource_hheca"), SubResource("Resource_8ugdl"), SubResource("Resource_kyupv"), SubResource("Resource_yu8u7"), SubResource("Resource_on1di"), SubResource("Resource_1sh4a"), SubResource("Resource_dtvb3")])
-middle_props = Array[ExtResource("1_ril8o")]([SubResource("Resource_r4itx"), SubResource("Resource_oogts"), SubResource("Resource_x76v3"), SubResource("Resource_by4fy"), SubResource("Resource_5aitp"), SubResource("Resource_h1cbb"), SubResource("Resource_o66at"), SubResource("Resource_dlar5"), SubResource("Resource_w1mt1"), SubResource("Resource_sgpl6"), SubResource("Resource_5gowx"), SubResource("Resource_memhr"), SubResource("Resource_ik7bi"), SubResource("Resource_m5y7b"), SubResource("Resource_w4ha3"), SubResource("Resource_doqxb"), SubResource("Resource_yu1vu"), SubResource("Resource_0n0so"), SubResource("Resource_267x4"), SubResource("Resource_30rd4"), SubResource("Resource_w2rpu"), SubResource("Resource_2kcs5"), SubResource("Resource_806kd"), SubResource("Resource_e0mos"), SubResource("Resource_inaxi"), SubResource("Resource_ygw44"), SubResource("Resource_vhqg1"), SubResource("Resource_uoif1"), SubResource("Resource_08ge4"), SubResource("Resource_demho"), SubResource("Resource_t0b2j"), SubResource("Resource_1ya6n"), SubResource("Resource_xm87d"), SubResource("Resource_0ohag"), SubResource("Resource_bwwq3"), SubResource("Resource_i1snh"), SubResource("Resource_66ptv"), SubResource("Resource_ism2g"), SubResource("Resource_67avl"), SubResource("Resource_yjw0m"), SubResource("Resource_ja3p1"), SubResource("Resource_yfkcp"), SubResource("Resource_abl5w"), SubResource("Resource_4oqlk"), SubResource("Resource_foog8"), SubResource("Resource_v3ngt"), SubResource("Resource_a7kwe"), SubResource("Resource_ps725"), SubResource("Resource_qrwfe"), SubResource("Resource_7a5ev"), SubResource("Resource_rpjbi"), SubResource("Resource_btvdj"), SubResource("Resource_m6bd5"), SubResource("Resource_7yrpr"), SubResource("Resource_pjnqr"), SubResource("Resource_of4su"), SubResource("Resource_a77i1"), SubResource("Resource_w00r8"), SubResource("Resource_bbbjw"), SubResource("Resource_j3j7v"), SubResource("Resource_3ig3r"), SubResource("Resource_nch16"), SubResource("Resource_4a825"), SubResource("Resource_vv6fm"), SubResource("Resource_p0d0s"), SubResource("Resource_fmqpb"), SubResource("Resource_tuhf6"), SubResource("Resource_h3bf5"), SubResource("Resource_lgune"), SubResource("Resource_uj3af"), SubResource("Resource_70kba"), SubResource("Resource_7p5qo"), SubResource("Resource_kn00s"), SubResource("Resource_soxy4"), SubResource("Resource_wripl"), SubResource("Resource_aq3h8"), SubResource("Resource_6ln8b"), SubResource("Resource_vsyrq"), SubResource("Resource_mt20c"), SubResource("Resource_qmxnv"), SubResource("Resource_wb8f6"), SubResource("Resource_5rnkr"), SubResource("Resource_nlg6r"), SubResource("Resource_4kcae"), SubResource("Resource_1cjor"), SubResource("Resource_1qh2v"), SubResource("Resource_rq71n"), SubResource("Resource_op7yx"), SubResource("Resource_bkvlt"), SubResource("Resource_84568"), SubResource("Resource_lgs38"), SubResource("Resource_sww2x"), SubResource("Resource_msrjx"), SubResource("Resource_w3bkq"), SubResource("Resource_wqwuc"), SubResource("Resource_cw11u"), SubResource("Resource_rwyli"), SubResource("Resource_o1623"), SubResource("Resource_hjtlw"), SubResource("Resource_gji1g"), SubResource("Resource_s3l5j"), SubResource("Resource_6cdk5"), SubResource("Resource_vjtk1"), SubResource("Resource_71rjb"), SubResource("Resource_ttuid"), SubResource("Resource_drmcr"), SubResource("Resource_4fqi7"), SubResource("Resource_7c8dh"), SubResource("Resource_au76l"), SubResource("Resource_vnte5"), SubResource("Resource_wd6qs"), SubResource("Resource_l2apr"), SubResource("Resource_6maac"), SubResource("Resource_20hkc"), SubResource("Resource_qx2r1"), SubResource("Resource_26jhn"), SubResource("Resource_1v16w"), SubResource("Resource_lh11q"), SubResource("Resource_og1tq"), SubResource("Resource_celrn"), SubResource("Resource_sw2rq"), SubResource("Resource_jikrm"), SubResource("Resource_yyd01"), SubResource("Resource_vk656"), SubResource("Resource_khrbp"), SubResource("Resource_ouc7q"), SubResource("Resource_bau8b"), SubResource("Resource_yirtp"), SubResource("Resource_elk7n"), SubResource("Resource_50c32"), SubResource("Resource_x0my7"), SubResource("Resource_t4av4"), SubResource("Resource_rw46m"), SubResource("Resource_4yv6x"), SubResource("Resource_04hm5"), SubResource("Resource_wpa4b"), SubResource("Resource_kmm1s"), SubResource("Resource_4p1ah"), SubResource("Resource_k1u0s"), SubResource("Resource_ea0iu"), SubResource("Resource_jxu1v"), SubResource("Resource_ncu0p"), SubResource("Resource_kpaaq"), SubResource("Resource_pa5s8"), SubResource("Resource_qobaj"), SubResource("Resource_qa32l"), SubResource("Resource_0geo3"), SubResource("Resource_tl8h5"), SubResource("Resource_eqs7o"), SubResource("Resource_hn0b5"), SubResource("Resource_wj8jk"), SubResource("Resource_j67j7"), SubResource("Resource_0prya"), SubResource("Resource_l8gb5"), SubResource("Resource_dtt7l"), SubResource("Resource_iicny"), SubResource("Resource_divst"), SubResource("Resource_cyopn"), SubResource("Resource_0l8q8"), SubResource("Resource_hkuxc"), SubResource("Resource_6l4wm"), SubResource("Resource_x4s0c"), SubResource("Resource_taft7"), SubResource("Resource_la5u6"), SubResource("Resource_thmgk"), SubResource("Resource_kdg34"), SubResource("Resource_tgkdp"), SubResource("Resource_d1w33"), SubResource("Resource_s8vfe"), SubResource("Resource_dlvvi"), SubResource("Resource_igt1k"), SubResource("Resource_ml6ru"), SubResource("Resource_s0085"), SubResource("Resource_s0nlu"), SubResource("Resource_1iabd"), SubResource("Resource_cxjy5"), SubResource("Resource_ihs7b"), SubResource("Resource_iq4nw"), SubResource("Resource_mvv5o"), SubResource("Resource_nnr8l"), SubResource("Resource_2huiy"), SubResource("Resource_svheg")])
+middle_props = Array[ExtResource("1_ril8o")]([SubResource("Resource_r4itx"), SubResource("Resource_oogts"), SubResource("Resource_x76v3"), SubResource("Resource_by4fy"), SubResource("Resource_5aitp"), SubResource("Resource_h1cbb"), SubResource("Resource_o66at"), SubResource("Resource_dlar5"), SubResource("Resource_w1mt1"), SubResource("Resource_sgpl6"), SubResource("Resource_5gowx"), SubResource("Resource_memhr"), SubResource("Resource_ik7bi"), SubResource("Resource_m5y7b"), SubResource("Resource_w4ha3"), SubResource("Resource_doqxb"), SubResource("Resource_yu1vu"), SubResource("Resource_0n0so"), SubResource("Resource_267x4"), SubResource("Resource_30rd4"), SubResource("Resource_w2rpu"), SubResource("Resource_2kcs5"), SubResource("Resource_806kd"), SubResource("Resource_e0mos"), SubResource("Resource_inaxi"), SubResource("Resource_ygw44"), SubResource("Resource_vhqg1"), SubResource("Resource_uoif1"), SubResource("Resource_08ge4"), SubResource("Resource_demho"), SubResource("Resource_t0b2j"), SubResource("Resource_1ya6n"), SubResource("Resource_xm87d"), SubResource("Resource_0ohag"), SubResource("Resource_bwwq3"), SubResource("Resource_i1snh"), SubResource("Resource_66ptv"), SubResource("Resource_ism2g"), SubResource("Resource_67avl"), SubResource("Resource_yjw0m"), SubResource("Resource_ja3p1"), SubResource("Resource_yfkcp"), SubResource("Resource_abl5w"), SubResource("Resource_4oqlk"), SubResource("Resource_foog8"), SubResource("Resource_v3ngt"), SubResource("Resource_a7kwe"), SubResource("Resource_ps725"), SubResource("Resource_qrwfe"), SubResource("Resource_7a5ev"), SubResource("Resource_rpjbi"), SubResource("Resource_btvdj"), SubResource("Resource_m6bd5"), SubResource("Resource_7yrpr"), SubResource("Resource_pjnqr"), SubResource("Resource_of4su"), SubResource("Resource_a77i1"), SubResource("Resource_w00r8"), SubResource("Resource_bbbjw"), SubResource("Resource_j3j7v"), SubResource("Resource_3ig3r"), SubResource("Resource_nch16"), SubResource("Resource_4a825"), SubResource("Resource_vv6fm"), SubResource("Resource_p0d0s"), SubResource("Resource_fmqpb"), SubResource("Resource_tuhf6"), SubResource("Resource_h3bf5"), SubResource("Resource_lgune"), SubResource("Resource_uj3af"), SubResource("Resource_70kba"), SubResource("Resource_7p5qo"), SubResource("Resource_kn00s"), SubResource("Resource_soxy4"), SubResource("Resource_wripl"), SubResource("Resource_aq3h8"), SubResource("Resource_6ln8b"), SubResource("Resource_vsyrq"), SubResource("Resource_mt20c"), SubResource("Resource_qmxnv"), SubResource("Resource_wb8f6"), SubResource("Resource_5rnkr"), SubResource("Resource_nlg6r"), SubResource("Resource_4kcae"), SubResource("Resource_1cjor"), SubResource("Resource_1qh2v"), SubResource("Resource_rq71n"), SubResource("Resource_op7yx"), SubResource("Resource_bkvlt"), SubResource("Resource_84568"), SubResource("Resource_lgs38"), SubResource("Resource_sww2x"), SubResource("Resource_msrjx"), SubResource("Resource_w3bkq"), SubResource("Resource_wqwuc"), SubResource("Resource_cw11u"), SubResource("Resource_rwyli"), SubResource("Resource_o1623"), SubResource("Resource_hjtlw"), SubResource("Resource_gji1g"), SubResource("Resource_s3l5j"), SubResource("Resource_6cdk5"), SubResource("Resource_vjtk1"), SubResource("Resource_71rjb"), SubResource("Resource_ttuid"), SubResource("Resource_drmcr"), SubResource("Resource_4fqi7"), SubResource("Resource_7c8dh"), SubResource("Resource_au76l"), SubResource("Resource_vnte5"), SubResource("Resource_wd6qs"), SubResource("Resource_l2apr"), SubResource("Resource_6maac"), SubResource("Resource_20hkc"), SubResource("Resource_qx2r1"), SubResource("Resource_26jhn"), SubResource("Resource_1v16w"), SubResource("Resource_lh11q"), SubResource("Resource_og1tq"), SubResource("Resource_celrn"), SubResource("Resource_sw2rq"), SubResource("Resource_jikrm"), SubResource("Resource_yyd01"), SubResource("Resource_vk656"), SubResource("Resource_khrbp"), SubResource("Resource_ouc7q"), SubResource("Resource_bau8b"), SubResource("Resource_yirtp"), SubResource("Resource_elk7n"), SubResource("Resource_50c32"), SubResource("Resource_x0my7"), SubResource("Resource_t4av4"), SubResource("Resource_rw46m"), SubResource("Resource_4yv6x"), SubResource("Resource_04hm5"), SubResource("Resource_wpa4b"), SubResource("Resource_kmm1s"), SubResource("Resource_4p1ah"), SubResource("Resource_k1u0s"), SubResource("Resource_ea0iu"), SubResource("Resource_jxu1v"), SubResource("Resource_ncu0p"), SubResource("Resource_kpaaq"), SubResource("Resource_pa5s8"), SubResource("Resource_qobaj"), SubResource("Resource_qa32l"), SubResource("Resource_0geo3"), SubResource("Resource_tl8h5"), SubResource("Resource_eqs7o"), SubResource("Resource_hn0b5"), SubResource("Resource_wj8jk"), SubResource("Resource_j67j7"), SubResource("Resource_0prya"), SubResource("Resource_l8gb5"), SubResource("Resource_dtt7l"), SubResource("Resource_iicny"), SubResource("Resource_divst"), SubResource("Resource_cyopn"), SubResource("Resource_0l8q8"), SubResource("Resource_hkuxc"), SubResource("Resource_6l4wm"), SubResource("Resource_x4s0c"), SubResource("Resource_taft7"), SubResource("Resource_la5u6"), SubResource("Resource_thmgk"), SubResource("Resource_kdg34"), SubResource("Resource_tgkdp"), SubResource("Resource_d1w33"), SubResource("Resource_s8vfe"), SubResource("Resource_dlvvi"), SubResource("Resource_igt1k"), SubResource("Resource_ml6ru"), SubResource("Resource_s0085"), SubResource("Resource_s0nlu"), SubResource("Resource_1iabd"), SubResource("Resource_cxjy5"), SubResource("Resource_ihs7b"), SubResource("Resource_iq4nw"), SubResource("Resource_mvv5o"), SubResource("Resource_nnr8l"), SubResource("Resource_2huiy"), SubResource("Resource_svheg"), SubResource("Resource_5k5mj"), SubResource("Resource_cxoxx"), SubResource("Resource_m68qr"), SubResource("Resource_rqvpg"), SubResource("Resource_aalll"), SubResource("Resource_55kub"), SubResource("Resource_qwt8f"), SubResource("Resource_ikyy4"), SubResource("Resource_8mqjg"), SubResource("Resource_t371n"), SubResource("Resource_62dgg"), SubResource("Resource_fiq73"), SubResource("Resource_8tv4v"), SubResource("Resource_lkxkt"), SubResource("Resource_ygerw"), SubResource("Resource_m2w0k"), SubResource("Resource_ujxd5"), SubResource("Resource_50428"), SubResource("Resource_5d8gx"), SubResource("Resource_384y0"), SubResource("Resource_foais"), SubResource("Resource_snkw2"), SubResource("Resource_xjiwv"), SubResource("Resource_svhgu"), SubResource("Resource_853dn"), SubResource("Resource_t8xvw"), SubResource("Resource_vkxui"), SubResource("Resource_65qls"), SubResource("Resource_s7r6l"), SubResource("Resource_ym7an"), SubResource("Resource_umtyj"), SubResource("Resource_q1v2q"), SubResource("Resource_2kcy5"), SubResource("Resource_6b58r"), SubResource("Resource_2h78h"), SubResource("Resource_htw3i"), SubResource("Resource_f6is2"), SubResource("Resource_h8aqo"), SubResource("Resource_balk0"), SubResource("Resource_t1cc1"), SubResource("Resource_ctrfv"), SubResource("Resource_oci86"), SubResource("Resource_8v4go"), SubResource("Resource_ighe8"), SubResource("Resource_h6qcy"), SubResource("Resource_dqq7c"), SubResource("Resource_h0863"), SubResource("Resource_r4fcs"), SubResource("Resource_noqno"), SubResource("Resource_0rfxx"), SubResource("Resource_mcuc2"), SubResource("Resource_ifb2b"), SubResource("Resource_si1ws"), SubResource("Resource_1rpob"), SubResource("Resource_4psvm"), SubResource("Resource_xna2v"), SubResource("Resource_osayq"), SubResource("Resource_evoib"), SubResource("Resource_df5kh"), SubResource("Resource_r4b5h"), SubResource("Resource_7tfg8"), SubResource("Resource_v88mq"), SubResource("Resource_0laqv"), SubResource("Resource_1m7s6"), SubResource("Resource_08geg"), SubResource("Resource_nbs6b"), SubResource("Resource_tako0"), SubResource("Resource_5r6wy"), SubResource("Resource_m8mim"), SubResource("Resource_2vfju"), SubResource("Resource_38e0b"), SubResource("Resource_folw2"), SubResource("Resource_coesw"), SubResource("Resource_m6bth"), SubResource("Resource_0ti2i"), SubResource("Resource_rcodi"), SubResource("Resource_gcj3b"), SubResource("Resource_psl74"), SubResource("Resource_4ep0u"), SubResource("Resource_syxse"), SubResource("Resource_i804u"), SubResource("Resource_hgl4x"), SubResource("Resource_3pjb1"), SubResource("Resource_mjaa1"), SubResource("Resource_uyv7x"), SubResource("Resource_pbu5m"), SubResource("Resource_ihh14"), SubResource("Resource_4l75m"), SubResource("Resource_j11br"), SubResource("Resource_w0gfa"), SubResource("Resource_aavt6"), SubResource("Resource_lfqqf"), SubResource("Resource_1grqe"), SubResource("Resource_ku5yc"), SubResource("Resource_xxo4u"), SubResource("Resource_4q85i"), SubResource("Resource_yybwp"), SubResource("Resource_hfr88"), SubResource("Resource_6g1hg")])

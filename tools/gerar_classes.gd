@@ -12,7 +12,8 @@ const CORPO := {
 	"Barbarian": ["Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight"],
 }
 
-const CABECA := 0.8
+const CABECA := 0.58
+const EXTREMIDADES := 1.3
 
 ## arquivo -> campos. "glb" escolhe o corpo; o resto vai direto para ClassStats.
 var CLASSES := {
@@ -100,6 +101,7 @@ func _init() -> void:
 		var novo: Resource = script.new()  # começa do padrão para não herdar campos velhos
 		novo.id = StringName(nome)
 		novo.escala_cabeca = CABECA
+		novo.escala_extremidades = EXTREMIDADES
 		novo.model = load("res://assets/characters/%s.glb" % d.glb)
 		novo.visible_meshes = PackedStringArray(CORPO[d.glb])
 		for k in d:
