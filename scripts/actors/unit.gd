@@ -391,6 +391,15 @@ func hp_ratio() -> float:
 	return hp / max_hp()
 
 
+## No meio de um golpe (antecipação ou animação): para os bots lerem o combo.
+func atacando() -> bool:
+	return _attack_t > 0.0 or _windup_t > 0.0
+
+
+func dash_pronto() -> bool:
+	return _dodge_cd <= 0.0 and _dodge_t <= 0.0 and not carried_princess
+
+
 ## Vida máxima de verdade: a da classe vezes GameConfig.vida_mult.
 func max_hp() -> float:
 	return stats.max_hp * Config.cfg.vida_mult
