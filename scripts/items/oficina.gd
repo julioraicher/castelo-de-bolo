@@ -9,7 +9,10 @@ extends Node3D
 ## todos os Construtores do time a menos de BUILD_RADIUS, mas o progresso não
 ## passa de madeira_entregue / oficina_custo_madeira (Ciclo 2.3). Quem está na
 ## obra puxa 1 madeira do estoque do time a cada oficina_puxar_intervalo / Σv s.
-## Em cima, o contador "faltam N" + barra (grande para quem joga de Construtor).
+## Em cima, o contador "NN% · faltam N" + barra (dourado = madeira entregue,
+## claro = já construído), grande para quem joga de Construtor. O progresso
+## fica guardado na casinha: quem volta (ele ou um aliado) continua dali, e a
+## opção do terreno trava assim que a obra começa.
 
 enum Estado { VAZIO, OBRA, PRONTA }
 
@@ -72,15 +75,21 @@ func opcao() -> ClassStats:
 	return list[opcao_i % list.size()]
 
 
-func trocar_opcao() -> void:
-	if estado == Estado.PRONTA:
-		return
+## A obra começou (tem progresso ou madeira): a opção fica travada e o
+## progresso é guardado para quem voltar, o mesmo Construtor ou um aliado.
+func comecada() -> bool:
+	return estado != Estado.VAZIO or progresso > 0.0 or madeira_entregue > 0
+
+
+## Troca a variação do terreno. Só antes de a obra começar: depois disso o
+## [E] não apaga nada. Devolve true se trocou.
+func trocar_opcao() -> bool:
+	if comecada():
+		return false
 	opcao_i = (opcao_i + 1) % Config.cfg.oficina_classes.size()
-	progresso = 0.0
-	estado = Estado.VAZIO
-	_casa.visible = false
 	Sfx.play("pickup", global_position, 0.1)
 	_update_label()
+	return true
 
 
 func custo() -> int:
@@ -112,6 +121,7 @@ func add_progress(frac: float, by: Unit) -> void:
 	progresso = minf(progresso + frac, teto())
 	estado = Estado.OBRA
 	_casa.visible = true
+	_walls.scale.y = maxf(progresso, 0.02)
 	if by:
 		by.building_t = 0.25
 	if progresso >= 1.0 - 1e-6:
@@ -142,7 +152,6 @@ func _physics_process(delta: float) -> void:
 		_update_label()
 		return  # esperando madeira: sem poeira nem martelada
 	add_progress(rate * delta / Config.cfg.oficina_build_time, null)
-	_walls.scale.y = maxf(progresso, 0.02)
 	_dust_t -= delta
 	if _dust_t <= 0.0:
 		_dust_t = 0.35
@@ -176,10 +185,13 @@ func _update_label() -> void:
 	var cls := opcao()
 	var txt := "Oficina: %s" % cls.display_name
 	if estado != Estado.PRONTA:
-		txt = "%s  %d%%" % [cls.display_name, int(progresso * 100.0)] if estado == Estado.OBRA \
-				else "Terreno: %s" % cls.display_name
+		txt = "Obra: %s" % cls.display_name if comecada() else "Terreno: %s" % cls.display_name
 	if _label.text != txt:
 		_label.text = txt
+	if estado != Estado.PRONTA:
+		# O letreiro acompanha a altura da obra: perto do Construtor (e longe
+		# do placar no alto da tela) enquanto a casa ainda é baixa.
+		_label.position.y = lerpf(2.6, _alt_label, progresso)
 	_label.modulate = cls.hat_color.lightened(0.35)
 	# Contador de madeira: grande para quem joga de Construtor, pequeno nas
 	# outras classes; pisca "falta madeira" quando o time não tem estoque.
@@ -188,7 +200,7 @@ func _update_label() -> void:
 		var p := _game.player
 		var grande := p != null and p.team == team and p.lenhador()
 		_contador.position.y = _label.position.y + (1.0 if grande else 0.7)
-		_contador.mostrar(faltam(), custo(), grande, falta_madeira or (faltam() > 0 and _game.madeira[team] <= 0))
+		_contador.mostrar(faltam(), custo(), grande, falta_madeira or (faltam() > 0 and _game.madeira[team] <= 0), progresso if comecada() else -1.0)
 
 
 ## Estacas nos cantos + chão de terra batida.

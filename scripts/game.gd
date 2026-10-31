@@ -430,10 +430,15 @@ func _rules() -> void:
 	if player.alive and not player.carried_princess and hint == "":
 		var of := nearest_oficina(player.team, player.global_position, Oficina.BUILD_RADIUS + 0.5, true)
 		if of:
-			var builder := "  (fique aqui para construir)" if player.stats.velocidade_obra > 0.0 else "  (precisa de um Construtor)"
-			hint = "[E] trocar oficina: %s%s" % [of.opcao().display_name, builder]
-			if player_brain != null and player_brain.interact_pressed:
-				of.trocar_opcao()
+			var builder := "fique aqui para construir" if player.stats.velocidade_obra > 0.0 else "precisa de um Construtor"
+			if of.comecada():
+				# Obra começada: mostra o progresso guardado; [E] não troca nem apaga nada.
+				var falta := "  ·  faltam %d madeiras" % of.faltam() if of.faltam() > 0 else ""
+				hint = "Obra de %s: %d%%%s  ·  %s" % [of.opcao().display_name, int(of.progresso * 100.0), falta, builder]
+			else:
+				hint = "[E] trocar oficina: %s  (%s)" % [of.opcao().display_name, builder]
+				if player_brain != null and player_brain.interact_pressed:
+					of.trocar_opcao()
 
 	# Perto de uma planta: diz quem corta e como (a madeira não é óbvia).
 	if player.alive and hint == "" and not player.carried_tora and not player.carried_princess:
@@ -664,6 +669,22 @@ func nearest_oficina(team: int, from: Vector3, max_dist: float, unbuilt_only: bo
 			best_d = d
 			best = of
 	return best
+
+
+## Obra que o Construtor deve tocar: a começada mais adiantada do time (todos
+## continuam de onde os outros pararam, sem espalhar madeira em vários
+## terrenos); sem obra começada, o terreno vazio mais perto.
+func obra_do_time(team: int, from: Vector3) -> Oficina:
+	var best: Oficina = null
+	var best_v := 0.0
+	for of in oficinas:
+		if of.team != team or of.estado == Oficina.Estado.PRONTA or not of.comecada():
+			continue
+		var v := of.progresso + float(of.madeira_entregue) / maxf(of.custo(), 1)
+		if best == null or v > best_v:
+			best_v = v
+			best = of
+	return best if best else nearest_oficina(team, from, 1e9, true)
 
 
 func on_oficina_pronta(of: Oficina) -> void:
