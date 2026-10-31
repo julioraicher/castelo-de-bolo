@@ -6,7 +6,18 @@ lanternas, corvos, poder aceso no corpo dos ninjas.
 
 **Título provisório: "A Máscara Tem Fome"** · ~55 s · 8 planos.
 
-## Como cada plano é feito
+## Fluxo novo (2026-10-31, sem Gemini)
+
+Tudo pelo conector do **Hugging Face** (conta grátis do Julio, ~5 min de GPU/dia):
+1. Print do jogo no Godot (`tools/trailer/quadros.gd`) como referência de personagem e lugar.
+2. **Imagem de cinema**: Qwen-Image-Edit ou FLUX.1 Kontext transformam o print em quadro
+   "animação realista", épico e sombrio (o trailer pode ser bem diferente do jogo).
+   FLUX.1 Krea ou Qwen-Image para cenas sem referência.
+3. **Animar**: Wan 2.2 (imagem → vídeo, ou primeiro e último quadro) ou LTX-Video.
+4. **Montar**: ffmpeg (cortes rápidos, títulos, música, sons).
+Trailer curto (~30-40 s) com muitas cenas épicas de medo. Nada não oficial por enquanto.
+
+## Como cada plano era feito (v1, Flow; descartado)
 
 1. Claude renderiza no Godot um **quadro-chave** (1280×720, 16:9) com a arte do jogo.
 2. O Julio cola o quadro + o prompt no **Google Flow** (Veo 3.1 Fast, imagem → vídeo,

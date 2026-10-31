@@ -27,7 +27,7 @@ daqui, em 3D, no estilo do jogo.
 | Tamanho na tela | boneco com 60-100 px de altura | classe se lê por silhueta e massa de cor, não por detalhe |
 | GPU | Intel UHD integrada, WebGL | low-poly, cor chapada, efeitos com formas grandes e emissivo, pouca transparência |
 | Times | azul x vermelho tingidos no jogo | partes do time em áreas grandes e lisas |
-| Key art | sem limite técnico | pode ser pintada e rica, mantendo formas e cores do jogo |
+| Key art e trailer | sem limite técnico | **mundo de cinema** (decisão do Julio, 2026-10-31): animação puxada para o realista, cenas épicas e de medo, personagens marcantes; pode ser bem diferente do visual do jogo. Mantém a silhueta, as cores do clã, a Máscara Oni e o poder aceso no corpo. Gerado por IA (Hugging Face) a partir de prints do jogo; ver `docs/trailer/` |
 
 ## Direção v1 (2026-10-29, a partir do quiz 2)
 
