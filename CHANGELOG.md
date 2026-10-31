@@ -5,6 +5,31 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.5b (2026-10-31), Jogabilidade + mapa: caminhos opostos dos magos
+- **Escolha de caminho** (pedido do Julio): cada castelo tem dois terrenos fixos de mago,
+  **Luz em cima** (Kitsune da Luz) e **Sombra embaixo** (Kitsune Sombria), no meio do
+  pátio. A primeira madeira num deles **sela o outro até o fim da partida** (corda de selo,
+  estandarte tomba). As Kitsunes saíram do sorteio das oficinas comuns.
+- **Níveis 2 a 5**: pronta, a oficina do caminho fica no nível 2 (sobe a maquininha de
+  Kitsune, como antes) e o Construtor continua levando madeira: 6, 8 e 10 madeiras para os
+  níveis 3, 4 e 5. Decisão de equilíbrio (fácil de mudar em `game_config.tres`, grupo
+  "Caminho dos magos"): por nível acima do 2, o mago do caminho ganha **+8% de dano, +8% de
+  vida e +10% de Chi**; a maquininha dele ganha +1 de estoque e fabrica 15% mais rápido.
+  Nível 5 = +24% / +24% / +30%. Modesto porque a Luz já é forte (sonda 2.4l).
+- **Indicações**: estandarte na cor do mago e título a pincel ("Luz"/"Sombra") em cada
+  terreno; ao chegar perto pela primeira vez, aviso grande "Caminho da Luz ou da Sombra:
+  construir um sela o outro"; dica embaixo com o que falta; aviso a cada nível (seu e do
+  inimigo); losango no minimapa (X apagado no selado).
+- Mapa: oficinas comuns foram para a frente do pátio (4,5; ±5,2); magos em (−3; ±6,2).
+  Campo novo `MapLayout.mago_spots` (vazio = Kitsunes voltam ao sorteio, sem caminho).
+  Bots escolhem um caminho ao começar a obra e sobem os níveis depois das outras obras.
+- Testes: `_caminho_magos` (selo, selado não aceita madeira, níveis com 24 madeiras,
+  bônus só para a classe e o time do caminho).
+- **O que testar**: vá de Construtor até o meio do pátio; leia o aviso, leve madeira para
+  a Luz ou a Sombra e veja o outro terreno ser selado. Depois de pronta, continue levando
+  madeira: o letreiro mostra "NÍVEL 3/5" e o aviso aparece a cada nível. Diga se o bônus
+  por nível é pouco ou demais, e se as oficinas comuns na frente atrapalham a passagem.
+
 ## Ciclo 2.5a (2026-10-31), Diretor de Jogabilidade: botões novos e sensação de porrada
 - **Controles** (pedido do Julio): esquerdo ataca · **direito defende** (todas as classes,
   com contra-golpe) · **Q = habilidade rápida** com recarga curta · **E = poder de Chi**
