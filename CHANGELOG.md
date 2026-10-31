@@ -5,7 +5,7 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
-## Ciclo 2.4c (2026-10-31), Diretor Visual: nível 2 à vista, elenco com cara própria, tela moderna
+## Ciclo 2.4d (2026-10-31), Diretor Visual: nível 2 à vista, elenco com cara própria, tela moderna
 - **Maquininha nível 2** (contrato `N2_*`): cada `maquina_<classe>.scn` ganhou degrau de pedra
   com quinas de ouro, dois estandartes na cor da classe com lanterna acesa e uma coroa
   dourada no topo; a animação `subir_nivel` (1,4 s) faz as peças brotarem uma a uma com o
@@ -31,6 +31,21 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 - **O que testar**: suba uma maquininha para o nível 2 (oficina da classe ou 8 madeiras)
   e veja os estandartes e a coroa brotarem; ande pela trilha da floresta até o castelo
   inimigo; abra o Esc e veja os menus novos; jogue de Construtor e de Kitsune.
+## Ciclo 2.4c (2026-10-31), Diretor de Jogabilidade: magos opostos
+- Pedido 2 do quiz ("mago do bem e do mal"): duas oficinas novas que sobem a
+  maquininha da Kitsune para o nível 2 (`classe_base` kitsune). O time escolhe o lado no
+  terreno ([E] antes de a obra começar; bots sorteiam):
+  - **Kitsune da Luz**: cura 26 em 7 m a cada 3 s, mais vida (90), poder **Bênção da
+    Raposa** (cura 40% e escudo 25 em 6 m). Máscara branca, chamas douradas.
+  - **Kitsune Sombria**: não cura; tiro de magia 16 com carga (cheio atravessa), poder
+    **Selo Sombrio** (área que cala os poderes). Máscara negra, chamas roxas.
+- Oficinas agora têm 6 opções. Visual: `ninja_visual.gd` ganhou `_raposa()` com as duas
+  variações (toque mínimo; emblemas e maquininhas próprias ficam com o Visual).
+- Bot Construtor usa a Corrida (Q) com a tora ou indo longe (antes guardava o medidor).
+- Teste da maquininha: zera o relógio depois de encher (falhava às vezes no CI).
+- Testes 106/106; 5 min sem erro (Kitsune da Luz saiu aos 203 s).
+- **O que testar**: no terreno, aperte [E] até "Kitsune Sombria" ou "da Luz", erga a
+  oficina e pegue o chapéu: compare a cura forte com o tiro carregado roxo.
 
 ## Ciclo 2.4b (2026-10-31), Diretor de Jogabilidade: bots com dash e botão direito "uau"
 - **Revisão dos bots** (pedido do Julio: "os bots usam dash e poderes?"): não usavam dash
