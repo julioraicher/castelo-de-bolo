@@ -422,6 +422,9 @@ func _should_use_power() -> bool:
 		"corrida":
 			if unit.carried_princess:
 				return true
+			# Construtor: corre com a tora ou quando a planta/obra está longe.
+			if unit.carried_tora or (unit.lenhador() and me.distance_to(_goal) > 30.0 and _nearest_enemy(12.0) == null):
+				return true
 			for u in game.units:
 				if u.alive and u.team == unit.team and u.carried_princess and u.global_position.distance_to(me) <= r:
 					return true

@@ -277,6 +277,9 @@ func _maquina() -> void:
 	var pad = game.hat_pads[0]
 	while pad.estoque < pad.estoque_max:
 		pad.avancar(pad.intervalo)
+	# O relógio pode ter sobra dos quadros que já rodaram (bot pegou chapéu
+	# no começo): zera para medir o intervalo inteiro.
+	pad._fab_t = 0.0
 	var cheio: int = pad.estoque
 	_check(cheio == cfg.maquina_estoque_max, "máquina deveria encher até maquina_estoque_max")
 	pad.take()
