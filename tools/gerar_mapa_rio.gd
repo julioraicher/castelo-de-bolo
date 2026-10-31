@@ -45,7 +45,6 @@ func _gerar_modelos_rio() -> void:
 	_tipo = 1; _ponte(4.6); _salvar("ponte_lateral")
 	_cachoeira(); _salvar("cachoeira")
 	_casa_a(); _salvar("casa_a")
-	_casa_b(); _salvar("casa_b")
 	_casa_moinho(); _salvar("casa_moinho")
 	_casa_moinho(); _espelhar_x(); _salvar("casa_moinho_esq")
 	for t in TIMES:
@@ -69,7 +68,6 @@ func _gerar_modelos_rio() -> void:
 	_templo(); _salvar("templo")
 	_casa_de_cha(); _salvar("casa_de_cha")
 	_barco(); _salvar("barco")
-	_ponte_corda(); _salvar("ponte_corda")
 	_forja(); _salvar("forja")
 	_dojo(); _salvar("dojo")
 	_arrozal(); _salvar("arrozal")
@@ -848,33 +846,6 @@ func _casa_moinho() -> void:
 	_fundos(w, d, [1.3])
 
 
-## Casa de fazenda térrea (6 x 5 m) com telhado alto de palha e varanda (engawa).
-func _casa_b() -> void:
-	var w := 6.0
-	var d := 5.0
-	var palha := Color(0.36, 0.3, 0.22) if P.arvore == "bambu" else Color(0.68, 0.56, 0.36)
-	_caixa(Vector3(w + 0.2, 0.45, d + 0.2), Vector3(0, 0.22, 0), Vector3.ZERO, P.pedra)
-	_caixa(Vector3(w, 2.2, d - 1.2), Vector3(0, 1.55, -0.6), Vector3.ZERO, P.reboco)
-	for k in 6:
-		_caixa(Vector3(0.16, 2.2, 0.16), Vector3(-w / 2 + k * w / 5, 1.55, d / 2 - 1.2), Vector3.ZERO, P.madeira)
-	for k in 3:
-		_shoji(Vector3(-1.8 + k * 1.8, 1.45, d / 2 - 1.18), 1.3, 1.6, 1, P.papel if k != 1 else P.luz1.lerp(P.papel, 0.5))
-	_caixa(Vector3(w, 0.12, 1.2), Vector3(0, 0.62, d / 2 - 0.6), Vector3.ZERO, P.madeira2)  # engawa
-	for x in [-w / 2 + 0.1, 0.0, w / 2 - 0.1]:
-		_cil(0.08, 0.08, 2.2, 6, Vector3(x, 1.65, d / 2 - 0.05), Vector3.ZERO, P.madeira)
-	_telhado(Vector3(0, 2.7, 0), w + 0.6, d + 0.4, 2.4, palha, 0.45)
-	_caixa(Vector3(w * 0.5, 0.35, 0.5), Vector3(0, 5.05, 0), Vector3.ZERO, P.madeira)
-	for k in 4:  # lenha empilhada
-		_cil(0.12, 0.12, 1.2, 6, Vector3(-w / 2 - 0.4, 0.15 + k * 0.22, -1.2 + (k % 2) * 0.12), Vector3(90, 0, 0), P.madeira2)
-		_cil(0.12, 0.12, 1.2, 6, Vector3(-w / 2 - 0.65, 0.15 + k * 0.22, -1.1), Vector3(90, 0, 0), P.madeira2.darkened(0.1))
-	_lanterna_papel(Vector3(w / 2 - 0.3, 2.3, d / 2 + 0.1), P.papel)
-	_vaso(Vector3(-1.0, 0.45, d / 2 + 0.5))
-	_fundos(w, d, [1.45])
-	_aldeao(Vector3(1.3, 0.68, d / 2 - 0.55), 0.0, P.telhado.lightened(0.25), "sentado")
-	for k in 2:  # gato dormindo na varanda
-		_esfera(0.13 - k * 0.04, Vector3(2.0 + k * 0.17, 0.78 + k * 0.05, d / 2 - 0.4), Vector3(1.4, 0.8, 1), Color(0.95, 0.6, 0.25), false, 6, 3)
-
-
 ## Loja com toldo listrado, balcão com mercadorias e placa de neon grande.
 func _loja() -> void:
 	var w := 5.0
@@ -1450,38 +1421,6 @@ func _barco() -> void:
 	_aldeao(Vector3(1.6, 0.35, 0), -90.0, P.telhado.lightened(0.2), "remar", true)
 	for k in 6:  # marolas brilhando em volta
 		_esfera(0.18, Vector3(-2.6 + k * 1.05, 0.05, (0.85 if k % 2 else -0.85)), Vector3(2.2, 0.15, 0.6), P.agua.lightened(0.45), true, 6, 2)
-
-
-## Ponte de corda pênsil (14 m em x), tábuas em catenária, lanternas penduradas.
-func _ponte_corda() -> void:
-	var meia := 7.0
-	var alt := 4.6
-	var flecha := 0.8
-	for s in [-1.0, 1.0]:
-		for z in [-0.75, 0.75]:
-			_cil(0.13, 0.16, alt + 1.2, 6, Vector3(s * meia, (alt + 1.2) / 2, z), Vector3.ZERO, P.madeira)
-		_caixa(Vector3(0.3, 0.25, 1.9), Vector3(s * meia, alt + 1.0, 0), Vector3.ZERO, P.madeira2)
-		_cil(0.06, 0.06, 2.0, 4, Vector3(s * (meia + 0.9), alt * 0.5, 0.75), Vector3(0, 0, s * 40), P.corda)
-		_lanterna_papel(Vector3(s * meia, alt + 1.45, 0), P.luz2, 0.2)
-	var n := 40
-	for k in n:
-		var x := -meia + 2.0 * meia * (k + 0.5) / n
-		var y := alt - flecha * (1.0 - pow(x / meia, 2.0))
-		_caixa(Vector3(0.25, 0.06, 1.4), Vector3(x, y, 0), Vector3(0, 0, 0), P.madeira2 if k % 3 else P.madeira2.darkened(0.2))
-	for z in [-0.72, 0.72]:
-		for k in 14:
-			var xa := -meia + 2.0 * meia * k / 14.0
-			var xb := -meia + 2.0 * meia * (k + 1) / 14.0
-			var ya := alt + 0.9 - flecha * (1.0 - pow(xa / meia, 2.0))
-			var yb := alt + 0.9 - flecha * (1.0 - pow(xb / meia, 2.0))
-			var meio := Vector3((xa + xb) / 2, (ya + yb) / 2, z)
-			_cil(0.025, 0.025, Vector2(xb - xa, yb - ya).length(), 4, meio, Vector3(0, 0, 90 + rad_to_deg(atan2(yb - ya, xb - xa))), P.corda)
-			if k % 2 == 0:
-				_cil(0.012, 0.012, 0.9, 3, Vector3(xa, (ya + alt - flecha * (1.0 - pow(xa / meia, 2.0))) / 2.0, z), Vector3.ZERO, P.corda)
-	for k in 3:
-		var x := -3.5 + k * 3.5
-		_lanterna_papel(Vector3(x, alt - flecha * (1.0 - pow(x / meia, 2.0)) - 0.45, 0.8), P.papel if k != 1 else P.luz2, 0.15)
-	_aldeao(Vector3(2.2, alt - flecha * (1.0 - pow(2.2 / meia, 2.0)) + 0.03, 0), -90.0, P.torii.lightened(0.15), "lanterna", true)
 
 
 ## Forja (5 x 4 m) aberta na frente: fornalha acesa, bigorna, ferreiro e armas.

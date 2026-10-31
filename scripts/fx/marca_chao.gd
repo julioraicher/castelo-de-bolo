@@ -3,7 +3,7 @@ extends RefCounted
 ## Marca no chão dos poderes de área: um quadrado só, com um shader que desenha
 ## o símbolo de cada poder (1 draw call por zona, sem textura):
 ##   nuvem       borda de pincel de tinta (sumi-e) e manchas de tinta girando
-##   selo        estrela de 5 pontas do onmyoji e anel de "escrita" correndo
+##   selo        estrela de 5 pontas (Kitsune Sombria) e anel de "escrita" correndo
 ##   coluna_fogo língua de fogo-raposa na borda e 3 caudas girando dentro
 ##   chuva       sombras das flechas chegando, borda tracejada e 4 setas fechando
 ## A borda some como um relógio conforme o tempo do poder acaba. Um aro fino na

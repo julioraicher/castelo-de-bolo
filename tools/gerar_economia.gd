@@ -2,7 +2,6 @@ extends "res://tools/gerar_cenario_ninja.gd"
 ## Modelos da Economia do Construtor (Ciclo 2.3), nos quatro temas:
 ##   arvore_e1/e2/e3, bambu_e1/e2/e3  plantas cortáveis nos 3 estágios
 ##   tora                             tora para carregar (centro na origem, eixo x)
-##   pilha_toras                      pilha do castelo; nós Nivel_1..4 (3 toras cada) e Contador
 ##   maquina_chapeu                   maquininha: Prensa, Gira_engrenagem, Molde, Brilho,
 ##                                    Vapor, Enfeite, Estoque_1..4 e a animação "fabricar"
 ##   maquina_<classe>                 maquininha própria da classe (mesmos nós; ver MAQUINAS) + nível 2:
@@ -34,12 +33,11 @@ func _init() -> void:
 			_arvore(e); _salvar("arvore_e%d" % (e + 1))
 			_bambu_planta(e); _salvar("bambu_e%d" % (e + 1))
 		_tora(Vector3.ZERO, 0.0); _salvar("tora")
-		_pilha_toras(); _salvar("pilha_toras"); _completar("pilha_toras", false)
 		_deposito(); _salvar("deposito_madeira"); _completar("deposito_madeira", false)
 		_maquina(); _salvar("maquina_chapeu"); _completar("maquina_chapeu", true)
 		for c in MAQUINAS:
 			_maquina_classe(c); _salvar("maquina_" + c); _completar("maquina_" + c, true)
-		for c in ["guerreiro", "arqueiro", "monge", "construtor", "kitsune", "ronin_oni", "arqueiro_yumi", "armadilheiro", "bombardeiro", "kitsune_luz", "kitsune_sombria"]:
+		for c in ["guerreiro", "arqueiro", "construtor", "kitsune", "ronin_oni", "arqueiro_yumi", "armadilheiro", "bombardeiro", "kitsune_luz", "kitsune_sombria"]:
 			_emblema(c); _salvar("emblema_" + c)
 	_ligar_temas()
 	print("triângulos (último tema): ", _tris)
@@ -856,11 +854,6 @@ func _emblema(classe: String) -> void:
 					else:
 						_tri(-lado * 0.08 + zf, dir * 0.3 + zf, lado * 0.08 + zf, aco.darkened(0.3), Vector3(0, 0, -1))
 			_cil(0.07, 0.07, 0.06, 10, Vector3.ZERO, Vector3(90, 0, 0), ouro)
-		"monge":  # lótus de chi: 6 pétalas e miolo aceso
-			for k in 6:
-				var a := TAU * k / 6.0 + PI / 2
-				_esfera(0.11, Vector3(cos(a) * 0.15, sin(a) * 0.15, 0), Vector3(1.0, 0.55, 0.4), P.branco if k % 2 else P.chao_folha2, false, 6, 3)
-			_esfera(0.08, Vector3(0, 0, 0.03), Vector3(1, 1, 0.6), ouro, false, 6, 3)
 		"kitsune", "kitsune_luz", "kitsune_sombria":  # máscara de raposa com chama entre as orelhas
 			var branco: Color = P.branco if classe != "kitsune_sombria" else Color(0.1, 0.08, 0.12)
 			var chama := Color(1.0, 0.5, 0.78)

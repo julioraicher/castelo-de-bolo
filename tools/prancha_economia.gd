@@ -116,7 +116,7 @@ func _rodar() -> void:
 			c.mostrar(4, 6, true, false)
 		else:
 			c.mostrar(4, 6, false, true)
-	_peca(cena, "pilha_toras", Vector3(-0.2, 0, 3.2))
+	_peca(cena, "deposito_madeira", Vector3(-0.2, 0, 3.2))
 	_peca(cena, "tora", Vector3(1.0, 0.2, 3.6)).rotation_degrees.y = 25
 	for k in 20:
 		await process_frame
@@ -189,7 +189,7 @@ func _foto(cena: Node3D, alvo: Vector3, dir: Vector3, dist: float, fov: float, a
 	await process_frame
 
 
-## Céu, sol, neblina e chão pintado do tema (igual a tools/prancha_piloto.gd).
+## Céu, sol, neblina e chão pintado do tema (como no jogo).
 func _cena(t: Resource) -> Node3D:
 	var cena := Node3D.new()
 	root.add_child(cena)

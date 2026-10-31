@@ -43,8 +43,7 @@ Os mesmos controles aparecem no jogo: na tela inicial e em **Esc > Controles**.
 | Dificuldade dos inimigos | Fácil: bots vermelhos reagem ~2x mais devagar e batem 30% menos. Difícil: reagem ~30% mais rápido e batem 5% mais |
 | Qualidade gráfica | Alta: sombras completas e antisserrilhado. Média (padrão no navegador): sombras leves. Baixa: sem sombras, 3D em 75% da resolução. Mínima: 3D em 50% |
 | Qualidade automática | se o FPS ficar abaixo de 40 no começo, o jogo baixa a qualidade sozinho |
-| Mapa | Rio das Lanternas (rio com 3 pontes, vila e muralhas andáveis) ou Vale Ninja; o mapa recomeça |
-| Tema do mapa | Floresta Oni ou Templo ao Luar; o mapa recomeça |
+| Tema do mapa | Festival ao Sol, Crepúsculo, Floresta Oni ou Templo ao Luar; a partida recomeça. O mapa é um só: Rio das Lanternas |
 | Mostrar FPS | mostra quadros por segundo no canto superior esquerdo (60 é o ideal) |
 | Tela cheia | também pela tecla F. No navegador, em tela cheia, segure Esc ou aperte F para sair |
 | Tremor da câmera | liga/desliga o "chacoalhar" nos impactos |
@@ -60,23 +59,20 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
 3. Quem carrega a máscara anda mais devagar e não ataca. Se morrer, ela cai
    no chão. Um inimigo dela pode pegar de novo; um aliado dela fica perto por
    1,5 s para devolvê-la. Se ninguém mexer, ela volta sozinha depois de 15 s.
-4. **Chapéus** ficam no pátio do castelo: chegue perto e aperte **F**. São 4
-   papéis, cada um com 3 variações (a 1ª já vem no pátio):
-   - Guerreiro: Samurai (bloqueia; Redemoinho) · Ronin Oni (mais vida e dano; Fúria) ·
-     Lâmina Dupla (ataque rápido; Corte Relâmpago: atravessa a mira cortando).
-   - Atirador: Ninja de Shuriken (Leque de shurikens) · Arqueiro Yumi (Chuva de flechas) ·
-     Bombas de Fumaça (bomba em arco que explode; Nuvem que deixa lento).
-   - Mago: Monge de Chi (Bênção: cura + escudo) · Onmyoji (Selo: inimigos sem atacar) ·
-     Kitsune (Colunas de fogo-raposa). Todos curam com o clique direito.
-   - Construtor (poder fraco contra gente, forte para construir): Armadilheiro
-     (estrepes; Corrida) · Mestre da Pólvora (minas; Reforço: escudo nos aliados) ·
-     Carpinteiro (constrói 2x mais rápido; Mutirão: adianta a obra).
+4. **Chapéus** saem das maquininhas do pátio: chegue perto e aperte **F**.
+   - No começo: Samurai (Redemoinho), Ninja de Shuriken (Leque), Kitsune
+     (Colunas de fogo-raposa; cura) e Construtor (corta madeira e constrói; Mutirão).
+   - Oficinas comuns liberam: Ronin Oni (Fúria), Arqueiro Yumi (Chuva de flechas),
+     Armadilheiro (Campo minado) e Bombardeiro (Bombardeio).
+   - Caminho dos magos: Kitsune da Luz (Bênção: cura + escudo) **ou** Kitsune
+     Sombria (Selo: inimigos sem atacar). Construir um sela o outro; o escolhido
+     sobe até o nível 5 com mais madeira.
    - Recruta (sem chapéu): rápido, socos em combo, sem poder.
    - O medidor de **Chi** enche batendo, apanhando, abatendo, entregando
      espírito e capturando a máscara. Cheio, aperte E.
-5. **Oficinas:** cada castelo tem 2 terrenos. Construtores em volta erguem a
-   casinha; pronta, ela libera um pedestal com a variação escolhida. Perto de
-   um terreno vazio, **F** troca qual variação construir.
+5. **Oficinas:** Construtores cortam árvores, levam as toras ao depósito e
+   erguem as casinhas do pátio; pronta, ela libera a maquininha da classe. Perto
+   de um terreno vazio, **F** troca qual classe construir.
 6. **Espíritos** (chamas verdes) aparecem no meio do mapa. Levar um até a
    **sua** máscara a deixa mais pesada: quem a carrega fica mais lento.
 7. **Itens no chão** aparecem de vez em quando no meio do mapa: poção, escudo,

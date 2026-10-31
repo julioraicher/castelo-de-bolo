@@ -42,25 +42,30 @@ config/
   mapas/*.tres            forma do mapa: castelo, torres, pedestais, objetos
 scenes/main.tscn          cena principal (só o nó "Jogo" com game.gd)
 scripts/
-  game.gd                 regras: pegar princesa/bolo/chapéu, pontuar, vitória
-  world/arena.gd          monta o mapa: chão, luz, castelos, muralhas, navegação
-  actors/unit.gd          soldado: anda, ataca, esquiva, carrega, morre, renasce
-  actors/princess.gd      princesa: estados (casa, carregada, caída) e peso
+  game.gd                 cérebro da partida: monta tudo e aplica as regras em _rules()
+  world/arena.gd          monta o mapa a partir do MapLayout + ThemeConfig, navegação
+  actors/unit.gd          soldado: anda, ataca, defende, Q/E, esquiva, carrega, morre
+  actors/ninja_visual.gd  roupa ninja por código no corpo KayKit (estilo do .tres)
+  actors/escala_ossos.gd  proporção (~3,5 cabeças) aplicada depois da animação
+  actors/princess.gd      a Máscara Oni (nome antigo no código): estados e peso
   ai/player_brain.gd      teclado + mouse -> intenções da Unit do jogador
-  ai/bot_brain.gd         IA dos bots (lista de prioridades + papéis)
-  items/cake.gd           bolo (visual feito com cilindros)
-  items/hat_pad.gd        pedestal de chapéu (troca de classe)
-  items/projectile.gd     flecha e magia
-  fx/camera_rig.gd        câmera 3/4 com suavização e tremor
-  fx/fx.gd                números de dano, faíscas, anel de cura
-  ui/hud.gd               placar, vida, dicas, tela de vitória
-  ui/menus.gd             tela inicial e menu de pausa (Controles/Configurações)
+  ai/bot_brain.gd         IA dos bots (prioridades + papéis + quando usar Q/E)
+  items/cake.gd           espírito solto (nome antigo no código); pesa a máscara
+  items/hat_pad.gd        maquininha de chapéu (troca de classe, estoque)
+  items/oficina.gd        terreno de oficina / caminho dos magos (obra e níveis)
+  items/planta.gd, tora.gd, pilha.gd   ciclo da madeira do Construtor
+  items/projectile.gd, trap.gd, pickup.gd   tiros, armadilhas, itens no chão
+  fx/                     câmera, efeitos, poderes (fx_poder, area_effect, marca_chao,
+                          arrow_rain), guia do Construtor, qualidade automática
+  ui/                     HUD, menus, minimapa, estilo (fontes/cores), ícones
   autoload/config.gd      carrega o config, registra as teclas e a lista CONTROLS
-  autoload/settings.gd    preferências do jogador (volume, dificuldade...), salvas em disco
+  autoload/settings.gd    preferências do jogador, salvas em disco
   autoload/sfx.gd         toca sons
   data/*.gd               definem os campos dos arquivos .tres
+tests/regras.gd           testes de regra (rodam no CI); qa_mapa.gd = QA do mapa
+tools/gerar_*.gd          geram cenário, mapa e peças por código; prancha_*.gd = imagens de pitaco
 tools/gerar_sons.py       sintetiza todos os sons e a música (Python puro)
-assets/                   modelos KayKit (CC0) e sons gerados
+assets/                   corpos KayKit (CC0), cenário ninja gerado (.scn), sons, fontes, shaders
 .claude/skills/           manuais de Godot e game design para o Claude
 ```
 
@@ -83,10 +88,10 @@ online, no futuro, é trocar só o cérebro.
 | Câmera mais longe | `config/game_config.tres` | `camera_offset` |
 | Trocar teclas | `scripts/autoload/config.gd` | `_setup_input()` e o texto em `CONTROLS` (aparece no menu e no [CONTROLES.md](CONTROLES.md)) |
 | Nova opção de configuração | `scripts/autoload/settings.gd` + `scripts/ui/menus.gd` | variável + linha em `_settings_form()` |
-| Mapa diferente | `config/mapas/vale.tres` | tamanho, muralhas, torres e `middle_props` |
-| Classe nova (ex.: Espadachim) | copie `config/classes/guerreiro.tres`, mude nome, `visible_meshes` (ex.: `2H_Sword`), números e `hat_style`; adicione em `game_config.tres > hat_class_list` e um ponto em `mapas/vale.tres > hat_spots` |
-| Clima novo (ex.: sinistro, neve) | copie `config/temas/sinistro.tres`, mude cores/modelos e adicione em `game_config.tres > themes` |
-| Outro tipo de castelo | `config/temas/*.tres > Modelos` (quais modelos) e `config/mapas/vale.tres > Castelo` (posições) |
+| Mapa diferente | `config/mapas/rio_lanternas.tres` (gerado por `tools/gerar_mapa_rio.gd`) | tamanho, muralhas, torres e `middle_props` |
+| Classe nova (ex.: Espadachim) | copie `config/classes/guerreiro.tres`, mude nome, `visible_meshes` (ex.: `2H_Sword`), números e `hat_style`; adicione em `game_config.tres > hat_class_list` e um ponto em `mapas/rio_lanternas.tres > hat_spots` |
+| Clima novo (ex.: neve) | copie `config/temas/luar.tres`, mude cores/modelos e adicione em `game_config.tres > themes` |
+| Outro tipo de castelo | `config/temas/*.tres > Modelos` (quais modelos) e `config/mapas/rio_lanternas.tres > Castelo` (posições) |
 | Novo som | `tools/gerar_sons.py` + nome em `Sfx.SOUNDS` |
 
 Dica: os `.tres` abrem no **Inspector** do Godot com campos agrupados

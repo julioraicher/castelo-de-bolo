@@ -1,13 +1,14 @@
 # Castelo de Bolo
 
-Jogo de ação 3D para PC, feito em Godot 4.7. Dois castelos, uma princesa em
-cada. Invada o castelo inimigo, carregue a princesa deles até o seu e não
-deixe roubarem a sua. Alimente a sua princesa com bolo: quanto mais gorda,
-mais devagar anda quem tentar levá-la.
+Jogo de ação 3D para PC e navegador, feito em Godot 4.7, num mundo ninja.
+Dois castelos, uma **Máscara Oni** em cada. Invada o castelo inimigo, leve a
+máscara deles até o seu pedestal e não deixe levarem a sua. Primeiro a 3 vence.
 
 - 8 contra 8, com bots
-- Chapéus trocam a classe: Guerreiro, Arqueiro, Monge (cura) e Construtor (estrepes)
-- Morreu? Volta como aldeão e precisa pegar outro chapéu
+- Chapéus trocam a classe: Samurai, Ninja de Shuriken, Kitsune e Construtor;
+  oficinas e o caminho dos magos liberam mais
+- O Construtor corta madeira e ergue as oficinas do pátio
+- Morreu? Volta como recruta e pega outro chapéu
 
 ## Jogar
 
@@ -20,16 +21,17 @@ mais devagar anda quem tentar levá-la.
 | WASD | andar |
 | Mouse | mirar |
 | Clique esquerdo | atacar |
-| Clique direito (segurar) | bloquear / tiro carregado / curar |
-| Q | poder especial (medidor de Glacê cheio) |
+| Clique direito (segurar) | defender (contra-golpe se erguido na hora) |
+| Q | habilidade rápida da classe |
+| E | poder de Chi (medidor cheio) |
 | Espaço / Shift | esquivar |
-| E | pegar chapéu, pegar/soltar princesa |
+| F | pegar chapéu ou máscara, escolher oficina |
 | Esc / P | pausar: controles e configurações |
 | R | reiniciar |
-| F / F11 | tela cheia |
+| F11 | tela cheia |
 
 Detalhes, regras e dicas em [CONTROLES.md](CONTROLES.md). Volume, dificuldade,
-tela cheia e tremor de câmera ficam no menu **Esc > Configurações** e são
+qualidade, tema e tremor de câmera ficam no menu **Esc > Configurações** e são
 salvos para a próxima vez.
 
 **Primeira abertura no navegador demora uns segundos:** o navegador baixa o
@@ -43,6 +45,6 @@ por trás. O que está feito e o que vem depois fica no [ROADMAP.md](ROADMAP.md)
 
 ## Créditos
 
-- Personagens e cenário: [KayKit](https://kaylousberg.com) por Kay Lousberg (CC0).
+- Corpos dos personagens: [KayKit](https://kaylousberg.com) por Kay Lousberg (CC0). Cenário e roupas ninja feitos por código (`tools/gerar_*.gd`, `scripts/actors/ninja_visual.gd`).
 - Sons e música: sintetizados por `tools/gerar_sons.py`.
 - Inspirado no estilo de jogo de *Fat Princess* (2009). Nome, arte e código são originais.

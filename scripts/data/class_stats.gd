@@ -98,7 +98,7 @@ extends Resource
 
 @export_group("Poder de Chi (E)")
 ## Poder especial, liberado quando o medidor de Glacê enche.
-@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "corrida", "furia", "corte_relampago", "leque", "nuvem", "selo", "coluna_fogo", "reforco", "mutirao", "campo_minado", "bombardeio") var power := "nenhum"
+@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "furia", "leque", "selo", "coluna_fogo", "mutirao", "campo_minado", "bombardeio") var power := "nenhum"
 @export var power_name := ""
 ## Raio de efeito (m).
 @export var power_radius := 3.0

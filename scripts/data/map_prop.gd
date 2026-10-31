@@ -4,7 +4,7 @@ extends Resource
 
 ## Arquivo do modelo dentro da pasta de modelos do tema. Vazio = só colisor
 ## (rampas, travas do rio, plataformas).
-@export var model := "rock_single_A.gltf"
+@export var model := ""
 ## No pátio: coordenadas locais do castelo (x aponta para o inimigo).
 ## No meio do mapa: coordenadas do mundo.
 @export var position := Vector3.ZERO

@@ -39,7 +39,7 @@ func _rodar() -> void:
 		for k in TREES.size():
 			_por(cena, pasta + "arvore_e3.scn", mundo.call(TREES[k]))
 		rotulos.append(["bosque", mundo.call(TREES[0].lerp(TREES[1], 0.5))])
-		_por(cena, pasta + "pilha_toras.scn", mundo.call(PILHA))
+		_por(cena, pasta + "deposito_madeira.scn", mundo.call(PILHA))
 		rotulos.append(["pilha", mundo.call(PILHA)])
 		for h in HATS:
 			_por(cena, pasta + "maquina_chapeu.scn", mundo.call(h))
