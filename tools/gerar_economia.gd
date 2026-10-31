@@ -503,7 +503,7 @@ func _maq_raposa(variante := "") -> void:
 	_cor_brilho = fogo
 	_cor_vapor = Color(1.0, 0.8, 0.9)
 	var vermelho: Color = P.torii
-	var pedra_raposa: Color = pedra_raposa
+	var pedra_raposa: Color = P.pedra.lightened(0.15)
 	if variante == "luz":
 		fogo = Color(1.0, 0.85, 0.4)
 		_cor_brilho = fogo
