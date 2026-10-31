@@ -82,8 +82,23 @@ func forward(team: int) -> Vector3:
 	return Vector3.RIGHT if team == Config.TEAM_BLUE else Vector3.LEFT
 
 
-func random_spawn(team: int) -> Vector3:
-	return to_world(team, randf_range(map.spawn_min.x, map.spawn_max.x), randf_range(map.spawn_min.y, map.spawn_max.y))
+func random_spawn(team: int, units: Array = []) -> Vector3:
+	if map.spawn_spots.is_empty():
+		return to_world(team, randf_range(map.spawn_min.x, map.spawn_max.x), randf_range(map.spawn_min.y, map.spawn_max.y))
+	# O ponto com menos aliados vivos perto (empate: sorteio).
+	var melhor := Vector3.ZERO
+	var menos := 1 << 20
+	for s in map.spawn_spots:
+		var p := to_world(team, s.x, s.y)
+		var n := 0
+		for u in units:
+			if u.alive and u.team == team and u.global_position.distance_to(p) < 5.0:
+				n += 1
+		if n < menos or (n == menos and randf() < 0.5):
+			menos = n
+			melhor = p
+	var j := map.spawn_jitter
+	return melhor + Vector3(randf_range(-j, j), 0.0, randf_range(-j, j))
 
 
 ## Ponto livre no chão do meio do mapa (espíritos e itens). Evita telhados,

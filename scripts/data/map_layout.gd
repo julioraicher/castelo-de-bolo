@@ -48,6 +48,11 @@ extends Resource
 @export var pilha_spot := Vector2(8, -12)
 @export var spawn_min := Vector2(-1, -5)
 @export var spawn_max := Vector2(6, 5)
+## Pontos de renascer (locais do castelo, como hat_spots). Vazio = caixa
+## spawn_min/spawn_max. Com pontos, cada um renasce no menos lotado (+ um
+## sorteio de spawn_jitter m), para o time não sair todo pela mesma porta.
+@export var spawn_spots: PackedVector2Array = []
+@export var spawn_jitter := 1.2
 ## Quanto à frente da muralha os defensores ficam de guarda.
 @export var gate_guard_distance := 3.0
 ## Muralha com passarela: altura do caminho em cima (0 = muralha antiga, só bloqueia).

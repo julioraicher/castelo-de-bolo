@@ -199,6 +199,9 @@ extends Resource
 ## Atraso de reação dos bots (s). Maior = mais fácil.
 @export var bot_think_interval := 0.25
 @export var bot_aggro_radius := 13.0
+## Começo calmo (s): nesse tempo os bots não invadem a metade inimiga; pegam
+## chapéu, cortam madeira e se posicionam na própria metade.
+@export var inicio_calmo := 30.0
 
 
 func hat_classes() -> Array[ClassStats]:

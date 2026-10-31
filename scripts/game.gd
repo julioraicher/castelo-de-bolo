@@ -190,7 +190,7 @@ func _ready() -> void:
 			if is_player and _classe_jogador != "":
 				cls = load("res://config/classes/%s.tres" % _classe_jogador)
 			u.setup(self, team, is_player, cls)
-			u.global_position = arena.random_spawn(team)
+			u.global_position = arena.random_spawn(team, units)
 			u.reset_physics_interpolation()
 			u.died.connect(_on_unit_died)
 			if is_player:
@@ -313,6 +313,11 @@ func _measure(delta: float) -> void:
 		_perf_acc.clear()
 		_perf_n = 0
 		_perf_t = 0.0
+
+
+## Começo calmo (inicio_calmo s): bots ficam na própria metade.
+func inicio_calmo() -> bool:
+	return _time < Config.cfg.inicio_calmo
 
 
 func _physics_process(delta: float) -> void:
@@ -685,6 +690,14 @@ func soltar_tora(pos: Vector3, dir: Vector3) -> Tora:
 
 ## Golpe de Construtor: acerta as plantas no arco do golpe (a mais perto).
 func golpear_plantas(u: Unit, dir: Vector3, alcance: float, arco_deg: float) -> bool:
+	var melhor := planta_no_alcance(u, dir, alcance, arco_deg)
+	if melhor == null:
+		return false
+	return melhor.golpe(u)
+
+
+## Planta cortável (jovem ou adulta) mais perto, dentro do alcance e do arco.
+func planta_no_alcance(u: Unit, dir: Vector3, alcance: float, arco_deg: float) -> Planta:
 	var melhor: Planta = null
 	var melhor_d := alcance
 	for p in plantas:
@@ -697,9 +710,7 @@ func golpear_plantas(u: Unit, dir: Vector3, alcance: float, arco_deg: float) -> 
 			continue
 		melhor = p
 		melhor_d = d
-	if melhor == null:
-		return false
-	return melhor.golpe(u)
+	return melhor
 
 
 func entregar_tora(u: Unit) -> void:

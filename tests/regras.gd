@@ -22,6 +22,7 @@ func _ready() -> void:
 	_controles()
 	await _empurrao()
 	_madeira()
+	_machadada()
 	_maquina()
 	await _obra()
 	_nivel2()
@@ -398,6 +399,44 @@ func _madeira() -> void:
 	game.entregar_tora(u)
 	_check(game.madeira[u.team] == m0 + 1, "entregar a tora deveria somar 1 ao estoque")
 	_check(u.carried_tora == null and u.maos_livres(), "depois de entregar as mãos ficam livres")
+
+
+## Bug 2.5d: Bombardeiro/Armadilheiro (lenhadores) perto de planta cortam com o
+## clique; longe dela, o ataque é o normal (bomba).
+func _machadada() -> void:
+	var u = _lenhador()
+	if u == null:
+		return
+	var arvore = null
+	for p in game.plantas:
+		if p.tipo == "arvore":
+			arvore = p
+			break
+	if arvore == null:
+		return
+	for id in ["bombardeiro", "armadilheiro"]:
+		u.set_class(load("res://config/classes/%s.tres" % id))
+		_check(u.lenhador(), "%s deveria ser lenhador" % id)
+		arvore.set_estagio(2, false)
+		u.global_position = arvore.global_position + Vector3(2.0, 0, 0)
+		u.reset_physics_interpolation()
+		u.aim_dir = Vector3.LEFT
+		u._attack_cd = 0.0
+		var antes: int = game.toras.size()
+		u._attack()
+		if u._windup_t > 0.0:
+			u._attack_hit()
+		_check(game.toras.size() - antes == 1, "%s: clique perto da árvore adulta deveria virar machadada" % id)
+	# Longe da planta: Bombardeiro joga bomba (não corta).
+	u.set_class(load("res://config/classes/bombardeiro.tres"))
+	arvore.set_estagio(2, false)
+	u.global_position = arvore.global_position + Vector3(8.0, 0, 0)
+	u.reset_physics_interpolation()
+	_check(not u.clique_vira_machadada(Vector3.LEFT), "bombardeiro longe da árvore não deveria cortar")
+	u.global_position = arvore.global_position + Vector3(2.0, 0, 0)
+	_check(not u.clique_vira_machadada(Vector3.RIGHT), "bombardeiro de costas para a árvore não deveria cortar")
+	u.reset_physics_interpolation()
+	u.set_class(load("res://config/classes/construtor.tres"))
 
 
 ## Maquininha: fabrica 1 a cada maquina_intervalo, para no máximo, pegar tira 1.
