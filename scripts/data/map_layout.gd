@@ -32,6 +32,12 @@ extends Resource
 @export var hat_spots: PackedVector2Array = [Vector2(5, -8.5), Vector2(5, 8.5), Vector2(-3, -8.5), Vector2(-3, 8.5)]
 ## Terrenos de oficina (o time escolhe que variação construir em cada um).
 @export var oficina_spots: PackedVector2Array = [Vector2(-7.5, -8.5), Vector2(-7.5, 8.5)]
+## Economia do Construtor. Árvores do bosque seguro e pilha de madeira em
+## coordenadas LOCAIS do castelo (como hat_spots: aparecem nos dois, espelhadas).
+@export var tree_spots: PackedVector2Array = []
+## Bambus de corte no MUNDO (x, z): o bambuzal do meio, onde há briga.
+@export var bamboo_spots: PackedVector2Array = []
+@export var pilha_spot := Vector2(8, -12)
 @export var spawn_min := Vector2(-1, -5)
 @export var spawn_max := Vector2(6, 5)
 ## Quanto à frente da muralha os defensores ficam de guarda.

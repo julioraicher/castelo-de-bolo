@@ -6,7 +6,10 @@ extends Node3D
 ## é assim que o time libera Ronin Oni, Kitsune etc.
 ##
 ## Obra: d(progresso)/dt = Σ velocidade_obra / oficina_build_time, somando
-## todos os Construtores do time a menos de BUILD_RADIUS.
+## todos os Construtores do time a menos de BUILD_RADIUS, mas o progresso não
+## passa de madeira_entregue / oficina_custo_madeira (Ciclo 2.3). Quem está na
+## obra puxa 1 madeira do estoque do time a cada oficina_puxar_intervalo / Σv s.
+## Em cima, o contador "faltam N" + barra (grande para quem joga de Construtor).
 
 enum Estado { VAZIO, OBRA, PRONTA }
 
@@ -17,6 +20,9 @@ var estado := Estado.VAZIO
 var progresso := 0.0
 var opcao_i := 0
 var pad: HatPad
+var madeira_entregue := 0
+## Obra parada porque o time não tem madeira (o contador pisca).
+var falta_madeira := false
 
 var _game: Game
 var _face := 0.0
@@ -31,6 +37,8 @@ var _mats_gira: Array[ShaderMaterial] = []
 var _relogio := 0.0
 var _ritmo := 0.0
 var _alt_label := 3.6
+var _puxar_t := 0.0
+var _contador: ContadorMadeira
 
 
 func setup(game: Game, p_team: int, pos: Vector3, opcao: int) -> void:
@@ -54,6 +62,8 @@ func setup(game: Game, p_team: int, pos: Vector3, opcao: int) -> void:
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.position.y = _alt_label
 	add_child(_label)
+	_contador = ContadorMadeira.new()
+	add_child(_contador)
 	_update_label()
 
 
@@ -73,15 +83,39 @@ func trocar_opcao() -> void:
 	_update_label()
 
 
+func custo() -> int:
+	return Config.cfg.oficina_custo_madeira
+
+
+func faltam() -> int:
+	return maxi(custo() - madeira_entregue, 0)
+
+
+## Teto da obra: a fração de madeira já entregue.
+func teto() -> float:
+	return 1.0 if custo() <= 0 else float(madeira_entregue) / custo()
+
+
+## Puxa 1 madeira do estoque do time para a obra. false = sem estoque ou já cheia.
+func puxar_madeira() -> bool:
+	if estado == Estado.PRONTA or faltam() <= 0 or not _game.gastar_madeira(team, 1):
+		return false
+	madeira_entregue += 1
+	if is_inside_tree():
+		Fx.burst(_game, global_position + Vector3(0, 0.6, 0), Color(0.7, 0.5, 0.25), 5, 2.5)
+	return true
+
+
 func add_progress(frac: float, by: Unit) -> void:
 	if estado == Estado.PRONTA:
 		return
-	progresso = minf(progresso + frac, 1.0)
+	progresso = minf(progresso + frac, teto())
 	estado = Estado.OBRA
 	_casa.visible = true
 	if by:
 		by.building_t = 0.25
-	if progresso >= 1.0:
+	if progresso >= 1.0 - 1e-6:
+		progresso = 1.0
 		_finish()
 
 
@@ -91,12 +125,22 @@ func _physics_process(delta: float) -> void:
 	var rate := 0.0
 	for u in _game.units:
 		if u.alive and u.team == team and u.stats.velocidade_obra > 0.0 and not u.carried_princess \
-				and u.global_position.distance_to(global_position) < BUILD_RADIUS:
+				and not u.carried_tora and u.global_position.distance_to(global_position) < BUILD_RADIUS:
 			rate += u.stats.velocidade_obra
 			u.building_t = 0.25
 	_ritmo = rate
 	if rate <= 0.0:
+		falta_madeira = false
+		_update_label()
 		return
+	_puxar_t -= delta * rate
+	if _puxar_t <= 0.0 and faltam() > 0:
+		if puxar_madeira():
+			_puxar_t = Config.cfg.oficina_puxar_intervalo
+	falta_madeira = faltam() > 0 and progresso >= teto() - 1e-4 and _game.madeira[team] <= 0
+	if progresso >= teto() - 1e-4:
+		_update_label()
+		return  # esperando madeira: sem poeira nem martelada
 	add_progress(rate * delta / Config.cfg.oficina_build_time, null)
 	_walls.scale.y = maxf(progresso, 0.02)
 	_dust_t -= delta
@@ -130,14 +174,21 @@ func _finish() -> void:
 
 func _update_label() -> void:
 	var cls := opcao()
+	var txt := "Oficina: %s" % cls.display_name
+	if estado != Estado.PRONTA:
+		txt = "%s  %d%%" % [cls.display_name, int(progresso * 100.0)] if estado == Estado.OBRA \
+				else "Terreno: %s" % cls.display_name
+	if _label.text != txt:
+		_label.text = txt
 	_label.modulate = cls.hat_color.lightened(0.35)
-	match estado:
-		Estado.PRONTA:
-			_label.text = "Oficina: %s" % cls.display_name
-		Estado.OBRA:
-			_label.text = "Obra: %s  %d%%" % [cls.display_name, int(progresso * 100.0)]
-		_:
-			_label.text = "Terreno: %s\n(Construtor constrói)" % cls.display_name
+	# Contador de madeira: grande para quem joga de Construtor, pequeno nas
+	# outras classes; pisca "falta madeira" quando o time não tem estoque.
+	_contador.visible = estado != Estado.PRONTA
+	if _contador.visible:
+		var p := _game.player
+		var grande := p != null and p.team == team and p.lenhador()
+		_contador.position.y = _label.position.y + (1.0 if grande else 0.7)
+		_contador.mostrar(faltam(), custo(), grande, falta_madeira or (faltam() > 0 and _game.madeira[team] <= 0))
 
 
 ## Estacas nos cantos + chão de terra batida.

@@ -51,6 +51,22 @@ jobs:
             exit 1
           fi
 
+      # QA do mapa (tests/qa_mapa.gd): passagem, objetos escondidos atrás de
+      # estrutura e bots presos. Por enquanto só avisa, não reprova o build.
+      - name: QA automático do mapa (aviso)
+        continue-on-error: true
+        run: |
+          timeout 10m ./godot --headless --path . --fixed-fps 60 -- --qa-mapa=qa > /dev/null 2>&1 || true
+          if [ -f qa/qa_mapa.txt ]; then
+            cat qa/qa_mapa.txt
+            { echo '### QA do mapa'; echo '```'; cat qa/qa_mapa.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            if [ "$(wc -l < qa/qa_mapa.txt)" -gt 1 ]; then
+              echo "::warning::QA do mapa achou problemas: $(sed -n 2p qa/qa_mapa.txt)"
+            fi
+          else
+            echo "::warning::QA do mapa não gerou o relatório."
+          fi
+
   export:
     needs: fumaca
     if: github.ref == 'refs/heads/main'

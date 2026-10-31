@@ -5,6 +5,73 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.3 (2026-10-31), Diretor Visual: mapa maior e maquininha por classe (branch)
+- Pedido do Julio: peças muito juntas; quer caminhos pela floresta para flanquear,
+  mapa maior e mais espaçado. Rio das Lanternas passa de 136 x 72 para 168 x 96 m
+  (`castle_distance` 60): vila com uma fileira de cada lado e becos de ~5 m,
+  campo do meio solto (|z| 14 a 22), trilhas de floresta em |z| = 30 (pontes
+  laterais -> mata -> lado do castelo inimigo, onde fica o bosque de corte dele),
+  lanternas de pedra a cada ~12 m marcando a trilha, colinas viraram mirantes
+  (|z| = 41) e um corredor de ~6 m atrás de cada castelo para contorná-lo.
+- QA do mapa: nenhum bot preso; os "desvios" atrás dos castelos são o corredor
+  novo (só se chega por fora, de propósito).
+- `maquina_<classe>.scn` para guerreiro (forja), arqueiro (esmeril), kitsune
+  (santuário), ronin_oni (fornalha oni), arqueiro_yumi (ateliê do arco) e
+  construtor (serraria), com os mesmos nós da `maquina_chapeu`; emblemas do
+  elenco 2.4. `tools/planta_mapa.gd` + `.py`: planta numerada do mapa.
+- Tema Dia: verdes mais escuros e menos saturados (grama, folhas, capim, bambu;
+  saturação 1,25 -> 1,0), pedido do Julio ("verde forte de joguinho bobinho").
+- Testes 98/98, 5 min simulados sem erro. Julio aprovou a planta (1ª versão).
+- **O que testar**: o mapa maior (trilhas da floresta pelas pontes laterais para
+  flanquear, corredor atrás do castelo inimigo), as maquininhas de cada classe
+  fabricando chapéu e o verde mais sóbrio do dia.
+
+## Ciclo 2.3 (2026-10-31), Diretor de Jogabilidade: Economia do Construtor, Etapa 1
+- **Madeira**: `Planta` (`scripts/items/planta.gd`): árvore e bambu em 3 estágios
+  (broto, jovem, adulta), um a cada `arvore_tempo_estagio` 40 s / `bambu_tempo_estagio`
+  15 s. Cada golpe de Construtor numa adulta solta 1 tora (`arvore_toras` 3,
+  `bambu_varas` 2) e no fim volta a broto; jovem rende 1. Só a linha do Construtor
+  (`velocidade_obra > 0`) corta.
+- **Tora** (`tora.gd`): o Construtor pega encostando, anda a `tora_vel_mult` 0,7 e não
+  ataca (dash vale). Apanhou, a tora cai e qualquer Construtor pega, até o inimigo.
+  Entregue na **pilha do castelo** (`pilha.gd`, a `pilha_raio` m) vira estoque do time.
+- **Maquininhas** (`hat_pad.gd`): 1 chapéu a cada `maquina_intervalo` 20 s até
+  `maquina_estoque_max` 3, começam cheias; pegar tira 1. Usam `maquina_chapeu.scn`
+  do Visual (chapéu sai do Molde e vai para a prateleira, emblema na frente).
+- **Oficinas** custam `oficina_custo_madeira` 6 e a obra caiu para 10 s: quem está na
+  obra puxa 1 madeira do estoque a cada 1,5 s; a obra não passa da madeira entregue.
+  Contador do Visual em cima ("faltam N", barra; grande para quem é Construtor,
+  pisca "falta madeira" sem estoque).
+- **Bot Construtor**: tora nos braços -> pilha; obra com estoque suficiente -> constrói;
+  tora solta perto -> pega; senão corta a adulta mais perto (bosque seguro primeiro,
+  sem dois aliados na mesma). Inimigo a 5 m: briga. No máximo `bots_construtores_max` 2.
+- **Alma de abate** (ideia do Julio): cada inimigo eliminado manda `alma_por_abate`
+  0,15 de espírito voando para a máscara do time de quem matou (~7 abates = 1
+  espírito). Quem só briga também deixa a máscara mais pesada para o inimigo.
+- **Bot preso perto do objetivo**: parado < 0,3 m em 3 s duas vezes seguidas dá a volta
+  (antes só valia longe do objetivo; o QA achou bots presos nos pátios do Rio).
+- **QA do mapa** (`tests/qa_mapa.gd`, flag `--qa-mapa=DIR`): passagem (grade de 1 m,
+  inalcançável e desvio > 2,5x), objetos escondidos da câmera (raios), bots presos
+  (3 min). Gera `qa_mapa.txt` (≤ 30 linhas) e, com tela, `qa_mapa.jpg`. No CI roda
+  como aviso. Hoje: 0 a 1 aviso (bot parado 2-3 amostras, briga).
+- Esquemas novos: `GameConfig` (grupo "Economia do Construtor", maquininha, oficina,
+  `alma_por_abate`), `MapLayout` (`tree_spots`, `pilha_spot` locais; `bamboo_spots` no
+  mundo), `ThemeConfig` (`arvore_estagios`, `bambu_estagios`, `maquina_model`,
+  `pilha_model`, `tora_model`). `Arena.registrar_contornos(no)` para modelos fora da Arena.
+- Elenco novo decidido no quiz: `docs/elenco-ciclo-2.4.md` (entra no 2.4).
+- Testes de regra 98/98 (novos: estágio, rendimento, tora, entrega, máquina, obra,
+  alma); 5 min simulados sem erro, 0 a 5 pontos por partida (igual a antes).
+- **O que testar**:
+  1. Jogue de **Armadilheiro** (chapéu laranja): corte a castanheira fora da muralha
+     lateral (perto do portão), leve a tora à pilha ao lado do portão e veja o número subir.
+  2. Fique na obra de uma casinha: o "faltam N" deve cair 1 a cada 1,5 s enquanto houver
+     madeira; sem madeira ele pisca.
+  3. Pegue chapéus da mesma máquina até acabar (3): ela fabrica outro a cada 20 s.
+  4. Apanhe carregando a tora: ela cai no chão.
+  5. Mate inimigos e olhe a sua máscara: uma alminha voa até ela.
+  6. Mapa maior do Visual (entrada acima): flanqueie pelas trilhas de floresta
+     (|z| = 30). Com ele, 1 a 3 pontos por 5 min nos bots (antes 0 a 5).
+
 ## Organização (2026-10-31), estagiário de economia: checkup de tokens
 - Pedido do Julio: checkup de onde o projeto gasta mais e aplicar as mudanças.
 - `docs/economia-de-tokens.md`: modelo de custo (N·C₀ + Δ·N²/2), tabela com
@@ -12,6 +79,24 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
   quiz econômico, resposta curta, lotes 3D com uma prancha, coordenador curto).
 - `CLAUDE.md`: resumo das regras novas na seção de economia.
 - **O que testar**: nada no jogo (só documentos).
+
+## Ciclo 2.3 (2026-10-31), Diretor Visual: modelos da Economia do Construtor (branch)
+- `tools/gerar_economia.gd` (rodar depois de `gerar_cenario_ninja.gd`): nos 4 temas,
+  `arvore_e1..3` (castanheira de corte; adulta com cunha no tronco e ofuda aceso
+  = "pronta"), `bambu_e1..3`, `tora` (centro na origem, eixo x), `pilha_toras`
+  (nós `Nivel_1..4`, 3 toras cada, e `Contador`), `maquina_chapeu` (`Prensa`,
+  `Gira_engrenagem`, `Molde`, `Brilho`, `Vapor`, `Enfeite`, `Estoque_1..4`,
+  animação `fabricar` de 2 s) e `emblema_{guerreiro,arqueiro,monge,construtor}`.
+  Liga os modelos nos temas sozinho quando o `ThemeConfig` ganhar os campos do contrato.
+- `scripts/ui/contador_madeira.gd` (`ContadorMadeira.mostrar(faltam, total, grande,
+  sem_estoque)`) + `assets/ui/icone_tora.png`: contador sobre a obra, por cima do telhado.
+- Rio das Lanternas: pontos do contrato (bosque local (9,5, 21) e (8, 25), pilha
+  local (9, 7,4), 6 bambus nas margens) gravados quando `MapLayout` tiver os campos;
+  saiu o bambuzal de enfeite em (±40,5, 24), que confundiria com o de corte.
+- Prancha: `tools/prancha_economia.gd` + `prancha_economia_mapa.gd` + `montar_economia.py`.
+- Testes de regra 68/68 e 5 min simulados sem erro de script.
+- **O que testar**: nada ainda (fora da main; o jogo usa os modelos quando a
+  Jogabilidade ligar as regras).
 
 ## Planejamento (2026-10-31), estagiário de ideias: Ciclo 2.3 aberto
 - Pedido do Julio (2 áudios): chapéus saindo de maquininhas animadas, limite
