@@ -94,7 +94,7 @@ func _build_start() -> Control:
 	var dicas := HBoxContainer.new()
 	dicas.add_theme_constant_override("separation", 12)
 	for tip in [
-		["katana", GOLD, "Chapéus", "No pátio, aperte E perto de um chapéu: %s. O Construtor corta madeira e ergue oficinas com classes novas." % lista],
+		["katana", GOLD, "Chapéus", "No pátio, aperte F perto de um chapéu: %s. O Construtor corta madeira e ergue oficinas com classes novas." % lista],
 		["espirito", Estilo.FANTASMA, "Espíritos", "Leve as chamas verdes até a SUA máscara. Cheia de espíritos, ela pesa e o inimigo anda devagar com ela."],
 		["mascara", Config.team_color(0).lightened(0.3), "Resgate", "Quem cai volta como recruta. Itens no chão ajudam na briga. Vence quem fizer %d resgates primeiro." % Config.cfg.score_to_win],
 	]:

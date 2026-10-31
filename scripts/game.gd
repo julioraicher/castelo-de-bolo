@@ -27,6 +27,9 @@ var caminho_nivel := [0, 0]
 var score := [0, 0]
 var player: Unit
 var player_brain: PlayerBrain
+## Guia do ciclo da madeira (seta/marcador) e minimapa do canto.
+var guia: GuiaConstrutor
+var minimapa: Minimapa
 var game_over := false
 
 var _cake_t := 2.0
@@ -248,6 +251,18 @@ func _ready() -> void:
 
 	hud = Hud.new()
 	add_child(hud)
+	# Minimapa no canto inferior direito, acima da linha de ajuda.
+	minimapa = Minimapa.new()
+	hud.add_child(minimapa)
+	minimapa.setup(self)
+	minimapa.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 16)
+	minimapa.offset_top -= 34.0
+	minimapa.offset_bottom -= 34.0
+	minimapa.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	minimapa.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	guia = GuiaConstrutor.new()
+	add_child(guia)
+	guia.setup(self)
 	var auto_q := AutoQuality.new()
 	auto_q.hud = hud
 	if _vista != "":
@@ -325,6 +340,7 @@ func _physics_process(delta: float) -> void:
 	if _hud_t <= 0.0:
 		_hud_t = 0.05
 		hud.update_state(self)
+		minimapa.alvo_guia = guia.alvo
 
 
 func _log(msg: String) -> void:
@@ -408,10 +424,10 @@ func _rules() -> void:
 			u.drop_princess()
 			continue
 
-		# Pegar a princesa inimiga: bots pegam sozinhos, o jogador aperta E.
+		# Pegar a princesa inimiga: bots pegam sozinhos, o jogador aperta F.
 		if not u.carried_princess and enemy_p.can_be_taken() and pos.distance_to(enemy_p.global_position) < 2.8:
 			if u.is_player:
-				hint = "[E] pegar a máscara!"
+				hint = "[F] pegar a máscara!"
 			if not u.is_player or wants_interact:
 				u.pick_up_princess(enemy_p)
 				u.has_cake = false
@@ -456,14 +472,14 @@ func _rules() -> void:
 				it.queue_free()
 				break
 
-		# Chapéus: recruta veste ao encostar; quem já tem classe troca com E.
+		# Chapéus: recruta veste ao encostar; quem já tem classe troca com F.
 		for pad in hat_pads:
 			if pad.team != u.team or not pad.available or pad.stats == u.stats or u.is_equipping():
 				continue
 			if pos.distance_to(pad.global_position) < 2.0:
 				if u.is_player:
-					hint = "[E] pegar o chapéu de %s" % pad.stats.display_name
-				# Jogador: só com E. Bots recrutas (e o jogador no modo teste) pegam sozinhos.
+					hint = "[F] pegar o chapéu de %s" % pad.stats.display_name
+				# Jogador: só com F. Bots recrutas (e o jogador no modo teste) pegam sozinhos.
 				var bot_pega := u.brain is BotBrain and u.is_villager() and not (pad.stats.velocidade_obra > 0.0 \
 						and _bots_lenhadores(u.team, u) >= Config.cfg.bots_construtores_max)
 				if wants_interact or bot_pega:
@@ -471,7 +487,7 @@ func _rules() -> void:
 					u.start_equip(pad.take(), from)
 				break
 
-	# Oficina: o jogador troca a opção do terreno com E.
+	# Oficina: o jogador troca a opção do terreno com F.
 	if player.alive and not player.carried_princess and hint == "":
 		var of := nearest_oficina(player.team, player.global_position, Oficina.BUILD_RADIUS + 0.5, true)
 		if of:
@@ -484,11 +500,11 @@ func _rules() -> void:
 				else:
 					hint = "Caminho de %s: construir aqui sela %s até o fim  ·  %s" % [of.opcao().display_name, nome_outro, builder]
 			elif of.comecada():
-				# Obra começada: mostra o progresso guardado; [E] não troca nem apaga nada.
+				# Obra começada: mostra o progresso guardado; [F] não troca nem apaga nada.
 				var falta := "  ·  faltam %d madeiras" % of.faltam() if of.faltam() > 0 else ""
 				hint = "Obra de %s: %d%%%s  ·  %s" % [of.opcao().display_name, int(of.progresso * 100.0), falta, builder]
 			else:
-				hint = "[E] trocar oficina: %s  (%s)" % [of.opcao().display_name, builder]
+				hint = "[F] trocar oficina: %s  (%s)" % [of.opcao().display_name, builder]
 				if player_brain != null and player_brain.interact_pressed:
 					of.trocar_opcao()
 
@@ -518,12 +534,22 @@ func _rules() -> void:
 	if player.alive and hint == "" and not player.carried_tora and not player.carried_princess:
 		for p in plantas:
 			if p.estagio != Planta.Estagio.BROTO and player.global_position.distance_to(p.global_position) < 4.0:
-				hint = "Golpeie para cortar madeira e leve ao armazém do castelo" if player.lenhador() \
+				hint = "Golpeie [Clique] para cortar a árvore; a tora cai no chão" if player.lenhador() \
 						else "Só a linha do Construtor (chapéu laranja) corta madeira"
 				break
 
+	# Construtor longe de tudo: o próximo passo do ciclo, junto com a seta dourada.
+	if player.alive and hint == "" and guia.verbo != "":
+		match guia.verbo:
+			"CORTE":
+				hint = "Siga a seta dourada até uma árvore e corte madeira"
+			"PEGUE":
+				hint = "Pegue a tora no chão: é só encostar"
+			"CONSTRUA":
+				hint = "Tem madeira no depósito: siga a seta e construa a oficina"
+
 	if player.alive and player.carried_princess:
-		hint = "Leve-a até o SEU castelo!  ([E] soltar)"
+		hint = "Leve-a até o SEU castelo!  ([F] soltar)"
 	elif player.has_cake:
 		hint = "Leve o espírito até a sua máscara"
 	hud.set_hint(hint)
@@ -688,7 +714,7 @@ func entregar_tora(u: Unit) -> void:
 	Sfx.play("pickup", u.global_position, 0.05)
 	Fx.burst(self, pilhas[u.team].global_position + Vector3(0, 1.0, 0), Color(0.9, 0.7, 0.4), 8, 3.0)
 	if u.is_player:
-		hud.show_big("+1 madeira (%d)" % madeira[u.team], Color(1, 0.8, 0.5), 0.8)
+		hud.show_big("+1 madeira  ·  depósito: %d" % madeira[u.team], Color(1, 0.8, 0.5), 0.9)
 
 
 ## Tira n do estoque do time. Sem estoque suficiente, não tira nada.
@@ -722,7 +748,7 @@ func _regras_madeira(u: Unit) -> String:
 		if pos.distance_to(pilhas[u.team].global_position) < Config.cfg.pilha_raio:
 			entregar_tora(u)
 			return ""
-		return "Leve a tora até o armazém de madeira do castelo (perto do portão)"
+		return "Siga a seta: entregue a tora no DEPÓSITO do seu castelo (ícone de tora)"
 	var t := nearest_tora_solta(pos, 1.6)
 	if t and not u.is_equipping():
 		t.pegar(u)
@@ -895,7 +921,10 @@ func spawn_projectile(shooter: Unit, origin: Vector3, dir: Vector3, kind: String
 # --- Eventos ------------------------------------------------------------------
 
 func _on_player_class_changed(u: Unit) -> void:
-	if not u.is_villager():
+	if u.lenhador():
+		# Ciclo da madeira explicado na hora em que o jogador vira Construtor.
+		hud.show_big("Você é %s!\nCorte árvores e leve as toras ao depósito" % u.stats.display_name, u.stats.hat_color.lightened(0.3), 2.6)
+	elif not u.is_villager():
 		hud.show_big("Agora você é %s!" % u.stats.display_name, u.stats.hat_color.lightened(0.3), 1.3)
 
 

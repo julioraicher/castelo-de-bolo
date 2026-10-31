@@ -35,7 +35,9 @@ static func prewarm(parent: Node, pos: Vector3) -> void:
 	parent.get_tree().create_timer(0.5).timeout.connect(bolha.queue_free)
 
 
-static func damage_number(parent: Node, pos: Vector3, text: String, color: Color) -> void:
+## forca: 1 = golpe comum; > 1 = número maior e com mais "pop" (combo final,
+## contra-golpe). dir: o número escorrega um pouco para onde o golpe empurrou.
+static func damage_number(parent: Node, pos: Vector3, text: String, color: Color, forca := 1.0, dir := Vector3.ZERO) -> void:
 	if not Settings.damage_numbers:
 		return
 	var label := Label3D.new()
@@ -45,15 +47,19 @@ static func damage_number(parent: Node, pos: Vector3, text: String, color: Color
 	label.outline_size = 10
 	label.font = Estilo.NUMERO
 	label.font_size = 64
-	label.pixel_size = 0.012
+	label.pixel_size = 0.012 * clampf(0.85 + 0.25 * forca, 0.85, 1.6)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
 	label.fixed_size = false
 	label.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
 	parent.add_child(label)
 	label.global_position = pos + Vector3(randf_range(-0.4, 0.4), 2.6, 0)
+	# "Pop": nasce grande e volta com sobra (TRANS_BACK), lê como impacto.
+	label.scale = Vector3.ONE * (1.5 + 0.3 * forca)
 	var tw := label.create_tween().set_parallel()
-	tw.tween_property(label, "global_position:y", label.global_position.y + 1.6, 0.7).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.tween_property(label, "scale", Vector3.ONE, 0.18).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	var fim := label.global_position + Vector3(0, 1.6, 0) + Vector3(dir.x, 0, dir.z).limit_length(1.0) * 0.6
+	tw.tween_property(label, "global_position", fim, 0.7).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tw.tween_property(label, "modulate:a", 0.0, 0.7).set_delay(0.25)
 	tw.chain().tween_callback(label.queue_free)
 
