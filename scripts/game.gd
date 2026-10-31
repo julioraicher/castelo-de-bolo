@@ -528,7 +528,7 @@ func _rules() -> void:
 				var esc := mago_oposto(of)
 				hint = "Caminho selado: seu time seguiu a %s" % (esc.nome_caminho() if esc else "outro mago")
 			elif of.pode_subir():
-				hint = "%s nível %d → %d: faltam %d madeiras  ·  %s" % [of.opcao().display_name, of.nivel, of.nivel + 1, of.faltam_nivel(),
+				hint = "Suba %s ao nível %d: faltam %d madeiras  ·  %s" % [of.opcao().display_name, of.nivel + 1, of.faltam_nivel(),
 					"fique aqui" if player.lenhador() else "precisa de um Construtor"]
 			elif of.estado == Oficina.Estado.PRONTA:
 				hint = "%s no nível máximo (%d)" % [of.opcao().display_name, of.nivel]
