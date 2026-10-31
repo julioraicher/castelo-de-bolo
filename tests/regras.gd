@@ -17,6 +17,10 @@ func _ready() -> void:
 	_dados()
 	_dano()
 	await _empurrao()
+	_madeira()
+	_maquina()
+	_obra()
+	await _alma()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -125,3 +129,153 @@ func _empurrao() -> void:
 		"empurrão: freada por quadro esperada %.3f m/s, deu %.3f" % [esperado, v1 - v2])
 	_check(_perto(8.0 * 8.0 / (2.0 * a), 0.8, 0.001), "KNOCK_DECAY mudou: 8 m/s deveria empurrar 0,8 m")
 	u._knock = Vector3.ZERO
+
+
+## Construtor do time do alvo (vira Construtor se preciso; com mãos livres).
+func _lenhador():
+	var u = _alvo()
+	if u == null:
+		return null
+	if not u.lenhador():
+		u.set_class(load("res://config/classes/construtor.tres"))
+	u.drop_tora()
+	u.carried_princess = null
+	u._dodge_t = 0.0
+	u._equip_t = 0.0
+	u._spin_t = 0.0
+	u._silence_t = 0.0
+	return u
+
+
+## Economia do Construtor: crescimento, rendimento, tora nos braços, entrega.
+func _madeira() -> void:
+	var cfg = get_node("/root/Config").cfg
+	_check(not game.plantas.is_empty(), "nenhuma planta no mapa (tree_spots/bamboo_spots)")
+	_check(game.pilhas.size() == 2, "esperadas 2 pilhas de madeira")
+	var u = _lenhador()
+	if game.plantas.is_empty() or u == null:
+		return
+	var arvore = null
+	for p in game.plantas:
+		if p.tipo == "arvore":
+			arvore = p
+			break
+	_check(arvore != null, "nenhuma árvore no mapa")
+	if arvore == null:
+		return
+
+	# Estágio sobe no tempo certo.
+	arvore.set_estagio(0, false)
+	arvore.avancar(cfg.arvore_tempo_estagio - 0.05)
+	_check(arvore.estagio == 0, "árvore subiu de estágio antes do tempo")
+	arvore.avancar(0.1)
+	_check(arvore.estagio == 1, "árvore não subiu de estágio em arvore_tempo_estagio")
+	arvore.avancar(cfg.arvore_tempo_estagio)
+	_check(arvore.estagio == 2, "árvore não chegou a adulta em 2 estágios")
+
+	# Adulta rende arvore_toras (1 por golpe) e volta a broto.
+	var antes: int = game.toras.size()
+	for i in cfg.arvore_toras:
+		arvore.golpe(u)
+	_check(game.toras.size() - antes == cfg.arvore_toras,
+		"adulta: esperadas %d toras, saíram %d" % [cfg.arvore_toras, game.toras.size() - antes])
+	_check(arvore.estagio == 0, "árvore não voltou a broto depois das toras")
+	_check(not arvore.golpe(u), "broto não deveria render tora")
+	# Jovem rende 1 e volta a broto.
+	arvore.set_estagio(1, false)
+	antes = game.toras.size()
+	arvore.golpe(u)
+	_check(game.toras.size() - antes == 1 and arvore.estagio == 0, "jovem deveria render 1 tora e voltar a broto")
+
+	# Carregar: velocidade x tora_vel_mult e sem ataque.
+	var v0: float = u.current_speed()
+	var t = game.toras.back()
+	t.pegar(u)
+	_check(_perto(u.current_speed(), v0 * cfg.tora_vel_mult, 0.01),
+		"tora: velocidade esperada %.2f, deu %.2f" % [v0 * cfg.tora_vel_mult, u.current_speed()])
+	_check(not u.maos_livres(), "com tora nos braços não deveria atacar")
+	# Apanhar derruba a tora.
+	u.hp = u.max_hp()
+	u.take_damage(1.0, null, Vector3.RIGHT)
+	_check(u.carried_tora == null and t.no_chao(), "apanhar deveria derrubar a tora")
+	# Entregar soma 1 ao estoque do time.
+	t.pegar(u)
+	var m0: int = game.madeira[u.team]
+	game.entregar_tora(u)
+	_check(game.madeira[u.team] == m0 + 1, "entregar a tora deveria somar 1 ao estoque")
+	_check(u.carried_tora == null and u.maos_livres(), "depois de entregar as mãos ficam livres")
+
+
+## Maquininha: fabrica 1 a cada maquina_intervalo, para no máximo, pegar tira 1.
+func _maquina() -> void:
+	var cfg = get_node("/root/Config").cfg
+	_check(not game.hat_pads.is_empty(), "nenhuma maquininha de chapéu")
+	if game.hat_pads.is_empty():
+		return
+	var pad = game.hat_pads[0]
+	while pad.estoque < pad.estoque_max:
+		pad.avancar(pad.intervalo)
+	var cheio: int = pad.estoque
+	_check(cheio == cfg.maquina_estoque_max, "máquina deveria encher até maquina_estoque_max")
+	pad.take()
+	_check(pad.estoque == cheio - 1 and pad.available, "pegar chapéu deveria tirar 1 do estoque")
+	pad.avancar(cfg.maquina_intervalo - 0.05)
+	_check(pad.estoque == cheio - 1, "máquina fabricou antes do intervalo")
+	pad.avancar(0.1)
+	_check(pad.estoque == cheio, "máquina não fabricou no intervalo")
+	pad.avancar(cfg.maquina_intervalo * 3.0)
+	_check(pad.estoque == cheio, "máquina passou do estoque máximo")
+	for i in cheio:
+		pad.take()
+	_check(pad.estoque == 0 and not pad.available, "estoque zero deveria deixar a máquina indisponível")
+	pad.take()
+	_check(pad.estoque == 0, "estoque não pode ficar negativo")
+
+
+## Obra: consome madeira do estoque, não passa do que foi entregue, estoque >= 0.
+func _obra() -> void:
+	var of = null
+	for o in game.oficinas:
+		if o.estado != 2:  # Oficina.Estado.PRONTA
+			of = o
+			break
+	_check(of != null, "nenhuma oficina por construir para testar")
+	if of == null:
+		return
+	var team: int = of.team
+	game.madeira[team] = 1
+	var e0: int = of.madeira_entregue
+	_check(of.puxar_madeira(), "obra deveria puxar madeira com estoque 1")
+	_check(game.madeira[team] == 0 and of.madeira_entregue == e0 + 1, "puxar deveria mover 1 do estoque para a obra")
+	_check(not of.puxar_madeira() and game.madeira[team] == 0, "sem estoque a obra não puxa e o estoque não fica negativo")
+	of.add_progress(1.0, null)
+	_check(_perto(of.progresso, of.teto(), 0.001) and of.progresso < 1.0,
+		"obra passou da madeira entregue: progresso %.2f, teto %.2f" % [of.progresso, of.teto()])
+
+
+## Alma de abate: matar um inimigo deixa a máscara do time de quem matou mais
+## pesada em fat_per_cake · alma_por_abate (a alma chega voando em ~0,9 s).
+func _alma() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var vitima = null
+	var matador = null
+	for u in game.units:
+		if u.alive and not u.is_player:
+			if vitima == null:
+				vitima = u
+			elif matador == null and u.team != vitima.team:
+				matador = u
+	if vitima == null or matador == null:
+		_check(false, "alma: faltou boneco para testar")
+		return
+	var mascara = game.princesses[matador.team]
+	mascara.fatness = 0.0
+	vitima._dodge_t = 0.0
+	vitima._shield = 0.0
+	vitima.take_damage(99999.0, matador, Vector3.RIGHT)
+	_check(not vitima.alive, "alma: a vítima deveria morrer")
+	await get_tree().create_timer(1.3).timeout
+	var esperado: float = cfg.fat_per_cake * cfg.alma_por_abate
+	# (tolerância para um abate de verdade no mesmo segundo)
+	_check(mascara.fatness >= esperado - 0.005 and mascara.fatness <= esperado * 3.0 + 0.005,
+		"alma: máscara deveria pesar %.3f, pesa %.3f" % [esperado, mascara.fatness])

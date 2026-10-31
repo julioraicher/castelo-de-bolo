@@ -38,6 +38,8 @@ var hp := 1.0
 var alive := true
 var carried_princess: Princess = null
 var has_cake := false
+## Tora nos braços (Construtor, Ciclo 2.3): anda a tora_vel_mult e não ataca.
+var carried_tora: Tora = null
 
 # Intenções preenchidas pelo cérebro.
 var move_intent := Vector3.ZERO
@@ -167,6 +169,8 @@ func setup(p_game: Game, p_team: int, p_is_player: bool, start_class: ClassStats
 
 func set_class(new_stats: ClassStats) -> void:
 	stats = new_stats
+	if not lenhador():
+		drop_tora()
 	hp = max_hp()  # trocar de chapéu cura por completo
 	if _model:
 		_model.queue_free()
@@ -362,6 +366,23 @@ func is_villager() -> bool:
 	return stats == Config.cfg.villager
 
 
+## Pode atacar/usar habilidade agora (sem máscara nem tora nos braços, fora
+## do dash, do chapéu, do Redemoinho e do Selo).
+func maos_livres() -> bool:
+	return not carried_princess and not carried_tora and _dodge_t <= 0.0 and _equip_t <= 0.0 \
+			and _spin_t <= 0.0 and _silence_t <= 0.0
+
+
+## Corta madeira (Construtor e variações: quem tem velocidade_obra).
+func lenhador() -> bool:
+	return stats.velocidade_obra > 0.0
+
+
+func drop_tora() -> void:
+	if carried_tora:
+		carried_tora.largar()
+
+
 func is_busy_carrying() -> bool:
 	return carried_princess != null
 
@@ -379,6 +400,8 @@ func current_speed() -> float:
 	var s := stats.move_speed
 	if carried_princess:
 		s *= stats.carry_speed_mult * (1.0 - carried_princess.fatness * Config.cfg.fat_slowdown)
+	if carried_tora:
+		s *= Config.cfg.tora_vel_mult
 	if _boost_t > 0.0:
 		s *= _boost_mult
 	if _slow_t > 0.0:
@@ -496,7 +519,7 @@ func _physics_process(delta: float) -> void:
 		_equip_t -= delta
 		if _equip_t <= 0.0:
 			_finish_equip()
-	var free_hands := not carried_princess and _dodge_t <= 0.0 and _equip_t <= 0.0 and _spin_t <= 0.0 and _silence_t <= 0.0
+	var free_hands := maos_livres()
 	_update_skill(delta, free_hands)
 	if wants_power:
 		wants_power = false
@@ -620,6 +643,8 @@ func _attack_hit() -> void:
 				other.take_damage(stats.damage * mult * damage_mult(), self, to.normalized(), mult, true)
 				if finisher:
 					other.launch(3.5)  # golpe final tira o alvo do chão
+				hit_any = true
+			if lenhador() and game.golpear_plantas(self, dir, stats.attack_range + 0.6, stats.attack_arc_deg):
 				hit_any = true
 			if hit_any:
 				hitstop(Config.cfg.hitstop_time * (1.6 if finisher else 1.0))
@@ -886,6 +911,8 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		amount -= absorbed
 	hp -= amount
 	_calm_t = 0.0
+	if carried_tora and amount > 0.0:
+		drop_tora()  # apanhou: a tora cai (qualquer Construtor pega, até o inimigo)
 	if attacker:
 		attacker._calm_t = 0.0
 		attacker.add_power(amount * Config.cfg.power_per_damage)
@@ -938,6 +965,7 @@ func _die(killer: Unit) -> void:
 	if carried_princess:
 		carried_princess.drop(global_position)
 		carried_princess = null
+	drop_tora()
 	has_cake = false
 	collision_layer = 0
 	velocity = Vector3.ZERO
@@ -1238,6 +1266,7 @@ func _end_buffs() -> void:
 # --- Carregar princesa e bolo -------------------------------------------------
 
 func pick_up_princess(p: Princess) -> void:
+	drop_tora()
 	carried_princess = p
 	p.pick_up(self)
 	Sfx.play("pickup", global_position)
@@ -1271,7 +1300,7 @@ func _animate(horizontal: Vector3) -> void:
 		_play_upper("1H_Melee_Attack_Chop", 0.9, true)
 	elif _upper and _upper.current_animation == "tronco/1H_Melee_Attack_Chop" and _upper.get_current_animation_length() > 0.0 and building_t <= 0.0:
 		_upper.stop()
-	if carried_princess:
+	if carried_princess or carried_tora:
 		_play("Walking_B" if moving else "Idle")
 	else:
 		_play(stats.anim_run if moving else stats.anim_idle)

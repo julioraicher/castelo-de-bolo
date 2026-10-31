@@ -13,6 +13,12 @@ var hat_pads: Array[HatPad] = []
 var cakes: Array[Cake] = []
 var pickups: Array[Pickup] = []
 var oficinas: Array[Oficina] = []
+## Economia do Construtor (Ciclo 2.3): plantas, toras soltas/carregadas,
+## pilha de cada castelo e o estoque de madeira de cada time.
+var plantas: Array[Planta] = []
+var toras: Array[Tora] = []
+var pilhas: Array[Pilha] = []
+var madeira := [0, 0]
 var score := [0, 0]
 var player: Unit
 var player_brain: PlayerBrain
@@ -37,6 +43,8 @@ var _time := 0.0
 #   --perf=N            mede o desempenho na qualidade N (0-3): a cada 5 s imprime
 #                       ms de CPU por quadro, draw calls, triângulos e objetos
 #   --testes            roda os testes de regra (tests/regras.gd) e sai com 0/1
+#   --qa-mapa=<pasta>   QA automático do mapa (tests/qa_mapa.gd): qa_mapa.txt
+#                       (até 30 linhas) e, com tela, qa_mapa.jpg; implica --autoplay
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
 var _variacoes := false
@@ -55,6 +63,7 @@ var _perf_n := 0
 var _perf_t := 0.0
 var _perf_t0 := 0
 var _testes := false  # --testes: roda tests/regras.gd e sai
+var _qa_dir := ""
 var _shot_times: Array[float] = [4.0, 15.0, 30.0, 50.0, 75.0]
 
 const BOT_ROLES := [BotBrain.Role.ATTACK, BotBrain.Role.DEFEND, BotBrain.Role.ATTACK, BotBrain.Role.CAKE,
@@ -89,6 +98,9 @@ func _ready() -> void:
 			Settings.theme = int(arg.trim_prefix("--tema="))
 		elif arg == "--testes":
 			_testes = true
+		elif arg.begins_with("--qa-mapa="):
+			_qa_dir = arg.trim_prefix("--qa-mapa=")
+			_autoplay = true
 	if _print_poder:
 		_shot_times = [1e9, 1e9, 1e9, 1e9, 1e9, 1e9]  # quem marca a hora é o poder
 	arena = Arena.new()
@@ -119,6 +131,9 @@ func _ready() -> void:
 				add_child(of)
 				of.setup(self, team, arena.oficina_spots[team][i], order[i % n_opts])
 				oficinas.append(of)
+		_montar_economia(team)
+
+	_registrar_modelos()
 
 	var cfg := Config.cfg
 	var start_classes: Array[ClassStats] = cfg.bot_start_classes if not cfg.bot_start_classes.is_empty() else [cfg.villager]
@@ -180,6 +195,11 @@ func _ready() -> void:
 		var t: Node = load("res://tests/regras.gd").new()
 		t.set("game", self)
 		add_child(t)
+	if _qa_dir != "":
+		var qa: Node = load("res://tests/qa_mapa.gd").new()
+		qa.set("game", self)
+		qa.set("dir", _qa_dir)
+		add_child(qa)
 
 	hud = Hud.new()
 	add_child(hud)
@@ -379,6 +399,10 @@ func _rules() -> void:
 					c.queue_free()
 					break
 
+		var dica_madeira := _regras_madeira(u)
+		if u.is_player and dica_madeira != "":
+			hint = dica_madeira
+
 		# Itens no chão: qualquer um que encosta pega.
 		for it in pickups:
 			if pos.distance_to(it.global_position) < 1.6:
@@ -395,7 +419,9 @@ func _rules() -> void:
 				if u.is_player:
 					hint = "[E] pegar o chapéu de %s" % pad.stats.display_name
 				# Jogador: só com E. Bots recrutas (e o jogador no modo teste) pegam sozinhos.
-				if wants_interact or (u.brain is BotBrain and u.is_villager()):
+				var bot_pega := u.brain is BotBrain and u.is_villager() and not (pad.stats.velocidade_obra > 0.0 \
+						and _bots_lenhadores(u.team, u) >= Config.cfg.bots_construtores_max)
+				if wants_interact or bot_pega:
 					var from: Vector3 = pad.hat_world_position()
 					u.start_equip(pad.take(), from)
 				break
@@ -484,6 +510,128 @@ func nearest_pickup(from: Vector3, max_dist: float) -> Pickup:
 	return best
 
 
+# --- Economia do Construtor ---------------------------------------------------
+
+## Pilha de madeira, árvores do bosque seguro e bambus do meio de um castelo.
+func _montar_economia(team: int) -> void:
+	var pilha := Pilha.new()
+	pilha.name = "Pilha%s" % Config.TEAM_NAMES[team]
+	add_child(pilha)
+	pilha.setup(self, team, arena.pilha_spot[team])
+	pilhas.append(pilha)
+	for spot in arena.tree_spots[team]:
+		_nova_planta("arvore", team, spot)
+	for spot in arena.bamboo_spots[team]:
+		_nova_planta("bambu", team, spot)
+
+
+## Contorno de tinta só na qualidade Alta também nos modelos da economia
+## (maquininha, pilha, plantas em todos os estágios, tora), que nascem fora da
+## Arena. Os materiais de cada .scn são compartilhados: registrar uma vez basta.
+func _registrar_modelos() -> void:
+	var th := arena.theme
+	var tmp := Node3D.new()
+	add_child(tmp)
+	for cena in th.arvore_estagios + th.bambu_estagios + [th.tora_model]:
+		if cena:
+			tmp.add_child(cena.instantiate())
+	arena.registrar_contornos(self)
+	tmp.queue_free()
+
+
+func _nova_planta(tipo: String, team: int, pos: Vector3) -> Planta:
+	var p := Planta.new()
+	add_child(p)
+	p.setup(self, tipo, team, pos)
+	plantas.append(p)
+	return p
+
+
+func soltar_tora(pos: Vector3, dir: Vector3) -> Tora:
+	var t := Tora.new()
+	add_child(t)
+	t.setup(self, pos)
+	toras.append(t)
+	# Pula para fora da planta (onde o Construtor está).
+	var alvo := pos + dir * 1.2
+	alvo.y = pos.y - 0.4
+	t.create_tween().tween_property(t, "global_position", alvo, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	return t
+
+
+## Golpe de Construtor: acerta as plantas no arco do golpe (a mais perto).
+func golpear_plantas(u: Unit, dir: Vector3, alcance: float, arco_deg: float) -> bool:
+	var melhor: Planta = null
+	var melhor_d := alcance
+	for p in plantas:
+		var to := p.global_position - u.global_position
+		to.y = 0
+		var d := to.length()
+		if d > melhor_d or p.estagio == Planta.Estagio.BROTO:
+			continue
+		if d > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > arco_deg / 2.0:
+			continue
+		melhor = p
+		melhor_d = d
+	if melhor == null:
+		return false
+	return melhor.golpe(u)
+
+
+func entregar_tora(u: Unit) -> void:
+	var t := u.carried_tora
+	if t == null:
+		return
+	u.carried_tora = null
+	toras.erase(t)
+	t.queue_free()
+	madeira[u.team] += 1
+	pilhas[u.team].atualizar(madeira[u.team])
+	_log("madeira %s = %d (t=%.0fs)" % [Config.TEAM_NAMES[u.team], madeira[u.team], _time])
+	Sfx.play("pickup", u.global_position, 0.05)
+	Fx.burst(self, pilhas[u.team].global_position + Vector3(0, 1.0, 0), Color(0.9, 0.7, 0.4), 8, 3.0)
+	if u.is_player:
+		hud.show_big("+1 madeira (%d)" % madeira[u.team], Color(1, 0.8, 0.5), 0.8)
+
+
+## Tira n do estoque do time. Sem estoque suficiente, não tira nada.
+func gastar_madeira(team: int, n: int) -> bool:
+	if madeira[team] < n:
+		return false
+	madeira[team] -= n
+	if team < pilhas.size():
+		pilhas[team].atualizar(madeira[team])
+	return true
+
+
+func nearest_tora_solta(from: Vector3, max_dist: float) -> Tora:
+	var best: Tora = null
+	var best_d := max_dist
+	for t in toras:
+		if t.no_chao():
+			var d := from.distance_to(t.global_position)
+			if d < best_d:
+				best_d = d
+				best = t
+	return best
+
+
+## Regras da madeira por boneco: pegar tora solta e entregar na pilha.
+func _regras_madeira(u: Unit) -> String:
+	if not u.lenhador() or u.carried_princess:
+		return ""
+	var pos := u.global_position
+	if u.carried_tora:
+		if pos.distance_to(pilhas[u.team].global_position) < Config.cfg.pilha_raio:
+			entregar_tora(u)
+			return ""
+		return "Leve a tora até a pilha do seu castelo"
+	var t := nearest_tora_solta(pos, 1.6)
+	if t and not u.is_equipping():
+		t.pegar(u)
+	return ""
+
+
 # --- Consultas usadas pelos bots ----------------------------------------------
 
 ## Oficina do time mais perto (só as não prontas, se unbuilt_only).
@@ -508,16 +656,27 @@ func on_oficina_pronta(of: Oficina) -> void:
 		hud.show_big("O inimigo liberou %s" % of.opcao().display_name, Color(1, 0.6, 0.55), 1.6)
 
 
-func nearest_free_hat(team: int, from: Vector3) -> HatPad:
+## Chapéu com estoque mais perto. Para bots (quem != null), o de Construtor
+## só vale enquanto o time tem menos de bots_construtores_max bots lenhadores.
+func nearest_free_hat(team: int, from: Vector3, quem: Unit = null) -> HatPad:
 	var best: HatPad = null
 	var best_d := INF
+	var sem_lenhador := quem != null and _bots_lenhadores(team, quem) >= Config.cfg.bots_construtores_max
 	for pad in hat_pads:
-		if pad.team == team and pad.available:
+		if pad.team == team and pad.available and not (sem_lenhador and pad.stats.velocidade_obra > 0.0):
 			var d := from.distance_to(pad.global_position)
 			if d < best_d:
 				best_d = d
 				best = pad
 	return best
+
+
+func _bots_lenhadores(team: int, fora: Unit) -> int:
+	var n := 0
+	for u in units:
+		if u != fora and u.team == team and u.brain is BotBrain and u.lenhador():
+			n += 1
+	return n
 
 
 func nearest_cake(from: Vector3) -> Cake:
@@ -546,6 +705,8 @@ func _on_player_class_changed(u: Unit) -> void:
 
 
 func _on_unit_died(u: Unit, killer: Unit) -> void:
+	if killer and killer.team != u.team:
+		_alma_de_abate(u, killer.team)
 	if u == player:
 		hud.show_big("Você caiu! Voltando como recruta...", Color(1, 0.6, 0.6), 1.8)
 	elif killer == player:
@@ -555,6 +716,27 @@ func _on_unit_died(u: Unit, killer: Unit) -> void:
 		camera.add_trauma(0.3)
 		camera.punch_fov(3.0)
 		slowmo(0.35, 0.12)
+
+
+## A alma do abatido voa até a máscara do time de quem matou e a deixa mais
+## pesada (Princess.pesar_alma). Ela pesa ao chegar, não no abate.
+func _alma_de_abate(morto: Unit, team: int) -> void:
+	var mascara := princesses[team]
+	var alma := Cake.make_visual(0.45)
+	alma.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	add_child(alma)
+	var de := morto.global_position + Vector3(0, 1.4, 0)
+	alma.global_position = de
+	var tw := alma.create_tween()
+	# Arco: sobe e cai na máscara (que pode estar andando no colo de alguém).
+	tw.tween_method(func(k: float):
+		var ate := mascara.global_position + Vector3(0, 1.6, 0)
+		alma.global_position = de.lerp(ate, k) + Vector3(0, sin(k * PI) * 4.0, 0), 0.0, 1.0, 0.9) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_callback(func():
+		mascara.pesar_alma(Config.cfg.alma_por_abate)
+		_log("alma -> mascara %s peso=%.2f (t=%.0fs)" % [Config.TEAM_NAMES[team], mascara.fatness, _time])
+		alma.queue_free())
 
 
 ## Chamado quando o jogador usa o poder (para o print do --print-poder).

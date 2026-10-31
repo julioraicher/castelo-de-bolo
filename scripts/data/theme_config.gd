@@ -51,6 +51,17 @@ extends Resource
 ## Casa da oficina pronta ({cor} = time). Vazio = casinha simples feita por código.
 ## Nós "Telhado" (cai quando a obra acaba) e "Gira_*" (engrenagens) são opcionais.
 @export var oficina_model := ""
+## Economia do Construtor. Vazio = formas provisórias feitas por código.
+## Planta: 3 cenas (broto, jovem, adulta).
+@export var arvore_estagios: Array[PackedScene] = []
+@export var bambu_estagios: Array[PackedScene] = []
+## Maquininha de chapéu: peças "Gira_*" (giram ao fabricar), nó "Molde" (onde
+## o chapéu aparece) e AnimationPlayer com a animação "fabricar".
+@export var maquina_model: PackedScene
+## Pilha de toras do castelo: filhos "Tora_1".."Tora_N" aparecem conforme o estoque.
+@export var pilha_model: PackedScene
+## Tora solta/carregada.
+@export var tora_model: PackedScene
 @export var wall_model := "wall_straight.gltf"
 @export var wall_scale := 3.0
 ## Comprimento de um módulo de muralha já escalado (2 m x escala 3).
