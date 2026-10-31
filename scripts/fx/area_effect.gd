@@ -56,7 +56,7 @@ func setup(game: Game, owner_unit: Unit, center: Vector3, kind: String, radius: 
 			Sfx.play("magic", center)
 			_apply_seal()
 		"coluna_fogo":
-			_mat = Fx.unshaded(Color(0.3, 1.4, 2.0, 0.75), true)
+			_mat = Fx.unshaded(Color(col.r * 1.6, col.g * 1.6, col.b * 1.6, 0.75), true)  # cor do chapéu de quem lança
 			_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 			var cyl := CylinderMesh.new()
 			cyl.top_radius = 0.2
@@ -79,6 +79,9 @@ func _color() -> Color:
 		"selo":
 			# Cor do chapéu de quem lançou (Kitsune Sombria = roxo).
 			return _owner.stats.hat_color.lightened(0.25) if _owner else Color(0.6, 0.9, 1.0)
+		"coluna_fogo":
+			# Fogo-raposa na cor do chapéu (Kitsune = rosa, Luz = dourado, Sombria = roxo).
+			return _owner.stats.hat_color.lightened(0.15) if _owner else Color(0.3, 0.95, 1.0)
 	return Color(0.3, 0.95, 1.0)
 
 
@@ -110,7 +113,7 @@ func _physics_process(delta: float) -> void:
 				if _kind == "nuvem":
 					u.apply_slow(0.55, PULSE + 0.1)
 		if _kind == "coluna_fogo":
-			Fx.burst(_game, global_position + Vector3(0, 1.0, 0), Color(0.4, 1.0, 1.0), 10, 6.0)
+			Fx.burst(_game, global_position + Vector3(0, 1.0, 0), _color(), 10, 6.0)
 	if _t >= _duration:
 		var tw := create_tween()
 		tw.tween_property(self, "scale", Vector3(0.05, 0.05, 0.05), 0.3)
