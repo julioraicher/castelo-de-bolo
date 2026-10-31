@@ -87,6 +87,7 @@ var _combo_i := 0
 var _combo_t := 0.0
 var _hitstop_t := 0.0
 var _blocking := false
+var _block_t := 0.0  # há quanto tempo o bloqueio está erguido (contra-golpe)
 var _charge_t := 0.0
 var _aim_line: MeshInstance3D
 var _power_idle := 0.0
@@ -711,7 +712,7 @@ func _assisted_dir(dir: Vector3, alvo: Unit) -> Vector3:
 	return dir.rotated(Vector3.UP, ang * AIM_ASSIST_PULL).normalized()
 
 
-func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZERO) -> void:
+func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZERO) -> Projectile:
 	var dir := aim_dir.normalized() if dir_override == Vector3.ZERO else dir_override
 	var to := aim_point - global_position
 	to.y = 0
@@ -731,6 +732,7 @@ func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZE
 	else:
 		var alvo := global_position + to.normalized() * dist
 		p.aim_ballistic(dist, game.arena.ground_y(alvo.x, alvo.z, maxf(global_position.y, aim_point.y) + 3.0))
+	return p
 
 
 ## Multiplicador de dano de buffs (Fúria, item de dano).
@@ -789,9 +791,11 @@ func _update_skill(delta: float, free_hands: bool) -> void:
 			if held and _heal_cd <= 0.0:
 				_heal()
 		"bloqueio":
+			_block_t += delta
 			if held != _blocking:
 				_blocking = held
 				if held:
+					_block_t = 0.0
 					_play_upper("Blocking", 1.0, true)
 				else:
 					_stop_upper("Blocking")
@@ -840,7 +844,9 @@ func _fire_charged() -> void:
 	_attack_cd = stats.attack_cooldown
 	_attack_t = 0.3
 	_play_upper("1H_Ranged_Shoot", 1.4)
-	_shoot_arrow(1.0 + (stats.charge_damage_mult - 1.0) * c, 1.0 + 0.5 * c)
+	var p := _shoot_arrow(1.0 + (stats.charge_damage_mult - 1.0) * c, 1.0 + 0.5 * c)
+	if c >= 1.0 and p:
+		p.carregar()  # atravessa inimigos / bomba maior
 	if c >= 1.0:
 		Fx.burst(game, global_position + Vector3(0, 1.4, 0) + aim_dir * 1.2, Color(1, 0.85, 0.4), 10, 6.0)
 		if is_player:
@@ -914,6 +920,9 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		amount *= Config.cfg.carrier_damage_mult
 	# Bloqueio: vale para golpes que chegam pela frente (até 60° do rosto).
 	var blocked := _blocking and _facing().dot(-dir) > BLOCK_COS
+	if blocked and melee and attacker and attacker.alive and _block_t <= Config.cfg.parry_janela:
+		_contra_golpe(attacker, dir)
+		return
 	if blocked:
 		amount *= 1.0 - stats.block_reduction
 		knock_mult *= 0.3
@@ -955,6 +964,30 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		_die(attacker)
 	elif _anim_lock <= 0.0 and not blocked and _spin_t <= 0.0:
 		_play_once("Hit_A" if randf() < 0.5 else "Hit_B", 0.25)
+
+
+## Contra-golpe (bloqueio na hora certa): o golpe não entra, quem bateu fica
+## atordoado e leva um corte de volta. dir = direção do golpe recebido.
+func _contra_golpe(attacker: Unit, dir: Vector3) -> void:
+	var cfg := Config.cfg
+	_block_t = cfg.parry_janela + 1.0  # um contra-golpe por bloqueio
+	attacker._attack_cd = maxf(attacker._attack_cd, cfg.parry_atordoa)
+	attacker._anim_lock = maxf(attacker._anim_lock, cfg.parry_atordoa)
+	attacker._windup_t = 0.0
+	attacker._play_once("Hit_B", cfg.parry_atordoa)
+	attacker.take_damage(stats.damage * damage_mult() * cfg.parry_mult, self, -dir, 1.8, false)
+	hitstop(cfg.hitstop_time * 2.5)
+	attacker.hitstop(cfg.hitstop_time * 2.5)
+	add_power(stats.damage * cfg.power_per_damage)
+	var p := global_position + Vector3(0, 1.4, 0) - dir * 0.7
+	Fx.burst(game, p, Color(1.0, 0.95, 0.7), 22, 9.0)
+	Fx.ring(game, global_position, Color(1.0, 0.9, 0.5, 0.9), 2.2)
+	Fx.damage_number(game, global_position + Vector3(0, 0.6, 0), "CONTRA!", Color(1.0, 0.85, 0.3))
+	Sfx.play("block", global_position, 0.05)
+	Sfx.play("hit", global_position, 0.1)
+	_play_upper("Block_Hit", 1.8)
+	if is_player or attacker.is_player:
+		game.camera.add_trauma(0.4)
 
 
 func _facing() -> Vector3:

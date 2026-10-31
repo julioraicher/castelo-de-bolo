@@ -5,6 +5,25 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4b (2026-10-31), Diretor de Jogabilidade: bots com dash e botão direito "uau"
+- **Revisão dos bots** (pedido do Julio: "os bots usam dash e poderes?"): não usavam dash
+  nem bloqueio. Agora (`BotBrain._tatica`, a cada 0,2 s): dash para fechar distância
+  (corpo a corpo a 4-8 m), fugir com <35% de vida, recuar o atirador encurralado, sair
+  do combo de quem está batendo e correr com a tora; Samurai/Ronin erguem o bloqueio
+  contra quem golpeia de frente. ~1 dash a cada 12 s por bot.
+- **Botão direito mais forte e mais frequente** (quiz 2.4, perguntas 1 e 7):
+  - **Contra-golpe**: bloqueio erguido há ≤ `parry_janela` 0,3 s quando o golpe chega =
+    dano zero, quem bateu fica atordoado `parry_atordoa` 0,8 s e leva 1,5 × o seu dano
+    de volta ("CONTRA!", anel dourado, hitstop dobrado).
+  - **Tiro cheio** (Ninja, Yumi): atravessa `carga_perfura` 2 inimigos (−20% por
+    inimigo), maior e brilhante. **Bombardeiro** ganhou o tiro carregado: bomba
+    cheia explode `carga_raio_bomba` 1,5 × maior.
+  - Recargas: cura da Kitsune 5 -> 3,5 s, mina do Armadilheiro 5 -> 3,5 s.
+- Testes 98/98 (contra-golpe dentro e fora da janela, carga); 5 min sem erro
+  (5 contra-golpes e 8 perfurações entre os bots).
+- **O que testar**: de Samurai, segure o direito no instante do golpe do inimigo
+  (não antes): sai "CONTRA!". De Ninja, carregue o tiro até o fim numa fila de inimigos.
+
 ## Ciclo 2.4a (2026-10-31), Diretor de Jogabilidade: maquininha nível 2 e madeira no HUD
 - **Maquininha nível 2** (quiz 2.4, pergunta 6): fabrica a cada `maquina_n2_intervalo` 12 s
   até `maquina_n2_estoque` 4 e ganha 1 chapéu na hora. Sobe de dois jeitos:

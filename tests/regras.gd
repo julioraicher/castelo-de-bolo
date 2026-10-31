@@ -16,6 +16,8 @@ func _ready() -> void:
 	await get_tree().create_timer(0.5).timeout
 	_dados()
 	_dano()
+	_contra_golpe()
+	_carga()
 	await _empurrao()
 	_madeira()
 	_maquina()
@@ -111,6 +113,65 @@ func _dano() -> void:
 	u.hp = u.max_hp() - 5.0
 	u.heal(50.0)
 	_check(_perto(u.hp, u.max_hp(), 0.01), "cura passou do máximo")
+
+
+## Contra-golpe: bloqueio erguido há ≤ parry_janela s anula o golpe de perto,
+## atordoa quem bateu e devolve parry_mult × dano; erguido antes disso é só
+## bloqueio (reduz pela block_reduction).
+func _contra_golpe() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var d = null
+	var a = null
+	for u in game.units:
+		if u.alive and not u.is_player:
+			if d == null:
+				d = u
+			elif a == null and u.team != d.team:
+				a = u
+	if d == null or a == null:
+		_check(false, "contra-golpe: faltou boneco")
+		return
+	d.set_class(load("res://config/classes/guerreiro.tres"))
+	var dir := Vector3(1, 0, 0)  # golpe de a para d
+	d._visual.rotation.y = atan2(-dir.x, -dir.z)  # d de frente para a
+	for x in [d, a]:
+		x._dodge_t = 0.0
+		x._shield = 0.0
+		x.hp = x.max_hp()
+	d._blocking = true
+	d._block_t = cfg.parry_janela * 0.5
+	a._attack_cd = 0.0
+	d.take_damage(20.0, a, dir, 1.0, true)
+	_check(_perto(d.hp, d.max_hp(), 0.01), "contra-golpe: quem bloqueou na hora não deveria levar dano (levou %.1f)" % (d.max_hp() - d.hp))
+	var volta: float = d.stats.damage * cfg.parry_mult
+	_check(_perto(a.max_hp() - a.hp, volta, 0.5), "contra-golpe: devolvido esperado %.1f, deu %.1f" % [volta, a.max_hp() - a.hp])
+	_check(a._attack_cd >= cfg.parry_atordoa - 0.01, "contra-golpe: quem bateu deveria ficar atordoado")
+	# Bloqueio velho: só reduz.
+	d.hp = d.max_hp()
+	d._block_t = cfg.parry_janela + 0.5
+	d.take_damage(20.0, a, dir, 1.0, true)
+	_check(_perto(d.max_hp() - d.hp, 20.0 * (1.0 - d.stats.block_reduction), 0.01), "bloqueio fora da janela deveria só reduzir")
+	d._blocking = false
+	d.hp = d.max_hp()
+	a.hp = a.max_hp()
+
+
+## Carga máxima: flecha/shuriken atravessa carga_perfura; bomba fica maior.
+func _carga() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var u = _alvo()
+	if u == null:
+		return
+	var p = game.spawn_projectile(u, Vector3(0, -50, 0), Vector3.RIGHT, "shuriken")
+	p.set_physics_process(false)
+	p.carregar()
+	_check(p.perfura == cfg.carga_perfura, "carga: shuriken cheia deveria atravessar %d" % cfg.carga_perfura)
+	var b = game.spawn_projectile(u, Vector3(0, -50, 0), Vector3.RIGHT, "bomba")
+	b.set_physics_process(false)
+	b.carregar()
+	_check(_perto(b.raio_mult, cfg.carga_raio_bomba, 0.001), "carga: bomba cheia deveria crescer o raio")
+	p.queue_free()
+	b.queue_free()
 
 
 ## Empurrão: freia a KNOCK_DECAY m/s², logo |v| cai a/60 por quadro (d = v²/2a).

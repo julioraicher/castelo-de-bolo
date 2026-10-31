@@ -33,5 +33,5 @@ power_value = 9.0
 power_duration = 3.0
 heal_amount = 15.0
 heal_radius = 6.0
-heal_cooldown = 5.0
+heal_cooldown = 3.5
 anim_attack = "Spellcast_Shoot"

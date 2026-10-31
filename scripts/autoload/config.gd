@@ -18,7 +18,7 @@ const CONTROLS := [
 	["W A S D", "andar"],
 	["Mouse", "mirar"],
 	["Clique esquerdo", "atacar"],
-	["Clique direito (segurar)", "Samurai/Ronin bloqueiam · Ninja/Yumi carregam o tiro · magos curam · Construtor arma estrepes/mina"],
+	["Clique direito (segurar)", "Samurai/Ronin bloqueiam (na hora do golpe = CONTRA-GOLPE) · Ninja/Yumi/Bombardeiro carregam o tiro (cheio atravessa / bomba maior) · Kitsune cura · Armadilheiro arma minas"],
 	["Q", "poder especial (quando o medidor de Chi enche)"],
 	["Espaço ou Shift", "esquivar (rolamento rápido)"],
 	["E", "pegar item de classe, pegar/soltar a máscara, trocar a oficina do terreno"],

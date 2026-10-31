@@ -82,7 +82,7 @@ func _tatica(delta: float) -> void:
 	var perto := _nearest_enemy(6.0)
 	# Bloqueio: inimigo de corpo a corpo golpeando de frente, a até 3 m.
 	if unit.stats.skill == "bloqueio" and perto and perto.atacando() and perto.stats.attack_kind == "melee" \
-			and me.distance_to(perto.global_position) < perto.stats.attack_range + 0.8 and randf() < 0.55:
+			and me.distance_to(perto.global_position) < perto.stats.attack_range + 0.8 and randf() < 0.35:
 		_bloqueio_t = 0.45
 		var to := perto.global_position - me
 		to.y = 0
@@ -394,7 +394,7 @@ func _combat() -> void:
 	unit.aim_dir = to.normalized()
 	unit.aim_point = _target.global_position + lead
 	# Arqueiro de longe: segura o botão direito até a carga máxima e solta.
-	if unit.stats.skill == "tiro_carregado" and dist > 12.0 and dist <= unit.stats.attack_range:
+	if unit.stats.skill == "tiro_carregado" and dist > unit.stats.attack_range * 0.6 and dist <= unit.stats.attack_range:
 		unit.wants_skill = unit.charge_ratio() < 1.0
 		return
 	if dist <= unit.stats.attack_range + 0.3:
