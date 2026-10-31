@@ -10,7 +10,10 @@ extends Node
 ##  2. Carregando bolo -> levar para a própria princesa.
 ##  3. Recruta -> pegar um chapéu no castelo.
 ##  4. Própria princesa sequestrada -> perseguir quem a leva / buscá-la no chão.
-##  5. Construtor com obra pendente no castelo -> construir.
+##  5. Construtor (lenhador, Ciclo 2.3): tora nos braços -> pilha; obra
+##     pendente com madeira no estoque -> construir; tora solta perto ->
+##     pegar; senão cortar a adulta mais perto que nenhum aliado está
+##     cortando, preferindo o bosque seguro. Inimigo a 5 m: larga a tarefa.
 ##  6. Item no chão bem perto e ninguém colado -> desviar para pegar.
 ##  7. Aliado carregando a princesa inimiga (até 45 m) -> escoltar: só briga
 ##     com quem chega a 8 m dele.
@@ -36,6 +39,8 @@ var _stuck_check_t := 3.0
 var _stuck_from := Vector3.INF
 var _unstuck_t := 0.0
 var _unstuck_goal := Vector3.ZERO
+## Planta que este bot está cortando (o _combat mira nela e golpeia).
+var _planta: Planta = null
 
 
 func tick(delta: float) -> void:
@@ -84,7 +89,7 @@ func _think() -> void:
 		_goal = my_princess.global_position
 		return
 	if unit.is_villager():
-		var pad := game.nearest_free_hat(unit.team, me)
+		var pad := game.nearest_free_hat(unit.team, me, unit)
 		if pad and (role != Role.CAKE or randf() < 0.5):
 			_goal = pad.global_position
 			_target = _nearest_enemy(5.0)
@@ -101,12 +106,8 @@ func _think() -> void:
 		_target = _nearest_enemy(6.0)
 		return
 
-	# Construtor: obra pendente no próprio castelo, sem inimigo colado -> construir.
-	if unit.stats.velocidade_obra > 0.0 and _nearest_enemy(6.0) == null:
-		var of := game.nearest_oficina(unit.team, me, 200.0, true)
-		if of and (role != Role.ATTACK or me.distance_to(of.global_position) < 40.0):
-			_goal = of.global_position + (me - of.global_position).normalized() * 1.2
-			return
+	if unit.lenhador() and _lenhador(me):
+		return
 
 	# Item no chão a poucos passos: vale o desvio se não tem inimigo colado.
 	var item := game.nearest_pickup(me, 10.0)
@@ -166,6 +167,67 @@ func _think() -> void:
 				_goal = cake.global_position
 			else:
 				_goal = arena.gate_spot[unit.team]
+
+
+## Ciclo de trabalho do Construtor. true = já escolheu o que fazer.
+func _lenhador(me: Vector3) -> bool:
+	_set_planta(null)
+	var perigo := _nearest_enemy(5.0)
+	if unit.carried_tora:
+		# Com a tora nos braços não dá para bater: segue para a pilha (foge).
+		_goal = game.pilhas[unit.team].global_position
+		return true
+	if perigo:
+		return false  # larga a tarefa e briga (prioridades de combate abaixo)
+	# Obra pendente e madeira no estoque para terminá-la: construir.
+	var of := game.nearest_oficina(unit.team, me, 200.0, true)
+	var falta := of.faltam() if of else 0
+	if of and ((falta > 0 and game.madeira[unit.team] >= falta) or (falta == 0 and of.progresso < 1.0)):
+		_goal = of.global_position + (me - of.global_position).normalized() * 1.2
+		return true
+	var tora := game.nearest_tora_solta(me, 30.0)
+	if tora:
+		_goal = tora.global_position
+		return true
+	var p := _escolher_planta(me)
+	if p:
+		_set_planta(p)
+		var lado := me - p.global_position
+		lado.y = 0
+		_goal = p.global_position + (lado.normalized() if lado.length() > 0.1 else Vector3.RIGHT) * 1.4
+		return true
+	return false
+
+
+func _set_planta(p: Planta) -> void:
+	if _planta and _planta.cortador == unit:
+		_planta.cortador = null
+	_planta = p
+	if p:
+		p.cortador = unit
+
+
+## Adulta mais perto que nenhum aliado está cortando; o bosque seguro do
+## próprio castelo vence enquanto tiver adulta (o meio é onde há briga).
+func _escolher_planta(me: Vector3) -> Planta:
+	var seguro: Planta = null
+	var qualquer: Planta = null
+	var d_seguro := INF
+	var d_qualquer := INF
+	for p in game.plantas:
+		if not p.adulta():
+			continue
+		var c := p.cortador
+		if c and c != unit and c.alive and c.team == unit.team and c.brain is BotBrain and c.brain._planta == p:
+			continue
+		var d := me.distance_to(p.global_position)
+		if p.tipo == "arvore" and p.lado == unit.team and d < d_seguro:
+			d_seguro = d
+			seguro = p
+		if d < d_qualquer:
+			d_qualquer = d
+			qualquer = p
+	return seguro if seguro else qualquer
 
 
 func _nearest_enemy(radius: float) -> Unit:
@@ -234,6 +296,13 @@ func _combat() -> void:
 	if unit.stats.skill == "armadilha" and _wants_trap():
 		unit.wants_skill = true
 	if _target == null or not _target.alive or unit.carried_princess:
+		if _planta and _planta.adulta() and not unit.carried_tora:
+			var to_p := _planta.global_position - unit.global_position
+			to_p.y = 0
+			if to_p.length() <= unit.stats.attack_range + 0.4:
+				unit.aim_dir = to_p.normalized()
+				unit.wants_attack = true
+				return
 		if unit.move_intent.length() > 0.1:
 			unit.aim_dir = unit.move_intent.normalized()
 		return

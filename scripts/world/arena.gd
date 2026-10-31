@@ -20,6 +20,9 @@ var theme: ThemeConfig
 var princess_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var hat_spots: Array = [[], []]          # [time] -> lista de Vector3
 var oficina_spots: Array = [[], []]      # [time] -> lista de Vector3
+var tree_spots: Array = [[], []]         # [time] -> lista de Vector3 (bosque seguro)
+var bamboo_spots: Array = [[], []]       # [time] -> lista de Vector3 (bambuzal do meio)
+var pilha_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var spawn_center: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var gate_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 
@@ -268,6 +271,15 @@ func _build_castle(team: int) -> void:
 	for os in m.oficina_spots:
 		ofs.append(to_world(team, os.x, os.y))
 	oficina_spots[team] = ofs
+	var arv := []
+	for p in m.tree_spots:
+		arv.append(to_world(team, p.x, p.y))
+	tree_spots[team] = arv
+	var bam := []
+	for p in m.bamboo_spots:
+		bam.append(to_world(team, p.x, p.y))
+	bamboo_spots[team] = bam
+	pilha_spot[team] = to_world(team, m.pilha_spot.x, m.pilha_spot.y)
 	spawn_center[team] = to_world(team, (m.spawn_min.x + m.spawn_max.x) / 2.0, 0.0)
 	gate_spot[team] = to_world(team, front + m.gate_guard_distance, 0.0)
 

@@ -1,57 +1,140 @@
 class_name HatPad
 extends Node3D
-## Pedestal de chapéu no castelo. Pegar o chapéu troca a classe da unidade.
-## Depois de pego, um chapéu novo aparece após `hat_respawn_time` segundos.
+## Maquininha de chapéu no castelo (Ciclo 2.3). Pegar o chapéu troca a classe
+## da unidade e tira 1 do estoque. A máquina fabrica 1 chapéu a cada
+## `maquina_intervalo` s enquanto o estoque está abaixo de `maquina_estoque_max`,
+## e começa cheia. Estoque zero = "acabou o seu favorito": joga de outra coisa.
+##
+## Modelo do tema (ThemeConfig.maquina_model): peças "Gira_*" giram enquanto
+## fabrica (relógio do pintura.gdshader), o chapéu aparece no nó "Molde" e a
+## animação "fabricar" toca quando um chapéu fica pronto. Sem modelo: pedestal.
 
 var team := 0
 var stats: ClassStats
 var available := true
+var estoque := 0
+var estoque_max := 3
+var intervalo := 20.0
 
 var _hat: Node3D
-var _respawn_t := 0.0
+var _hat_y := 1.2
+var _fab_t := 0.0
 var _t := randf() * TAU
+var _label: Label3D
+var _anim: AnimationPlayer
+var _mats_gira: Array[ShaderMaterial] = []
+var _relogio := 0.0
 
 
 func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 	team = p_team
 	stats = p_stats
 	position = pos
-	var base := MeshInstance3D.new()
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = 1.0
-	cyl.bottom_radius = 1.2
-	cyl.height = 0.5
-	base.mesh = cyl
-	base.material_override = Fx.lit(Color(0.55, 0.55, 0.6))
-	base.position.y = 0.25
-	add_child(base)
-	var label := Label3D.new()
-	label.text = stats.display_name
-	label.font = Estilo.FORTE
-	label.font_size = 48
-	label.pixel_size = 0.012
-	label.outline_size = 10
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.position.y = 2.6
-	label.modulate = stats.hat_color.lightened(0.3)
-	add_child(label)
+	estoque_max = Config.cfg.maquina_estoque_max
+	intervalo = Config.cfg.maquina_intervalo
+	estoque = estoque_max
+	var molde: Node3D = self
+	var th: ThemeConfig = Config.theme()
+	if th.maquina_model:
+		var m: Node3D = th.maquina_model.instantiate()
+		add_child(m)
+		# A máquina olha para o centro do pátio (o lado de onde se chega).
+		m.rotation.y = 0.0 if team == Config.TEAM_BLUE else PI
+		var no := m.find_child("Molde", true, false) as Node3D
+		if no:
+			molde = no
+			_hat_y = 0.0
+		_anim = m.find_child("AnimationPlayer", true, false) as AnimationPlayer
+		_preparar_gira(m)
+	else:
+		var base := MeshInstance3D.new()
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 1.0
+		cyl.bottom_radius = 1.2
+		cyl.height = 0.5
+		base.mesh = cyl
+		base.material_override = Fx.lit(Color(0.55, 0.55, 0.6))
+		base.position.y = 0.25
+		add_child(base)
+	_label = Label3D.new()
+	_label.font = Estilo.FORTE
+	_label.font_size = 48
+	_label.pixel_size = 0.012
+	_label.outline_size = 10
+	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_label.position.y = 2.6
+	_label.modulate = stats.hat_color.lightened(0.3)
+	add_child(_label)
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # chapéu animado em _process
 	_hat = make_hat(stats.hat_style, stats.hat_color)
-	_hat.position.y = 1.2
-	add_child(_hat)
+	_hat.position.y = _hat_y
+	molde.add_child(_hat)
+	_atualizar()
+
+
+## Peças "Gira_*" ganham material próprio: o relógio é desta máquina.
+func _preparar_gira(m: Node3D) -> void:
+	for mi: MeshInstance3D in m.find_children("Gira_*", "MeshInstance3D", true, false):
+		for s in mi.mesh.get_surface_count():
+			var mat := mi.mesh.surface_get_material(s) as ShaderMaterial
+			if mat == null:
+				continue
+			var c: ShaderMaterial = mat.duplicate()
+			if mat.next_pass is ShaderMaterial:
+				c.next_pass = mat.next_pass.duplicate()
+				_mats_gira.append(c.next_pass)
+			mi.set_surface_override_material(s, c)
+			_mats_gira.append(c)
 
 
 func _process(delta: float) -> void:
 	_t += delta
 	_hat.rotation.y += delta * 1.8
-	_hat.position.y = 1.2 + sin(_t * 2.5) * 0.15
-	if not available:
-		_respawn_t -= delta
-		if _respawn_t <= 0.0:
-			available = true
-			_hat.visible = true
-			_hat.scale = Vector3.ONE * 0.01
-			create_tween().tween_property(_hat, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_hat.position.y = _hat_y + sin(_t * 2.5) * 0.15
+	if not _mats_gira.is_empty():
+		_relogio += delta * (1.0 if estoque < estoque_max else 0.15)
+		for m in _mats_gira:
+			m.set_shader_parameter("relogio", _relogio)
+
+
+func _physics_process(delta: float) -> void:
+	avancar(delta)
+
+
+## Relógio da fábrica (separado do _physics_process para os testes).
+func avancar(delta: float) -> void:
+	if estoque >= estoque_max:
+		_fab_t = 0.0
+		return
+	_fab_t += delta
+	if _fab_t >= intervalo:
+		_fab_t -= intervalo
+		estoque += 1
+		_fabricou()
+	_atualizar()
+
+
+func _fabricou() -> void:
+	if _anim and _anim.has_animation("fabricar"):
+		_anim.stop()
+		_anim.play("fabricar")
+	if estoque == 1:
+		_hat.visible = true
+		_hat.scale = Vector3.ONE * 0.01
+		create_tween().tween_property(_hat, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if is_inside_tree():
+		Fx.burst(self, global_position + Vector3(0, 1.4, 0), Color(0.95, 0.95, 0.9), 6, 2.5)
+
+
+func _atualizar() -> void:
+	available = estoque > 0
+	_hat.visible = available
+	var txt := "%s  %d/%d" % [stats.display_name, estoque, estoque_max]
+	if estoque < estoque_max:
+		txt += "\n%ds" % ceili(intervalo - _fab_t)
+	if _label.text != txt:
+		_label.text = txt
+	_label.modulate = stats.hat_color.lightened(0.3) if available else Color(0.7, 0.7, 0.7, 0.8)
 
 
 ## Posição do chapéu flutuante no mundo (de onde ele "sai" ao ser pego).
@@ -60,9 +143,8 @@ func hat_world_position() -> Vector3:
 
 
 func take() -> ClassStats:
-	available = false
-	_hat.visible = false
-	_respawn_t = Config.cfg.hat_respawn_time
+	estoque = maxi(estoque - 1, 0)
+	_atualizar()
 	return stats
 
 
