@@ -5,6 +5,37 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.3c (2026-10-31), Diretor de Jogabilidade: obra guardada e progresso à vista
+- Pedido do Julio: o progresso da construção não ficava claro e tinha de ser guardado.
+  Causa: perto do terreno o [E] trocava a opção da oficina e **zerava a obra**. Agora a
+  opção trava assim que a obra começa (tem progresso ou madeira); quem volta, o mesmo
+  Construtor ou um aliado, continua de onde parou.
+- Bots Construtores tocam a obra começada mais adiantada do time (`Game.obra_do_time`)
+  em vez da mais perto: não espalham madeira em vários terrenos. 1ª oficina caiu de
+  ~146 s para ~65-73 s nos 5 min simulados.
+- Clareza: na tela, perto da obra, "Obra de X: 66% · faltam 2 madeiras · fique aqui para
+  construir"; em cima da casinha o contador mostra "NN%" e uma barra clara (construído)
+  por cima da dourada (madeira entregue). Letreiro "Obra: X" desce para perto da casa e
+  sobe com ela. (Toque no `contador_madeira.gd` do Visual: parâmetro opcional `obra`.)
+- Junto: depósito de madeira 3D do Visual (e4a8ac8) mesclado.
+- Testes 86/86 (4 novos: trocar não apaga, parada não perde, aliados voltam à mesma obra).
+- **O que testar**: de Construtor, ajude a erguer uma casinha até a metade, saia, volte (ou
+  deixe um bot continuar): a porcentagem segue de onde parou e o [E] não apaga mais nada.
+
+## Ciclo 2.3b (2026-10-31), Diretor de Jogabilidade: elenco novo e madeira mais clara (branch, espera o OK)
+- Elenco do quiz já no jogo: pátio = Samurai, Ninja de Shuriken, Kitsune (Mago),
+  **Construtor** (nome certo; base só coleta, sem estrepes). Oficinas (com madeira):
+  Ronin Oni, Arqueiro Yumi, **Armadilheiro** (ex-Mestre da Pólvora) e **Bombardeiro**
+  (ex-Bombas de Fumaça), os dois ramos do Construtor e coletam madeira.
+  Saíram Monge, Onmyoji, Lâmina Dupla e Carpinteiro.
+- Cada casinha pronta deixa a linha do Construtor +5% mais rápida (`construtor_vel_por_oficina`).
+- Dica na tela perto de árvore/bambu (quem corta e para onde levar); a tora entregue
+  voa num arco para dentro do armazém (depósito 3D do Visual, branch ra8pxs e4a8ac8).
+- Testes 82/82 (menos classes = menos checagens de dados); 5 min sem erro.
+- **O que testar**: pegue o chapéu laranja (Construtor), corte a árvore com cerca acesa
+  fora da muralha lateral, leve a tora ao depósito perto do portão; erga uma casinha e
+  veja o Armadilheiro/Bombardeiro na maquininha nova.
+
 ## Ciclo 2.3 (2026-10-31), Diretor Visual: mapa maior e maquininha por classe (branch)
 - Pedido do Julio: peças muito juntas; quer caminhos pela floresta para flanquear,
   mapa maior e mais espaçado. Rio das Lanternas passa de 136 x 72 para 168 x 96 m

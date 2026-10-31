@@ -4,12 +4,16 @@ extends Node3D
 ## "faltam N" e uma barrinha. Sempre de frente para a câmera e por cima do
 ## telhado (sem teste de profundidade). Grande para quem joga de Construtor,
 ## pequeno para as outras classes; sem estoque no time, pisca "falta madeira".
-## 4 chamadas de desenho enquanto visível: esconda quando a obra acabar.
+## Com `obra` (0..1, Jogabilidade 2.3c) a barra tem duas camadas: dourado =
+## madeira entregue (até onde dá para construir), claro = já construído; o
+## texto começa com a porcentagem da obra.
+## 5 chamadas de desenho enquanto visível: esconda quando a obra acabar.
 
 const ICONE := preload("res://assets/ui/icone_tora.png")
 const COR_OK := Color(1.0, 0.82, 0.36)      # Estilo.OURO
 const COR_FALTA := Color(1.0, 0.36, 0.36)   # Estilo.PERIGO
 const COR_FUNDO := Color(0.055, 0.045, 0.12, 0.85)
+const COR_OBRA := Color(0.75, 1.0, 0.8)
 const LARG := 2.2  # largura da barra no tamanho grande (m)
 
 var _icone: Sprite3D
@@ -17,6 +21,7 @@ var _texto: Label3D
 var _fundo: MeshInstance3D
 var _barra: MeshInstance3D
 var _mat_barra: StandardMaterial3D
+var _obra: MeshInstance3D
 var _sem_estoque := false
 var _t := 0.0
 
@@ -38,7 +43,7 @@ func _ready() -> void:
 	_texto.outline_size = 18
 	_texto.outline_modulate = Color(0.03, 0.02, 0.06)
 	_texto.pixel_size = 0.009
-	_texto.position = Vector3(0.25, 0.36, 0)
+	_texto.position = Vector3(0.3, 0.36, 0)
 	_texto.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_texto.no_depth_test = true
 	_texto.render_priority = 11
@@ -47,23 +52,34 @@ func _ready() -> void:
 	_fundo = _quad(Vector2(LARG + 0.1, 0.26), COR_FUNDO, 10)
 	_barra = _quad(Vector2(LARG, 0.16), COR_OK, 11)
 	_mat_barra = _barra.material_override
+	_obra = _quad(Vector2(LARG, 0.16), COR_OBRA, 12)
+	_obra.visible = false
 	mostrar(0, 1)
 
 
-## faltam = madeiras que ainda faltam; total = custo da obra.
-func mostrar(faltam: int, total: int, grande := true, sem_estoque := false) -> void:
+## faltam = madeiras que ainda faltam; total = custo da obra; obra = fração
+## já construída (negativa = sem camada de obra).
+func mostrar(faltam: int, total: int, grande := true, sem_estoque := false, obra := -1.0) -> void:
 	_sem_estoque = sem_estoque and faltam > 0
 	scale = Vector3.ONE * (1.0 if grande else 0.55)
+	var pct := "%d%%  " % int(obra * 100.0) if obra >= 0.0 else ""
 	if faltam <= 0:
-		_texto.text = "pronto!"
+		_texto.text = pct + "construindo" if obra >= 0.0 and obra < 1.0 else "pronto!"
 	elif _sem_estoque:
-		_texto.text = "falta madeira"
+		_texto.text = pct + "falta madeira"
 	else:
-		_texto.text = "faltam %d" % faltam
+		_texto.text = pct + "faltam %d" % faltam
 	var f := 1.0 - clampf(float(faltam) / maxf(total, 1), 0.0, 1.0)
-	_barra.scale.x = maxf(f, 0.001)
-	_barra.position.x = -LARG * (1.0 - f) / 2.0
+	_encher(_barra, f)
+	_obra.visible = obra > 0.0
+	if _obra.visible:
+		_encher(_obra, clampf(obra, 0.0, 1.0))
 	_pintar(1.0)
+
+
+func _encher(q: MeshInstance3D, f: float) -> void:
+	q.scale.x = maxf(f, 0.001)
+	q.position.x = -LARG * (1.0 - f) / 2.0
 
 
 func _process(delta: float) -> void:

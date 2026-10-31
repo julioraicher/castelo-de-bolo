@@ -5,8 +5,8 @@
 
 [resource]
 script = ExtResource("2_tufoi")
-id = &"mestre_polvora"
-display_name = "Mestre da Pólvora"
+id = &"armadilheiro"
+display_name = "Armadilheiro"
 model = ExtResource("1_dk4ki")
 visible_meshes = PackedStringArray("Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight")
 hat_color = Color(1, 0.45, 0.08, 1)

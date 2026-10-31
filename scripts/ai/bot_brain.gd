@@ -187,7 +187,7 @@ func _lenhador(me: Vector3) -> bool:
 	if perigo:
 		return false  # larga a tarefa e briga (prioridades de combate abaixo)
 	# Obra pendente e madeira no estoque para terminá-la: construir.
-	var of := game.nearest_oficina(unit.team, me, 200.0, true)
+	var of := game.obra_do_time(unit.team, me)
 	var falta := of.faltam() if of else 0
 	if of and ((falta > 0 and game.madeira[unit.team] >= falta) or (falta == 0 and of.progresso < 1.0)):
 		_goal = of.global_position + (me - of.global_position).normalized() * 1.2
