@@ -5,7 +5,7 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
-## Ciclo 2.4h (2026-10-31), Diretor de Jogabilidade: mais pontos e Q com mais "uau"
+## Ciclo 2.4i (2026-10-31), Diretor de Jogabilidade: mais pontos e Q com mais "uau"
 - **Ritmo de pontos** (opção recomendada do card, alvo 1 a 3 pontos a cada 5 min):
   `carrier_damage_mult` 0,5 → 0,4 (quem leva a máscara aguenta mais) e
   `princess_return_time` 15 → 25 s (dá tempo de o time do ladrão retomar a máscara caída).
@@ -21,6 +21,15 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 - Testes 109/109; 5 min com poderes a cada 4 s sem erro.
 - **O que testar**: jogue de Ronin Oni e solte o Q no meio da briga; de Samurai, gire perto
   de um grupo; pegue a máscara e veja se dá para chegar em casa.
+
+## Ciclo 2.4h (2026-10-31), Diretor Visual: nome dos poderes dos bots mais discreto
+- Revisão por prints (Crepúsculo e Luar, com todos soltando poder): os nomes dos poderes
+  dos bots ("REDEMOINHO!", "LEQUE DE SHURIKEN!") se empilhavam no meio da briga. Agora o
+  nome do poder de bot é menor (46 em vez de 64) e some mais cedo; o do jogador continua
+  grande (`fx_poder.gd`).
+- Conferido: HUD novo, letreiros de 2 linhas e depósito legíveis no Luar; Coluna de
+  Fogo rosa no Crepúsculo.
+- **O que testar**: numa briga grande, veja se dá para ler o seu próprio poder.
 
 ## Ciclo 2.4g (2026-10-31), Diretor de Jogabilidade: menos texto na tela
 - "ESQUIVA!" só aparece quando o jogador está na jogada (ele esquivou ou foi o golpe dele
