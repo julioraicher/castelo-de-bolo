@@ -25,14 +25,15 @@ Se quiser mais pontos, há três alavancas só de número, sem mudar regra:
 2. `carry_speed_mult` maior nas classes (o ladrão corre mais);
 3. `princess_return_time` maior (hoje 15 s ao lado da máscara caída para devolvê-la; mais tempo = o time do ladrão retoma).
 
-Não mexi: é decisão de ritmo de partida, e você ainda não reclamou disso.
+Aplicado em 2.4h (opção recomendada do card): 0,4 e 25 s, ~1,7 ponto por 5 min com bots.
+Calibração (3 partidas cada): 0,5/15 ~0,5; 0,5/25 ~1,7; 0,42/25 ~1; 0,4/25 ~1,7; 0,35/25 3-5.
 
 ## O que falta (lista)
 
 - **HUD moderno**: o Visual entregou a 1ª versão (PR #6). Falta o seu pitaco.
-- **Poderes Q "uau" novos**: só reaproveitei os existentes (Bênção, Selo) nas Kitsunes
-  opostas. Um Q novo por classe exige o seu gosto (quiz curto quando você voltar).
+- **Poderes Q "uau"**: 2.4h deu Fúria gigante, Redemoinho vórtice, Leque em 2 ondas e
+  Campo Minado. Faltam Yumi, Bombardeiro e Construtor (e o seu pitaco nos novos).
 - **Opostos nas outras classes** (Samurai de honra x Ronin amaldiçoado, tecnológico x
   feitiço): o padrão está pronto (`classe_base` + oficina). Cada par novo é um `.tres`.
 - **Equilíbrio das Kitsunes opostas**: números iniciais, sem teste com gente.
-- **Ritmo de pontos** (acima).
+- **Ritmo de pontos**: aplicado (acima); confirmar jogando.

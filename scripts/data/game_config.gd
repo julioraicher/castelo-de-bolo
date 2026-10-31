@@ -105,6 +105,14 @@ extends Resource
 ## Esquiva perfeita (golpe que passa por dentro do dash): Chi ganho.
 @export var chi_esquiva := 8.0
 
+@export_group("Poderes Q (Ciclo 2.4)")
+## Fúria do Ronin: cresce furia_escala × (e quase não é empurrado).
+@export var furia_escala := 1.35
+## Redemoinho: puxa inimigos até power_radius × redemoinho_puxa_raio,
+## a redemoinho_puxa m/s (vórtice; o empurrão normal ainda vence).
+@export var redemoinho_puxa := 4.5
+@export var redemoinho_puxa_raio := 2.2
+
 @export_group("Chapéus")
 ## (Antigo, sem uso desde o Ciclo 2.3: as maquininhas têm estoque.)
 @export var hat_respawn_time := 6.0

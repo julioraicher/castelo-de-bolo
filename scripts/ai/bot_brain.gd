@@ -442,6 +442,8 @@ func _should_use_power() -> bool:
 				return false
 			unit.aim_point = _target.global_position
 			return _count(1 - unit.team, _target.global_position, r) >= 2 or _target.carried_princess != null
+		"campo_minado":
+			return _count(1 - unit.team, me, 7.0) >= 2 or (role == Role.DEFEND and unit.global_position.distance_to(game.arena.gate_spot[unit.team]) < 6.0)
 		"reforco":
 			return _count(unit.team, me, r) >= 3 and _count(1 - unit.team, me, 10.0) >= 2
 		"mutirao":
