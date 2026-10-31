@@ -435,6 +435,14 @@ func _rules() -> void:
 			if player_brain != null and player_brain.interact_pressed:
 				of.trocar_opcao()
 
+	# Perto de uma planta: diz quem corta e como (a madeira não é óbvia).
+	if player.alive and hint == "" and not player.carried_tora and not player.carried_princess:
+		for p in plantas:
+			if p.estagio != Planta.Estagio.BROTO and player.global_position.distance_to(p.global_position) < 4.0:
+				hint = "Golpeie para cortar madeira e leve ao armazém do castelo" if player.lenhador() \
+						else "Só a linha do Construtor (chapéu laranja) corta madeira"
+				break
+
 	if player.alive and player.carried_princess:
 		hint = "Leve-a até o SEU castelo!  ([E] soltar)"
 	elif player.has_cake:
@@ -584,7 +592,17 @@ func entregar_tora(u: Unit) -> void:
 		return
 	u.carried_tora = null
 	toras.erase(t)
-	t.queue_free()
+	# A tora voa num arco e cai dentro do armazém (o "buraco" da base).
+	t.carrier = null
+	t.set_process(false)
+	t.set_physics_process(false)
+	var de := t.global_position
+	var ate := pilhas[u.team].global_position + Vector3(0, 0.8, 0)
+	var tw := t.create_tween()
+	tw.tween_method(func(k: float):
+		t.global_position = de.lerp(ate, k) + Vector3(0, sin(k * PI) * 2.0, 0)
+		t.rotation.z = k * TAU, 0.0, 1.0, 0.35)
+	tw.tween_callback(t.queue_free)
 	madeira[u.team] += 1
 	pilhas[u.team].atualizar(madeira[u.team])
 	_log("madeira %s = %d (t=%.0fs)" % [Config.TEAM_NAMES[u.team], madeira[u.team], _time])
@@ -625,7 +643,7 @@ func _regras_madeira(u: Unit) -> String:
 		if pos.distance_to(pilhas[u.team].global_position) < Config.cfg.pilha_raio:
 			entregar_tora(u)
 			return ""
-		return "Leve a tora até a pilha do seu castelo"
+		return "Leve a tora até o armazém de madeira do castelo (perto do portão)"
 	var t := nearest_tora_solta(pos, 1.6)
 	if t and not u.is_equipping():
 		t.pegar(u)
@@ -669,6 +687,14 @@ func nearest_free_hat(team: int, from: Vector3, quem: Unit = null) -> HatPad:
 				best_d = d
 				best = pad
 	return best
+
+
+func oficinas_prontas(team: int) -> int:
+	var n := 0
+	for of in oficinas:
+		if of.team == team and of.estado == Oficina.Estado.PRONTA:
+			n += 1
+	return n
 
 
 func _bots_lenhadores(team: int, fora: Unit) -> int:

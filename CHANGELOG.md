@@ -5,6 +5,20 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.3b (2026-10-31), Diretor de Jogabilidade: elenco novo e madeira mais clara (branch, espera o OK)
+- Elenco do quiz já no jogo: pátio = Samurai, Ninja de Shuriken, Kitsune (Mago),
+  **Construtor** (nome certo; base só coleta, sem estrepes). Oficinas (com madeira):
+  Ronin Oni, Arqueiro Yumi, **Armadilheiro** (ex-Mestre da Pólvora) e **Bombardeiro**
+  (ex-Bombas de Fumaça), os dois ramos do Construtor e coletam madeira.
+  Saíram Monge, Onmyoji, Lâmina Dupla e Carpinteiro.
+- Cada casinha pronta deixa a linha do Construtor +5% mais rápida (`construtor_vel_por_oficina`).
+- Dica na tela perto de árvore/bambu (quem corta e para onde levar); a tora entregue
+  voa num arco para dentro do armazém (depósito 3D do Visual, branch ra8pxs e4a8ac8).
+- Testes 82/82 (menos classes = menos checagens de dados); 5 min sem erro.
+- **O que testar**: pegue o chapéu laranja (Construtor), corte a árvore com cerca acesa
+  fora da muralha lateral, leve a tora ao depósito perto do portão; erga uma casinha e
+  veja o Armadilheiro/Bombardeiro na maquininha nova.
+
 ## Ciclo 2.3 (2026-10-31), Diretor Visual: mapa maior e maquininha por classe (branch)
 - Pedido do Julio: peças muito juntas; quer caminhos pela floresta para flanquear,
   mapa maior e mais espaçado. Rio das Lanternas passa de 136 x 72 para 168 x 96 m
