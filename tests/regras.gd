@@ -28,6 +28,7 @@ func _ready() -> void:
 	_nivel2()
 	_caminho_magos()
 	await _alma()
+	_ferradura()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -430,7 +431,18 @@ func _machadada() -> void:
 	# Longe da planta: Bombardeiro joga bomba (não corta).
 	u.set_class(load("res://config/classes/bombardeiro.tres"))
 	arvore.set_estagio(2, false)
-	u.global_position = arvore.global_position + Vector3(8.0, 0, 0)
+	# Ponto a 8 m da árvore e longe de TODAS as plantas (o bosque depende do mapa).
+	var longe: Vector3 = arvore.global_position + Vector3(8.0, 0, 0)
+	for dir in [Vector3(8, 0, 0), Vector3(-8, 0, 0), Vector3(0, 0, -8), Vector3(0, 0, 8)]:
+		var cand: Vector3 = arvore.global_position + dir
+		var livre := true
+		for p in game.plantas:
+			if p.global_position.distance_to(cand) < 5.0:
+				livre = false
+		if livre:
+			longe = cand
+			break
+	u.global_position = longe
 	u.reset_physics_interpolation()
 	_check(not u.clique_vira_machadada(Vector3.LEFT), "bombardeiro longe da árvore não deveria cortar")
 	u.global_position = arvore.global_position + Vector3(2.0, 0, 0)
@@ -625,3 +637,27 @@ func _alma() -> void:
 	# (tolerância para um abate de verdade no mesmo segundo)
 	_check(mascara.fatness >= esperado - 0.005 and mascara.fatness <= esperado * 3.0 + 0.005,
 		"alma: máscara deveria pesar %.3f, pesa %.3f" % [esperado, mascara.fatness])
+
+
+## Ciclo 2.5e: muralha em ferradura (vãos fora da muralha) e torre que entra
+## em alarme quando a máscara sai de casa.
+func _ferradura() -> void:
+	var ar = game.arena
+	var m = ar.map
+	if m.wall_arc_radius <= 0.0:
+		return
+	var runs: Array = ar.wall_arc_runs()
+	_check(runs.size() == m.wall_arc_gaps.size(), "ferradura: um trecho de muralha entre cada par de vãos")
+	var no_vao := false
+	for r: Array in runs:
+		for a in [0.0, m.wall_arc_gates[0]]:
+			if a > r[0] + 0.5 and a < r[1] - 0.5:
+				no_vao = true
+	_check(not no_vao, "ferradura: saída larga e portão lateral sem muralha")
+	for team in 2:
+		var k: Node = ar.keep_node[team]
+		var ap: AnimationPlayer = k.get_node_or_null("AnimationPlayer") if k else null
+		_check(ap != null and ap.current_animation == "respirar", "torre %d respira parada" % team)
+		ar.torre_alarme(team, true)
+		_check(ap != null and ap.current_animation == "alarme", "torre %d entra em alarme" % team)
+		ar.torre_alarme(team, false)

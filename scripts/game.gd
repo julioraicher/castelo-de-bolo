@@ -1023,6 +1023,7 @@ func slowmo(scale: float, real_time: float) -> void:
 
 func _on_princess_changed(p: Princess) -> void:
 	_log("mascara %s -> %s [%d] (t=%.0fs)" % [Config.TEAM_NAMES[p.team], p.state_text(), p.state, _time])
+	arena.torre_alarme(p.team, p.state != Princess.State.HOME)
 	if game_over:
 		return
 	var ours := p.team == player.team

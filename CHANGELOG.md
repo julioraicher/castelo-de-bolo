@@ -5,6 +5,37 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.5f (2026-10-31), Visual + Jogabilidade: pátio em ferradura e Torre da Máscara
+- **Pátio em ferradura** (prancha aprovada pelo Julio): muralha com passarela em arco de raio
+  22 m (antes era um retângulo de 32 × 28 m), aberta para o inimigo, com uma **saída larga** de
+  24 m entre duas torres e **2 portões laterais** que dão nas trilhas da floresta. As 4
+  maquininhas ficam no meio do arco, as oficinas vêm depois, e **Luz** (em cima) e **Sombra**
+  (embaixo) ficam nas pontas. Há uma praça de pedra no centro, calçadas até as saídas e
+  pilares com lanterna nas juntas da muralha.
+- **Torre da Máscara** (refeita do zero): tem 20 m, 3 andares e frisos na cor do time. A
+  **máscara Oni viva** na frente tem rugas, veias, órbitas fundas, olhos de fera (íris do
+  time e pupila em fenda), narinas que soltam fumaça, boca rosnando com fogo dentro,
+  mandíbula que respira, chifres em gomos com anéis de ouro, e juba e barba ao vento.
+  Animações: "respirar" (sempre) e **"alarme"** quando a máscara é roubada (olhos piscam
+  rápido, boca abre, fogo cresce, fumaça engrossa). Volta a respirar quando a máscara
+  está em casa.
+- Dados: campos novos `MapLayout.wall_arc_*` e `keep_model` (o padrão é 0/vazio, que mantém
+  a muralha retangular). Arena: `_wall_arc`, `wall_arc_runs`, `torre_alarme`. O minimapa
+  desenha o arco. Renascer (`spawn_spots`) em 6 pontos do arco, perto das saídas. O bosque
+  seguro foi para fora do portão de baixo, e o depósito ficou por dentro dele. 16 objetos
+  do meio do mapa que caíam dentro da ferradura saíram.
+- Desempenho: a torre tem ~7,3 mil triângulos e 5 peças animadas (olhos, mandíbula, fogo da
+  boca e 2 braseiros); as lanternas ficaram fixas para economizar chamadas de desenho.
+- QA do mapa: os avisos caíram de 38 para 9 (os 4 "inalcançáveis" em z = -46 já existiam).
+  Testes 167/167, com o `_ferradura` novo. 5 min simulados sem erro. O teste do Bombardeiro
+  longe da árvore agora procura um ponto longe de todas as plantas.
+- Saiu a escada da passarela: a muralha nova não tem acesso por cima (dá para voltar depois,
+  se fizer falta).
+- **O que testar**: (1) entre no seu pátio: ele deve parecer bem mais espaçoso, sem trombar
+  nas casinhas. (2) Saia pelos portões laterais até as trilhas. (3) Pare na frente da torre
+  e veja a máscara respirando e soltando fumaça. (4) Quando roubarem sua máscara, a torre
+  entra em alarme. (5) Veja o minimapa com o arco.
+
 ## Ciclo 2.5e (2026-10-31), Interface: identidade "Festival sombrio" no jogo inteiro
 - **Fontes**: Lilita One (títulos, avisos, números, botões, letreiros 3D) com contorno
   grosso de tinta e sombra sólida; Nunito Black no texto. Shojumaru e Barlow saíram
