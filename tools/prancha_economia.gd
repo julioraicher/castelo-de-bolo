@@ -4,7 +4,7 @@ extends SceneTree
 ## o contador de madeira. Também gera o ícone de tora (assets/ui/icone_tora.png).
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
 ##     --rendering-method gl_compatibility --audio-driver Dummy -s tools/prancha_economia.gd -- DIR [--icone]
-## --emblemas: só a fileira de enfeites das classes. --icone: só gera o ícone (rode antes do --import, o contador o pré-carrega).
+## --maquinas [--n2]: cada maquininha de classe (nível 1 ou 2). --emblemas: só a fileira de enfeites das classes. --icone: só gera o ícone (rode antes do --import, o contador o pré-carrega).
 ## Salva DIR/plantas.png, DIR/maquina_N.png, DIR/contador.png; a montagem é tools/montar_economia.py.
 ## Sem tipos do jogo aqui (o script compila antes dos autoloads).
 
@@ -45,9 +45,14 @@ func _rodar() -> void:
 			ap0.seek(1.0, true)
 			ap0.pause()
 			(mq.get_node("Vapor") as CPUParticles3D).emitting = true
+			var n2 := args.has("--n2")  # nível 2: mostra as peças N2_*
+			if n2:
+				for f in mq.get_children():
+					if f.name.begins_with("N2_"):
+						f.visible = true
 			for k in 14:
 				await process_frame
-			await _foto(c0, Vector3(0, 1.4, 0), Vector3(0.3, 0.45, 1), 7.0, 40.0, saida.path_join("maq_%s.png" % c))
+			await _foto(c0, Vector3(0, 1.5, 0), Vector3(0.3, 0.45, 1), 7.6 if n2 else 7.0, 40.0, saida.path_join("maq%s_%s.png" % ["2" if n2 else "", c]))
 		quit()
 		return
 	if args.has("--emblemas"):  # só os enfeites do elenco do Ciclo 2.4, lado a lado

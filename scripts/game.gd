@@ -37,6 +37,7 @@ var _time := 0.0
 #   --mapa=N            usa o mapa N de GameConfig.maps
 #   --vista=mapa|alto|patio  câmera parada vendo o mapa todo / o castelo de cima /
 #                       o pátio azul no ângulo da câmera do jogo (prints)
+#   --vista=px,py,pz,ax,ay,az  câmera parada em p olhando para a (prints)
 #   --print-poder       com --shots: os prints saem logo depois de cada poder do jogador
 #   --filme=<pasta>     roteiro fixo com o jogador (golpe, dash, pulo, pancada,
 #                       morte) salvando um quadro a cada 2: prancha de animação
@@ -183,9 +184,15 @@ func _ready() -> void:
 			camera.position = Vector3(0, 95, 62)
 			camera.look_at(Vector3(0, 0, 2))
 		elif _vista == "patio":
+			var cx := -arena.map.castle_distance
 			camera.fov = 42
-			camera.position = Vector3(-50, 0, 0) + Vector3(0, 21, 19) * 1.55
-			camera.look_at(Vector3(-50, 0, 0))
+			camera.position = Vector3(cx, 0, 0) + Vector3(0, 21, 19) * 1.55
+			camera.look_at(Vector3(cx, 0, 0))
+		elif _vista.count(",") == 5:  # --vista=px,py,pz,ax,ay,az: câmera em p olhando para a
+			var v := _vista.split_floats(",")
+			camera.fov = 42
+			camera.position = Vector3(v[0], v[1], v[2])
+			camera.look_at(Vector3(v[3], v[4], v[5]))
 		else:
 			camera.fov = 45
 			camera.position = Vector3(-22, 22, 26)

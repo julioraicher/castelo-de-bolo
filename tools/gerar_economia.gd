@@ -5,7 +5,8 @@ extends "res://tools/gerar_cenario_ninja.gd"
 ##   pilha_toras                      pilha do castelo; nós Nivel_1..4 (3 toras cada) e Contador
 ##   maquina_chapeu                   maquininha: Prensa, Gira_engrenagem, Molde, Brilho,
 ##                                    Vapor, Enfeite, Estoque_1..4 e a animação "fabricar"
-##   maquina_<classe>                 maquininha própria da classe (mesmos nós; ver MAQUINAS)
+##   maquina_<classe>                 maquininha própria da classe (mesmos nós; ver MAQUINAS) + nível 2:
+##                                    nós N2_* (escondidos) e a animação "subir_nivel"
 ##   emblema_<classe>                 enfeite da frente da máquina (nome do .tres da classe; armadilheiro e
 ##                                    bombardeiro = ramos do Construtor no Ciclo 2.4)
 ## Rode depois de tools/gerar_cenario_ninja.gd:
@@ -374,6 +375,50 @@ func _maquina_classe(c: String) -> void:
 		"ronin_oni": _maq_oni()
 		"arqueiro_yumi": _maq_yumi()
 		"construtor": _maq_serraria()
+	_nivel2()
+
+
+## Nível 2 (sobe quando a oficina da classe fica pronta): peças N2_* que o
+## HatPad mostra no nível 2 e a animação "subir_nivel" faz brotar. Leitura de
+## longe, estilo "prédio melhorado": degrau de pedra com quinas de ouro, dois
+## estandartes da cor da classe com lanterna acesa e uma coroa dourada no topo.
+func _nivel2() -> void:
+	var cor: Color = P.torii if _cor_brilho.r < 0 else _cor_brilho
+	var pano := Color(cor.r * 0.75, cor.g * 0.75, cor.b * 0.75)
+	var topo := 1.8
+	for v in V[0]:
+		topo = maxf(topo, v.y)
+	var g := _inicio_peca()
+	_tipo = 3
+	_blocod(Vector3(2.8, 0.14, 2.0), Vector3(0, 0.07, 0.05), Vector3.ZERO, P.pedra2.darkened(0.1), 0.05)
+	_tipo = 0
+	for x in [-1.38, 1.38]:
+		for z in [-0.93, 1.03]:
+			_blocod(Vector3(0.2, 0.22, 0.2), Vector3(x, 0.11, z), Vector3.ZERO, P.ouro, 0.03)
+	_fim_peca(g, "N2_Base", Transform3D())
+	for lado in [-1.0, 1.0]:
+		g = _inicio_peca()
+		_viga(Vector3(0, 0, 0), Vector3(0, 2.9, 0), 0.07, Color(0.12, 0.09, 0.1))
+		_viga(Vector3(0, 2.75, 0), Vector3(-lado * 0.5, 2.75, 0), 0.05, Color(0.12, 0.09, 0.1))
+		var m := _marca()
+		_blocod(Vector3(0.44, 1.35, 0.03), Vector3(-lado * 0.24, 2.05, 0), Vector3.ZERO, pano, 0.01)
+		_blocod(Vector3(0.46, 0.1, 0.04), Vector3(-lado * 0.24, 2.66, 0), Vector3.ZERO, P.ouro, 0.01)
+		_blocod(Vector3(0.12, 0.9, 0.04), Vector3(-lado * 0.24, 2.0, 0.01), Vector3.ZERO, P.ouro.lerp(pano, 0.35), 0.01)
+		_vento_pendurado(m, 2.72, 1.4, 0.7)
+		var m2 := _marca()
+		_esfera(0.16, Vector3(0, 3.02, 0), Vector3(1, 1.25, 1), P.luz1, true, 8, 4)
+		_cil(0.08, 0.08, 0.05, 6, Vector3(0, 3.24, 0), Vector3.ZERO, Color(0.12, 0.09, 0.1))
+		_vento_pendurado(m2, 3.25, 0.4, 0.3)
+		_fim_peca(g, "N2_Estandarte_%s" % ("E" if lado < 0 else "D"), Transform3D(Basis(), Vector3(lado * 1.3, 0.14, -0.62)))
+	g = _inicio_peca()
+	var e := 1.4  # coroa grande: precisa ler da câmera do jogo
+	_cil(0.2 * e, 0.24 * e, 0.12 * e, 8, Vector3(0, 0.06 * e, 0), Vector3.ZERO, P.ouro.darkened(0.2))
+	for k in 5:
+		var a := (k - 2) * 0.38
+		var alto := (0.32 if k % 2 == 0 else 0.22) * e
+		_blocod(Vector3(0.08, alto, 0.08) * e, Vector3(sin(a) * 0.2 * e, 0.12 * e + alto / 2, cos(a) * 0.05), Vector3(0, 0, -rad_to_deg(a) * 0.5), P.ouro, 0.02)
+	_esfera(0.07 * e, Vector3(0, 0.5 * e, 0.02), Vector3.ONE, cor.lightened(0.3), true, 6, 3)
+	_fim_peca(g, "N2_Coroa", Transform3D(Basis(), Vector3(0, topo + 0.15, -0.1)))
 
 
 ## Samurai: forja. Fornalha de pedra com a boca acesa, chaminé (fumaça),
@@ -613,6 +658,7 @@ func _completar(nome: String, maquina: bool) -> void:
 	_marcadores.clear()
 	if maquina:
 		_efeitos_maquina(raiz, marc)
+		_subir_nivel(raiz)
 	var ps := PackedScene.new()
 	ps.pack(raiz)
 	ResourceSaver.save(ps, caminho)
@@ -726,6 +772,47 @@ func _efeitos_maquina(raiz: Node3D, marc: Dictionary) -> void:
 	ap.add_animation_library("", lib)
 	raiz.add_child(ap)
 	ap.owner = raiz
+
+
+## "subir_nivel" (1,4 s): as peças N2_* brotam do chão uma depois da outra,
+## com o anel aceso e uma baforada. Salvas escondidas (nível 1).
+func _subir_nivel(raiz: Node3D) -> void:
+	var n2: Array[Node3D] = []
+	for f in raiz.get_children():
+		if f.name.begins_with("N2_"):
+			f.visible = false
+			n2.append(f)
+	if n2.is_empty():
+		return
+	var an := Animation.new()
+	an.length = 1.4
+	for k in n2.size():
+		var no := n2[k]
+		var t0 := 0.12 * k
+		var t := an.add_track(Animation.TYPE_VALUE)
+		an.track_set_path(t, "%s:visible" % no.name)
+		an.value_track_set_update_mode(t, Animation.UPDATE_DISCRETE)
+		an.track_insert_key(t, 0.0, true)
+		t = an.add_track(Animation.TYPE_VALUE)
+		an.track_set_path(t, "%s:scale" % no.name)
+		for q in [[0.0, 0.01], [t0, 0.01], [t0 + 0.28, 1.22], [t0 + 0.45, 0.92], [t0 + 0.6, 1.0]]:
+			an.track_insert_key(t, q[0], Vector3.ONE * q[1])
+	var t := an.add_track(Animation.TYPE_VALUE)
+	an.track_set_path(t, "Brilho:visible")
+	an.value_track_set_update_mode(t, Animation.UPDATE_DISCRETE)
+	an.track_insert_key(t, 0.0, true)
+	an.track_insert_key(t, 1.2, false)
+	t = an.add_track(Animation.TYPE_VALUE)
+	an.track_set_path(t, "Brilho:scale")
+	for q in [[0.0, 0.6], [0.5, 2.6], [1.2, 3.4]]:
+		an.track_insert_key(t, q[0], Vector3(q[1], 0.5, q[1]))
+	t = an.add_track(Animation.TYPE_VALUE)
+	an.track_set_path(t, "Vapor:emitting")
+	an.value_track_set_update_mode(t, Animation.UPDATE_DISCRETE)
+	an.track_insert_key(t, 0.0, false)
+	an.track_insert_key(t, 0.1, true)
+	var ap: AnimationPlayer = raiz.get_node("AnimationPlayer")
+	ap.get_animation_library("").add_animation("subir_nivel", an)
 
 
 ## Enfeite da classe no plano XY (de frente para +z), ~0,5 m.
