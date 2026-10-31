@@ -1203,14 +1203,17 @@ func _use_power() -> void:
 		"campo_minado":
 			# Armadilheiro: anel de minas em volta (power_duration = quantas).
 			_play_upper("Interact", 1.6)
-			Fx.ring(game, global_position, Color(1.0, 0.55, 0.15, 0.9), stats.power_radius)
+			Fx.ring(game, global_position, Color(stats.hat_color, 0.9), stats.power_radius)
 			var nm := int(stats.power_duration)
+			var pontos: Array = []
 			for i in nm:
 				var a := TAU * i / nm
 				var mina := Trap.new()
 				game.add_child(mina)
 				mina.set_meta("do_poder", true)  # não conta no trap_max do botão direito
 				mina.setup(game, self, global_position + Vector3(cos(a), 0, sin(a)) * stats.power_radius)
+				pontos.append(global_position + Vector3(cos(a), 0, sin(a)) * stats.power_radius)
+			FxPoder.campo_minado(self, pontos)
 			Sfx.play("pickup", global_position, 0.1)
 		"reforco":
 			# Pólvora: escudo de tábuas nos aliados em volta (não fere ninguém).

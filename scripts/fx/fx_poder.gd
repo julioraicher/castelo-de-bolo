@@ -102,6 +102,58 @@ static func redemoinho(u: Unit) -> void:
 	tw.tween_property(mat, "albedo_color:a", 0.0, 0.3).set_delay(maxf(dur - 0.3, 0.0))
 	tw.chain().tween_callback(n.queue_free)
 	_poeira(u.game, u.global_position, Color(0.85, 0.75, 0.55), 18)
+	_succao(u, r * Config.cfg.redemoinho_puxa_raio, dur)
+
+
+## Vórtice do Redemoinho: anel de vento na borda da puxada que se fecha
+## no Samurai (2 vezes), para ler "puxa" e não só "gira".
+static func _succao(u: Unit, r_puxa: float, dur: float) -> void:
+	var n := Node3D.new()
+	n.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	u.add_child(n)
+	var mat := _mat(Color(1.3, 1.15, 0.8, 0.0))
+	var t := TorusMesh.new()
+	t.inner_radius = r_puxa - 0.12
+	t.outer_radius = r_puxa
+	t.rings = 32
+	t.ring_segments = 3
+	var mi := _malha(n, t, mat)
+	mi.position.y = 0.3
+	mi.scale = Vector3(1, 0.1, 1)
+	var meia := maxf(dur, 0.6) / 2.0
+	var tw := n.create_tween()
+	for k in 2:
+		tw.tween_callback(func() -> void: n.scale = Vector3.ONE)
+		tw.tween_property(mat, "albedo_color:a", 0.5, 0.08)
+		tw.parallel().tween_property(n, "scale", Vector3(0.35, 1, 0.35), meia).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+		tw.parallel().tween_property(n, "rotation:y", -TAU, meia)
+		tw.tween_property(mat, "albedo_color:a", 0.0, 0.05)
+	tw.tween_callback(n.queue_free)
+
+
+## Armadilheiro (Campo Minado): cada mina sai voando da mão em arco até o
+## seu lugar no anel e acende ao cair (luz verde + faíscas).
+static func campo_minado(u: Unit, pontos: Array) -> void:
+	var cor := u.stats.hat_color
+	var g := u.game
+	var origem := u.global_position + Vector3(0, 1.3, 0)
+	for k in pontos.size():
+		var alvo: Vector3 = pontos[k]
+		var n := _no(g, origem)
+		var s := SphereMesh.new()
+		s.radius = 0.16
+		s.height = 0.32
+		s.radial_segments = 6
+		s.rings = 3
+		_malha(n, s, _mat(Color(cor * 1.8, 1.0)))
+		var atraso := 0.04 * k
+		var tw := n.create_tween()
+		tw.tween_interval(atraso)
+		tw.tween_method(func(f: float) -> void:
+			n.global_position = origem.lerp(alvo, f) + Vector3(0, sin(f * PI) * 1.6, 0), 0.0, 1.0, 0.32)
+		tw.tween_callback(func() -> void:
+			_motas(g, alvo, cor, 6)
+			n.queue_free())
 
 
 ## Ronin Oni: cúpula de choque vermelha, labareda e pedras voando; aura de fogo

@@ -5,6 +5,15 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4k (2026-10-31), Diretor Visual: efeitos do Campo Minado e do vórtice
+- **Campo Minado** (Q novo do Armadilheiro): cada mina sai voando da mão em arco até o
+  lugar no anel e acende ao cair; o anel no chão usa o verde do chapéu (`FxPoder.campo_minado`).
+- **Redemoinho**: anel de vento na borda da puxada (raio × `redemoinho_puxa_raio`) que se
+  fecha no Samurai duas vezes: lê "puxa", não só "gira" (`FxPoder._succao`).
+- Toque mínimo em `unit.gd` (chama o efeito e passa os pontos das minas). Testes 109/109;
+  1,5 min com todos soltando poder sem erro de script.
+- **O que testar**: de Armadilheiro, solte o Q; de Samurai, solte o Q perto de inimigos.
+
 ## Ciclo 2.4i (2026-10-31), Diretor de Jogabilidade: mais pontos e Q com mais "uau"
 - **Ritmo de pontos** (opção recomendada do card, alvo 1 a 3 pontos a cada 5 min):
   `carrier_damage_mult` 0,5 → 0,4 (quem leva a máscara aguenta mais) e
