@@ -357,15 +357,15 @@ static func selo(g: Node, centro: Vector3, r: float) -> void:
 
 
 ## Kitsune: erupção de fogo-raposa e orbes girando em volta das colunas.
-static func coluna_fogo(g: Node, centro: Vector3, r: float, dur: float) -> void:
-	_labareda(g, centro, Color(0.4, 1.4, 2.0, 0.75), r * 0.55, 8.0, 0.7)
+static func coluna_fogo(g: Node, centro: Vector3, r: float, dur: float, cor := Color(0.25, 0.9, 1.25)) -> void:
+	_labareda(g, centro, Color(cor.r * 1.6, cor.g * 1.6, cor.b * 1.6, 0.75), r * 0.55, 8.0, 0.7)
 	var n := _no(g, centro + Vector3(0, 1.4, 0))
 	var s := SphereMesh.new()
 	s.radius = 0.28
 	s.height = 0.56
 	s.radial_segments = 8
 	s.rings = 4
-	var mat := _mat(Color(1.0, 1.9, 2.0, 0.95))
+	var mat := _mat(Color(cor.r * 1.6, cor.g * 1.6, cor.b * 1.6, 0.95).lerp(Color(2, 2, 2, 0.95), 0.35))
 	for k in 6:
 		var a := TAU * k / 6.0
 		var mi := _malha(n, s, mat)
