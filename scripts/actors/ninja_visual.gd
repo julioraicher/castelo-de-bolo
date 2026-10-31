@@ -20,6 +20,7 @@ const MAGENTA := Color(1.0, 0.25, 0.85)
 const FANTASMA := Color(0.45, 1.0, 0.45)
 const OURO := Color(1.0, 0.78, 0.3)
 const FOGO := Color(1.0, 0.45, 0.08)
+const KITSUNEBI := Color(0.85, 0.45, 1.0)  # fogo de raposa (violeta: o ciano é do Ninja de Shuriken)
 
 static var _pecas_cache := {}   # "estilo|r,g,b" -> ArrayMesh
 static var _corpo_cache := {}   # "textura|time|contorno" -> ShaderMaterial
@@ -413,13 +414,39 @@ func _kitsune(time: Color) -> void:
 	for s in [-1, 1]:
 		_peca(cab, _cone(0.15, 0.4), Vector3(0.3 * s, 1.05, 0.15), Vector3(0, 0, -15 * s), Vector3.ONE, _plano(Color(0.95, 0.94, 0.9)))
 		_peca(cab, _caixa(Vector3(0.18, 0.04, 0.02)), Vector3(0.17 * s, 0.68, 0.64), Vector3(0, 0, -20 * s), Vector3.ONE, _neon(Color(1.0, 0.15, 0.2), 1.6))
-	# Fogo de raposa (kitsunebi): chamas azuladas orbitando
+	# Fogo de raposa (kitsunebi): chamas violeta orbitando
 	var peito := "chest"
 	for i in 4:
 		var a := TAU * i / 4.0 + 0.4
 		var p := Vector3(cos(a) * 0.8, 0.7 + 0.2 * (i % 2), sin(a) * 0.8)
-		_peca(peito, _esfera(0.12, 0.14), p, Vector3.ZERO, Vector3.ONE, _neon(CIANO, 2.4))
-		_peca(peito, _cone(0.1, 0.3), p + Vector3(0, 0.2, 0), Vector3.ZERO, Vector3.ONE, _neon(CIANO, 1.6))
+		_peca(peito, _esfera(0.12, 0.14), p, Vector3.ZERO, Vector3.ONE, _neon(KITSUNEBI, 2.4))
+		_peca(peito, _cone(0.1, 0.3), p + Vector3(0, 0.2, 0), Vector3.ZERO, Vector3.ONE, _neon(KITSUNEBI, 1.6))
+
+
+## Construtor (Ciclo 2.4): operário simples. Hachimaki, armação de carregar
+## nas costas (shoiko) com duas toras e a marreta de madeira (kizuchi). Os
+## ramos (Armadilheiro, Bombardeiro) herdam a faixa e ganham óculos + carga.
+func _construtor(time: Color) -> void:
+	var cab := "head"
+	_peca(cab, _cilindro(0.57, 0.57, 0.1), Vector3(0, 0.74, 0), Vector3(-6, 0, 0), Vector3.ONE, _plano(Color(0.95, 0.93, 0.86)))
+	_peca(cab, _esfera(0.11, 0.09), Vector3(0.12, 0.8, -0.56), Vector3.ZERO, Vector3.ONE, _plano(Color(0.95, 0.93, 0.86)))
+	_peca(cab, _caixa(Vector3(0.07, 0.22, 0.03)), Vector3(0.2, 0.68, -0.58), Vector3(30, 0, -30), Vector3.ONE, _plano(Color(0.95, 0.93, 0.86)))
+	var peito := "chest"
+	var mad := Color(0.55, 0.38, 0.2)
+	for s in [-1, 1]:
+		_peca(peito, _caixa(Vector3(0.07, 1.15, 0.07)), Vector3(0.24 * s, 0.4, -0.5), Vector3(-6, 0, 0), Vector3.ONE, _plano(mad.darkened(0.2)))
+	_peca(peito, _caixa(Vector3(0.6, 0.07, 0.3)), Vector3(0, -0.12, -0.6), Vector3.ZERO, Vector3.ONE, _plano(mad.darkened(0.2)))
+	for i in 2:
+		var y := 0.1 + i * 0.3
+		_peca(peito, _cilindro(0.13, 0.13, 0.85), Vector3(0, y, -0.62), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.42, 0.27, 0.15)))
+		for s in [-1, 1]:
+			_peca(peito, _cilindro(0.11, 0.11, 0.02), Vector3(0.43 * s, y, -0.62), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.86, 0.7, 0.45)))
+	_peca(peito, _caixa(Vector3(0.7, 0.05, 0.05)), Vector3(0, 0.3, -0.48), Vector3.ZERO, Vector3.ONE, _plano(Color(0.85, 0.75, 0.5)))
+	var mao := "handslot.r"
+	_peca(mao, _cilindro(0.045, 0.045, 0.95), Vector3(0, 0.4, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.45, 0.3, 0.15)))
+	_peca(mao, _cilindro(0.2, 0.2, 0.5), Vector3(0, 0.92, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.7, 0.52, 0.3)))
+	for s in [-1, 1]:
+		_peca(mao, _cilindro(0.21, 0.21, 0.05), Vector3(0.23 * s, 0.92, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.15, 0.15, 0.18)))
 
 
 func _carpinteiro(time: Color) -> void:

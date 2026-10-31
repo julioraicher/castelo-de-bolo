@@ -494,8 +494,8 @@ func _maq_shuriken() -> void:
 ## duas raposas de pedra, carimbo hanko gigante e um anel de fogo-raposa
 ## girando atrás do molde.
 func _maq_raposa() -> void:
-	_cor_brilho = Color(0.45, 0.85, 1.0)
-	_cor_vapor = Color(0.75, 0.9, 1.0)
+	_cor_brilho = Color(0.85, 0.5, 1.0)
+	_cor_vapor = Color(0.9, 0.75, 1.0)
 	var vermelho: Color = P.torii
 	_maquina_base(P.pedra, Color(0.3, 0.12, 0.1), vermelho)
 	# Torii.
@@ -529,7 +529,7 @@ func _maq_raposa() -> void:
 	_gira("Gira_fogo_raposa", Vector3(0, 1.45, -0.32), 1.6, func() -> void:
 		for k in 6:
 			var a := TAU * k / 6.0
-			_esfera(0.08, Vector3(cos(a), sin(a), 0) * 0.62, Vector3(1, 1.3, 1), Color(0.45, 0.85, 1.0), true, 6, 3)
+			_esfera(0.08, Vector3(cos(a), sin(a), 0) * 0.62, Vector3(1, 1.3, 1), Color(0.85, 0.5, 1.0), true, 6, 3)
 		_toro(0.58, 0.62, Vector3.ZERO, Vector3(1, 1, 0.3), P.corda.darkened(0.3)))
 
 
@@ -850,7 +850,7 @@ func _emblema(classe: String) -> void:
 			_esfera(0.06, Vector3(0, -0.17, 0.04), Vector3(1, 0.8, 0.8), Color(0.1, 0.06, 0.08), false, 6, 3)
 			for sx in [-1.0, 1.0]:
 				_blocod(Vector3(0.09, 0.025, 0.03), Vector3(sx * 0.08, 0.0, 0.06), Vector3(0, 0, sx * 18), P.torii, 0.005)
-			_cil(0.0, 0.07, 0.18, 6, Vector3(0, 0.3, 0.02), Vector3.ZERO, P.luz1, true)
+			_cil(0.0, 0.07, 0.18, 6, Vector3(0, 0.3, 0.02), Vector3.ZERO, Color(0.85, 0.5, 1.0), true)
 		"ronin_oni":  # chifres de oni sobre um kanabo (clava cravejada)
 			_viga(Vector3(-0.2, -0.26, 0), Vector3(0.18, 0.2, 0), 0.1, Color(0.12, 0.08, 0.1))
 			for k in 4:
