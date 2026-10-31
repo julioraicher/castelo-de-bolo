@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" path="res://assets/ninja/luar/bambu_e2.scn" id="5_ww3x4"]
 [ext_resource type="PackedScene" path="res://assets/ninja/luar/bambu_e3.scn" id="6_7vdn0"]
 [ext_resource type="PackedScene" path="res://assets/ninja/luar/maquina_chapeu.scn" id="7_ty6ib"]
-[ext_resource type="PackedScene" path="res://assets/ninja/luar/pilha_toras.scn" id="8_s8lay"]
+[ext_resource type="PackedScene" path="res://assets/ninja/luar/deposito_madeira.scn" id="8_2nyex"]
 [ext_resource type="PackedScene" path="res://assets/ninja/luar/tora.scn" id="10_isvjg"]
 
 [resource]
@@ -45,7 +45,7 @@ oficina_model = "oficina_{cor}.scn"
 arvore_estagios = Array[PackedScene]([ExtResource("1_2nyex"), ExtResource("2_356h3"), ExtResource("3_c4pgq")])
 bambu_estagios = Array[PackedScene]([ExtResource("4_x8kcc"), ExtResource("5_ww3x4"), ExtResource("6_7vdn0")])
 maquina_model = ExtResource("7_ty6ib")
-pilha_model = ExtResource("8_s8lay")
+pilha_model = ExtResource("8_2nyex")
 tora_model = ExtResource("10_isvjg")
 wall_model = "muro.scn"
 wall_scale = 1.0

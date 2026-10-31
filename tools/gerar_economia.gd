@@ -34,6 +34,7 @@ func _init() -> void:
 			_bambu_planta(e); _salvar("bambu_e%d" % (e + 1))
 		_tora(Vector3.ZERO, 0.0); _salvar("tora")
 		_pilha_toras(); _salvar("pilha_toras"); _completar("pilha_toras", false)
+		_deposito(); _salvar("deposito_madeira"); _completar("deposito_madeira", false)
 		_maquina(); _salvar("maquina_chapeu"); _completar("maquina_chapeu", true)
 		for c in MAQUINAS:
 			_maquina_classe(c); _salvar("maquina_" + c); _completar("maquina_" + c, true)
@@ -82,6 +83,7 @@ func _arvore(e: int) -> void:
 		_blocod(Vector3(0.5, 0.26, 0.12), Vector3(0, 0.75, r - 0.02), Vector3(-12, 0, 0), P.madeira2.lightened(0.25), 0.02)
 		_tipo = 0
 		_blocod(Vector3(0.52, 0.04, 0.16), Vector3(0, 0.62, r), Vector3.ZERO, P.madeira2.lightened(0.1), 0.01)
+		_cerca_madura(1.25)
 		# Corda sagrada com o ofuda aceso.
 		_toro(r * 0.86, r * 0.86 + 0.08, Vector3(0, 1.5, 0), Vector3(1, 0.6, 1), P.corda)
 		_caixa(Vector3(0.14, 0.32, 0.02), Vector3(0.12, 1.25, r * 0.8 + 0.06), Vector3(0, 0, 6), P.papel, true)
@@ -133,6 +135,7 @@ func _bambu_planta(e: int) -> void:
 	if e == 2:
 		_toro(0.62, 0.7, Vector3(0, 1.3, 0), Vector3(1, 0.5, 0.85), P.corda)
 		_caixa(Vector3(0.14, 0.32, 0.02), Vector3(0.1, 1.05, 0.62), Vector3(0, 0, -5), P.papel, true)
+		_cerca_madura(1.35)
 
 
 ## Tora curta deitada no eixo x, centro em `c`: casca escura, pontas claras com
@@ -167,6 +170,59 @@ func _pilha_toras() -> void:
 			_tora(Vector3(x, 0, 0), 90.0 + (j - 1) * 2.0, 1.15, 0.19)
 		_fim_peca(g, "Nivel_%d" % (k + 1), Transform3D(Basis(), Vector3(0, y, 0)))
 	_pecas_marcador("Contador", Vector3(0, 2.0, 0))
+
+
+## Planta madura ("pode cortar"): 4 estacas baixas com corda e papéis
+## acesos em volta da base. Lê de longe sem ser um círculo no chão.
+func _cerca_madura(r: float) -> void:
+	for k in 4:
+		var a := TAU * k / 4.0 + PI / 4
+		var p := Vector3(cos(a) * r, 0, sin(a) * r)
+		_viga(p, p + Vector3(0, 0.55, 0), 0.08, P.madeira2)
+		_caixa(Vector3(0.1, 0.16, 0.02), p + Vector3(0, 0.38, 0.06), Vector3(0, -rad_to_deg(a) + 90, 0), P.luz1, true)
+		var q := Vector3(cos(a + PI / 2) * r, 0, sin(a + PI / 2) * r)
+		_viga(p + Vector3(0, 0.48, 0), q + Vector3(0, 0.48, 0), 0.035, P.corda)
+
+
+## Depósito de madeira do castelo (substitui a pilha): galpão de uma água
+## sobre o cavalete de toras (Nivel_1..4 = estoque) e, na frente, a boca
+## onde o Construtor joga a tora: moldura de vigas, fundo escuro, rampa e
+## lanterna. Placa com a tora pintada; o número fica no nó Contador.
+## ~2,6 x 2,2 m de chão.
+func _deposito() -> void:
+	_pilha_toras()
+	var mad: Color = P.madeira
+	_tipo = 3
+	_blocod(Vector3(2.6, 0.16, 2.3), Vector3(0, 0.08, -0.1), Vector3.ZERO, P.pedra2, 0.05)
+	_tipo = 0
+	# Galpão: 4 postes e telhado de uma água inclinado para trás.
+	for x in [-1.15, 1.15]:
+		_viga(Vector3(x, 0.16, 0.75), Vector3(x, 2.35, 0.75), 0.15, mad)
+		_viga(Vector3(x, 0.16, -0.95), Vector3(x, 1.95, -0.95), 0.15, mad)
+	_viga(Vector3(-1.25, 2.35, 0.75), Vector3(1.25, 2.35, 0.75), 0.14, mad)
+	_tipo = 2
+	_blocod(Vector3(2.8, 0.1, 2.1), Vector3(0, 2.25, -0.1), Vector3(-11, 0, 0), P.telhado, 0.04)
+	_tipo = 1
+	_blocod(Vector3(2.3, 1.6, 0.08), Vector3(0, 0.95, -1.0), Vector3.ZERO, P.madeira2.darkened(0.15), 0.03)
+	_tipo = 0
+	# Boca de entrega na frente: buraco escuro com moldura e rampa de tábuas.
+	var zb := 1.15
+	_ao = 0.25
+	_blocod(Vector3(1.1, 0.05, 0.7), Vector3(0, 0.17, zb), Vector3.ZERO, Color(0.05, 0.04, 0.05), 0.0)
+	_ao = 1.0
+	for s in [-1.0, 1.0]:
+		_blocod(Vector3(0.14, 0.24, 0.86), Vector3(s * 0.62, 0.24, zb), Vector3.ZERO, mad, 0.03)
+		_blocod(Vector3(1.38, 0.24, 0.14), Vector3(0, 0.24, zb + s * 0.43), Vector3.ZERO, mad, 0.03)
+	_tipo = 1
+	_blocod(Vector3(1.0, 0.06, 0.9), Vector3(0, 0.2, zb + 0.85), Vector3(-14, 0, 0), P.madeira2, 0.02)
+	_tipo = 0
+	# Lanterna no poste da frente e placa com a tora.
+	var m := _marca()
+	_caixa(Vector3(0.02, 0.3, 0.02), Vector3(1.15, 2.05, 0.95), Vector3.ZERO, P.corda)
+	_esfera(0.15, Vector3(1.15, 1.82, 0.95), Vector3(1, 1.3, 1), P.papel, true, 7, 4)
+	_vento_pendurado(m, 2.2, 0.5, 0.8)
+	_blocod(Vector3(0.9, 0.42, 0.06), Vector3(0, 2.0, 0.82), Vector3(-8, 0, 0), P.madeira2.lightened(0.05), 0.03)
+	_tora(Vector3(0, 2.0, 0.88), 0.0, 0.55, 0.11)
 
 
 # --- Maquininha de chapéu ------------------------------------------------------
@@ -757,7 +813,7 @@ func _ligar_temas() -> void:
 		t.arvore_estagios = arv
 		t.bambu_estagios = bam
 		t.maquina_model = load(d + "maquina_chapeu.scn")
-		t.pilha_model = load(d + "pilha_toras.scn")
+		t.pilha_model = load(d + "deposito_madeira.scn")
 		t.tora_model = load(d + "tora.scn")
 		ResourceSaver.save(t, caminho)
 		print("tema %s: economia ligada" % tema)
