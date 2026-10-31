@@ -8,13 +8,13 @@ extends SceneTree
 
 const TEMAS := {
 	"dia": {
-		"pedra": Color(0.66, 0.63, 0.6), "pedra2": Color(0.52, 0.5, 0.5), "musgo": Color(0.32, 0.62, 0.2),
+		"pedra": Color(0.66, 0.63, 0.6), "pedra2": Color(0.52, 0.5, 0.5), "musgo": Color(0.26, 0.42, 0.18),
 		"madeira": Color(0.56, 0.32, 0.15), "madeira2": Color(0.82, 0.55, 0.26), "reboco": Color(0.95, 0.86, 0.72),
-		"telhado": Color(0.86, 0.42, 0.2), "folha": Color(0.26, 0.68, 0.18), "folha2": Color(0.46, 0.82, 0.26),
-		"tronco": Color(0.48, 0.3, 0.16), "bambu": Color(0.46, 0.76, 0.28), "capim": Color(0.3, 0.68, 0.16),
-		"capim2": Color(0.48, 0.8, 0.22), "torii": Color(0.95, 0.24, 0.14), "chao_folha": Color(1.0, 0.86, 0.22),
+		"telhado": Color(0.86, 0.42, 0.2), "folha": Color(0.2, 0.42, 0.18), "folha2": Color(0.32, 0.52, 0.22),
+		"tronco": Color(0.48, 0.3, 0.16), "bambu": Color(0.38, 0.56, 0.26), "capim": Color(0.24, 0.44, 0.16),
+		"capim2": Color(0.36, 0.54, 0.2), "torii": Color(0.95, 0.24, 0.14), "chao_folha": Color(1.0, 0.86, 0.22),
 		"chao_folha2": Color(1.0, 0.58, 0.72), "agua": Color(0.18, 0.55, 0.9), "corda": Color(0.92, 0.82, 0.55),
-		"montanha": Color(0.34, 0.56, 0.36), "neve": Color(0.96, 0.98, 1.0),
+		"montanha": Color(0.28, 0.42, 0.32), "neve": Color(0.96, 0.98, 1.0),
 		"luz1": Color(1.0, 0.86, 0.4), "luz2": Color(1.0, 0.52, 0.32), "papel": Color(1.0, 0.92, 0.7),
 		"ouro": Color(1.0, 0.8, 0.3), "branco": Color(1.0, 1.0, 0.96),
 		"arvore": "sakura",
@@ -1137,15 +1137,17 @@ func _gerar_temas() -> void:
 		"border_mountains": PackedStringArray(["montanha_a.scn", "montanha_b.scn"]),
 		"decor_estrada": {"lajota.scn": 150, "folhas.scn": 30},
 	}
+	# Dia (2026-10-31): verdes mais escuros e menos saturados; o Julio achou o verde
+	# claro forte "de joguinho bobinho".
 	var temas := {
 		"dia": {
 			"display_name": "Festival ao Sol (dia)", "models_dir": "res://assets/ninja/dia",
-			"sun_rotation_deg": Vector3(-55, 30, 0), "sun_color": Color(1.0, 0.95, 0.82), "sun_energy": 1.35,
-			"sky_top": Color(0.2, 0.5, 0.95), "sky_horizon": Color(0.68, 0.86, 1.0),
+			"sun_rotation_deg": Vector3(-55, 30, 0), "sun_color": Color(1.0, 0.93, 0.8), "sun_energy": 1.25,
+			"sky_top": Color(0.22, 0.42, 0.75), "sky_horizon": Color(0.68, 0.86, 1.0),
 			"ground_horizon": Color(0.5, 0.7, 0.85), "ground_bottom": Color(0.2, 0.35, 0.5),
-			"ambient_energy": 1.1, "saturation": 1.25, "contrast": 1.05, "glow_intensity": 0.25,
+			"ambient_energy": 0.95, "saturation": 1.0, "contrast": 1.1, "glow_intensity": 0.25,
 			"fog_enabled": false, "fog_color": Color(0.7, 0.85, 1.0), "fog_density": 0.002,
-			"grass_dark": Color(0.3, 0.62, 0.14), "grass_light": Color(0.45, 0.78, 0.2),
+			"grass_dark": Color(0.22, 0.38, 0.14), "grass_light": Color(0.34, 0.5, 0.2),
 			"road_dark": Color(0.68, 0.6, 0.48), "road_light": Color(0.82, 0.75, 0.6),
 			"pedestal_neutral": Color(0.8, 0.72, 0.55),
 			"decor_campo": {"capim.scn": 950, "flores.scn": 230, "flores_b.scn": 190, "broto.scn": 130, "pedrinhas.scn": 100, "folhas.scn": 110},

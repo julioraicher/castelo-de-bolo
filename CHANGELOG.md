@@ -19,8 +19,12 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
   (santuário), ronin_oni (fornalha oni), arqueiro_yumi (ateliê do arco) e
   construtor (serraria), com os mesmos nós da `maquina_chapeu`; emblemas do
   elenco 2.4. `tools/planta_mapa.gd` + `.py`: planta numerada do mapa.
-- Testes 98/98, 5 min simulados sem erro.
-- **O que testar**: nada ainda (branch; espera o pitaco do Julio na planta).
+- Tema Dia: verdes mais escuros e menos saturados (grama, folhas, capim, bambu;
+  saturação 1,25 -> 1,0), pedido do Julio ("verde forte de joguinho bobinho").
+- Testes 98/98, 5 min simulados sem erro. Julio aprovou a planta (1ª versão).
+- **O que testar**: o mapa maior (trilhas da floresta pelas pontes laterais para
+  flanquear, corredor atrás do castelo inimigo), as maquininhas de cada classe
+  fabricando chapéu e o verde mais sóbrio do dia.
 
 ## Ciclo 2.3 (2026-10-31), Diretor de Jogabilidade: Economia do Construtor, Etapa 1
 - **Madeira**: `Planta` (`scripts/items/planta.gd`): árvore e bambu em 3 estágios
