@@ -134,6 +134,23 @@ extends Resource
 @export var maquina_n2_intervalo := 12.0
 @export var maquina_n2_estoque := 4
 
+@export_group("Caminho dos magos")
+## Magos opostos (Ciclo 2.5): duas oficinas fixas em lados opostos do castelo
+## (MapLayout.mago_spots). Começar uma sela a outra pelo resto da partida; a
+## escolhida fica pronta no nível 2 e sobe com madeira até mago_nivel_max.
+## Sem mago_spots no mapa, as duas voltam para o sorteio das oficinas comuns.
+@export var magos_opostos: Array[ClassStats] = []
+@export var mago_nivel_max := 5
+## Madeira para subir do nível 2 ao 3, do 3 ao 4 e do 4 ao 5.
+@export var mago_nivel_custo := PackedInt32Array([6, 8, 10])
+## Bônus por nível acima do 2, para quem usa o mago do caminho (nível 5 = 3x):
+## dano, vida máxima e ganho de Chi (Q mais frequente).
+@export var mago_bonus_dano := 0.08
+@export var mago_bonus_vida := 0.08
+@export var mago_bonus_chi := 0.10
+## A maquininha da oficina ganha +1 de estoque e fabrica mais rápido por nível.
+@export var mago_pad_intervalo_mult := 0.85
+
 @export_group("Economia do Construtor")
 ## Só quem tem velocidade_obra > 0 (Construtor e variações) corta e carrega.
 ## Estágios: broto -> jovem -> adulta, um a cada tempo_estagio s.

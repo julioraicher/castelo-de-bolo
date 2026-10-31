@@ -259,6 +259,11 @@ func _lenhador(me: Vector3) -> bool:
 		lado.y = 0
 		_goal = maq.global_position + (lado.normalized() if lado.length() > 0.1 else Vector3.BACK) * 1.8
 		return true
+	# Oficina do caminho dos magos pronta: a madeira sobe o nível (3 a 5).
+	var mago: Oficina = game.mago_para_subir(unit.team) if of == null and maq == null else null
+	if mago and game.madeira[unit.team] >= mini(mago.faltam_nivel(), 2):
+		_goal = mago.global_position + (me - mago.global_position).normalized() * 1.2
+		return true
 	var tora := game.nearest_tora_solta(me, 30.0)
 	if tora:
 		_goal = tora.global_position

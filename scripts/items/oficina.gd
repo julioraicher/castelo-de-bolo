@@ -13,6 +13,10 @@ extends Node3D
 ## claro = já construído), grande para quem joga de Construtor. O progresso
 ## fica guardado na casinha: quem volta (ele ou um aliado) continua dali, e a
 ## opção do terreno trava assim que a obra começa.
+##
+## Caminho dos magos (caminho >= 0): terreno fixo de um dos magos opostos.
+## Começar um sela o do outro lado (selada) pelo resto da partida; pronto, ele
+## está no nível 2 e sobe com madeira (GameConfig.mago_nivel_custo) até o 5.
 
 enum Estado { VAZIO, OBRA, PRONTA }
 
@@ -26,6 +30,15 @@ var pad: HatPad
 var madeira_entregue := 0
 ## Obra parada porque o time não tem madeira (o contador pisca).
 var falta_madeira := false
+## Caminho dos magos: -1 = terreno comum; 0/1 = índice em magos_opostos.
+var caminho := -1
+## O time escolheu o outro caminho: este terreno nunca será construído.
+var selada := false
+## Nível do mago (2 ao ficar pronta; sobe até mago_nivel_max com madeira).
+var nivel := 1
+var madeira_nivel := 0
+var _lista: Array[ClassStats] = []
+var _selo: Node3D
 
 var _game: Game
 var _face := 0.0
@@ -44,10 +57,12 @@ var _puxar_t := 0.0
 var _contador: ContadorMadeira
 
 
-func setup(game: Game, p_team: int, pos: Vector3, opcao: int) -> void:
+func setup(game: Game, p_team: int, pos: Vector3, opcao: int, lista: Array[ClassStats] = [], p_caminho := -1) -> void:
 	_game = game
 	team = p_team
 	opcao_i = opcao
+	_lista = lista
+	caminho = p_caminho
 	position = pos
 	_face = 0.0 if team == Config.TEAM_BLUE else PI
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # cresce por código
@@ -71,7 +86,7 @@ func setup(game: Game, p_team: int, pos: Vector3, opcao: int) -> void:
 
 
 func opcao() -> ClassStats:
-	var list := Config.cfg.oficina_classes
+	var list := _lista if not _lista.is_empty() else Config.cfg.oficina_classes
 	return list[opcao_i % list.size()]
 
 
@@ -84,9 +99,9 @@ func comecada() -> bool:
 ## Troca a variação do terreno. Só antes de a obra começar: depois disso o
 ## [E] não apaga nada. Devolve true se trocou.
 func trocar_opcao() -> bool:
-	if comecada():
+	if comecada() or caminho >= 0:
 		return false
-	opcao_i = (opcao_i + 1) % Config.cfg.oficina_classes.size()
+	opcao_i = (opcao_i + 1) % (_lista.size() if not _lista.is_empty() else Config.cfg.oficina_classes.size())
 	Sfx.play("pickup", global_position, 0.1)
 	_update_label()
 	return true
@@ -107,17 +122,19 @@ func teto() -> float:
 
 ## Puxa 1 madeira do estoque do time para a obra. false = sem estoque ou já cheia.
 func puxar_madeira() -> bool:
-	if estado == Estado.PRONTA or faltam() <= 0 or not _game.gastar_madeira(team, 1):
+	if selada or estado == Estado.PRONTA or faltam() <= 0 or not _game.gastar_madeira(team, 1):
 		return false
 	madeira_entregue += 1
+	_game.on_obra_comecou(self)
 	if is_inside_tree():
 		Fx.burst(_game, global_position + Vector3(0, 0.6, 0), Color(0.7, 0.5, 0.25), 5, 2.5)
 	return true
 
 
 func add_progress(frac: float, by: Unit) -> void:
-	if estado == Estado.PRONTA:
+	if estado == Estado.PRONTA or selada:
 		return
+	_game.on_obra_comecou(self)
 	progresso = minf(progresso + frac, teto())
 	estado = Estado.OBRA
 	_casa.visible = true
@@ -129,15 +146,25 @@ func add_progress(frac: float, by: Unit) -> void:
 		_finish()
 
 
-func _physics_process(delta: float) -> void:
-	if estado == Estado.PRONTA or _game.game_over:
-		return
+## Σ velocidade_obra dos Construtores do time na obra (e os marca construindo).
+func _ritmo_obra() -> float:
 	var rate := 0.0
 	for u in _game.units:
 		if u.alive and u.team == team and u.stats.velocidade_obra > 0.0 and not u.carried_princess \
 				and not u.carried_tora and u.global_position.distance_to(global_position) < BUILD_RADIUS:
 			rate += u.stats.velocidade_obra
 			u.building_t = 0.25
+	return rate
+
+
+func _physics_process(delta: float) -> void:
+	if selada or _game.game_over:
+		return
+	if estado == Estado.PRONTA:
+		if pode_subir():
+			_obra_nivel(delta)
+		return
+	var rate := _ritmo_obra()
 	_ritmo = rate
 	if rate <= 0.0:
 		falta_madeira = false
@@ -160,6 +187,98 @@ func _physics_process(delta: float) -> void:
 	_update_label()
 
 
+# --- Caminho dos magos: selo e níveis 3 a 5 -----------------------------------
+
+## Oficina de mago pronta e abaixo do nível máximo: aceita madeira para subir.
+func pode_subir() -> bool:
+	return caminho >= 0 and estado == Estado.PRONTA and not selada and nivel < Config.cfg.mago_nivel_max
+
+
+func custo_nivel() -> int:
+	var c := Config.cfg.mago_nivel_custo
+	var i := nivel - 2
+	return c[clampi(i, 0, c.size() - 1)] if not c.is_empty() else 0
+
+
+func faltam_nivel() -> int:
+	return maxi(custo_nivel() - madeira_nivel, 0) if pode_subir() else 0
+
+
+## Puxa 1 madeira do estoque para o próximo nível; a última sobe o nível.
+func puxar_madeira_nivel() -> bool:
+	if not pode_subir() or not _game.gastar_madeira(team, 1):
+		return false
+	madeira_nivel += 1
+	if is_inside_tree():
+		Fx.burst(_game, global_position + Vector3(0, 1.2, 0), opcao().hat_color.lightened(0.3), 5, 2.5)
+	if faltam_nivel() <= 0:
+		subir_nivel()
+	return true
+
+
+func subir_nivel() -> void:
+	nivel += 1
+	madeira_nivel = 0
+	if pad:
+		pad.estoque_max += 1
+		pad.intervalo *= Config.cfg.mago_pad_intervalo_mult
+		pad.estoque = mini(pad.estoque + 1, pad.estoque_max)
+	if is_inside_tree():
+		var cor := opcao().hat_color.lightened(0.3)
+		Fx.pillar(_game, global_position, cor, 2.6 + 0.4 * nivel)
+		Fx.ring(_game, global_position, cor, 3.0 + nivel * 0.5)
+		Sfx.play("score", global_position, 0.05)
+		var tw := _casa.create_tween()
+		var esc := Vector3.ONE * (1.0 + 0.06 * (nivel - 2))
+		tw.tween_property(_casa, "scale", esc * 1.15, 0.15)
+		tw.tween_property(_casa, "scale", esc, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_update_label()
+	_game.on_mago_nivel(self)
+
+
+func _obra_nivel(delta: float) -> void:
+	var rate := _ritmo_obra()
+	_ritmo = rate
+	if rate > 0.0:
+		_puxar_t -= delta * rate
+		if _puxar_t <= 0.0 and puxar_madeira_nivel():
+			_puxar_t = Config.cfg.oficina_puxar_intervalo
+	falta_madeira = rate > 0.0 and _game.madeira[team] <= 0
+	_update_label()
+
+
+## O time escolheu o caminho oposto: o terreno ganha a corda de selo
+## (shimenawa com papéis) e some das obras para sempre.
+func selar() -> void:
+	if selada or comecada():
+		return
+	selada = true
+	_selo = Node3D.new()
+	add_child(_selo)
+	var corda := MeshInstance3D.new()
+	var t := TorusMesh.new()
+	t.inner_radius = 2.18
+	t.outer_radius = 2.36
+	t.rings = 24
+	t.ring_segments = 6
+	corda.mesh = t
+	corda.position.y = 0.72
+	corda.material_override = Fx.lit(Color(0.78, 0.68, 0.45))
+	_selo.add_child(corda)
+	var papel := Fx.unshaded(Color(0.95, 0.93, 0.86))
+	for i in 6:
+		var a := TAU * (i + 0.5) / 6.0
+		var f := MeshInstance3D.new()
+		f.mesh = _box(Vector3(0.22, 0.42, 0.02))
+		f.material_override = papel
+		f.position = Vector3(cos(a) * 2.27, 0.48, sin(a) * 2.27)
+		f.rotation.y = -a + PI / 2
+		_selo.add_child(f)
+	if is_inside_tree():
+		Fx.burst(_game, global_position + Vector3(0, 0.8, 0), Color(0.5, 0.45, 0.6), 12, 3.0)
+	_update_label()
+
+
 func _finish() -> void:
 	estado = Estado.PRONTA
 	_walls.scale.y = 1.0
@@ -176,6 +295,8 @@ func _finish() -> void:
 	var lado := signf(_game.arena.spawn_center[team].x - global_position.x)
 	pad.setup(team, opcao(), global_position + Vector3(lado * 3.0, 0, 0))
 	_game.hat_pads.append(pad)
+	if caminho >= 0:
+		nivel = 2
 	_label.position.y = _alt_label + 1.0
 	_update_label()
 	_game.on_oficina_pronta(self)
@@ -186,21 +307,45 @@ func _update_label() -> void:
 	var txt := "Oficina: %s" % cls.display_name
 	if estado != Estado.PRONTA:
 		txt = "Obra: %s" % cls.display_name if comecada() else "Terreno: %s" % cls.display_name
+	if caminho >= 0:
+		txt = _texto_caminho(cls)
 	if _label.text != txt:
 		_label.text = txt
 	if estado != Estado.PRONTA:
 		# O letreiro acompanha a altura da obra: perto do Construtor (e longe
 		# do placar no alto da tela) enquanto a casa ainda é baixa.
 		_label.position.y = lerpf(2.6, _alt_label, progresso)
-	_label.modulate = cls.hat_color.lightened(0.35)
+	_label.modulate = Color(0.55, 0.52, 0.58) if selada else cls.hat_color.lightened(0.35)
 	# Contador de madeira: grande para quem joga de Construtor, pequeno nas
 	# outras classes; pisca "falta madeira" quando o time não tem estoque.
-	_contador.visible = estado != Estado.PRONTA
+	_contador.visible = estado != Estado.PRONTA and not selada
+	if pode_subir():
+		var p := _game.player
+		var perto := p != null and p.team == team and p.global_position.distance_to(global_position) < BUILD_RADIUS + 2.0
+		_contador.visible = madeira_nivel > 0 or perto
+		if _contador.visible:
+			_contador.position.y = _label.position.y + 0.9
+			_contador.mostrar(faltam_nivel(), custo_nivel(), p != null and p.lenhador(), falta_madeira)
+		return
 	if _contador.visible:
 		var p := _game.player
 		var grande := p != null and p.team == team and p.lenhador()
 		_contador.position.y = _label.position.y + (1.0 if grande else 0.7)
 		_contador.mostrar(faltam(), custo(), grande, falta_madeira or (faltam() > 0 and _game.madeira[team] <= 0), progresso if comecada() else -1.0)
+
+
+## Letreiro do terreno de mago: o caminho, o selo ou o nível.
+func _texto_caminho(cls: ClassStats) -> String:
+	if selada:
+		return "Selado\n%s" % cls.display_name
+	if estado == Estado.PRONTA:
+		var mx := Config.cfg.mago_nivel_max
+		return "%s\nNível %d/%d%s" % [cls.display_name, nivel, mx, "  MÁX" if nivel >= mx else ""]
+	var outro := _game.mago_oposto(self)
+	var nome_outro := outro.opcao().display_name if outro else "o outro"
+	if comecada():
+		return "Caminho: %s\n%s selado" % [cls.display_name, nome_outro]
+	return "Caminho: %s\nsela %s" % [cls.display_name, nome_outro]
 
 
 ## Estacas nos cantos + chão de terra batida.

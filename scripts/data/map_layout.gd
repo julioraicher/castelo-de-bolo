@@ -37,6 +37,9 @@ extends Resource
 @export var hat_spots: PackedVector2Array = [Vector2(5, -8.5), Vector2(5, 8.5), Vector2(-3, -8.5), Vector2(-3, 8.5)]
 ## Terrenos de oficina (o time escolhe que variação construir em cada um).
 @export var oficina_spots: PackedVector2Array = [Vector2(-7.5, -8.5), Vector2(-7.5, 8.5)]
+## Terrenos dos magos opostos: [0] lado de cima (z-, magos_opostos[0]) e
+## [1] lado de baixo (z+, magos_opostos[1]). Vazio = sem caminho de magos.
+@export var mago_spots: PackedVector2Array = []
 ## Economia do Construtor. Árvores do bosque seguro e pilha de madeira em
 ## coordenadas LOCAIS do castelo (como hat_spots: aparecem nos dois, espelhadas).
 @export var tree_spots: PackedVector2Array = []

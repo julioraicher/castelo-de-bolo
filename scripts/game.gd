@@ -19,6 +19,11 @@ var plantas: Array[Planta] = []
 var toras: Array[Tora] = []
 var pilhas: Array[Pilha] = []
 var madeira := [0, 0]
+## Caminho dos magos de cada time: -1 = ainda não escolheu; senão o índice em
+## GameConfig.magos_opostos. classe/nivel servem o bônus do Unit sem varrer.
+var caminho := [-1, -1]
+var caminho_classe: Array[StringName] = [&"", &""]
+var caminho_nivel := [0, 0]
 var score := [0, 0]
 var player: Unit
 var player_brain: PlayerBrain
@@ -139,15 +144,29 @@ func _ready() -> void:
 			add_child(pad)
 			pad.setup(team, hats[i], arena.hat_spots[team][i])
 			hat_pads.append(pad)
-		# Terrenos de oficina: começam com opções diferentes, sorteadas.
-		var n_opts := Config.cfg.oficina_classes.size()
+		# Terrenos de oficina: começam com opções diferentes, sorteadas. Os
+		# magos opostos ganham terrenos fixos, um de cada lado do castelo.
+		var magos := Config.cfg.magos_opostos
+		var com_caminho := magos.size() == 2 and arena.mago_spots[team].size() >= 2
+		var opts: Array[ClassStats] = Config.cfg.oficina_classes.duplicate()
+		if not com_caminho:
+			for m in magos:
+				if not opts.has(m):
+					opts.append(m)
+		var n_opts := opts.size()
 		if n_opts > 0:
 			var order := range(n_opts)
 			order.shuffle()
 			for i in arena.oficina_spots[team].size():
 				var of := Oficina.new()
 				add_child(of)
-				of.setup(self, team, arena.oficina_spots[team][i], order[i % n_opts])
+				of.setup(self, team, arena.oficina_spots[team][i], order[i % n_opts], opts)
+				oficinas.append(of)
+		if com_caminho:
+			for i in 2:
+				var of := Oficina.new()
+				add_child(of)
+				of.setup(self, team, arena.mago_spots[team][i], i, magos, i)
 				oficinas.append(of)
 		_montar_economia(team)
 
@@ -156,7 +175,7 @@ func _ready() -> void:
 	var cfg := Config.cfg
 	var start_classes: Array[ClassStats] = cfg.bot_start_classes if not cfg.bot_start_classes.is_empty() else [cfg.villager]
 	if _variacoes:
-		start_classes = cfg.hat_classes() + cfg.oficina_classes
+		start_classes = cfg.hat_classes() + cfg.oficina_classes + cfg.magos_opostos
 	for team in 2:
 		for i in cfg.units_per_team:
 			var u := Unit.new()
@@ -457,7 +476,14 @@ func _rules() -> void:
 		var of := nearest_oficina(player.team, player.global_position, Oficina.BUILD_RADIUS + 0.5, true)
 		if of:
 			var builder := "fique aqui para construir" if player.stats.velocidade_obra > 0.0 else "precisa de um Construtor"
-			if of.comecada():
+			if of.caminho >= 0:
+				var outro := mago_oposto(of)
+				var nome_outro := outro.opcao().display_name if outro else "o outro mago"
+				if of.comecada():
+					hint = "Caminho de %s: %d%%  ·  faltam %d madeiras  ·  %s" % [of.opcao().display_name, int(of.progresso * 100.0), of.faltam(), builder]
+				else:
+					hint = "Caminho de %s: construir aqui sela %s até o fim  ·  %s" % [of.opcao().display_name, nome_outro, builder]
+			elif of.comecada():
 				# Obra começada: mostra o progresso guardado; [E] não troca nem apaga nada.
 				var falta := "  ·  faltam %d madeiras" % of.faltam() if of.faltam() > 0 else ""
 				hint = "Obra de %s: %d%%%s  ·  %s" % [of.opcao().display_name, int(of.progresso * 100.0), falta, builder]
@@ -465,6 +491,21 @@ func _rules() -> void:
 				hint = "[E] trocar oficina: %s  (%s)" % [of.opcao().display_name, builder]
 				if player_brain != null and player_brain.interact_pressed:
 					of.trocar_opcao()
+
+	# Perto da oficina do caminho (pronta) ou do terreno selado.
+	if player.alive and hint == "":
+		for of in oficinas:
+			if of.team != player.team or of.caminho < 0 or player.global_position.distance_to(of.global_position) > Oficina.BUILD_RADIUS + 1.5:
+				continue
+			if of.selada:
+				var esc := mago_oposto(of)
+				hint = "Selado: o time seguiu o caminho de %s" % (esc.opcao().display_name if esc else "outro mago")
+			elif of.pode_subir():
+				hint = "%s nível %d → %d: faltam %d madeiras  ·  %s" % [of.opcao().display_name, of.nivel, of.nivel + 1, of.faltam_nivel(),
+					"fique aqui" if player.lenhador() else "precisa de um Construtor"]
+			elif of.estado == Oficina.Estado.PRONTA:
+				hint = "%s no nível máximo (%d)" % [of.opcao().display_name, of.nivel]
+			break
 
 	# Construtor perto de uma maquininha nível 1: ela sobe com madeira.
 	if player.alive and hint == "" and player.lenhador() and not player.carried_tora:
@@ -695,7 +736,7 @@ func nearest_oficina(team: int, from: Vector3, max_dist: float, unbuilt_only: bo
 	var best: Oficina = null
 	var best_d := max_dist
 	for of in oficinas:
-		if of.team != team or (unbuilt_only and of.estado == Oficina.Estado.PRONTA):
+		if of.team != team or of.selada or (unbuilt_only and of.estado == Oficina.Estado.PRONTA):
 			continue
 		var d := from.distance_to(of.global_position)
 		if d < best_d:
@@ -711,7 +752,7 @@ func obra_do_time(team: int, from: Vector3) -> Oficina:
 	var best: Oficina = null
 	var best_v := 0.0
 	for of in oficinas:
-		if of.team != team or of.estado == Oficina.Estado.PRONTA or not of.comecada():
+		if of.team != team or of.selada or of.estado == Oficina.Estado.PRONTA or not of.comecada():
 			continue
 		var v := of.progresso + float(of.madeira_entregue) / maxf(of.custo(), 1)
 		if best == null or v > best_v:
@@ -733,7 +774,60 @@ func maquina_para_n2(team: int, from: Vector3) -> HatPad:
 	return best
 
 
+## Oficina de mago pronta abaixo do nível máximo, para o Construtor subir.
+func mago_para_subir(team: int) -> Oficina:
+	for of in oficinas:
+		if of.team == team and of.pode_subir():
+			return of
+	return null
+
+
+## O outro terreno de mago do mesmo time (null em terreno comum).
+func mago_oposto(of: Oficina) -> Oficina:
+	if of.caminho < 0:
+		return null
+	for o in oficinas:
+		if o != of and o.team == of.team and o.caminho >= 0:
+			return o
+	return null
+
+
+## A primeira madeira (ou martelada) num terreno de mago escolhe o caminho
+## do time: o terreno do outro lado é selado pelo resto da partida.
+func on_obra_comecou(of: Oficina) -> void:
+	if of.caminho < 0 or caminho[of.team] >= 0:
+		return
+	caminho[of.team] = of.caminho
+	caminho_classe[of.team] = of.opcao().id
+	var outro := mago_oposto(of)
+	if outro:
+		outro.selar()
+	_log("caminho %s: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.opcao().display_name, _time])
+	if hud and player and of.team == player.team:
+		hud.show_big("Caminho escolhido: %s\n%s selado até o fim da partida" % [of.opcao().display_name,
+			outro.opcao().display_name if outro else "O outro mago"], of.opcao().hat_color.lightened(0.3), 2.6)
+
+
+func on_mago_nivel(of: Oficina) -> void:
+	caminho_nivel[of.team] = of.nivel
+	_log("mago %s nível %d: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.nivel, of.opcao().display_name, _time])
+	if hud and player:
+		if of.team == player.team:
+			hud.show_big("%s: nível %d/%d!" % [of.opcao().display_name, of.nivel, Config.cfg.mago_nivel_max], of.opcao().hat_color.lightened(0.3), 2.2)
+		else:
+			hud.show_big("O inimigo subiu %s para o nível %d" % [of.opcao().display_name, of.nivel], Color(1, 0.6, 0.55), 1.6)
+
+
+## Níveis acima do 2 do mago do caminho, para um soldado dessa classe (0 = sem bônus).
+func bonus_mago(team: int, id: StringName) -> int:
+	if id == &"" or caminho_classe[team] != id:
+		return 0
+	return maxi(caminho_nivel[team] - 2, 0)
+
+
 func on_oficina_pronta(of: Oficina) -> void:
+	if of.caminho >= 0:
+		caminho_nivel[of.team] = of.nivel
 	_log("oficina %s pronta: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.opcao().display_name, _time])
 	# A maquininha da classe de origem sobe para o nível 2 (Ronin Oni -> Samurai).
 	var base := of.opcao().classe_base
