@@ -77,26 +77,31 @@ func _build_start() -> Control:
 	var root := _backdrop()
 	var box := _card(root, Vector2(900, 0))
 	var cabeca := VBoxContainer.new()
-	cabeca.add_theme_constant_override("separation", -6)
-	cabeca.add_child(Estilo.titulo("Castelo de Bolo", 66, ACCENT))
-	var sub := Estilo.rotulo("C L Ã S   D E   N E O N", 20, Estilo.CIANO, Estilo.FORTE)
+	cabeca.add_theme_constant_override("separation", 2)
+	cabeca.add_child(Estilo.titulo("Castelo de Bolo", 72, ACCENT))
+	cabeca.add_child(Estilo.ornamento(420.0))
+	var sub := Estilo.rotulo("A GUERRA DA MÁSCARA ONI", 24, Estilo.TEXTO_FRACO, Estilo.espacada(Estilo.FORTE, 5))
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cabeca.add_child(sub)
 	box.add_child(cabeca)
-	var intro := _text("Dois clãs ninja, uma Máscara Oni em cada castelo. Invada o castelo vermelho, roube a máscara deles e traga-a até o pedestal do seu castelo. Proteja a sua!", 20)
+	var intro := _text("Dois clãs, uma Máscara Oni em cada castelo. Roube a máscara inimiga e leve-a até o pedestal do seu castelo. E não deixe levarem a sua.", 20, Estilo.TEXTO)
 	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(intro)
+	var nomes: PackedStringArray = []
+	for c in Config.cfg.hat_class_list:
+		nomes.append(c.display_name)
+	var lista := ", ".join(nomes.slice(0, -1)) + " ou " + nomes[-1] if nomes.size() > 1 else ", ".join(nomes)
 	var dicas := HBoxContainer.new()
 	dicas.add_theme_constant_override("separation", 12)
 	for tip in [
-		["katana", GOLD, "Chapéus", "Pegue um chapéu no pátio [E]: Samurai, Ninja de Shuriken, Monge de Chi ou Armadilheiro. O Construtor ergue oficinas com variações novas."],
-		["espirito", Estilo.FANTASMA, "Espíritos", "Leve as chamas verdes até a SUA máscara: cheia de espíritos, ela fica pesada para o inimigo carregar."],
-		["mascara", Config.team_color(0).lightened(0.3), "Resgate", "Itens no chão ajudam. Quem cai volta como recruta. Primeiro a %d resgates vence." % Config.cfg.score_to_win],
+		["katana", GOLD, "Chapéus", "No pátio, aperte E perto de um chapéu: %s. O Construtor corta madeira e ergue oficinas com classes novas." % lista],
+		["espirito", Estilo.FANTASMA, "Espíritos", "Leve as chamas verdes até a SUA máscara. Cheia de espíritos, ela pesa e o inimigo anda devagar com ela."],
+		["mascara", Config.team_color(0).lightened(0.3), "Resgate", "Quem cai volta como recruta. Itens no chão ajudam na briga. Vence quem fizer %d resgates primeiro." % Config.cfg.score_to_win],
 	]:
 		dicas.add_child(_dica(tip[0], tip[1], tip[2], tip[3]))
 	box.add_child(dicas)
 	box.add_child(_controls_grid())
-	var play := _button("JOGAR  (Enter)")
+	var play := _button("JOGAR   ·   Enter")
 	play.custom_minimum_size = Vector2(300, 58)
 	play.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	play.pressed.connect(_begin)
@@ -119,9 +124,9 @@ func _dica(icone: String, cor: Color, titulo: String, texto: String) -> PanelCon
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	h.add_child(Icone.novo(icone, cor, 30))
-	h.add_child(Estilo.rotulo(titulo, 20, cor, Estilo.FORTE))
+	h.add_child(Estilo.rotulo(titulo.to_upper(), 22, cor, Estilo.FORTE))
 	v.add_child(h)
-	var t := _text(texto, 16, Estilo.TEXTO_FRACO)
+	var t := _text(texto, 18, Estilo.TEXTO_FRACO)
 	t.custom_minimum_size = Vector2(240, 0)
 	v.add_child(t)
 	return p
@@ -130,7 +135,8 @@ func _dica(icone: String, cor: Color, titulo: String, texto: String) -> PanelCon
 func _build_pause() -> Control:
 	var root := _backdrop()
 	var box := _card(root, Vector2(700, 0))
-	box.add_child(Estilo.titulo("Pausado", 52, GOLD))
+	box.add_child(Estilo.titulo("Pausado", 60, GOLD))
+	box.add_child(Estilo.ornamento(300.0))
 	_tabs = TabContainer.new()
 	_tabs.custom_minimum_size = Vector2(0, 360)
 	box.add_child(_tabs)
@@ -147,7 +153,7 @@ func _build_pause() -> Control:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 16)
-	var resume := _button("Continuar  (Esc)")
+	var resume := _button("Continuar   ·   Esc")
 	resume.pressed.connect(_toggle_pause)
 	row.add_child(resume)
 	var restart := _button("Reiniciar partida")
@@ -178,11 +184,11 @@ func _controls_grid() -> GridContainer:
 		var partes: PackedStringArray = pair[0].split(" ou ")
 		for k in partes.size():
 			if k > 0:
-				teclas.add_child(Estilo.rotulo("ou", 15, Estilo.TEXTO_FRACO))
-			teclas.add_child(Estilo.tecla(partes[k], 16))
+				teclas.add_child(Estilo.rotulo("ou", Estilo.T_PEQUENO, Estilo.TEXTO_FRACO))
+			teclas.add_child(Estilo.tecla(partes[k], Estilo.T_PEQUENO + 1))
 		grid.add_child(teclas)
-		var o_que := _text(pair[1], 17, Estilo.TEXTO, true)
-		o_que.custom_minimum_size = Vector2(480, 0)
+		var o_que := _text(pair[1], Estilo.T_TEXTO, Estilo.TEXTO, true)
+		o_que.custom_minimum_size = Vector2(500, 0)
 		grid.add_child(o_que)
 	return grid
 
@@ -193,17 +199,17 @@ func _settings_form() -> GridContainer:
 	grid.add_theme_constant_override("h_separation", 24)
 	grid.add_theme_constant_override("v_separation", 12)
 
-	grid.add_child(_text("Volume da música", 19, Color.WHITE, false))
+	grid.add_child(_text("Volume da música", Estilo.T_TEXTO + 1, Estilo.TEXTO, false))
 	grid.add_child(_slider(Settings.music_volume, func(v: float):
 		Settings.music_volume = v
 		Settings.apply()))
-	grid.add_child(_text("Volume dos efeitos", 19, Color.WHITE, false))
+	grid.add_child(_text("Volume dos efeitos", Estilo.T_TEXTO + 1, Estilo.TEXTO, false))
 	grid.add_child(_slider(Settings.sfx_volume, func(v: float):
 		Settings.sfx_volume = v
 		Settings.apply()
 		Sfx.play_ui("pickup")))
 
-	grid.add_child(_text("Dificuldade dos inimigos", 19, Color.WHITE, false))
+	grid.add_child(_text("Dificuldade dos inimigos", Estilo.T_TEXTO + 1, Estilo.TEXTO, false))
 	var diff := OptionButton.new()
 	for d in Settings.DIFFICULTIES:
 		diff.add_item(d)
@@ -214,7 +220,7 @@ func _settings_form() -> GridContainer:
 	grid.add_child(diff)
 
 	if Config.cfg.themes.size() > 1:
-		grid.add_child(_text("Tema do mapa", 19, Color.WHITE, false))
+		grid.add_child(_text("Tema do mapa", Estilo.T_TEXTO + 1, Estilo.TEXTO, false))
 		var th := OptionButton.new()
 		for t in Config.cfg.themes:
 			th.add_item(t.display_name)
@@ -227,7 +233,7 @@ func _settings_form() -> GridContainer:
 		grid.add_child(th)
 
 	if Config.cfg.maps.size() > 1:
-		grid.add_child(_text("Mapa", 19, Color.WHITE, false))
+		grid.add_child(_text("Mapa", Estilo.T_TEXTO + 1, Estilo.TEXTO, false))
 		var mp := OptionButton.new()
 		for m in Config.cfg.maps:
 			mp.add_item(m.display_name)
@@ -239,7 +245,7 @@ func _settings_form() -> GridContainer:
 			get_tree().reload_current_scene())
 		grid.add_child(mp)
 
-	grid.add_child(_text("Qualidade gráfica", 19, Color.WHITE, false))
+	grid.add_child(_text("Qualidade gráfica", Estilo.T_TEXTO + 1, Estilo.TEXTO, false))
 	var qual := OptionButton.new()
 	for q in Settings.QUALITIES:
 		qual.add_item(q)
@@ -249,23 +255,23 @@ func _settings_form() -> GridContainer:
 		Settings.apply())
 	Settings.changed.connect(func(): qual.selected = Settings.quality)  # AutoQuality pode mudar
 	grid.add_child(qual)
-	grid.add_child(_text("Qualidade automática", 19, Color.WHITE, false))
+	grid.add_child(_text("Qualidade automática", Estilo.T_TEXTO + 1, Estilo.TEXTO, false))
 	grid.add_child(_check(Settings.auto_quality, func(on: bool):
 		Settings.auto_quality = on
 		Settings.apply()))
-	grid.add_child(_text("Mostrar FPS", 19, Color.WHITE, false))
+	grid.add_child(_text("Mostrar FPS", Estilo.T_TEXTO + 1, Estilo.TEXTO, false))
 	grid.add_child(_check(Settings.show_fps, func(on: bool):
 		Settings.show_fps = on
 		Settings.apply()))
 
-	grid.add_child(_text("Tela cheia  (F)", 19, Color.WHITE, false))
+	grid.add_child(_text("Tela cheia  (F)", Estilo.T_TEXTO + 1, Estilo.TEXTO, false))
 	grid.add_child(_check(DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN, func(on: bool):
 		Settings.set_fullscreen(on)))
-	grid.add_child(_text("Tremor da câmera", 19, Color.WHITE, false))
+	grid.add_child(_text("Tremor da câmera", Estilo.T_TEXTO + 1, Estilo.TEXTO, false))
 	grid.add_child(_check(Settings.camera_shake, func(on: bool):
 		Settings.camera_shake = on
 		Settings.apply()))
-	grid.add_child(_text("Números de dano", 19, Color.WHITE, false))
+	grid.add_child(_text("Números de dano", Estilo.T_TEXTO + 1, Estilo.TEXTO, false))
 	grid.add_child(_check(Settings.damage_numbers, func(on: bool):
 		Settings.damage_numbers = on
 		Settings.apply()))
