@@ -35,6 +35,7 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
   nas casinhas. (2) Saia pelos portões laterais até as trilhas. (3) Pare na frente da torre
   e veja a máscara respirando e soltando fumaça. (4) Quando roubarem sua máscara, a torre
   entra em alarme. (5) Veja o minimapa com o arco.
+
 ## Ciclo 2.5e (2026-10-31), Interface: identidade "Festival sombrio" no jogo inteiro
 - **Fontes**: Lilita One (títulos, avisos, números, botões, letreiros 3D) com contorno
   grosso de tinta e sombra sólida; Nunito Black no texto. Shojumaru e Barlow saíram
