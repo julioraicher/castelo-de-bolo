@@ -11,6 +11,7 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 - Trilha da floresta mais clara: no tema Oni ela quase sumia no chão roxo.
 - Conferido nos prints: depósito à vista também no Luar; HUD novo legível em jogo.
 - **O que testar**: jogue de Kitsune e solte o Q; troque o tema para Oni e siga a trilha.
+
 ## Ciclo 2.4e (2026-10-31), Diretor de Jogabilidade: esquiva perfeita e letreiros
 - **Esquiva perfeita** (quiz 2.4, pergunta 7: "uau" também no dash): o dash continua
   igual; quando um golpe passa por dentro dele, sai "ESQUIVA!", ganha `chi_esquiva` 8 de
