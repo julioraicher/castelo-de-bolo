@@ -4,7 +4,7 @@ extends SceneTree
 ## o contador de madeira. Também gera o ícone de tora (assets/ui/icone_tora.png).
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
 ##     --rendering-method gl_compatibility --audio-driver Dummy -s tools/prancha_economia.gd -- DIR [--icone]
-## --icone: só gera o ícone (rode antes do --import, o contador o pré-carrega).
+## --emblemas: só a fileira de enfeites das classes. --icone: só gera o ícone (rode antes do --import, o contador o pré-carrega).
 ## Salva DIR/plantas.png, DIR/maquina_N.png, DIR/contador.png; a montagem é tools/montar_economia.py.
 ## Sem tipos do jogo aqui (o script compila antes dos autoloads).
 
@@ -25,6 +25,16 @@ func _rodar() -> void:
 		quit()
 		return
 	var cfg: Resource = load("res://config/temas/%s.tres" % TEMA)
+	if args.has("--emblemas"):  # só os enfeites do elenco do Ciclo 2.4, lado a lado
+		root.size = Vector2i(1280, 300)
+		var c0 := _cena(cfg)
+		var lista := ["guerreiro", "arqueiro", "kitsune", "ronin_oni", "arqueiro_yumi", "armadilheiro", "bombardeiro"]
+		for k in lista.size():
+			var e := _peca(c0, "emblema_" + lista[k], Vector3((k - 3) * 1.0, 1.0, 0))
+			e.scale = Vector3.ONE * 1.4
+		await _foto(c0, Vector3(0, 1.0, 0), Vector3(0, 0.15, 1), 6.2, 40.0, saida.path_join("emblemas.png"))
+		quit()
+		return
 	# 1. Plantas: árvore e bambu, broto -> jovem -> adulta.
 	root.size = Vector2i(1280, 440)
 	var cena := _cena(cfg)
