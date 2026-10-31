@@ -64,6 +64,7 @@ var _anim_lock := 0.0
 var _attack_cd := 0.0
 var _heal_cd := 0.0
 var _dodge_cd := 0.0
+var _esquiva_t := 0.0  # recarga do aviso de esquiva perfeita (área acerta várias vezes)
 var _dodge_t := 0.0
 var _dodge_dir := Vector3.ZERO
 var _knock := Vector3.ZERO      # velocidade do empurrão (separada da caminhada)
@@ -912,7 +913,11 @@ func heal(amount: float) -> float:
 
 ## dir = direção do golpe (de quem bate para quem apanha).
 func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0, melee := false) -> void:
-	if not alive or _dodge_t > 0.0:
+	if not alive:
+		return
+	if _dodge_t > 0.0:
+		if attacker and amount > 0.0:
+			_esquiva_perfeita()
 		return
 	if attacker and attacker.team != Config.TEAM_BLUE:
 		amount *= Settings.bot_damage_mult()
@@ -964,6 +969,22 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		_die(attacker)
 	elif _anim_lock <= 0.0 and not blocked and _spin_t <= 0.0:
 		_play_once("Hit_A" if randf() < 0.5 else "Hit_B", 0.25)
+
+
+## Esquiva perfeita: um golpe passou por dentro do dash. O dash continua
+## igual (pedido do Julio); só ganha recompensa e aviso: Chi, "ESQUIVA!",
+## rastro e, para o jogador, um instante de câmera lenta.
+func _esquiva_perfeita() -> void:
+	var agora := Time.get_ticks_msec() / 1000.0
+	if agora - _esquiva_t < 0.6:
+		return
+	_esquiva_t = agora
+	add_power(Config.cfg.chi_esquiva)
+	Fx.damage_number(game, global_position + Vector3(0, 0.5, 0), "ESQUIVA!", Color(0.55, 1.0, 1.0))
+	Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(0.55, 1.0, 1.0), 10, 4.0)
+	Sfx.play("dodge", global_position, 0.2)
+	if is_player:
+		game.slowmo(0.45, 0.22)
 
 
 ## Contra-golpe (bloqueio na hora certa): o golpe não entra, quem bateu fica

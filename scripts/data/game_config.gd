@@ -102,6 +102,8 @@ extends Resource
 ## perde 20% do dano); bomba carregada explode carga_raio_bomba × maior.
 @export var carga_perfura := 2
 @export var carga_raio_bomba := 1.5
+## Esquiva perfeita (golpe que passa por dentro do dash): Chi ganho.
+@export var chi_esquiva := 8.0
 
 @export_group("Chapéus")
 ## (Antigo, sem uso desde o Ciclo 2.3: as maquininhas têm estoque.)

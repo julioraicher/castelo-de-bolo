@@ -99,8 +99,20 @@ func _dano() -> void:
 	u.hp = u.max_hp()
 	u._dodge_t = 0.2
 	u.take_damage(10.0, null, dir)
-	u._dodge_t = 0.0
 	_check(_perto(u.hp, u.max_hp(), 0.01), "dash deveria anular o dano")
+	# Esquiva perfeita: golpe de alguém dentro do dash dá Chi.
+	var outro = null
+	for x in game.units:
+		if x.alive and x.team != u.team:
+			outro = x
+			break
+	u.power = 0.0
+	u._esquiva_t = -10.0
+	u.take_damage(10.0, outro, dir)
+	_check(_perto(u.hp, u.max_hp(), 0.01) and u.power >= cfg.chi_esquiva - 0.01,
+		"esquiva perfeita: sem dano e +%.0f de Chi (Chi %.1f)" % [cfg.chi_esquiva, u.power])
+	u._dodge_t = 0.0
+	u.power = 0.0
 
 	# Escudo absorve antes da vida.
 	u.hp = u.max_hp()

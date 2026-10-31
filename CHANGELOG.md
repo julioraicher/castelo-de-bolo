@@ -5,12 +5,25 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
-## Ciclo 2.4e (2026-10-31), Diretor Visual: revisão (fogo da Kitsune, trilha nos temas escuros)
+## Ciclo 2.4f (2026-10-31), Diretor Visual: revisão (fogo da Kitsune, trilha nos temas escuros)
 - Coluna de Fogo (poder da Kitsune) na cor do chapéu de quem lança: rosa na Kitsune,
   dourado na da Luz, roxo na Sombria (`area_effect.gd`, `fx_poder.gd`, chamada em `unit.gd`).
 - Trilha da floresta mais clara: no tema Oni ela quase sumia no chão roxo.
 - Conferido nos prints: depósito à vista também no Luar; HUD novo legível em jogo.
 - **O que testar**: jogue de Kitsune e solte o Q; troque o tema para Oni e siga a trilha.
+## Ciclo 2.4e (2026-10-31), Diretor de Jogabilidade: esquiva perfeita e letreiros
+- **Esquiva perfeita** (quiz 2.4, pergunta 7: "uau" também no dash): o dash continua
+  igual; quando um golpe passa por dentro dele, sai "ESQUIVA!", ganha `chi_esquiva` 8 de
+  Chi e, se for o jogador, um instante de câmera lenta (0,45× por 0,22 s).
+- Letreiros das maquininhas em duas linhas (nome / "2/3 · 15s") e menores: o "Construtor
+  3/3" não invade mais o "Ninja de Shuriken 3/3" ao lado (aviso do Visual).
+- Revisão: 6 partidas de 5 min, com e sem a alma de abate, deram 0-1 ponto nos dois
+  casos (5-20 roubos por partida). A alma não é a causa: o ladrão cai em 3-4 s dentro do
+  castelo inimigo. Fica como observação para o Julio (ver docs/revisao-2.4.md).
+- Testes 107/107; 5 min sem erro.
+- **O que testar**: dê dash no instante do golpe de um inimigo e veja "ESQUIVA!" com a
+  câmera lenta; olhe os letreiros das maquininhas lado a lado.
+
 
 ## Ciclo 2.4d (2026-10-31), Diretor Visual: nível 2 à vista, elenco com cara própria, tela moderna
 - **Maquininha nível 2** (contrato `N2_*`): cada `maquina_<classe>.scn` ganhou degrau de pedra
