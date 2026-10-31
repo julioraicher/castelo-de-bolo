@@ -5,6 +5,15 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.4h (2026-10-31), Diretor Visual: nome dos poderes dos bots mais discreto
+- Revisão por prints (Crepúsculo e Luar, com todos soltando poder): os nomes dos poderes
+  dos bots ("REDEMOINHO!", "LEQUE DE SHURIKEN!") se empilhavam no meio da briga. Agora o
+  nome do poder de bot é menor (46 em vez de 64) e some mais cedo; o do jogador continua
+  grande (`fx_poder.gd`).
+- Conferido: HUD novo, letreiros de 2 linhas e depósito legíveis no Luar; Coluna de
+  Fogo rosa no Crepúsculo.
+- **O que testar**: numa briga grande, veja se dá para ler o seu próprio poder.
+
 ## Ciclo 2.4g (2026-10-31), Diretor de Jogabilidade: menos texto na tela
 - "ESQUIVA!" só aparece quando o jogador está na jogada (ele esquivou ou foi o golpe dele
   que passou pelo dash). Bot contra bot continua ganhando o Chi, sem o texto.
