@@ -5,6 +5,26 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.5a (2026-10-31), Diretor de Jogabilidade: botões novos e sensação de porrada
+- **Controles** (pedido do Julio): esquerdo ataca · **direito defende** (todas as classes,
+  com contra-golpe) · **Q = habilidade rápida** com recarga curta · **E = poder de Chi**
+  (o antigo Q) · **F = interagir** (chapéu, máscara, oficina; era o E) · tela cheia só F11.
+- Q por classe (tabela em CONTROLES.md): o que era do botão direito virou Q na hora
+  (tiro carregado = tiro cheio que atravessa, cura, mina). Novos: Samurai **Investida**
+  (corte em avanço), Ronin **Pisão** (onda curta), Construtor **Corrida** curta; o E do
+  Construtor virou **Mutirão**. Superpoder: só anotado em docs/ideias.md.
+- Defesa visível: arco na cor do time na frente do corpo, mais forte na janela do
+  contra-golpe. Quem bate no escudo quica para trás e trava um instante.
+- Porrada: número de dano com "pop" (maior no golpe forte e no seu), escorrega para onde
+  o golpe empurrou; golpe forte soa mais grave e pisca mais; tiro seu que acerta dá
+  micro-pausa no alvo e um toque na câmera. Resto da lista em docs/ideias.md (A).
+- Bots: defendem (corpo a corpo mais vezes), usam o Q de cada classe. Esquemas novos em
+  `ClassStats` (`skill_name`, `skill_cooldown`, `skill_value`, `skill_radius`,
+  `skill_duration`). Testes 157/157 (Q de toda classe sai e recarrega; Kitsune defende).
+- **O que testar**: jogue de Samurai e de Ninja: direito segura a guarda, Q (barra dourada
+  no HUD) e E quando o Chi enche. Pegue chapéu com **F**. Diga se a Investida/Pisão e as
+  recargas estão rápidas demais ou devagar.
+
 ## Ciclo 2.4o (2026-10-31), Jogabilidade: coleta de madeira clara + minimapa
 - **Guia do Construtor** (`scripts/fx/guia_construtor.gd`): quando você é Construtor, uma
   **seta dourada no chão** aponta o próximo passo e um marcador quica em cima do alvo com o

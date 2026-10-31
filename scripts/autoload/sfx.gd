@@ -35,14 +35,16 @@ func _ready() -> void:
 	add_child(_music)
 
 
-func play(sound: String, at: Vector3, pitch_jitter := 0.08) -> void:
+## pitch < 1 = mais grave (golpe pesado), > 1 = mais agudo (acerto leve/de longe).
+func play(sound: String, at: Vector3, pitch_jitter := 0.08, pitch := 1.0, volume_db := 0.0) -> void:
 	if not _streams.has(sound):
 		return
 	var p := _pool[_next]
 	_next = (_next + 1) % POOL_SIZE
 	p.stream = _streams[sound]
 	p.global_position = at
-	p.pitch_scale = 1.0 + randf_range(-pitch_jitter, pitch_jitter)
+	p.pitch_scale = pitch + randf_range(-pitch_jitter, pitch_jitter)
+	p.volume_db = volume_db
 	p.play()
 
 

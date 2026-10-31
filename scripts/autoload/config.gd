@@ -18,12 +18,13 @@ const CONTROLS := [
 	["W A S D", "andar"],
 	["Mouse", "mirar"],
 	["Clique esquerdo", "atacar (segure para golpear sem parar)"],
-	["Clique direito", "ação da classe (segure): bloquear (na hora do golpe, contra-ataca), carregar o tiro, curar ou armar minas"],
-	["Q", "poder especial, quando a barra de Chi enche"],
+	["Clique direito", "defender (segure). Erguido na hora do golpe, contra-ataca"],
+	["Q", "habilidade rápida da classe (recarga curta): investida, pisão, tiro perfurante, cura, mina ou corrida"],
+	["E", "poder especial, quando a barra de Chi enche"],
 	["Espaço ou Shift", "esquiva (rolamento rápido)"],
-	["E", "pegar chapéu ou máscara · escolher a oficina do terreno"],
+	["F", "pegar chapéu ou máscara · escolher a oficina do terreno"],
 	["Esc ou P", "pausa, controles e configurações"],
-	["F ou F11", "tela cheia"],
+	["F11", "tela cheia"],
 	["R", "reiniciar a partida"],
 ]
 
@@ -57,14 +58,15 @@ func _setup_input() -> void:
 	_bind_keys("move_down", [KEY_S, KEY_DOWN])
 	_bind_keys("move_left", [KEY_A, KEY_LEFT])
 	_bind_keys("move_right", [KEY_D, KEY_RIGHT])
-	_bind_keys("interact", [KEY_E])
+	_bind_keys("interact", [KEY_F])
 	_bind_keys("dodge", [KEY_SPACE, KEY_SHIFT])
 	_bind_keys("restart", [KEY_R])
-	_bind_keys("power", [KEY_Q])
+	_bind_keys("quick", [KEY_Q])
+	_bind_keys("power", [KEY_E])
 	_bind_keys("pause", [KEY_ESCAPE, KEY_P])
-	_bind_keys("fullscreen", [KEY_F, KEY_F11])
+	_bind_keys("fullscreen", [KEY_F11])
 	_bind_mouse("attack", MOUSE_BUTTON_LEFT)
-	_bind_mouse("skill", MOUSE_BUTTON_RIGHT)
+	_bind_mouse("block", MOUSE_BUTTON_RIGHT)
 
 
 func _bind_keys(action: StringName, keys: Array) -> void:

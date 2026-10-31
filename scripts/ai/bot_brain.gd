@@ -23,8 +23,8 @@ extends Node
 ##
 ## Tática de luta (_tatica, a cada TATICA_INTERVALO s): dash para fechar
 ## distância, fugir com pouca vida, recuar o atirador, sair do combo de quem
-## está batendo, correr com a tora; Samurai/Ronin seguram o bloqueio contra
-## quem está golpeando de frente. As chances valem para todos; a dificuldade
+## está batendo, correr com a tora; todos seguram a defesa (botão direito)
+## contra quem está golpeando de frente (corpo a corpo defende mais vezes). As chances valem para todos; a dificuldade
 ## só muda o ritmo das checagens dos inimigos (bot_reaction_mult).
 
 enum Role { ATTACK, DEFEND, CAKE }
@@ -72,7 +72,7 @@ func tick(delta: float) -> void:
 func _tatica(delta: float) -> void:
 	_bloqueio_t = maxf(_bloqueio_t - delta, 0.0)
 	if _bloqueio_t > 0.0:
-		unit.wants_skill = true
+		unit.wants_block = true
 		unit.wants_attack = false
 	_tatica_t -= delta
 	if _tatica_t > 0.0 or not unit.alive:
@@ -81,13 +81,14 @@ func _tatica(delta: float) -> void:
 	var me := unit.global_position
 	var perto := _nearest_enemy(6.0)
 	# Bloqueio: inimigo de corpo a corpo golpeando de frente, a até 3 m.
-	if unit.stats.skill == "bloqueio" and perto and perto.atacando() and perto.stats.attack_kind == "melee" \
-			and me.distance_to(perto.global_position) < perto.stats.attack_range + 0.8 and randf() < 0.35:
+	var chance_def := 0.35 if unit.stats.attack_kind == "melee" else 0.18
+	if perto and perto.atacando() and perto.stats.attack_kind == "melee" \
+			and me.distance_to(perto.global_position) < perto.stats.attack_range + 0.8 and randf() < chance_def:
 		_bloqueio_t = 0.45
 		var to := perto.global_position - me
 		to.y = 0
 		unit.aim_dir = to.normalized()
-		unit.wants_skill = true
+		unit.wants_block = true
 		unit.wants_attack = false
 		return
 	if not unit.dash_pronto():
@@ -362,13 +363,11 @@ func _steer(delta: float) -> void:
 
 func _combat() -> void:
 	unit.wants_attack = false
-	unit.wants_skill = false
-	if unit.stats.skill == "cura" and _needs_heal():
-		unit.wants_skill = true
+	unit.wants_block = false
+	if unit.quick_ready():
+		unit.wants_quick = _should_use_quick()
 	if unit.power_ready():
 		unit.wants_power = _should_use_power()
-	if unit.stats.skill == "armadilha" and _wants_trap():
-		unit.wants_skill = true
 	if _target == null or not _target.alive or unit.carried_princess:
 		if _planta and _planta.adulta() and not unit.carried_tora:
 			var to_p := _planta.global_position - unit.global_position
@@ -393,10 +392,6 @@ func _combat() -> void:
 		to = to.rotated(Vector3.UP, randf_range(-0.08, 0.08))
 	unit.aim_dir = to.normalized()
 	unit.aim_point = _target.global_position + lead
-	# Arqueiro de longe: segura o botão direito até a carga máxima e solta.
-	if unit.stats.skill == "tiro_carregado" and dist > unit.stats.attack_range * 0.6 and dist <= unit.stats.attack_range:
-		unit.wants_skill = unit.charge_ratio() < 1.0
-		return
 	if dist <= unit.stats.attack_range + 0.3:
 		unit.wants_attack = true
 
@@ -453,6 +448,30 @@ func _should_use_power() -> bool:
 			return _count(unit.team, me, r) >= 3 and _count(1 - unit.team, me, 10.0) >= 2
 		"mutirao":
 			return game.nearest_oficina(unit.team, me, r * 2.0, true) != null
+	return false
+
+
+## Quando soltar o Q (recarga curta: pode gastar sem muito critério).
+func _should_use_quick() -> bool:
+	var me := unit.global_position
+	var alvo_ok := _target != null and _target.alive and not unit.carried_princess
+	var d := me.distance_to(_target.global_position) if alvo_ok else INF
+	match unit.stats.skill:
+		"cura":
+			return _needs_heal()
+		"armadilha":
+			return _wants_trap()
+		"tiro_carregado":
+			# Tiro cheio de longe (atravessa): no meio do alcance para cima.
+			return alvo_ok and d > unit.stats.attack_range * 0.4 and d <= unit.stats.attack_range
+		"investida":
+			return alvo_ok and d > 2.5 and d < unit.stats.skill_radius * 0.9 and randf() < 0.5
+		"pisao":
+			return _count(1 - unit.team, me, unit.stats.skill_radius * 0.8) >= 1 and randf() < 0.6
+		"corrida":
+			if unit.carried_tora or unit.carried_princess:
+				return true
+			return unit.lenhador() and me.distance_to(_goal) > 25.0 and _nearest_enemy(12.0) == null
 	return false
 
 

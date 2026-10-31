@@ -8,7 +8,8 @@ extends CharacterBody3D
 ##   move_intent  -> direção desejada (Vector3 no plano XZ, comprimento 0..1)
 ##   aim_dir      -> para onde mirar
 ##   aim_point    -> ponto do chão mirado (poderes de área)
-##   wants_attack / wants_skill (segurado) / wants_power / wants_dodge
+##   wants_attack / wants_block (segurado, botão direito) / wants_quick (Q) /
+##   wants_power (E, poder de Chi) / wants_dodge
 
 signal died(unit: Unit, killer: Unit)
 signal class_changed(unit: Unit)
@@ -46,8 +47,9 @@ var move_intent := Vector3.ZERO
 var aim_dir := Vector3.FORWARD
 var aim_point := Vector3.ZERO
 var wants_attack := false
-var wants_skill := false
-var wants_power := false
+var wants_block := false
+var wants_quick := false  # Q: habilidade rápida (recarga curta)
+var wants_power := false  # E: poder de Chi (medidor cheio)
 var wants_dodge := false
 
 ## Medidor de Glacê (0 a POWER_MAX). Cheio = poder do Q liberado.
@@ -104,6 +106,8 @@ var _boost_fx_t := 0.0
 var _slow_t := 0.0
 var _slow_mult := 1.0
 var _trap_cd := 0.0
+var _quick_cd := 0.0  # recarga do Q
+var _escudo_def: MeshInstance3D  # arco na frente enquanto defende
 var _silence_t := 0.0   # Selo do Onmyoji: sem ataque, botão direito nem poder
 var _fury_t := 0.0      # Fúria do Ronin: dano multiplicado
 var _gigante := 1.0     # Fúria: o Ronin cresce (poder no corpo); volta a 1 suave
@@ -443,7 +447,7 @@ func add_power(amount: float) -> void:
 	_power_idle = 0.0
 	if is_player and not was_ready and power >= POWER_MAX and stats.power != "nenhum":
 		Sfx.play_ui("power_ready")
-		game.hud.show_big("Chi cheio! Q: %s" % stats.power_name, Color(1, 0.75, 0.9), 1.4)
+		game.hud.show_big("Chi cheio! E: %s" % stats.power_name, Color(1, 0.75, 0.9), 1.4)
 
 
 # --- Loop principal -----------------------------------------------------------
@@ -784,38 +788,138 @@ func _set_anim_speed(s: float) -> void:
 		_upper.speed_scale = s
 
 
-# --- Botão direito: cura, bloqueio ou tiro carregado ---------------------------
+# --- Botão direito = defesa (todas as classes); Q = habilidade rápida -----------
 
 func _update_skill(delta: float, free_hands: bool) -> void:
-	var held := wants_skill and free_hands
+	_block_t += delta
+	_quick_cd = maxf(_quick_cd - delta, 0.0)
+	var held := wants_block and free_hands
+	if held != _blocking:
+		_blocking = held
+		if held:
+			_block_t = 0.0
+			_play_upper("Blocking", 1.0, true)
+			_mola(-2.0, -1.5)  # agacha um pouco atrás da guarda
+		else:
+			_stop_upper("Blocking")
+	_tick_escudo_def(delta)
+	if wants_quick:
+		wants_quick = false
+		if quick_ready() and free_hands and not _blocking:
+			if _usar_rapida():
+				_quick_cd = quick_cooldown()
+
+
+func tem_rapida() -> bool:
+	return stats.skill in ["cura", "tiro_carregado", "armadilha", "investida", "pisao", "corrida"]
+
+
+func quick_cooldown() -> float:
 	match stats.skill:
 		"cura":
-			if held and _heal_cd <= 0.0:
-				_heal()
-		"bloqueio":
-			_block_t += delta
-			if held != _blocking:
-				_blocking = held
-				if held:
-					_block_t = 0.0
-					_play_upper("Blocking", 1.0, true)
-				else:
-					_stop_upper("Blocking")
+			return stats.heal_cooldown
 		"armadilha":
-			_trap_cd = maxf(_trap_cd - delta, 0.0)
-			if held and _trap_cd <= 0.0:
-				_place_trap()
+			return stats.trap_cooldown
+	return stats.skill_cooldown
+
+
+func quick_ready() -> bool:
+	return tem_rapida() and _quick_cd <= 0.0
+
+
+## 0 = acabou de usar, 1 = pronto.
+func quick_ratio() -> float:
+	return 1.0 - clampf(_quick_cd / maxf(quick_cooldown(), 0.01), 0.0, 1.0)
+
+
+func quick_restante() -> float:
+	return _quick_cd
+
+
+## Solta o Q da classe. Devolve false se não saiu (recarga não começa).
+func _usar_rapida() -> bool:
+	match stats.skill:
+		"cura":
+			_heal()
+		"armadilha":
+			_place_trap()
 		"tiro_carregado":
-			if held and _attack_cd <= 0.0:
-				if _charge_t <= 0.0:
-					_play_upper("1H_Ranged_Aiming", 1.0, true)
-				_charge_t = minf(_charge_t + delta, stats.charge_time)
-				_show_aim_line()
-			elif _charge_t > 0.0:
-				if not wants_skill and free_hands:
-					_fire_charged()
-				else:
-					_cancel_skill()
+			_fire_charged(1.0)
+		"investida":
+			_corte_relampago(stats.skill_radius, stats.skill_value * damage_mult(), false)
+		"pisao":
+			_pisao()
+		"corrida":
+			_play_upper("Cheer", 1.6)
+			Fx.ring(game, global_position, Color(1, 0.8, 0.3, 0.9), stats.skill_radius)
+			for other in game.units:
+				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.skill_radius:
+					other.give_boost(stats.skill_value, stats.skill_duration)
+					FxPoder.rastro(other, Color(1, 0.8, 0.3), stats.skill_duration)
+		_:
+			return false
+	return true
+
+
+## Ronin Oni (Q): pisão curto. Mesma física da Fúria em escala menor:
+## onda radial, dano cai até a metade na borda, arremessa um pouco.
+func _pisao() -> void:
+	_play_once("2H_Melee_Attack_Chop", 0.35)
+	_mola(-6.0, 0.0)
+	Fx.cracks(game, global_position, Color(1.0, 0.35, 0.15), stats.skill_radius)
+	Fx.ring(game, global_position, Color(1.0, 0.4, 0.2, 0.9), stats.skill_radius)
+	Fx.burst(game, global_position + Vector3(0, 0.4, 0), Color(0.75, 0.6, 0.45), 16, 6.0)
+	Sfx.play("hit", global_position, 0.1)
+	game.camera.shake_at(global_position, 0.35)
+	var acertou := false
+	for other in game.units:
+		if not other.alive or other.team == team:
+			continue
+		var d := other.global_position - global_position
+		if absf(d.y) > 1.8:
+			continue
+		d.y = 0
+		if d.length() <= stats.skill_radius:
+			var f := 1.0 - 0.5 * d.length() / stats.skill_radius
+			other.take_damage(stats.skill_value * damage_mult() * f, self, d.normalized() if d.length() > 0.1 else _facing(), 1.4, true)
+			other.launch(4.5 * f)
+			acertou = true
+	if acertou:
+		hitstop(Config.cfg.hitstop_time * 1.3)
+
+
+## Arco translúcido na cor do time na frente do corpo enquanto defende:
+## lê "estou de guarda" de longe, para qualquer classe (nem todas têm escudo).
+func _tick_escudo_def(delta: float) -> void:
+	if _escudo_def == null:
+		if not _blocking:
+			return
+		_escudo_def = MeshInstance3D.new()
+		var m := CylinderMesh.new()
+		m.top_radius = 1.0
+		m.bottom_radius = 1.0
+		m.height = 1.5
+		m.radial_segments = 16
+		m.rings = 1
+		m.cap_top = false
+		m.cap_bottom = false
+		_escudo_def.mesh = m
+		var mat := Fx.unshaded(Color(Config.team_color(team).lightened(0.45), 0.0), true)
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		_escudo_def.material_override = mat
+		_escudo_def.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_escudo_def.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+		# Só a metade da frente: achata em z e empurra para a frente.
+		_escudo_def.scale = Vector3(0.9, 1.0, 0.45)
+		_escudo_def.position = Vector3(0, 1.0, 0.55)
+		_visual.add_child(_escudo_def)
+	var mat2 := _escudo_def.material_override as StandardMaterial3D
+	var alvo := 0.0
+	if _blocking:
+		# Janela do contra-golpe: brilha mais forte (dá para aprender o tempo).
+		alvo = 0.6 if _block_t <= Config.cfg.parry_janela else 0.3
+	mat2.albedo_color.a = move_toward(mat2.albedo_color.a, alvo, delta * 3.0)
+	_escudo_def.visible = mat2.albedo_color.a > 0.01
 
 
 ## Estrepes nos pés; passou do limite, a mais antiga do mesmo dono some.
@@ -840,8 +944,9 @@ func apply_slow(mult: float, duration: float) -> void:
 	Fx.burst(game, global_position + Vector3(0, 0.4, 0), Color(0.6, 0.6, 0.7), 6, 2.0)
 
 
-func _fire_charged() -> void:
-	var c := charge_ratio()
+func _fire_charged(c := -1.0) -> void:
+	if c < 0.0:
+		c = charge_ratio()
 	_cancel_skill()
 	_attack_cd = stats.attack_cooldown
 	_attack_t = 0.3
@@ -856,6 +961,9 @@ func _fire_charged() -> void:
 
 
 func _cancel_skill() -> void:
+	if _escudo_def:
+		(_escudo_def.material_override as StandardMaterial3D).albedo_color.a = 0.0
+		_escudo_def.visible = false
 	if _blocking:
 		_blocking = false
 		_stop_upper("Blocking")
@@ -947,23 +1055,35 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 	if _fury_t > 0.0:
 		knock_mult *= 0.2  # gigante: quase não é empurrado
 	_knock = dir * (attacker.stats.knockback if attacker else 4.0) * knock_mult
-	_flash_t = 0.1
 	var forte := knock_mult > 1.0
+	_flash_t = 0.14 if forte else 0.1
 	_mola(-5.0 if forte else -3.0, -3.0 if forte else -1.5)
 	_tremor_t = 0.22 if forte else 0.15
 	var col := Color(1, 0.9, 0.3) if attacker and attacker.is_player else Color(1, 1, 1)
 	if blocked:
 		col = Color(0.6, 0.8, 1.0)
-	Fx.damage_number(game, global_position, str(int(amount)), col)
+	Fx.damage_number(game, global_position, str(int(amount)), col, 0.6 if blocked else maxf(knock_mult, 1.0) * (1.25 if attacker and attacker.is_player else 1.0), dir)
 	if blocked:
 		Fx.burst(game, global_position + Vector3(0, 1.3, 0) - dir * 0.6, Color(0.8, 0.9, 1.0), 10, 6.0)
 		Sfx.play("block", global_position, 0.1)
 		_play_upper("Block_Hit", 1.5)
+		if melee and attacker and attacker.alive:
+			# Bateu no escudo: quem golpeou quica para trás e os dois travam um
+			# instante (o "clang"). Impulso de volta ~ metade do empurrão normal.
+			attacker._knock = -dir * attacker.stats.knockback * 0.5
+			attacker.hitstop(Config.cfg.hitstop_time * 0.7)
+			attacker._mola(-2.0, -3.0)
 	else:
 		Fx.burst(game, global_position + Vector3(0, 1.2, 0), Color(1, 0.85, 0.5), 8 if knock_mult <= 1.0 else 14, 5.0 * maxf(knock_mult, 1.0))
-		Sfx.play("hit", global_position)
+		# Golpe forte soa mais grave (mais "massa"); acerto de longe, mais agudo.
+		Sfx.play("hit", global_position, 0.08, 0.82 if forte else (1.12 if not melee else 1.0), 2.0 if forte else 0.0)
 	if melee:
 		hitstop(Config.cfg.hitstop_time * (1.6 if knock_mult > 1.0 else 1.0))
+	elif attacker and attacker.is_player and amount > 0.0:
+		# Tiro do jogador acertou: micro-pausa no alvo e um toque na câmera,
+		# senão o acerto de longe parece não ter peso.
+		hitstop(Config.cfg.hitstop_time * 0.5)
+		game.camera.add_trauma(0.08)
 	if is_player:
 		game.camera.add_trauma(0.2 if blocked else 0.45)
 		game.camera.kick(dir, 0.15 if blocked else 0.35)
@@ -1068,7 +1188,7 @@ func _contra_golpe(attacker: Unit, dir: Vector3) -> void:
 	var p := global_position + Vector3(0, 1.4, 0) - dir * 0.7
 	Fx.burst(game, p, Color(1.0, 0.95, 0.7), 22, 9.0)
 	Fx.ring(game, global_position, Color(1.0, 0.9, 0.5, 0.9), 2.2)
-	Fx.damage_number(game, global_position + Vector3(0, 0.6, 0), "CONTRA!", Color(1.0, 0.85, 0.3))
+	Fx.damage_number(game, global_position + Vector3(0, 0.6, 0), "CONTRA!", Color(1.0, 0.85, 0.3), 2.0)
 	Sfx.play("block", global_position, 0.05)
 	Sfx.play("hit", global_position, 0.1)
 	_play_upper("Block_Hit", 1.8)
@@ -1288,10 +1408,14 @@ func _use_power() -> void:
 
 ## Lâmina Dupla: atravessa até power_radius m na mira, cortando quem estiver
 ## perto da linha (distância ponto-segmento < 1,6 m).
-func _corte_relampago() -> void:
+func _corte_relampago(dist := -1.0, dano := -1.0, poder := true) -> void:
+	if dist < 0.0:
+		dist = stats.power_radius
+	if dano < 0.0:
+		dano = stats.power_value * Config.cfg.dano_poder_mult * damage_mult()
 	var dir := aim_dir.normalized()
 	var from := global_position
-	var to := from + dir * stats.power_radius
+	var to := from + dir * dist
 	var q := PhysicsRayQueryParameters3D.create(from + Vector3(0, 1, 0), to + Vector3(0, 1, 0), Config.LAYER_WORLD)
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
 	if not hit.is_empty():
@@ -1306,17 +1430,21 @@ func _corte_relampago() -> void:
 		var tt := clampf((p - from).dot(seg) / maxf(seg.length_squared(), 0.01), 0.0, 1.0)
 		if p.distance_to(from + seg * tt) < 1.6:
 			atingidos.append(other)
-			other.take_damage(stats.power_value * Config.cfg.dano_poder_mult * damage_mult(), self, dir, 1.2, true)
+			other.take_damage(dano, self, dir, 1.2, true)
 	global_position = to
 	reset_physics_interpolation()
 	Fx.beam(game, from + Vector3(0, 1.0, 0), to + Vector3(0, 1.0, 0), Color(0.3, 0.95, 1.0), 0.5, 0.5)
 	Fx.zap(game, from + Vector3(0, 1.4, 0), to + Vector3(0, 1.4, 0), Color(0.6, 1.0, 1.0), 6)
 	Fx.burst(game, from + Vector3(0, 1, 0), Color(0.4, 1.0, 1.0), 14, 6.0)
 	Fx.burst(game, to + Vector3(0, 1, 0), Color(0.4, 1.0, 1.0), 14, 6.0)
-	FxPoder.corte_relampago(self, from, to, atingidos)
-	_play_once("Dualwield_Melee_Attack_Stab", 0.3)
+	if poder:
+		FxPoder.corte_relampago(self, from, to, atingidos)
+	else:
+		Sfx.play("swing", from, 0.1)
+		_mola(0.0, 6.0)  # estica para a frente no avanço
+	_play_once("Dualwield_Melee_Attack_Stab" if poder else "1H_Melee_Attack_Stab", 0.3)
 	if is_player:
-		game.camera.add_trauma(0.4)
+		game.camera.add_trauma(0.4 if poder else 0.25)
 
 
 func give_shield(amount: float, duration: float) -> void:

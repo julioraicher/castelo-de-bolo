@@ -19,3 +19,4 @@ knockback = 5.0
 combo_anims = PackedStringArray("Unarmed_Melee_Attack_Punch_A", "Unarmed_Melee_Attack_Punch_B", "Unarmed_Melee_Attack_Kick")
 carry_speed_mult = 0.95
 anim_attack = "Unarmed_Melee_Attack_Punch_A"
+block_reduction = 0.5

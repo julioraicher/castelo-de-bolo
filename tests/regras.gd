@@ -19,6 +19,7 @@ func _ready() -> void:
 	_contra_golpe()
 	_carga()
 	_poderes_q()
+	_controles()
 	await _empurrao()
 	_madeira()
 	_maquina()
@@ -185,6 +186,71 @@ func _carga() -> void:
 	_check(_perto(b.raio_mult, cfg.carga_raio_bomba, 0.001), "carga: bomba cheia deveria crescer o raio")
 	p.queue_free()
 	b.queue_free()
+
+
+## Controles do 2.5: direito defende em TODA classe; Q (rápida) tem recarga
+## e todas as classes com chapéu têm um Q; E é o poder de Chi.
+func _controles() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var im = InputMap
+	_check(im.has_action("quick") and im.has_action("block") and im.has_action("power") and im.has_action("interact"), "controles: faltou ação quick/block/power/interact")
+	var tecla := func(acao: String) -> int:
+		for ev in InputMap.action_get_events(acao):
+			if ev is InputEventKey:
+				return ev.physical_keycode if ev.physical_keycode != 0 else ev.keycode
+		return -1
+	_check(tecla.call("quick") == KEY_Q, "controles: Q deveria ser a habilidade rápida")
+	_check(tecla.call("power") == KEY_E, "controles: E deveria ser o poder de Chi")
+	_check(tecla.call("interact") == KEY_F, "controles: F deveria interagir")
+	var u = _alvo()
+	if u == null:
+		return
+	var classes: Array = cfg.hat_classes() + cfg.oficina_classes
+	for c in classes:
+		if c == null:
+			continue
+		u.set_class(c)
+		_check(u.tem_rapida(), "classe %s sem habilidade no Q" % c.id)
+		_check(c.skill_name != "", "classe %s sem skill_name (nome no HUD)" % c.id)
+		_check(c.power != "nenhum", "classe %s sem poder de Chi no E" % c.id)
+		# Solta o Q de verdade (pega erro de script em cada habilidade).
+		var pos0: Vector3 = u.global_position
+		u._quick_cd = 0.0
+		u._dodge_t = 0.0
+		u._equip_t = 0.0
+		u.wants_quick = true
+		u._update_skill(0.0, true)
+		_check(u._quick_cd > 0.0, "classe %s: o Q não saiu" % c.id)
+		u.global_position = pos0
+		u.reset_physics_interpolation()
+	# Defesa de uma classe que não é guerreiro: reduz pela block_reduction dela.
+	var a = null
+	for x in game.units:
+		if x.alive and x.team != u.team and not x.is_player:
+			a = x
+			break
+	if a == null:
+		return
+	u.set_class(load("res://config/classes/kitsune.tres"))
+	u._dodge_t = 0.0
+	u._shield = 0.0
+	u.carried_princess = null
+	u.hp = u.max_hp()
+	var dir := Vector3(1, 0, 0)
+	u._visual.rotation.y = atan2(-dir.x, -dir.z)
+	u._blocking = true
+	u._block_t = cfg.parry_janela + 0.5
+	u.take_damage(20.0, a, dir, 1.0, true)
+	_check(_perto(u.max_hp() - u.hp, 20.0 * (1.0 - u.stats.block_reduction), 0.01), "defesa da Kitsune deveria reduzir o dano")
+	u._blocking = false
+	u.hp = u.max_hp()
+	# Q: sai e entra em recarga.
+	u._quick_cd = 0.0
+	u.wants_quick = true
+	u._update_skill(0.0, true)
+	_check(u._quick_cd > 0.0 and not u.quick_ready(), "Q deveria entrar em recarga depois de usado")
+	u._quick_cd = 0.0
+	u.set_class(cfg.villager)
 
 
 ## Q do 2.4: Campo Minado põe power_duration minas; Fúria deixa o Ronin
