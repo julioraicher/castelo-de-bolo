@@ -46,6 +46,10 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 - Sons próprios por poder (shuriken, talismã, fogo-raposa, explosão de pólvora).
 
 ## C — talvez
+- **Spotar inimigos no minimapa, estilo Battlefield** (Julio, 2026-10-31): marcar um
+  inimigo (tecla ou ao acertar) e ele aparece no minimapa por alguns segundos para o
+  time. O Julio ficou em dúvida se é boa ideia; por isso o minimapa (2.4n) não mostra
+  inimigos. Gancho: `Minimapa._draw` em `scripts/ui/minimapa.gd`.
 - **Ninja vs Cowboys** (Julio, 2026-10-31; antes anotado como "minhas vs
   cowboys"): mudança grande para o futuro (Fase 3), um mundo/time novo contra
   os ninjas. Por enquanto fica só ninja.
