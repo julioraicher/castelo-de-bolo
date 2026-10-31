@@ -83,6 +83,15 @@ func _draw() -> void:
 			draw_rect(r, cor)
 		else:
 			draw_rect(r, Color(cor, 0.8), false, 1.2)
+		# Caminho dos magos: losango na cor do mago; selado = X apagado.
+		if of.caminho >= 0:
+			var cm := of.opcao().hat_color.lightened(0.25)
+			if of.selada:
+				draw_line(c + Vector2(-4, -4), c + Vector2(4, 4), Color(0.45, 0.42, 0.45, 0.9), 1.6)
+				draw_line(c + Vector2(-4, 4), c + Vector2(4, -4), Color(0.45, 0.42, 0.45, 0.9), 1.6)
+			else:
+				var pts := PackedVector2Array([c + Vector2(0, -6), c + Vector2(6, 0), c + Vector2(0, 6), c + Vector2(-6, 0), c + Vector2(0, -6)])
+				draw_polyline(pts, cm, 1.8)
 
 	# Madeira: árvores/bambus adultos brilham; crescendo ficam apagados.
 	for p in game.plantas:

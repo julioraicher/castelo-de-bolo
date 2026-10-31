@@ -39,6 +39,8 @@ var nivel := 1
 var madeira_nivel := 0
 var _lista: Array[ClassStats] = []
 var _selo: Node3D
+var _titulo: Label3D
+var _bandeira: Node3D
 
 var _game: Game
 var _face := 0.0
@@ -82,7 +84,60 @@ func setup(game: Game, p_team: int, pos: Vector3, opcao: int, lista: Array[Class
 	add_child(_label)
 	_contador = ContadorMadeira.new()
 	add_child(_contador)
+	if caminho >= 0:
+		_montar_placa()
 	_update_label()
+
+
+## Nome curto do caminho ("Luz", "Sombra").
+func nome_caminho() -> String:
+	var n := Config.cfg.magos_caminho_nomes
+	return n[caminho] if caminho >= 0 and caminho < n.size() else opcao().display_name
+
+
+## Terreno de mago: estandarte (nobori) na cor do mago, de pé desde o começo
+## para os dois lados do castelo se lerem de longe, e o título a pincel.
+func _montar_placa() -> void:
+	var cor := opcao().hat_color
+	var lado := -1.0 if position.z < 0.0 else 1.0  # para fora, longe do pátio
+	_bandeira = Node3D.new()
+	_bandeira.position = Vector3(1.9, 0, lado * 1.9)
+	add_child(_bandeira)
+	var mastro := MeshInstance3D.new()
+	var m := CylinderMesh.new()
+	m.top_radius = 0.05
+	m.bottom_radius = 0.07
+	m.height = 3.6
+	mastro.mesh = m
+	mastro.position.y = 1.8
+	mastro.material_override = Fx.lit(Color(0.22, 0.15, 0.1))
+	_bandeira.add_child(mastro)
+	var pano := MeshInstance3D.new()
+	pano.name = "Pano"
+	pano.mesh = _box(Vector3(0.04, 2.1, 0.75))
+	pano.position = Vector3(0, 2.35, 0.42)
+	pano.material_override = Fx.lit(cor.darkened(0.15))
+	_bandeira.add_child(pano)
+	var faixa := MeshInstance3D.new()
+	faixa.mesh = _box(Vector3(0.05, 0.22, 0.8))
+	faixa.position = Vector3(0, 3.3, 0.42)
+	faixa.material_override = Fx.unshaded(cor.lightened(0.45))
+	_bandeira.add_child(faixa)
+	_titulo = Label3D.new()
+	_titulo.font = Estilo.TITULO
+	_titulo.font_size = 64
+	_titulo.pixel_size = 0.011
+	_titulo.outline_size = 14
+	_titulo.outline_modulate = Estilo.TINTA
+	_titulo.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_titulo.text = nome_caminho()
+	_titulo.modulate = cor.lightened(0.4)
+	add_child(_titulo)
+	_alt_label = 3.2
+	_label.font = Estilo.FORTE
+	_label.font_size = 46
+	_label.pixel_size = 0.01
+	_label.outline_modulate = Estilo.TINTA
 
 
 func opcao() -> ClassStats:
@@ -276,6 +331,12 @@ func selar() -> void:
 		_selo.add_child(f)
 	if is_inside_tree():
 		Fx.burst(_game, global_position + Vector3(0, 0.8, 0), Color(0.5, 0.45, 0.6), 12, 3.0)
+	if _bandeira:
+		# Estandarte tombado e apagado: este caminho não volta mais.
+		_bandeira.create_tween().tween_property(_bandeira, "rotation:x", deg_to_rad(-62.0) * signf(position.z if position.z != 0.0 else 1.0), 0.6) \
+			.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+		var pano := _bandeira.get_node("Pano") as MeshInstance3D
+		pano.material_override = Fx.lit(opcao().hat_color.darkened(0.7).lerp(Color(0.3, 0.3, 0.32), 0.5))
 	_update_label()
 
 
@@ -297,7 +358,7 @@ func _finish() -> void:
 	_game.hat_pads.append(pad)
 	if caminho >= 0:
 		nivel = 2
-	_label.position.y = _alt_label + 1.0
+	_label.position.y = _alt_label + (0.4 if _titulo else 1.0)
 	_update_label()
 	_game.on_oficina_pronta(self)
 
@@ -315,7 +376,11 @@ func _update_label() -> void:
 		# O letreiro acompanha a altura da obra: perto do Construtor (e longe
 		# do placar no alto da tela) enquanto a casa ainda é baixa.
 		_label.position.y = lerpf(2.6, _alt_label, progresso)
-	_label.modulate = Color(0.55, 0.52, 0.58) if selada else cls.hat_color.lightened(0.35)
+	_label.modulate = Estilo.TEXTO_FRACO if selada else cls.hat_color.lightened(0.35)
+	if _titulo:
+		_titulo.position.y = _label.position.y + 0.75
+		_titulo.modulate = Estilo.TEXTO_FRACO.darkened(0.25) if selada else cls.hat_color.lightened(0.4)
+		_titulo.text = nome_caminho()
 	# Contador de madeira: grande para quem joga de Construtor, pequeno nas
 	# outras classes; pisca "falta madeira" quando o time não tem estoque.
 	_contador.visible = estado != Estado.PRONTA and not selada
@@ -324,28 +389,28 @@ func _update_label() -> void:
 		var perto := p != null and p.team == team and p.global_position.distance_to(global_position) < BUILD_RADIUS + 2.0
 		_contador.visible = madeira_nivel > 0 or perto
 		if _contador.visible:
-			_contador.position.y = _label.position.y + 0.9
+			_contador.position.y = _label.position.y + (1.75 if _titulo else 0.9)
 			_contador.mostrar(faltam_nivel(), custo_nivel(), p != null and p.lenhador(), falta_madeira)
 		return
 	if _contador.visible:
 		var p := _game.player
 		var grande := p != null and p.team == team and p.lenhador()
-		_contador.position.y = _label.position.y + (1.0 if grande else 0.7)
+		_contador.position.y = _label.position.y + (1.0 if grande else 0.7) + (0.8 if _titulo else 0.0)
 		_contador.mostrar(faltam(), custo(), grande, falta_madeira or (faltam() > 0 and _game.madeira[team] <= 0), progresso if comecada() else -1.0)
 
 
 ## Letreiro do terreno de mago: o caminho, o selo ou o nível.
 func _texto_caminho(cls: ClassStats) -> String:
 	if selada:
-		return "Selado\n%s" % cls.display_name
+		return "SELADO"
 	if estado == Estado.PRONTA:
 		var mx := Config.cfg.mago_nivel_max
-		return "%s\nNível %d/%d%s" % [cls.display_name, nivel, mx, "  MÁX" if nivel >= mx else ""]
+		return "%s · NÍVEL %d/%d" % [cls.display_name.to_upper(), nivel, mx]
 	var outro := _game.mago_oposto(self)
-	var nome_outro := outro.opcao().display_name if outro else "o outro"
+	var nome_outro := outro.nome_caminho() if outro else "o outro"
 	if comecada():
-		return "Caminho: %s\n%s selado" % [cls.display_name, nome_outro]
-	return "Caminho: %s\nsela %s" % [cls.display_name, nome_outro]
+		return "%s · %s SELADA" % [cls.display_name.to_upper(), nome_outro.to_upper()]
+	return "%s · SELA A %s" % [cls.display_name.to_upper(), nome_outro.to_upper()]
 
 
 ## Estacas nos cantos + chão de terra batida.

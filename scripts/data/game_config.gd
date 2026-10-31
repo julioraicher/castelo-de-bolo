@@ -150,6 +150,8 @@ extends Resource
 @export var mago_bonus_chi := 0.10
 ## A maquininha da oficina ganha +1 de estoque e fabrica mais rápido por nível.
 @export var mago_pad_intervalo_mult := 0.85
+## Nome curto de cada caminho (título a pincel na placa e nos avisos).
+@export var magos_caminho_nomes := PackedStringArray(["Luz", "Sombra"])
 
 @export_group("Economia do Construtor")
 ## Só quem tem velocidade_obra > 0 (Construtor e variações) corta e carrega.

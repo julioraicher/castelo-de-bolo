@@ -24,6 +24,7 @@ var madeira := [0, 0]
 var caminho := [-1, -1]
 var caminho_classe: Array[StringName] = [&"", &""]
 var caminho_nivel := [0, 0]
+var _caminho_avisado := false
 var score := [0, 0]
 var player: Unit
 var player_brain: PlayerBrain
@@ -494,11 +495,11 @@ func _rules() -> void:
 			var builder := "fique aqui para construir" if player.stats.velocidade_obra > 0.0 else "precisa de um Construtor"
 			if of.caminho >= 0:
 				var outro := mago_oposto(of)
-				var nome_outro := outro.opcao().display_name if outro else "o outro mago"
+				var nome_outro := outro.nome_caminho() if outro else "outra"
 				if of.comecada():
-					hint = "Caminho de %s: %d%%  ·  faltam %d madeiras  ·  %s" % [of.opcao().display_name, int(of.progresso * 100.0), of.faltam(), builder]
+					hint = "Caminho da %s (%s): %d%%  ·  faltam %d madeiras  ·  %s" % [of.nome_caminho(), of.opcao().display_name, int(of.progresso * 100.0), of.faltam(), builder]
 				else:
-					hint = "Caminho de %s: construir aqui sela %s até o fim  ·  %s" % [of.opcao().display_name, nome_outro, builder]
+					hint = "Caminho da %s (%s): construir aqui sela a %s até o fim  ·  %s" % [of.nome_caminho(), of.opcao().display_name, nome_outro, builder]
 			elif of.comecada():
 				# Obra começada: mostra o progresso guardado; [F] não troca nem apaga nada.
 				var falta := "  ·  faltam %d madeiras" % of.faltam() if of.faltam() > 0 else ""
@@ -508,6 +509,16 @@ func _rules() -> void:
 				if player_brain != null and player_brain.interact_pressed:
 					of.trocar_opcao()
 
+	# Primeira vez perto de um terreno de mago: aviso grande da escolha.
+	if player.alive and not _caminho_avisado and caminho[player.team] < 0:
+		for of in oficinas:
+			if of.team == player.team and of.caminho >= 0 and player.global_position.distance_to(of.global_position) < 7.0:
+				_caminho_avisado = true
+				var outro := mago_oposto(of)
+				hud.show_big("Caminho da %s ou da %s\nConstruir um sela o outro" % [of.nome_caminho(), outro.nome_caminho() if outro else "?"],
+					of.opcao().hat_color.lightened(0.35), 3.0)
+				break
+
 	# Perto da oficina do caminho (pronta) ou do terreno selado.
 	if player.alive and hint == "":
 		for of in oficinas:
@@ -515,7 +526,7 @@ func _rules() -> void:
 				continue
 			if of.selada:
 				var esc := mago_oposto(of)
-				hint = "Selado: o time seguiu o caminho de %s" % (esc.opcao().display_name if esc else "outro mago")
+				hint = "Caminho selado: seu time seguiu a %s" % (esc.nome_caminho() if esc else "outro mago")
 			elif of.pode_subir():
 				hint = "%s nível %d → %d: faltam %d madeiras  ·  %s" % [of.opcao().display_name, of.nivel, of.nivel + 1, of.faltam_nivel(),
 					"fique aqui" if player.lenhador() else "precisa de um Construtor"]
@@ -830,8 +841,8 @@ func on_obra_comecou(of: Oficina) -> void:
 		outro.selar()
 	_log("caminho %s: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.opcao().display_name, _time])
 	if hud and player and of.team == player.team:
-		hud.show_big("Caminho escolhido: %s\n%s selado até o fim da partida" % [of.opcao().display_name,
-			outro.opcao().display_name if outro else "O outro mago"], of.opcao().hat_color.lightened(0.3), 2.6)
+		hud.show_big("Caminho da %s escolhido\n%s selada até o fim" % [of.nome_caminho(),
+			outro.nome_caminho() if outro else "A outra"], of.opcao().hat_color.lightened(0.3), 2.6)
 
 
 func on_mago_nivel(of: Oficina) -> void:
