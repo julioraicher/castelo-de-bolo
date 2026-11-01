@@ -107,7 +107,7 @@ func _hit_inside() -> void:
 			continue
 		d.y = 0
 		if d.length() <= _radius + 0.5:
-			u.take_damage(_damage, _shooter, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.3)
+			u.take_damage(_damage, _shooter, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.3, false, "flecha", 3)
 
 
 ## Arremate: a última salva cai junta no centro, fere mais e arremessa.
@@ -119,7 +119,8 @@ func _salva_final() -> void:
 	Fx.ring(_game, global_position, col, r)
 	FxPoder.arremate_chuva(_game, global_position, r, Config.team_color(_shooter.team))
 	Fx.burst(_game, global_position + Vector3(0, 0.5, 0), col, 22, 9.0)
-	Sfx.play("hit", global_position, 0.12)
+	Sfx.play("explosao", global_position, 0.1, 1.3, -3.0)
+	Sfx.play("sino", global_position, 0.05, 0.7)
 	_game.camera.shake_at(global_position, 0.4)
 	for u in _game.units:
 		if not u.alive or u.team == _shooter.team:

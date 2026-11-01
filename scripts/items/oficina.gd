@@ -282,8 +282,8 @@ func subir_nivel() -> void:
 	if is_inside_tree():
 		var cor := opcao().hat_color.lightened(0.3)
 		Fx.pillar(_game, global_position, cor, 2.6 + 0.4 * nivel)
-		Fx.ring(_game, global_position, cor, 3.0 + nivel * 0.5)
-		Sfx.play("score", global_position, 0.05)
+		FxPoder.subir_nivel(_game, global_position, cor, nivel)
+		Sfx.play("nivel", global_position, 0.02)
 		var tw := _casa.create_tween()
 		var esc := Vector3.ONE * (1.0 + 0.06 * (nivel - 2))
 		tw.tween_property(_casa, "scale", esc * 1.15, 0.15)

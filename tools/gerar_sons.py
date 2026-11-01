@@ -145,5 +145,61 @@ def combate():
     save("power_ready", seq([midi(m) for m in (79, 83, 86, 91)], 0.06, lambda f, s: tone(f, s, release_pow=1.2)), 0.45)
 
 
+def sino(f0, sec, parciais=((1.0, 1.0, 3), (2.76, 0.5, 6), (5.4, 0.25, 10), (8.9, 0.12, 16))):
+    """Sino/metal: parciais inarmônicas com decaimento exponencial próprio."""
+    return [sum(a * math.sin(2 * math.pi * f0 * r * i / SR) * math.exp(-i / SR * d) for r, a, d in parciais)
+            for i in range(n(sec))]
+
+
+def ganho(track, g):
+    return [x * g for x in track]
+
+
+def ao_contrario(track):
+    return list(reversed(track))
+
+
+def efeitos():
+    """Sons dos efeitos (docs/direcao-efeitos.md): lançar e acertar por
+    projétil, estrondo do poder de Chi, nível da oficina e captura.
+    Semente própria: não muda os outros sons. Rode: gerar_sons.py efeitos"""
+    random.seed(11)
+    # Lançar
+    save("lancar_metal", mix(noise(0.13, cutoff=lambda x: 0.5 + 0.4 * x, release_pow=1.5),
+                             ganho(sino(2400, 0.13, ((1.0, 1.0, 30), (1.5, 0.4, 40))), 0.25)), 0.45)
+    save("pavio", noise(0.3, cutoff=lambda x: 0.85 if random.random() < 0.3 else 0.15, release_pow=1.0), 0.4)
+    save("fogo", mix(noise(0.32, cutoff=lambda x: 0.04 + 0.25 * math.sin(math.pi * x), release_pow=1.2),
+                     ganho(tone(lambda x: 220 + 180 * x, 0.32, vib=0.05, release_pow=1.5), 0.3)), 0.55)
+    save("luz", mix(ganho(sino(1320, 0.4), 0.6), noise(0.2, cutoff=lambda x: 0.05 + 0.4 * x, release_pow=1.0)), 0.45)
+    # Sombra: "inspiração" ao contrário (sobe e corta seco), grave.
+    save("sombra", ao_contrario(mix(noise(0.35, cutoff=lambda x: 0.06, release_pow=1.5),
+                                    ganho(tone(lambda x: 110 - 40 * x, 0.35, release_pow=1.5), 0.8))), 0.55)
+    # Acertar
+    save("tinido", mix(sino(1800, 0.18, ((1.0, 1.0, 22), (2.4, 0.6, 30), (4.1, 0.3, 40))), noise(0.03, cutoff=lambda x: 0.9)), 0.5)
+    save("flecha_chao", mix(tone(lambda x: 180 - 90 * x, 0.1, release_pow=3), noise(0.05, cutoff=lambda x: 0.4)), 0.6)
+    save("brasa", mix(noise(0.3, cutoff=lambda x: 0.9 if random.random() < 0.05 else 0.08, release_pow=1.5),
+                      ganho(tone(lambda x: 160 - 60 * x, 0.2, release_pow=2.5), 0.6)), 0.55)
+    save("sino", mix(sino(880, 0.6), ganho(sino(1320, 0.6), 0.5)), 0.5)
+    implode = ao_contrario(noise(0.3, cutoff=lambda x: 0.08 + 0.3 * x, release_pow=2.0))
+    save("implosao", implode + ganho(tone(lambda x: 70 - 30 * x, 0.18, release_pow=2.5), 1.2), 0.6)
+    # Explosão: ruído grave longo + "tum" descendo + estalos.
+    save("explosao", mix(noise(0.8, cutoff=lambda x: 0.12 * (1 - x) + 0.02, release_pow=1.8),
+                         ganho(tone(lambda x: 85 - 45 * x, 0.6, release_pow=2.0), 1.3),
+                         noise(0.05, cutoff=lambda x: 0.9)), 0.8)
+    # Poder de Chi (E): taiko grave + estrondo longo (som "cheio").
+    taiko = mix(ganho(tone(lambda x: 65 - 25 * x, 0.9, release_pow=2.2), 1.4), noise(0.12, cutoff=lambda x: 0.25))
+    save("poder_boom", mix(taiko, [0.0] * n(0.18) + ganho(taiko, 0.5), noise(1.1, cutoff=lambda x: 0.03, release_pow=1.3)), 0.85)
+    # Oficina sobe de nível: três sinos subindo.
+    save("nivel", seq([midi(m) for m in (72, 76, 79, 84)], 0.11, lambda f, s: ganho(sino(f, s + 0.3), 1.0)[: n(s)]) + sino(midi(84), 0.6), 0.5)
+    # Captura da máscara: gongo grave longo.
+    save("captura", mix(sino(110, 2.0, ((1.0, 1.0, 1.2), (2.1, 0.6, 1.8), (3.3, 0.4, 2.5), (4.7, 0.25, 3.5))),
+                        ganho(taiko, 0.8)), 0.8)
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+    if sys.argv[1:] == ["efeitos"]:
+        efeitos()
+    else:
+        main()
+        efeitos()

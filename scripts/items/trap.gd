@@ -109,16 +109,16 @@ func _physics_process(delta: float) -> void:
 			u.take_damage(s.trap_damage, owner_unit, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.3)
 			u.apply_slow(s.trap_slow, s.trap_slow_time)
 			Fx.burst(_game, global_position + Vector3(0, 0.3, 0), Color(0.8, 0.8, 0.9), 10, 5.0)
-			Sfx.play("block", global_position, 0.2)
+			Sfx.play("tinido", global_position, 0.2)
 			queue_free()
 			return
 
 
 func _explode() -> void:
 	var r := RADIUS * 1.6
-	Fx.burst(_game, global_position + Vector3(0, 0.5, 0), Color(1.0, 0.6, 0.2), 20, 8.0)
-	Fx.ring(_game, global_position, Color(1.0, 0.55, 0.15, 0.9), r)
-	Sfx.play("hit", global_position, 0.15)
+	FxProjetil.explosao(_game, global_position, r)
+	FxProjetil.anel_chao(_game, global_position, Color(1.0, 0.55, 0.15, 0.8), r)
+	Sfx.play("explosao", global_position, 0.1, 1.1)
 	_game.camera.shake_at(global_position, 0.5)
 	for u in _game.units:
 		if not u.alive or u.team == owner_unit.team:

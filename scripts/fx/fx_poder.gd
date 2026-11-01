@@ -528,6 +528,103 @@ static func arremate_chuva(g: Node, centro: Vector3, r: float, cor: Color) -> vo
 	tw.chain().tween_callback(n.queue_free)
 
 
+# --- Economia e placar ------------------------------------------------------------
+
+## Oficina sobe de nível: três anéis dourados sobem pela casa e o letreiro
+## "NÍVEL N!" estoura em cima.
+static func subir_nivel(g: Node, pos: Vector3, cor: Color, nivel: int) -> void:
+	var ouro := Color(1.0, 0.82, 0.35)
+	for i in 3:
+		var n := _no(g, pos + Vector3(0, 0.3, 0))
+		var t := TorusMesh.new()
+		t.inner_radius = 2.2
+		t.outer_radius = 2.45
+		t.rings = 32
+		t.ring_segments = 4
+		var mat := Fx.unshaded(Color(ouro.lerp(cor, 0.25), 0.0), true)
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		var mi := _malha(n, t, mat)
+		mi.scale = Vector3(1, 0.08, 1)
+		var tw := n.create_tween()
+		tw.tween_interval(0.18 * i)
+		tw.tween_property(mat, "albedo_color:a", 0.9, 0.08)
+		tw.set_parallel()
+		tw.tween_property(n, "global_position:y", pos.y + 4.5 + i * 0.6, 1.1).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		tw.tween_property(n, "scale", Vector3.ONE * (0.55 - 0.08 * i), 1.1).set_ease(Tween.EASE_OUT)
+		tw.tween_property(mat, "albedo_color:a", 0.0, 0.5).set_delay(0.6)
+		tw.chain().tween_callback(n.queue_free)
+	_motas(g, pos + Vector3(0, 1.0, 0), ouro, 16)
+	var l := Label3D.new()
+	l.text = "NÍVEL %d!" % nivel
+	l.font = Estilo.TITULO
+	l.font_size = 80
+	l.pixel_size = 0.011
+	l.outline_size = 20
+	l.outline_modulate = Color(0.25, 0.12, 0.0, 0.95)
+	l.modulate = ouro.lightened(0.2)
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.no_depth_test = true
+	l.render_priority = 3
+	l.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	g.add_child(l)
+	l.global_position = pos + Vector3(0, 5.2, 0)
+	l.scale = Vector3.ONE * 0.3
+	var tl := l.create_tween()
+	tl.tween_property(l, "scale", Vector3.ONE * 1.2, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tl.tween_property(l, "scale", Vector3.ONE, 0.1)
+	tl.set_parallel()
+	tl.tween_property(l, "global_position:y", l.global_position.y + 1.2, 1.4).set_delay(0.4)
+	tl.tween_property(l, "modulate:a", 0.0, 0.5).set_delay(1.2)
+	tl.tween_property(l, "outline_modulate:a", 0.0, 0.5).set_delay(1.2)
+	tl.chain().tween_callback(l.queue_free)
+
+
+## Captura da máscara: coluna de luz no castelo de quem pontuou, visível de
+## longe (sobe acima dos telhados), com anéis subindo e a marca no chão.
+static func coluna_captura(g: Node, pos: Vector3, cor_time: Color) -> void:
+	var claro := cor_time.lightened(0.45)
+	for camada in [[2.2, 0.45, claro], [0.9, 0.8, Color(1.0, 0.95, 0.8)]]:
+		var n := _no(g, pos)
+		var c := CylinderMesh.new()
+		c.top_radius = camada[0] * 0.7
+		c.bottom_radius = camada[0]
+		c.height = 40.0
+		c.radial_segments = 16
+		c.cap_top = false
+		c.cap_bottom = false
+		var mat := Fx.unshaded(Color(camada[2], camada[1]), true)
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		var mi := _malha(n, c, mat)
+		mi.position.y = 20.0
+		n.scale = Vector3(0.1, 1, 0.1)
+		var tw := n.create_tween().set_parallel()
+		tw.tween_property(n, "scale", Vector3.ONE, 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+		tw.tween_property(mat, "albedo_color:a", 0.0, 1.2).set_delay(1.6)
+		tw.tween_property(n, "scale", Vector3(0.3, 1, 0.3), 1.2).set_delay(1.6)
+		tw.chain().tween_callback(n.queue_free)
+	for i in 4:
+		var n := _no(g, pos + Vector3(0, 0.3, 0))
+		var t := TorusMesh.new()
+		t.inner_radius = 2.6
+		t.outer_radius = 3.0
+		t.rings = 32
+		t.ring_segments = 4
+		var mat := Fx.unshaded(Color(claro, 0.0), true)
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		var mi := _malha(n, t, mat)
+		mi.scale = Vector3(1, 0.06, 1)
+		var tw := n.create_tween()
+		tw.tween_interval(0.25 * i)
+		tw.tween_property(mat, "albedo_color:a", 0.85, 0.08)
+		tw.set_parallel()
+		tw.tween_property(n, "global_position:y", pos.y + 14.0, 1.6).set_ease(Tween.EASE_IN)
+		tw.tween_property(n, "scale", Vector3.ONE * 0.4, 1.6)
+		tw.tween_property(mat, "albedo_color:a", 0.0, 0.6).set_delay(1.0)
+		tw.chain().tween_callback(n.queue_free)
+	_motas(g, pos + Vector3(0, 0.5, 0), claro, 24)
+	FxProjetil.marca_chao(g, pos, Color(claro, 0.5), 3.5, 3.0)
+
+
 # --- Peças --------------------------------------------------------------------------
 
 static func _mat(cor: Color) -> StandardMaterial3D:

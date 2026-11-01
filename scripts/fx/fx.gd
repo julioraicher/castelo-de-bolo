@@ -22,6 +22,7 @@ static func cached(key: String, maker: Callable) -> Resource:
 ## por um instante no primeiro golpe, no primeiro poder etc.
 static func prewarm(parent: Node, pos: Vector3) -> void:
 	var p := pos + Vector3(0, -6.0, 0)
+	FxProjetil.prewarm(parent, p)
 	burst(parent, p, Color(1, 0.85, 0.5), 2, 1.0)
 	ring(parent, p, Color(1, 1, 1, 0.5), 1.0)
 	slash(parent, p, Vector3.FORWARD, 2.0, 120.0, Color.WHITE)
@@ -47,7 +48,7 @@ static func damage_number(parent: Node, pos: Vector3, text: String, color: Color
 	label.outline_size = 16
 	label.font = Estilo.NUMERO
 	label.font_size = 64
-	label.pixel_size = 0.012 * clampf(0.85 + 0.25 * forca, 0.85, 1.6)
+	label.pixel_size = 0.0095 * clampf(0.85 + 0.2 * forca, 0.85, 1.35)  # um pouco menores (pedido do Julio)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
 	label.fixed_size = false
@@ -143,14 +144,25 @@ static func slash(parent: Node, pos: Vector3, dir: Vector3, radius: float, arc_d
 	var s0 := 0.8 if strong else 0.85
 	var s1 := 1.12 if strong else 1.02
 	mi.scale = Vector3(signf(mi.scale.x) * s0, 1, s0)
+	# Fio do corte: faixa fina e clara na borda de fora (lê como lâmina, não
+	# como leque), e some um pouco depois do rastro.
+	var fio := MeshInstance3D.new()
+	fio.mesh = _sector(radius * 1.02, arc_deg, 0.9)
+	fio.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat_fio := mat.duplicate() as StandardMaterial3D
+	mat_fio.albedo_color = Color(color.lerp(Color.WHITE, 0.7), 1.0)
+	mat_fio.render_priority = 3
+	fio.material_override = mat_fio
+	mi.add_child(fio)
 	var tw := mi.create_tween().set_parallel()
 	tw.tween_property(mi, "scale", Vector3(signf(mi.scale.x) * s1, 1, s1), 0.16).set_ease(Tween.EASE_OUT)
 	tw.tween_property(mat, "albedo_color:a", 0.0, 0.2 if strong else 0.16).set_ease(Tween.EASE_IN)
+	tw.tween_property(mat_fio, "albedo_color:a", 0.0, 0.24 if strong else 0.2).set_ease(Tween.EASE_IN)
 	tw.chain().tween_callback(mi.queue_free)
 
 
-static func _sector(radius: float, arc_deg: float) -> ArrayMesh:
-	var key := "%d_%d" % [roundi(radius * 10.0), roundi(arc_deg)]
+static func _sector(radius: float, arc_deg: float, dentro := 0.35) -> ArrayMesh:
+	var key := "%d_%d_%d" % [roundi(radius * 10.0), roundi(arc_deg), roundi(dentro * 100.0)]
 	if _sector_cache.has(key):
 		return _sector_cache[key]
 	var segs := 20 if arc_deg < 200.0 else 32
@@ -164,8 +176,8 @@ static func _sector(radius: float, arc_deg: float) -> ArrayMesh:
 		var d := Vector3(sin(a), 0, cos(a))
 		# Mais forte na ponta da frente do corte e na borda de fora.
 		var lead := 0.25 + 0.75 * u * u if arc_deg < 359.0 else 0.8
-		verts.append(d * radius * 0.35)
-		cols.append(Color(1, 1, 1, 0.0))
+		verts.append(d * radius * dentro)
+		cols.append(Color(1, 1, 1, 0.0 if dentro < 0.8 else lead))
 		verts.append(d * radius)
 		cols.append(Color(1, 1, 1, lead))
 		if i < segs:

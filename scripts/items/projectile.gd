@@ -31,54 +31,17 @@ func setup(game: Game, shooter: Unit, origin: Vector3, dir: Vector3, p_kind: Str
 	velocity = dir.normalized() * shooter.stats.projectile_speed
 	damage = shooter.stats.damage * shooter.damage_mult()
 	kind = {"arrow": "flecha", "magic": "magia"}.get(p_kind, p_kind)
-	var mi := MeshInstance3D.new()
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	match kind:
-		"flecha":
-			var shaft := CylinderMesh.new()
-			shaft.top_radius = 0.04
-			shaft.bottom_radius = 0.04
-			shaft.height = 0.9
-			mi.mesh = shaft
-			mi.material_override = Fx.unshaded(Color(0.9, 0.95, 1.0))
-			mi.rotation_degrees.x = 90
-		"shuriken":
-			mi.mesh = _star_mesh()
-			mi.material_override = Fx.unshaded(Color(0.4, 1.6, 2.0))
-			mi.rotation_degrees.x = 90
-			_spin = mi
-		"bomba":
-			var sp := SphereMesh.new()
-			sp.radius = 0.24
-			sp.height = 0.48
-			sp.radial_segments = 10
-			sp.rings = 5
-			mi.mesh = sp
-			mi.material_override = Fx.lit(Color(0.08, 0.08, 0.12))
-			var spark := MeshInstance3D.new()
-			var ss := SphereMesh.new()
-			ss.radius = 0.09
-			ss.height = 0.18
-			spark.mesh = ss
-			spark.material_override = Fx.unshaded(Color(2.0, 1.0, 0.2))
-			spark.position.y = 0.28
-			add_child(spark)
-		"talisma":
-			var card := BoxMesh.new()
-			card.size = Vector3(0.32, 0.02, 0.5)
-			mi.mesh = card
-			mi.material_override = Fx.unshaded(Color(1.6, 1.7, 1.9))
-			_spin = mi
-		_:
-			var orb := SphereMesh.new()
-			orb.radius = 0.28
-			orb.height = 0.56
-			orb.radial_segments = 10
-			orb.rings = 5
-			mi.mesh = orb
-			var cols := {"magia": Color(1.2, 0.9, 2.0), "chi": Color(0.7, 2.0, 0.8), "fogo": Color(2.0, 0.8, 1.5)}
-			mi.material_override = Fx.unshaded(cols.get(kind, Color(1.2, 0.9, 2.0)))
-	add_child(mi)
+	# Leque/Chuva soltam vários de uma vez: um som só por rajada.
+	var agora := Time.get_ticks_msec()
+	if agora - int(shooter.get_meta("som_t", -1000)) > 60:
+		shooter.set_meta("som_t", agora)
+		Sfx.play(SOM_LANCAR.get(kind, "shoot"), origin, 0.1)
+
+
+## Som ao lançar e ao acertar, por projétil (gerados por tools/gerar_sons.py).
+const SOM_LANCAR := {"flecha": "shoot", "shuriken": "lancar_metal", "bomba": "pavio", "fogo": "fogo", "chi": "luz", "magia": "sombra"}
+const SOM_ACERTO := {"flecha": "flecha_chao", "shuriken": "tinido", "bomba": "explosao", "fogo": "brasa", "chi": "sino", "magia": "implosao"}
+var nivel := 1  # 2 = tiro carregado (rastro e impacto maiores)
 
 
 static var _star: ArrayMesh
@@ -107,21 +70,20 @@ static func _star_mesh() -> ArrayMesh:
 ## Carga máxima: flecha/shuriken atravessa carga_perfura inimigos e fica maior
 ## e mais brilhante; bomba explode carga_raio_bomba × maior.
 func carregar() -> void:
+	nivel = 2
+	FxProjetil.carregar(self, kind)
 	if kind == "bomba":
 		raio_mult = Config.cfg.carga_raio_bomba
 		scale = Vector3.ONE * 1.4
 	else:
 		perfura = Config.cfg.carga_perfura
 		scale = Vector3.ONE * 1.7
-		for mi: MeshInstance3D in find_children("*", "MeshInstance3D", false, false):
-			var m := mi.material_override as StandardMaterial3D
-			if m:
-				m = m.duplicate()
-				m.albedo_color = m.albedo_color * 1.6 + Color(0.3, 0.25, 0.0)
-				mi.material_override = m
 
 
 func _ready() -> void:
+	# Forma, cor e rastro de cada projétil: FxProjetil (docs/direcao-efeitos.md).
+	# Aqui (já na árvore): o rastro em coordenadas do mundo lê a posição global.
+	_spin = FxProjetil.montar(self, kind, Config.team_color(owner_unit.team))
 	if velocity.length_squared() > 1e-6:  # look_at falha com alvo na mesma posição
 		look_at(global_position + velocity, Vector3.UP)
 
@@ -141,27 +103,28 @@ func aim_ballistic(distance: float, chao_alvo := 0.0) -> void:
 func _physics_process(delta: float) -> void:
 	_life -= delta
 	if _life <= 0.0:
-		queue_free()
+		_fim()
 		return
 	var from := global_position
 	velocity.y -= gravity * delta
 	var to := from + velocity * delta
 	if _spin:
-		_spin.rotate_object_local(Vector3.FORWARD if kind == "shuriken" else Vector3.UP, delta * 25.0)
+		_spin.rotate_object_local(Vector3.FORWARD, delta * (25.0 if kind == "shuriken" else 9.0))
 	if to.y <= -1.0:  # segurança: o chão é colisor, o raio abaixo já pega
 		if kind == "bomba":
 			_explode(Vector3(to.x, 0.0, to.z))
 		else:
-			Fx.burst(_game, Vector3(to.x, 0.1, to.z), Color(0.8, 0.7, 0.5), 5, 2.5)
-		queue_free()
+			_bateu(Vector3(to.x, 0.1, to.z))
+		_fim()
 		return
 	var query := PhysicsRayQueryParameters3D.create(from, to, Config.LAYER_WORLD)
-	if not get_world_3d().direct_space_state.intersect_ray(query).is_empty():
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty():
 		if kind == "bomba":
 			_explode(from)
 		else:
-			Fx.burst(_game, to, Color(0.8, 0.7, 0.5), 6, 3.0)
-		queue_free()
+			_bateu(hit.position)
+		_fim()
 		return
 	global_position = to
 	if gravity > 0.0 and velocity.length_squared() > 1e-6:
@@ -178,24 +141,22 @@ func _physics_process(delta: float) -> void:
 				if kind == "bomba":
 					_explode(global_position)
 				else:
-					u.take_damage(damage, owner_unit, velocity.normalized())
+					u.take_damage(damage, owner_unit, velocity.normalized(), 1.0, false, kind, nivel)
 					if perfura > 0:
 						perfura -= 1
 						damage *= 0.8
 						_acertados.append(u)
-						Fx.burst(_game, global_position, Color(1, 0.9, 0.5), 8, 5.0)
 						continue
-				queue_free()
+				_fim()
 				return
 
 
 ## Bomba: dano em área, mais forte no centro (cai linearmente até 50% na borda).
 func _explode(at: Vector3) -> void:
 	var r := owner_unit.stats.explosao_raio * raio_mult
-	Fx.burst(_game, at + Vector3(0, 0.6, 0), Color(1.0, 0.6, 0.2), 18, 8.0)
-	Fx.burst(_game, at + Vector3(0, 0.4, 0), Color(0.6, 0.6, 0.7), 10, 3.0)
-	Fx.ring(_game, at, Color(1.0, 0.55, 0.15, 0.9), r)
-	Sfx.play("hit", at, 0.15)
+	FxProjetil.explosao(_game, at, r)
+	FxProjetil.anel_chao(_game, at, Color(1.0, 0.55, 0.15, 0.8), r)
+	Sfx.play("explosao", at, 0.1, 1.0 if nivel == 1 else 0.8)
 	_game.camera.shake_at(at, 0.45)
 	for u in _game.units:
 		if not u.alive or u.team == owner_unit.team:
@@ -206,5 +167,17 @@ func _explode(at: Vector3) -> void:
 		d.y = 0
 		if d.length() <= r:
 			var f := 1.0 - 0.5 * d.length() / r
-			u.take_damage(damage * f, owner_unit, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, f)
+			u.take_damage(damage * f, owner_unit, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, f, false, "bomba", nivel)
 			u.launch(5.0 * f)
+
+
+## Bateu no cenário (parede/chão): impacto do elemento e som.
+func _bateu(at: Vector3) -> void:
+	FxProjetil.impacto_cenario(_game, at, kind, velocity.normalized(), nivel)
+	Sfx.play(SOM_ACERTO.get(kind, "hit"), at, 0.1, 1.0, -6.0)
+
+
+## Some sem cortar o rastro: as partículas soltas terminam no mundo.
+func _fim() -> void:
+	FxProjetil.soltar_rastro(self, _game)
+	queue_free()
