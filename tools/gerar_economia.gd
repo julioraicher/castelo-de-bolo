@@ -15,7 +15,11 @@ extends "res://tools/gerar_cenario_ninja.gd"
 const FABRICAR := 2.0  # duração da animação "fabricar" (s)
 ## Maquininha própria de cada classe (nome do .tres): maquina_<classe>.scn, com os
 ## mesmos nós e a mesma animação da maquina_chapeu (que fica de reserva).
-const MAQUINAS := ["guerreiro", "arqueiro", "kitsune", "ronin_oni", "arqueiro_yumi", "construtor", "kitsune_luz", "kitsune_sombria"]
+## Só as classes com maquininha no pátio (GameConfig.hat_class_list): o jogo
+## nunca carrega as outras. Os desenhos de ronin_oni, arqueiro_yumi e das
+## kitsunes luz/sombria continuam em _maquina_classe(): ponha o nome aqui se
+## uma delas ganhar maquininha.
+const MAQUINAS := ["guerreiro", "arqueiro", "kitsune", "construtor"]
 
 var _cor_brilho := Color(-1, 0, 0)  # brilho do molde da próxima máquina (-1 = luz1 do tema)
 var _cor_vapor := Color(-1, 0, 0)

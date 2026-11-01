@@ -28,7 +28,7 @@ func _rodar() -> void:
 	if args.has("--maquinas"):  # a maquininha de cada classe, no meio do "fabricar"
 		root.size = Vector2i(420, 470)
 		var hp0: Script = load("res://scripts/items/hat_pad.gd")
-		for c in ["guerreiro", "arqueiro", "kitsune", "ronin_oni", "arqueiro_yumi", "construtor", "kitsune_luz", "kitsune_sombria"]:
+		for c in ["guerreiro", "arqueiro", "kitsune", "construtor"]:  # = MAQUINAS de gerar_economia.gd
 			var arq := "res://config/classes/%s.tres" % c
 			var st: Resource = load(arq if ResourceLoader.exists(arq) else "res://config/classes/kitsune.tres")
 			var c0 := _cena(cfg)
