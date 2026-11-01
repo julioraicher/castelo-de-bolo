@@ -33,6 +33,8 @@ var player_brain: PlayerBrain
 ## Guia do ciclo da madeira (seta/marcador) e minimapa do canto.
 var guia: GuiaConstrutor
 var minimapa: Minimapa
+## Cursor de mira do jogador (ponta de hardware + enfeites + marcas no chão).
+var mira: Mira
 var game_over := false
 
 var _cake_t := 2.0
@@ -53,6 +55,7 @@ var _time := 0.0
 #                       o pátio azul no ângulo da câmera do jogo (prints)
 #   --vista=px,py,pz,ax,ay,az  câmera parada em p olhando para a (prints)
 #   --print-poder[=s]   com --shots: os prints saem s segundos (0,15) depois de cada poder do jogador
+#   --mira              com --shots: mostra a mira do jogador no print (segue a mira do bot)
 #   --classe=<nome>     o jogador começa nessa classe (config/classes/<nome>.tres), para prints
 #   --filme=<pasta>     roteiro fixo com o jogador (golpe, dash, pulo, pancada,
 #                       morte) salvando um quadro a cada 2: prancha de animação
@@ -73,6 +76,7 @@ var _equilibrio := false
 var _poderes := false
 var _poderes_t := 2.0
 var _shots_dir := ""
+var _mira_print := false
 var _menu_print := ""
 var _clipe_dir := ""  # --clipe=DIR [--clipe-ini=s]: grava os quadros de um clipe do tutorial
 var _clipe_ini := 10.0
@@ -127,6 +131,8 @@ func _ready() -> void:
 			_print_poder = true
 			if arg.contains("="):
 				_print_atraso = float(arg.get_slice("=", 1))
+		elif arg == "--mira":
+			_mira_print = true
 		elif arg.begins_with("--classe="):
 			_classe_jogador = arg.trim_prefix("--classe=")
 		elif arg.begins_with("--filme="):
@@ -291,6 +297,10 @@ func _ready() -> void:
 	minimapa.offset_bottom -= 34.0
 	minimapa.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	minimapa.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	mira = Mira.new()
+	add_child(mira)
+	mira.setup(self)
+	mira.para_print = _mira_print
 	guia = GuiaConstrutor.new()
 	add_child(guia)
 	guia.setup(self)

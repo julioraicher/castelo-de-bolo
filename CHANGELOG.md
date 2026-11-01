@@ -5,6 +5,28 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.6c (2026-11-01), Jogabilidade: mira nova (piloto do mouse aprovado)
+- **Cursor próprio "Mira de ouro"** (`scripts/ui/mira.gd`, novo): aro + 4 marcas + ponto,
+  na **cor do seu time**. É cursor de hardware (`Input.set_custom_mouse_cursor`, desenhado
+  por código, sem arquivo de arte): continua liso mesmo com FPS baixo. Nos menus/pausa
+  volta a setinha normal.
+- **O cursor avisa**: inimigo embaixo (fica na cor do inimigo, as marcas giram e fecham),
+  fora do alcance (apagado; só classes de tiro), anel de **Chi** em volta enchendo e
+  brilhando quando o E está pronto, tracinho da **recarga do Q**, pulso vermelho com
+  **vida baixa** e hexágono azul enquanto **defende**.
+- **Efeitos no clique** (nível médio): faíscas douradas + anel no ataque, anel ciano no Q,
+  explosão na cor do poder no E. Q/E sem carga dão um "não" cinza no cursor.
+- **Marcas no chão por classe**: onde o tiro em **arco** cai (Yumi, Kitsune Sombria,
+  Bombardeiro, já presa entre o mínimo e o máximo). Com o **E pronto**, a área do poder:
+  no cursor (Chuva de flechas, Selo, Coluna de fogo), em volta do corpo (Redemoinho,
+  Bênção, Fúria, Campo minado, Mutirão) ou a fila de explosões do Bombardeio.
+- Flag de print `--mira` (com `--autoplay --shots`): desenha a mira seguindo o bot.
+- Mexe em `player_brain.gd` (avisa a mira no clique/Q/E) e `game.gd` (cria a `Mira`).
+  Nenhuma regra de jogo mudou.
+- **O que testar**: jogue com o mouse e veja se a mira some no cenário; passe por cima de
+  um inimigo; segure o direito; espere o anel do E encher e aperte E; jogue de Yumi e veja
+  o círculo de onde a flecha cai. No navegador e no .exe.
+
 ## Limpeza 2.6b (2026-11-01), revisão rápida: peso morto e docs velhos
 - Revisão do código: sem funções mortas, sem campos velhos nos `.tres`; testes de regra
   167/167. A limpeza grande já tinha sido a 2.5c (PR #21).
