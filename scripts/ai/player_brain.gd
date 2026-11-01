@@ -20,6 +20,14 @@ func tick(_delta: float) -> void:
 		unit.aim_dir = to.normalized()
 	unit.aim_point = aim_point
 	unit.wants_attack = Input.is_action_pressed("attack")
+	# Enfeite do cursor sai antes do corpo gastar o poder/recarga.
+	if game.mira:
+		if Input.is_action_just_pressed("attack"):
+			game.mira.evento("atk", unit.alive)
+		if Input.is_action_just_pressed("quick") and unit.tem_rapida():
+			game.mira.evento("q", unit.quick_ready())
+		if Input.is_action_just_pressed("power"):
+			game.mira.evento("e", unit.power_ready())
 	unit.wants_block = Input.is_action_pressed("block")
 	if Input.is_action_just_pressed("quick"):
 		unit.wants_quick = true
