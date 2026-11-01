@@ -3,7 +3,7 @@ extends SceneTree
 ## Uso (xvfb no servidor):
 ##   xvfb-run -a -s "-screen 0 800x600x24" godot --path . --rendering-driver opengl3 \
 ##     --rendering-method gl_compatibility --audio-driver Dummy -s tools/prancha_pecas.gd -- DIR tema peca1 peca2@180 ...
-## Salva DIR/peca_NN.png; a montagem com números é feita fora (tools/montar_prancha.py).
+## Salva DIR/peca_NN.png; a montagem com números é feita fora (PIL, como em tools/montar_economia.py).
 
 func _init() -> void:
 	_rodar.call_deferred()

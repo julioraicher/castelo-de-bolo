@@ -26,7 +26,6 @@ const FORTE := NUNITO
 const CORPO := NUNITO
 
 const T_GIGANTE := 110  # fim de partida
-const T_TITULO := 56    # título de tela / aviso grande
 const T_GRANDE := 28    # nome da classe, placar secundário
 const T_MEDIO := 22     # botões, dicas, cabeçalhos de cartão
 const T_TEXTO := 20     # texto corrido
@@ -48,7 +47,6 @@ const TEXTO_FRACO := Color("c8b494")   # apoio
 const TEXTO_BOTAO := Color("2b1606")   # letra escura sobre ouro
 const FANTASMA := Color(0.45, 1.0, 0.62)  # espíritos, Chi pronto (cor do jogo)
 const PAINEL := Color(LACA, 0.93)
-const NOITE := TINTA
 # Nomes antigos, apontando para a paleta nova.
 const CIANO := AZUL
 const PERIGO := VERMELHO
