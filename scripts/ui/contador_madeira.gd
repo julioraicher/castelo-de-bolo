@@ -10,8 +10,8 @@ extends Node3D
 ## 5 chamadas de desenho enquanto visível: esconda quando a obra acabar.
 
 const ICONE := preload("res://assets/ui/icone_tora.png")
-const COR_OK := Color(1.0, 0.82, 0.36)      # Estilo.OURO
-const COR_FALTA := Color(1.0, 0.36, 0.36)   # Estilo.PERIGO
+const COR_OK := Estilo.OURO
+const COR_FALTA := Estilo.PERIGO
 const COR_FUNDO := Color(0.055, 0.045, 0.12, 0.85)
 const COR_OBRA := Color(0.75, 1.0, 0.8)
 const LARG := 2.2  # largura da barra no tamanho grande (m)
@@ -41,7 +41,7 @@ func _ready() -> void:
 	_texto.font = Estilo.NUMERO
 	_texto.font_size = 64
 	_texto.outline_size = 18
-	_texto.outline_modulate = Color(0.03, 0.02, 0.06)
+	_texto.outline_modulate = Estilo.TINTA
 	_texto.pixel_size = 0.009
 	_texto.position = Vector3(0.3, 0.36, 0)
 	_texto.billboard = BaseMaterial3D.BILLBOARD_ENABLED

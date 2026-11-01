@@ -23,7 +23,7 @@ static func _nome(u: Unit, cor: Color) -> void:
 	l.font_size = 96 if u.is_player else 46  # bots: menor e mais curto, para não poluir a briga
 	l.pixel_size = 0.011
 	l.outline_size = 22 if u.is_player else 14
-	l.outline_modulate = Color(cor.darkened(0.8), 0.95)
+	l.outline_modulate = Estilo.TINTA
 	l.modulate = cor
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.no_depth_test = true

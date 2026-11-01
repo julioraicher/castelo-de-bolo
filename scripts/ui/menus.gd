@@ -6,7 +6,7 @@ extends CanvasLayer
 
 signal started
 
-const BG := Color(0.04, 0.035, 0.05, 0.94)
+const BG := Color(Estilo.LACA, 0.97)
 const ACCENT := Estilo.OURO
 const GOLD := Estilo.OURO
 
@@ -30,6 +30,11 @@ func _ready() -> void:
 func show_start() -> void:
 	_start_panel.visible = true
 	get_tree().paused = true
+
+
+## Só para prints (--menu=inicio|pausa): mostra a tela sem pausar o jogo.
+func mostrar_para_print(qual: String) -> void:
+	(_start_panel if qual == "inicio" else _pause_panel).visible = true
 
 
 func is_open() -> bool:
@@ -80,7 +85,7 @@ func _build_start() -> Control:
 	cabeca.add_theme_constant_override("separation", 2)
 	cabeca.add_child(Estilo.titulo("Castelo de Bolo", 72, ACCENT))
 	cabeca.add_child(Estilo.ornamento(420.0))
-	var sub := Estilo.rotulo("A GUERRA DA MÁSCARA ONI", 24, Estilo.TEXTO_FRACO, Estilo.espacada(Estilo.FORTE, 5))
+	var sub := Estilo.rotulo("A GUERRA DA MÁSCARA ONI", 24, Estilo.TEXTO, Estilo.espacada(Estilo.NUMERO, 4))
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cabeca.add_child(sub)
 	box.add_child(cabeca)
@@ -96,11 +101,11 @@ func _build_start() -> Control:
 	for tip in [
 		["katana", GOLD, "Chapéus", "No pátio, aperte F perto de um chapéu: %s. O Construtor corta madeira e ergue oficinas com classes novas." % lista],
 		["espirito", Estilo.FANTASMA, "Espíritos", "Leve as chamas verdes até a SUA máscara. Cheia de espíritos, ela pesa e o inimigo anda devagar com ela."],
-		["mascara", Config.team_color(0).lightened(0.3), "Resgate", "Quem cai volta como recruta. Itens no chão ajudam na briga. Vence quem fizer %d resgates primeiro." % Config.cfg.score_to_win],
+		["mascara", Estilo.AZUL, "Resgate", "Quem cai volta como recruta. Itens no chão ajudam na briga. Vence quem fizer %d resgates primeiro." % Config.cfg.score_to_win],
 	]:
 		dicas.add_child(_dica(tip[0], tip[1], tip[2], tip[3]))
 	box.add_child(dicas)
-	box.add_child(_controls_grid())
+	box.add_child(_controls_grid(2))
 	var play := _button("JOGAR   ·   Enter")
 	play.custom_minimum_size = Vector2(300, 58)
 	play.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -113,20 +118,18 @@ func _build_start() -> Control:
 ## Cartão de dica da tela inicial: ícone, título e texto curto.
 func _dica(icone: String, cor: Color, titulo: String, texto: String) -> PanelContainer:
 	var p := PanelContainer.new()
-	var sb := Estilo.painel(Color(cor, 0.5), false, Color(0.03, 0.025, 0.07, 0.7))
-	sb.shadow_size = 0
-	p.add_theme_stylebox_override("panel", sb)
+	p.add_theme_stylebox_override("panel", Estilo.placa(Estilo.LACA_CLARA, Color(Estilo.OURO, 0.6), 8))
 	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	p.custom_minimum_size = Vector2(0, 150)
+	p.custom_minimum_size = Vector2(0, 0)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
 	p.add_child(v)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	h.add_child(Icone.novo(icone, cor, 30))
-	h.add_child(Estilo.rotulo(titulo.to_upper(), 22, cor, Estilo.FORTE))
+	h.add_child(Estilo.rotulo(titulo.to_upper(), 24, cor, Estilo.NUMERO))
 	v.add_child(h)
-	var t := _text(texto, 18, Estilo.TEXTO_FRACO)
+	var t := _text(texto, 17, Estilo.TEXTO)
 	t.custom_minimum_size = Vector2(240, 0)
 	v.add_child(t)
 	return p
@@ -135,7 +138,7 @@ func _dica(icone: String, cor: Color, titulo: String, texto: String) -> PanelCon
 func _build_pause() -> Control:
 	var root := _backdrop()
 	var box := _card(root, Vector2(700, 0))
-	box.add_child(Estilo.titulo("Pausado", 60, GOLD))
+	box.add_child(Estilo.titulo("Pausado", 64, GOLD))
 	box.add_child(Estilo.ornamento(300.0))
 	_tabs = TabContainer.new()
 	_tabs.custom_minimum_size = Vector2(0, 360)
@@ -172,11 +175,11 @@ func _build_pause() -> Control:
 	return root
 
 
-func _controls_grid() -> GridContainer:
+## pares = quantos "tecla + o que faz" por linha (2 na tela inicial: cabe sem rolar).
+func _controls_grid(pares := 1) -> GridContainer:
 	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 24)
-	grid.add_theme_constant_override("v_separation", 6)
+	grid.columns = 2 * pares
+	grid.add_theme_constant_override("h_separation", 18 if pares > 1 else 24)
 	grid.add_theme_constant_override("v_separation", 8)
 	for pair in Config.CONTROLS:
 		var teclas := HBoxContainer.new()
@@ -187,8 +190,8 @@ func _controls_grid() -> GridContainer:
 				teclas.add_child(Estilo.rotulo("ou", Estilo.T_PEQUENO, Estilo.TEXTO_FRACO))
 			teclas.add_child(Estilo.tecla(partes[k], Estilo.T_PEQUENO + 1))
 		grid.add_child(teclas)
-		var o_que := _text(pair[1], Estilo.T_TEXTO, Estilo.TEXTO, true)
-		o_que.custom_minimum_size = Vector2(500, 0)
+		var o_que := _text(pair[1], Estilo.T_TEXTO - (3 if pares > 1 else 1), Estilo.TEXTO, true)
+		o_que.custom_minimum_size = Vector2(500 if pares == 1 else 290, 0)
 		grid.add_child(o_que)
 	return grid
 
@@ -282,7 +285,7 @@ func _settings_form() -> GridContainer:
 
 func _backdrop() -> Control:
 	var root := ColorRect.new()
-	root.color = Color(0.01, 0.0, 0.04, 0.62)
+	root.color = Color(Estilo.TINTA, 0.6)
 	root.theme = Estilo.tema()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -294,19 +297,18 @@ func _card(parent: Control, min_size: Vector2) -> VBoxContainer:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	parent.add_child(center)
 	var panel := PanelContainer.new()
-	var sb := Estilo.painel(Color(ACCENT, 0.75), false, BG, 10)
-	sb.shadow_size = 24
-	sb.shadow_color = Color(0, 0, 0, 0.5)
-	sb.border_width_top = 3
+	var sb := Estilo.placa(BG, ACCENT, 14)
+	sb.set_border_width_all(3)
+	sb.shadow_offset = Vector2(0, 8)
 	sb.content_margin_left = 40
 	sb.content_margin_right = 40
-	sb.content_margin_top = 28
+	sb.content_margin_top = 20
 	sb.content_margin_bottom = 30
 	panel.add_theme_stylebox_override("panel", sb)
 	panel.custom_minimum_size = min_size
 	center.add_child(panel)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 18)
+	box.add_theme_constant_override("separation", 14)
 	panel.add_child(box)
 	return box
 
@@ -318,7 +320,8 @@ func _text(text: String, size: int, color := Color.WHITE, wrap := true) -> Label
 	l.text = text
 	if wrap:
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.label_settings = Estilo.ajustes(size, color, Estilo.CORPO, 4)
+	l.label_settings = Estilo.ajustes(size, color, Estilo.CORPO, 2)  # sobre placa: contorno fino
+	l.label_settings.shadow_color = Color(0, 0, 0, 0)
 	return l
 
 

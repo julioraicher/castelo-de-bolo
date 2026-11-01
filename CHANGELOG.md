@@ -5,6 +5,62 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.5f (2026-10-31), Visual + Jogabilidade: pátio em ferradura e Torre da Máscara
+- **Pátio em ferradura** (prancha aprovada pelo Julio): muralha com passarela em arco de raio
+  22 m (antes era um retângulo de 32 × 28 m), aberta para o inimigo, com uma **saída larga** de
+  24 m entre duas torres e **2 portões laterais** que dão nas trilhas da floresta. As 4
+  maquininhas ficam no meio do arco, as oficinas vêm depois, e **Luz** (em cima) e **Sombra**
+  (embaixo) ficam nas pontas. Há uma praça de pedra no centro, calçadas até as saídas e
+  pilares com lanterna nas juntas da muralha.
+- **Torre da Máscara** (refeita do zero): tem 20 m, 3 andares e frisos na cor do time. A
+  **máscara Oni viva** na frente tem rugas, veias, órbitas fundas, olhos de fera (íris do
+  time e pupila em fenda), narinas que soltam fumaça, boca rosnando com fogo dentro,
+  mandíbula que respira, chifres em gomos com anéis de ouro, e juba e barba ao vento.
+  Animações: "respirar" (sempre) e **"alarme"** quando a máscara é roubada (olhos piscam
+  rápido, boca abre, fogo cresce, fumaça engrossa). Volta a respirar quando a máscara
+  está em casa.
+- Dados: campos novos `MapLayout.wall_arc_*` e `keep_model` (o padrão é 0/vazio, que mantém
+  a muralha retangular). Arena: `_wall_arc`, `wall_arc_runs`, `torre_alarme`. O minimapa
+  desenha o arco. Renascer (`spawn_spots`) em 6 pontos do arco, perto das saídas. O bosque
+  seguro foi para fora do portão de baixo, e o depósito ficou por dentro dele. 16 objetos
+  do meio do mapa que caíam dentro da ferradura saíram.
+- Desempenho: a torre tem ~7,3 mil triângulos e 5 peças animadas (olhos, mandíbula, fogo da
+  boca e 2 braseiros); as lanternas ficaram fixas para economizar chamadas de desenho.
+- QA do mapa: os avisos caíram de 38 para 9 (os 4 "inalcançáveis" em z = -46 já existiam).
+  Testes 167/167, com o `_ferradura` novo. 5 min simulados sem erro. O teste do Bombardeiro
+  longe da árvore agora procura um ponto longe de todas as plantas.
+- Saiu a escada da passarela: a muralha nova não tem acesso por cima (dá para voltar depois,
+  se fizer falta).
+- **O que testar**: (1) entre no seu pátio: ele deve parecer bem mais espaçoso, sem trombar
+  nas casinhas. (2) Saia pelos portões laterais até as trilhas. (3) Pare na frente da torre
+  e veja a máscara respirando e soltando fumaça. (4) Quando roubarem sua máscara, a torre
+  entra em alarme. (5) Veja o minimapa com o arco.
+
+## Ciclo 2.5e (2026-10-31), Interface: identidade "Festival sombrio" no jogo inteiro
+- **Fontes**: Lilita One (títulos, avisos, números, botões, letreiros 3D) com contorno
+  grosso de tinta e sombra sólida; Nunito Black no texto. Shojumaru e Barlow saíram
+  (OFL das novas em `assets/fonts`). Tudo passa por `scripts/ui/estilo.gd`; os nomes
+  antigos (`TITULO`, `FORTE`, `NUMERO`, `CORPO`) continuam valendo.
+- **Molduras**: placas de laca escura com borda de ouro e sombra sólida
+  (`Estilo.placa`); botões e aba escolhida em ouro com degradê (`Estilo.botao_ouro`,
+  um StyleBox desenhado à mão, porque o StyleBoxFlat não faz degradê). Paleta reduzida a
+  ouro, cor do time e laca.
+- **HUD cheio, preso nas bordas**: máscaras e placar numa faixa só no topo (antes eram
+  duas linhas descendo pela tela); **abates e quedas** novos no canto superior esquerdo;
+  aviso grande saiu do meio e fica logo abaixo do placar; dica colada embaixo. O centro
+  é da briga.
+- **Tela inicial**: controles em duas colunas; o botão JOGAR agora cabe na tela
+  (antes ficava cortado em 1280x720).
+- Mudanças pequenas em pastas de outros papéis (aviso): `game.gd` ganhou
+  `abates_jogador`/`quedas_jogador` e o modo de print `--menu=inicio|pausa`; Label3D de
+  `oficina`, `pilha`, `hat_pad`, `guia_construtor`, `fx`, `fx_poder` e
+  `contador_madeira` com Lilita e contorno de tinta. Guia atualizado:
+  `docs/estilo-textos.md`.
+- **O que testar**: abra o jogo e olhe a tela inicial (título, cartões, botão JOGAR de
+  ouro). Na partida, confira se dá para ler placar, vida, Chi e Q no meio de uma briga
+  com efeitos, e se o centro fica livre. Abata alguém e caia uma vez: os números no
+  canto superior esquerdo sobem. Esc: abas e botões de ouro; Configurações legíveis.
+
 ## Ciclo 2.5d (2026-10-31), Jogabilidade: corte do Bombardeiro, contador de tora e ritmo
 - **Bug**: Bombardeiro (e qualquer lenhador que ataca de longe) seguia a seta até a
   árvore e o clique jogava bomba. Agora, com uma planta jovem/adulta à frente a até ~3 m,

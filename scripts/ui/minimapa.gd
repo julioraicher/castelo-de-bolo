@@ -67,6 +67,16 @@ func _draw() -> void:
 
 	# Castelos: muralha na cor do time (o seu mais forte).
 	for team in 2:
+		var cor_t := Config.team_color(team)
+		if m.wall_arc_radius > 0.0:  # ferradura: arco grosso na cor do time
+			for run: Array in arena.wall_arc_runs():
+				var pts := PackedVector2Array()
+				for k in 13:
+					var a := deg_to_rad(lerpf(run[0], run[1], k / 12.0))
+					var lp := m.wall_arc_center + Vector2(cos(a), sin(a)) * m.wall_arc_radius
+					pts.append(_p(arena.to_world(team, lp.x, lp.y)))
+				draw_polyline(pts, Color(cor_t, 0.9 if team == me.team else 0.55), 2.5)
+			continue
 		var a := _p(arena.to_world(team, m.wall_back, -m.wall_half_width))
 		var b := _p(arena.to_world(team, m.wall_front, m.wall_half_width))
 		var r := Rect2(Vector2(minf(a.x, b.x), minf(a.y, b.y)), (b - a).abs())
