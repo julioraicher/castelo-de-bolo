@@ -75,10 +75,11 @@ func setup(game: Game, p_team: int, pos: Vector3, opcao: int, lista: Array[Class
 	_roof.visible = false
 	add_child(_casa)
 	_label = Label3D.new()
-	_label.font = Estilo.FORTE
+	_label.font = Estilo.LETREIRO
 	_label.font_size = 44
 	_label.pixel_size = 0.012
-	_label.outline_size = 10
+	_label.outline_size = 12
+	_label.outline_modulate = Estilo.TINTA
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.position.y = _alt_label
 	add_child(_label)
@@ -134,7 +135,7 @@ func _montar_placa() -> void:
 	_titulo.modulate = cor.lightened(0.4)
 	add_child(_titulo)
 	_alt_label = 3.2
-	_label.font = Estilo.FORTE
+	_label.font = Estilo.LETREIRO
 	_label.font_size = 46
 	_label.pixel_size = 0.01
 	_label.outline_modulate = Estilo.TINTA

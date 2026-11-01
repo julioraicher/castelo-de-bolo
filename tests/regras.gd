@@ -22,11 +22,13 @@ func _ready() -> void:
 	_controles()
 	await _empurrao()
 	_madeira()
+	_machadada()
 	_maquina()
 	await _obra()
 	_nivel2()
 	_caminho_magos()
 	await _alma()
+	_ferradura()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -400,6 +402,55 @@ func _madeira() -> void:
 	_check(u.carried_tora == null and u.maos_livres(), "depois de entregar as mãos ficam livres")
 
 
+## Bug 2.5d: Bombardeiro/Armadilheiro (lenhadores) perto de planta cortam com o
+## clique; longe dela, o ataque é o normal (bomba).
+func _machadada() -> void:
+	var u = _lenhador()
+	if u == null:
+		return
+	var arvore = null
+	for p in game.plantas:
+		if p.tipo == "arvore":
+			arvore = p
+			break
+	if arvore == null:
+		return
+	for id in ["bombardeiro", "armadilheiro"]:
+		u.set_class(load("res://config/classes/%s.tres" % id))
+		_check(u.lenhador(), "%s deveria ser lenhador" % id)
+		arvore.set_estagio(2, false)
+		u.global_position = arvore.global_position + Vector3(2.0, 0, 0)
+		u.reset_physics_interpolation()
+		u.aim_dir = Vector3.LEFT
+		u._attack_cd = 0.0
+		var antes: int = game.toras.size()
+		u._attack()
+		if u._windup_t > 0.0:
+			u._attack_hit()
+		_check(game.toras.size() - antes == 1, "%s: clique perto da árvore adulta deveria virar machadada" % id)
+	# Longe da planta: Bombardeiro joga bomba (não corta).
+	u.set_class(load("res://config/classes/bombardeiro.tres"))
+	arvore.set_estagio(2, false)
+	# Ponto a 8 m da árvore e longe de TODAS as plantas (o bosque depende do mapa).
+	var longe: Vector3 = arvore.global_position + Vector3(8.0, 0, 0)
+	for dir in [Vector3(8, 0, 0), Vector3(-8, 0, 0), Vector3(0, 0, -8), Vector3(0, 0, 8)]:
+		var cand: Vector3 = arvore.global_position + dir
+		var livre := true
+		for p in game.plantas:
+			if p.global_position.distance_to(cand) < 5.0:
+				livre = false
+		if livre:
+			longe = cand
+			break
+	u.global_position = longe
+	u.reset_physics_interpolation()
+	_check(not u.clique_vira_machadada(Vector3.LEFT), "bombardeiro longe da árvore não deveria cortar")
+	u.global_position = arvore.global_position + Vector3(2.0, 0, 0)
+	_check(not u.clique_vira_machadada(Vector3.RIGHT), "bombardeiro de costas para a árvore não deveria cortar")
+	u.reset_physics_interpolation()
+	u.set_class(load("res://config/classes/construtor.tres"))
+
+
 ## Maquininha: fabrica 1 a cada maquina_intervalo, para no máximo, pegar tira 1.
 func _maquina() -> void:
 	var cfg = get_node("/root/Config").cfg
@@ -586,3 +637,27 @@ func _alma() -> void:
 	# (tolerância para um abate de verdade no mesmo segundo)
 	_check(mascara.fatness >= esperado - 0.005 and mascara.fatness <= esperado * 3.0 + 0.005,
 		"alma: máscara deveria pesar %.3f, pesa %.3f" % [esperado, mascara.fatness])
+
+
+## Ciclo 2.5e: muralha em ferradura (vãos fora da muralha) e torre que entra
+## em alarme quando a máscara sai de casa.
+func _ferradura() -> void:
+	var ar = game.arena
+	var m = ar.map
+	if m.wall_arc_radius <= 0.0:
+		return
+	var runs: Array = ar.wall_arc_runs()
+	_check(runs.size() == m.wall_arc_gaps.size(), "ferradura: um trecho de muralha entre cada par de vãos")
+	var no_vao := false
+	for r: Array in runs:
+		for a in [0.0, m.wall_arc_gates[0]]:
+			if a > r[0] + 0.5 and a < r[1] - 0.5:
+				no_vao = true
+	_check(not no_vao, "ferradura: saída larga e portão lateral sem muralha")
+	for team in 2:
+		var k: Node = ar.keep_node[team]
+		var ap: AnimationPlayer = k.get_node_or_null("AnimationPlayer") if k else null
+		_check(ap != null and ap.current_animation == "respirar", "torre %d respira parada" % team)
+		ar.torre_alarme(team, true)
+		_check(ap != null and ap.current_animation == "alarme", "torre %d entra em alarme" % team)
+		ar.torre_alarme(team, false)

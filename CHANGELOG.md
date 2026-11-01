@@ -45,6 +45,97 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
   veja se dá para reconhecer cada tiro sem ler nada; se o golpe do Samurai/Ronin ficou com
   mais peso; suba uma oficina de mago de nível (anéis + letreiro) e capture a máscara
   (coluna de luz). Diga se ficou muito ou pouco na tela e se o FPS caiu.
+## Ciclo 2.5g (2026-11-01), Jogabilidade + Interface: página "Como jogar"
+- **Como jogar** (`scripts/ui/tutorial.gd`): 5 abas, Objetivo, Classes (4 papéis com as
+  variações, de onde saem e a Q de cada), Madeira (cortar, pegar, entregar, construir;
+  inclui o corte do Bombardeiro), Casinhas e níveis (maquininhas, oficinas, nível 2) e
+  Luz e Sombra (caminho que sela o outro, níveis 2 a 5). Os números saem do
+  `game_config`: mudou um custo lá, o texto muda junto. Visual com o Estilo "Festival
+  sombrio".
+- Abre sozinha na **1ª partida** (`Settings.tutorial_visto`), tem botão **Como jogar** ao
+  lado de JOGAR e é a 1ª aba do menu de pausa (Esc), junto de Controles e Configurações.
+- **Clipes** em cada aba, gravados do jogo (`assets/tutorial/<aba>/NN.jpg`, 10 quadros/s,
+  importados em WebP com perdas, ~1,5 MB no total). Só carregam quando a aba abre.
+  Ferramentas: `--tutorial=DIR` (print das abas) e `--clipe=DIR --clipe-ini=s
+  --classe=X [--clipe-cena=mascara]` (grava um clipe novo).
+- **O que testar**: (1) Abra o jogo (na 1ª vez a página abre sozinha; depois, botão
+  "Como jogar" na tela inicial ou Esc > Como jogar). (2) Passe pelas 5 abas: o texto
+  explica o Construtor de um jeito que dá para seguir? (3) Os clipes ajudam ou é melhor
+  trocar por cenas montadas (ex.: alguém roubando a máscara)?
+
+## Ciclo 2.5f (2026-10-31), Visual + Jogabilidade: pátio em ferradura e Torre da Máscara
+- **Pátio em ferradura** (prancha aprovada pelo Julio): muralha com passarela em arco de raio
+  22 m (antes era um retângulo de 32 × 28 m), aberta para o inimigo, com uma **saída larga** de
+  24 m entre duas torres e **2 portões laterais** que dão nas trilhas da floresta. As 4
+  maquininhas ficam no meio do arco, as oficinas vêm depois, e **Luz** (em cima) e **Sombra**
+  (embaixo) ficam nas pontas. Há uma praça de pedra no centro, calçadas até as saídas e
+  pilares com lanterna nas juntas da muralha.
+- **Torre da Máscara** (refeita do zero): tem 20 m, 3 andares e frisos na cor do time. A
+  **máscara Oni viva** na frente tem rugas, veias, órbitas fundas, olhos de fera (íris do
+  time e pupila em fenda), narinas que soltam fumaça, boca rosnando com fogo dentro,
+  mandíbula que respira, chifres em gomos com anéis de ouro, e juba e barba ao vento.
+  Animações: "respirar" (sempre) e **"alarme"** quando a máscara é roubada (olhos piscam
+  rápido, boca abre, fogo cresce, fumaça engrossa). Volta a respirar quando a máscara
+  está em casa.
+- Dados: campos novos `MapLayout.wall_arc_*` e `keep_model` (o padrão é 0/vazio, que mantém
+  a muralha retangular). Arena: `_wall_arc`, `wall_arc_runs`, `torre_alarme`. O minimapa
+  desenha o arco. Renascer (`spawn_spots`) em 6 pontos do arco, perto das saídas. O bosque
+  seguro foi para fora do portão de baixo, e o depósito ficou por dentro dele. 16 objetos
+  do meio do mapa que caíam dentro da ferradura saíram.
+- Desempenho: a torre tem ~7,3 mil triângulos e 5 peças animadas (olhos, mandíbula, fogo da
+  boca e 2 braseiros); as lanternas ficaram fixas para economizar chamadas de desenho.
+- QA do mapa: os avisos caíram de 38 para 9 (os 4 "inalcançáveis" em z = -46 já existiam).
+  Testes 167/167, com o `_ferradura` novo. 5 min simulados sem erro. O teste do Bombardeiro
+  longe da árvore agora procura um ponto longe de todas as plantas.
+- Saiu a escada da passarela: a muralha nova não tem acesso por cima (dá para voltar depois,
+  se fizer falta).
+- **O que testar**: (1) entre no seu pátio: ele deve parecer bem mais espaçoso, sem trombar
+  nas casinhas. (2) Saia pelos portões laterais até as trilhas. (3) Pare na frente da torre
+  e veja a máscara respirando e soltando fumaça. (4) Quando roubarem sua máscara, a torre
+  entra em alarme. (5) Veja o minimapa com o arco.
+
+## Ciclo 2.5e (2026-10-31), Interface: identidade "Festival sombrio" no jogo inteiro
+- **Fontes**: Lilita One (títulos, avisos, números, botões, letreiros 3D) com contorno
+  grosso de tinta e sombra sólida; Nunito Black no texto. Shojumaru e Barlow saíram
+  (OFL das novas em `assets/fonts`). Tudo passa por `scripts/ui/estilo.gd`; os nomes
+  antigos (`TITULO`, `FORTE`, `NUMERO`, `CORPO`) continuam valendo.
+- **Molduras**: placas de laca escura com borda de ouro e sombra sólida
+  (`Estilo.placa`); botões e aba escolhida em ouro com degradê (`Estilo.botao_ouro`,
+  um StyleBox desenhado à mão, porque o StyleBoxFlat não faz degradê). Paleta reduzida a
+  ouro, cor do time e laca.
+- **HUD cheio, preso nas bordas**: máscaras e placar numa faixa só no topo (antes eram
+  duas linhas descendo pela tela); **abates e quedas** novos no canto superior esquerdo;
+  aviso grande saiu do meio e fica logo abaixo do placar; dica colada embaixo. O centro
+  é da briga.
+- **Tela inicial**: controles em duas colunas; o botão JOGAR agora cabe na tela
+  (antes ficava cortado em 1280x720).
+- Mudanças pequenas em pastas de outros papéis (aviso): `game.gd` ganhou
+  `abates_jogador`/`quedas_jogador` e o modo de print `--menu=inicio|pausa`; Label3D de
+  `oficina`, `pilha`, `hat_pad`, `guia_construtor`, `fx`, `fx_poder` e
+  `contador_madeira` com Lilita e contorno de tinta. Guia atualizado:
+  `docs/estilo-textos.md`.
+- **O que testar**: abra o jogo e olhe a tela inicial (título, cartões, botão JOGAR de
+  ouro). Na partida, confira se dá para ler placar, vida, Chi e Q no meio de uma briga
+  com efeitos, e se o centro fica livre. Abata alguém e caia uma vez: os números no
+  canto superior esquerdo sobem. Esc: abas e botões de ouro; Configurações legíveis.
+
+## Ciclo 2.5d (2026-10-31), Jogabilidade: corte do Bombardeiro, contador de tora e ritmo
+- **Bug**: Bombardeiro (e qualquer lenhador que ataca de longe) seguia a seta até a
+  árvore e o clique jogava bomba. Agora, com uma planta jovem/adulta à frente a até ~3 m,
+  o clique vira **machadada** (anim. de golpe, 1 tora). Longe dela, bomba normal. Bots do
+  Bombardeiro chegam a 3 m para cortar. Teste novo `_machadada` (161 testes).
+  O Armadilheiro já cortava (é corpo a corpo); agora o teste garante isso.
+- **HUD**: ao lado de "Madeira do time: N" aparece **CARREGANDO 1/1** enquanto há tora
+  nos braços (nó novo no `hud.gd`, nada movido).
+- **Ritmo**: `MapLayout.spawn_spots` (+ `spawn_jitter`): renascer no ponto menos lotado
+  entre 6 pontos do pátio (o mapa em ferradura vai trocar pelos pontos do arco).
+  `game_config.inicio_calmo = 30` s: atacantes e confeiteiros ficam espalhados na própria
+  metade (frente e laterais); depois invadem. Kitsunes atacantes andam ~6 m atrás do
+  guerreiro aliado mais adiantado; o Construtor segue no bosque.
+- **O que testar**: (1) pegue o chapéu de Construtor, suba para Bombardeiro, siga a seta
+  e clique colado na árvore: deve sair machadada e tora. (2) Com a tora nos braços, veja
+  "CARREGANDO 1/1" embaixo à esquerda. (3) Nos primeiros 30 s ninguém deve invadir seu
+  castelo; depois a briga começa. (4) Morra algumas vezes: o renascer muda de lugar.
 
 ## Limpeza 2.5c (2026-10-31), revisão de código: tirar o que sobrou de versões antigas
 - **Nada muda no jogo** (regras, números, visual e controles iguais). Testes 155/155 e 5 min

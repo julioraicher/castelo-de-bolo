@@ -28,6 +28,8 @@ extends Resource
 ## Meia-largura do vão do portão na muralha da frente.
 @export var gate_half_width := 5.0
 @export var keep_position := Vector2(-8, 0)
+## Troca o modelo da torre principal só neste mapa (vazio = o do tema). Aceita {cor}.
+@export var keep_model := ""
 @export var keep_collider_size := Vector3(6.0, 6.0, 6.5)
 @export var tower_spots: PackedVector2Array = [Vector2(-13, -13), Vector2(-13, 13), Vector2(11, -13), Vector2(11, 13), Vector2(11, -5.5), Vector2(11, 5.5)]
 @export var tower_collider_radius := 1.8
@@ -48,6 +50,11 @@ extends Resource
 @export var pilha_spot := Vector2(8, -12)
 @export var spawn_min := Vector2(-1, -5)
 @export var spawn_max := Vector2(6, 5)
+## Pontos de renascer (locais do castelo, como hat_spots). Vazio = caixa
+## spawn_min/spawn_max. Com pontos, cada um renasce no menos lotado (+ um
+## sorteio de spawn_jitter m), para o time não sair todo pela mesma porta.
+@export var spawn_spots: PackedVector2Array = []
+@export var spawn_jitter := 1.2
 ## Quanto à frente da muralha os defensores ficam de guarda.
 @export var gate_guard_distance := 3.0
 ## Muralha com passarela: altura do caminho em cima (0 = muralha antiga, só bloqueia).
@@ -62,6 +69,25 @@ extends Resource
 @export var tower_model := ""
 ## Altura da bandeira na torre neste mapa (negativo = usa a do tema).
 @export var flag_height := -1.0
+
+@export_group("Muralha em arco")
+## Raio (linha do meio) da muralha em ferradura. 0 = muralha retangular antiga
+## (wall_back/front/half_width). Com arco, aquela caixa só serve de limite
+## (enfeites do chão, minimapa antigo) e wall_front + gate_guard_distance dá a guarda.
+@export var wall_arc_radius := 0.0
+## Centro do arco (coordenadas locais do castelo).
+@export var wall_arc_center := Vector2.ZERO
+## Vãos do arco: (ângulo do meio, meia-abertura), em graus. 0° aponta para o
+## inimigo, + para z+. Ex.: a saída larga, os portões e o lugar da torre.
+@export var wall_arc_gaps: PackedVector2Array = []
+## Ângulos (graus) dos portões: um modelo de portão no meio do vão.
+@export var wall_arc_gates: PackedFloat32Array = []
+@export var wall_arc_gate_model := ""
+## Pilar nas juntas do arco (a cada 2 módulos e nas pontas). Vazio = sem pilar.
+@export var wall_arc_pillar_model := ""
+@export var wall_arc_pillar_radius := 1.6
+## Ângulo máximo de cada módulo reto do arco (graus).
+@export var wall_arc_step := 14.0
 
 @export_group("Objetos")
 ## Objetos de cada pátio (coordenadas locais, aparecem nos dois castelos).

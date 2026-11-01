@@ -26,6 +26,8 @@ var caminho_classe: Array[StringName] = [&"", &""]
 var caminho_nivel := [0, 0]
 var _caminho_avisado := false
 var score := [0, 0]
+var abates_jogador := 0  # HUD (canto superior esquerdo)
+var quedas_jogador := 0
 var player: Unit
 var player_brain: PlayerBrain
 ## Guia do ciclo da madeira (seta/marcador) e minimapa do canto.
@@ -56,6 +58,8 @@ var _time := 0.0
 #                       morte) salvando um quadro a cada 2: prancha de animação
 #   --perf=N            mede o desempenho na qualidade N (0-3): a cada 5 s imprime
 #                       ms de CPU por quadro, draw calls, triângulos e objetos
+#   --menu=inicio|pausa com --autoplay: abre essa tela por cima da partida, sem
+#                       pausar (prints da interface)
 #   --testes            roda os testes de regra (tests/regras.gd) e sai com 0/1
 #   --qa-mapa=<pasta>   QA automático do mapa (tests/qa_mapa.gd): qa_mapa.txt
 #   --vitrine=<pasta>   com --classe: câmera parada, 3 alvos, o jogador faz 3 ataques,
@@ -69,6 +73,12 @@ var _equilibrio := false
 var _poderes := false
 var _poderes_t := 2.0
 var _shots_dir := ""
+var _menu_print := ""
+var _clipe_dir := ""  # --clipe=DIR [--clipe-ini=s]: grava os quadros de um clipe do tutorial
+var _clipe_ini := 10.0
+var _clipe_n := 0
+var _clipe_cena := ""  # --clipe-cena=mascara: põe o jogador do lado da máscara inimiga
+var _tutorial_dir := ""  # --tutorial=DIR: print de cada aba do "Como jogar" e sai
 var _vista := ""
 var _print_poder := false
 var _print_atraso := 0.15
@@ -125,8 +135,18 @@ func _ready() -> void:
 			_vitrine_dir = arg.trim_prefix("--vitrine=")
 			Settings.auto_quality = false  # o xvfb é lento: sem isso cairia para a Mínima
 			Settings.quality = 2
+		elif arg.begins_with("--clipe="):
+			_clipe_dir = arg.trim_prefix("--clipe=")
+		elif arg.begins_with("--clipe-cena="):
+			_clipe_cena = arg.trim_prefix("--clipe-cena=")
+		elif arg.begins_with("--clipe-ini="):
+			_clipe_ini = float(arg.trim_prefix("--clipe-ini="))
+		elif arg.begins_with("--tutorial="):
+			_tutorial_dir = arg.trim_prefix("--tutorial=")
 		elif arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
+		elif arg.begins_with("--menu="):
+			_menu_print = arg.trim_prefix("--menu=")
 		elif arg.begins_with("--vista="):
 			_vista = arg.trim_prefix("--vista=")
 		elif arg.begins_with("--mapa="):
@@ -200,7 +220,7 @@ func _ready() -> void:
 			if is_player and _classe_jogador != "":
 				cls = load("res://config/classes/%s.tres" % _classe_jogador)
 			u.setup(self, team, is_player, cls)
-			u.global_position = arena.random_spawn(team)
+			u.global_position = arena.random_spawn(team, units)
 			u.reset_physics_interpolation()
 			u.died.connect(_on_unit_died)
 			if is_player:
@@ -284,8 +304,47 @@ func _ready() -> void:
 	menus.started.connect(_on_started)
 	if _autoplay:
 		_on_started()
+		if _menu_print != "":
+			menus.mostrar_para_print(_menu_print)
 	else:
 		menus.show_start()
+	if _tutorial_dir != "":
+		_prints_tutorial.call_deferred(menus)
+
+
+## Clipe do tutorial: 1 quadro a cada 6 de física (10 por s), 45 quadros,
+## 384 px de largura, JPG. Depois: tools/importar_clipes.sh deixa leve (WebP).
+func _gravar_clipe() -> void:
+	if _clipe_n == 0 and _clipe_cena == "mascara" and is_instance_valid(player):
+		_clipe_cena = ""
+		var m := princesses[1 - player.team]
+		player.global_position = m.global_position - arena.forward(player.team) * 2.5
+		player.reset_physics_interpolation()
+		camera.snap()
+	if Engine.get_physics_frames() % 6 != 0:
+		return
+	var full := get_viewport().get_texture().get_image()
+	# Recorte do meio da tela (onde fica o boneco), 60% do tamanho.
+	var w := int(full.get_width() * 0.6)
+	var h := int(full.get_height() * 0.6)
+	var img := full.get_region(Rect2i((full.get_width() - w) / 2, (full.get_height() - h) / 2, w, h))
+	img.resize(384, 216, Image.INTERPOLATE_LANCZOS)
+	img.save_jpg("%s/%02d.jpg" % [_clipe_dir, _clipe_n], 0.8)
+	_clipe_n += 1
+	if _clipe_n >= 45:
+		get_tree().quit()
+
+
+## --tutorial=DIR: abre o "Como jogar", fotografa cada aba e sai.
+func _prints_tutorial(menus: Menus) -> void:
+	menus._abrir_tutorial()
+	var tabs: TabContainer = menus._tutorial._tabs
+	for i in tabs.get_tab_count():
+		tabs.current_tab = i
+		for f in 20:
+			await get_tree().process_frame
+		get_viewport().get_texture().get_image().save_jpg("%s/tutorial_%d.jpg" % [_tutorial_dir, i], 0.85)
+	get_tree().quit()
 
 
 func _on_started() -> void:
@@ -325,6 +384,11 @@ func _measure(delta: float) -> void:
 		_perf_t = 0.0
 
 
+## Começo calmo (inicio_calmo s): bots ficam na própria metade.
+func inicio_calmo() -> bool:
+	return _time < Config.cfg.inicio_calmo
+
+
 func _physics_process(delta: float) -> void:
 	_time += delta
 	if _shots_dir != "" and not _shot_times.is_empty() and _time >= _shot_times[0]:
@@ -333,6 +397,8 @@ func _physics_process(delta: float) -> void:
 		_filme()
 	if _vitrine_dir != "" and _time >= 1.0:
 		_vitrine()
+	if _clipe_dir != "" and _time >= _clipe_ini:
+		_gravar_clipe()
 	if Input.is_action_just_pressed("restart"):
 		get_tree().reload_current_scene()
 		return
@@ -772,6 +838,14 @@ func soltar_tora(pos: Vector3, dir: Vector3) -> Tora:
 
 ## Golpe de Construtor: acerta as plantas no arco do golpe (a mais perto).
 func golpear_plantas(u: Unit, dir: Vector3, alcance: float, arco_deg: float) -> bool:
+	var melhor := planta_no_alcance(u, dir, alcance, arco_deg)
+	if melhor == null:
+		return false
+	return melhor.golpe(u)
+
+
+## Planta cortável (jovem ou adulta) mais perto, dentro do alcance e do arco.
+func planta_no_alcance(u: Unit, dir: Vector3, alcance: float, arco_deg: float) -> Planta:
 	var melhor: Planta = null
 	var melhor_d := alcance
 	for p in plantas:
@@ -784,9 +858,7 @@ func golpear_plantas(u: Unit, dir: Vector3, alcance: float, arco_deg: float) -> 
 			continue
 		melhor = p
 		melhor_d = d
-	if melhor == null:
-		return false
-	return melhor.golpe(u)
+	return melhor
 
 
 func entregar_tora(u: Unit) -> void:
@@ -1032,6 +1104,10 @@ func _on_unit_died(u: Unit, killer: Unit) -> void:
 	if killer and killer.team != u.team:
 		_alma_de_abate(u, killer.team)
 	if u == player:
+		quedas_jogador += 1
+	elif killer == player and u.team != player.team:
+		abates_jogador += 1
+	if u == player:
 		hud.show_big("Você caiu! Voltando como recruta...", Color(1, 0.6, 0.6), 1.8)
 	elif killer == player:
 		# Abate do jogador: o espírito sobe, a tela dá um tranco e o tempo engasga.
@@ -1086,6 +1162,7 @@ func slowmo(scale: float, real_time: float) -> void:
 
 func _on_princess_changed(p: Princess) -> void:
 	_log("mascara %s -> %s [%d] (t=%.0fs)" % [Config.TEAM_NAMES[p.team], p.state_text(), p.state, _time])
+	arena.torre_alarme(p.team, p.state != Princess.State.HOME)
 	if game_over:
 		return
 	var ours := p.team == player.team

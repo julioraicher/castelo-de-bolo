@@ -26,6 +26,7 @@ script = ExtResource("1")
 villager = ExtResource("2")
 hat_class_list = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource("4"), ExtResource("of_kitsune"), ExtResource("11")])
 bot_start_classes = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource("4"), ExtResource("of_kitsune"), ExtResource("11"), ExtResource("2")])
+inicio_calmo = 30.0
 oficina_classes = Array[ExtResource("1_3yous")]([ExtResource("of_ronin_oni"), ExtResource("of_arqueiro_yumi"), ExtResource("of_armadilheiro"), ExtResource("of_bombardeiro")])
 magos_opostos = Array[ExtResource("1_3yous")]([ExtResource("of_kitsune_luz"), ExtResource("of_kitsune_sombria")])
 themes = Array[ExtResource("8_txtu1")]([ExtResource("11_dia"), ExtResource("12_crep"), ExtResource("9_f5mmm"), ExtResource("10_wo1y8")])

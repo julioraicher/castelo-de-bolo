@@ -125,6 +125,7 @@ var _no_chao := true
 var _windup_t := 0.0  # antecipação: o golpe já começou, o dano ainda não saiu
 var _golpe_mult := 1.0
 var _golpe_final := false
+var _golpe_machado := false  # este clique é machadada (lenhador de longe perto da planta)
 var _carga_vista := -1.0  # último poder_carga mandado ao material
 var _morte_t := -1.0  # s desde a morte (pulinho cômico); < 0 = vivo
 ## Construindo uma oficina (marcado pela Oficina a cada quadro).
@@ -384,6 +385,21 @@ func lenhador() -> bool:
 	return stats.velocidade_obra > 0.0
 
 
+## Alcance da machadada (corte de planta). Quem ataca de longe (Bombardeiro)
+## usa o alcance do Construtor: perto da planta, o clique vira machadada.
+const MACHADO_ALCANCE := 2.6
+const MACHADO_ARCO := 120.0
+func alcance_corte() -> float:
+	return stats.attack_range if stats.attack_kind == "melee" else MACHADO_ALCANCE
+
+
+## O próximo clique corta planta em vez do ataque normal? Só para lenhador que
+## não é corpo a corpo (o corpo a corpo já corta dentro do próprio golpe).
+func clique_vira_machadada(dir: Vector3) -> bool:
+	return lenhador() and stats.attack_kind != "melee" \
+			and game.planta_no_alcance(self, dir, MACHADO_ALCANCE + 0.6, MACHADO_ARCO) != null
+
+
 func drop_tora() -> void:
 	if carried_tora:
 		carried_tora.largar()
@@ -608,6 +624,11 @@ func _attack() -> void:
 	var mult := 1.0
 	var finisher := false
 	var combo := stats.combo_anims
+	_golpe_machado = clique_vira_machadada(aim_dir.normalized())
+	if _golpe_machado:
+		anim = "1H_Melee_Attack_Chop"
+		_attack_cd = 0.7
+		combo = []
 	if combo.size() > 0:
 		_combo_i = (_combo_i + 1) % combo.size() if _combo_t > 0.0 else 0
 		anim = combo[_combo_i]
@@ -639,6 +660,16 @@ func _attack_hit() -> void:
 	var forte := 1.4 if finisher else 1.0
 	_mola(2.0 * forte, 7.0 * forte)  # estica para a frente no golpe
 	var dir := aim_dir.normalized()
+	if _golpe_machado:
+		_golpe_machado = false
+		Sfx.play("swing", global_position, 0.12)
+		Fx.slash(game, global_position + Vector3(0, 1.0, 0), dir, MACHADO_ALCANCE + 0.3, MACHADO_ARCO, Color(1, 1, 1), 0.0, false)
+		if game.golpear_plantas(self, dir, MACHADO_ALCANCE + 0.6, MACHADO_ARCO):
+			hitstop(Config.cfg.hitstop_time)
+			if is_player:
+				game.camera.add_trauma(0.25)
+				game.camera.kick(dir, 0.3)
+		return
 	match stats.attack_kind:
 		"melee":
 			Sfx.play("swing", global_position, 0.12)
@@ -1241,7 +1272,7 @@ func _die(killer: Unit) -> void:
 func _respawn() -> void:
 	alive = true
 	collision_layer = Config.LAYER_UNITS
-	global_position = game.arena.random_spawn(team)
+	global_position = game.arena.random_spawn(team, game.units)
 	reset_physics_interpolation()  # teleporte: sem rastro interpolado até o castelo
 	velocity = Vector3.ZERO
 	_knock = Vector3.ZERO

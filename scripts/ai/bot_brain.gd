@@ -222,6 +222,21 @@ func _think() -> void:
 			_wander = Vector3(randf_range(-4, 4), 0, randf_range(-4, 4))
 		return
 
+	# Começo calmo: atacante e confeiteiro se espalham na própria metade (pela
+	# frente e pelas laterais), esperando o fim do relógio para invadir.
+	if role != Role.DEFEND and game.inicio_calmo():
+		if _wander == Vector3.ZERO or randf() < 0.03:
+			_wander = Vector3(randf_range(6, 16), 0, randf_range(-18, 18))
+		_goal = arena.gate_spot[unit.team] + _wander * Vector3(arena.forward(unit.team).x, 1, 1)
+		return
+	# Magos ficam atrás da linha: seguem o guerreiro aliado mais adiantado.
+	if role == Role.ATTACK and eh_mago():
+		var frente := _aliado_mais_adiantado()
+		if frente:
+			if randf() < 0.15 or _wander == Vector3.ZERO:
+				_wander = Vector3(randf_range(-3, 3), 0, randf_range(-4, 4))
+			_goal = frente.global_position - arena.forward(unit.team) * 6.0 + _wander
+			return
 	match role:
 		Role.ATTACK:
 			_goal = their_princess.global_position
@@ -235,6 +250,28 @@ func _think() -> void:
 				_goal = cake.global_position
 			else:
 				_goal = arena.gate_spot[unit.team]
+
+
+## Kitsunes (e as variações): ficam atrás dos guerreiros.
+func eh_mago() -> bool:
+	return unit.stats.id == &"kitsune" or unit.stats.classe_base == &"kitsune"
+
+
+## Aliado vivo, não mago nem lenhador, mais adiantado rumo ao inimigo.
+func _aliado_mais_adiantado() -> Unit:
+	var fx := game.arena.forward(unit.team).x
+	var melhor: Unit = null
+	var melhor_x := -INF
+	for u in game.units:
+		if u == unit or not u.alive or u.team != unit.team or u.is_villager() or u.lenhador():
+			continue
+		if u.brain is BotBrain and (u.brain as BotBrain).eh_mago():
+			continue
+		var x := u.global_position.x * fx
+		if x > melhor_x:
+			melhor_x = x
+			melhor = u
+	return melhor
 
 
 ## Ciclo de trabalho do Construtor. true = já escolheu o que fazer.
@@ -377,7 +414,7 @@ func _combat() -> void:
 		if _planta and _planta.adulta() and not unit.carried_tora:
 			var to_p := _planta.global_position - unit.global_position
 			to_p.y = 0
-			if to_p.length() <= unit.stats.attack_range + 0.4:
+			if to_p.length() <= unit.alcance_corte() + 0.4:
 				unit.aim_dir = to_p.normalized()
 				unit.wants_attack = true
 				return

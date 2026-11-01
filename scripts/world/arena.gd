@@ -82,8 +82,23 @@ func forward(team: int) -> Vector3:
 	return Vector3.RIGHT if team == Config.TEAM_BLUE else Vector3.LEFT
 
 
-func random_spawn(team: int) -> Vector3:
-	return to_world(team, randf_range(map.spawn_min.x, map.spawn_max.x), randf_range(map.spawn_min.y, map.spawn_max.y))
+func random_spawn(team: int, units: Array = []) -> Vector3:
+	if map.spawn_spots.is_empty():
+		return to_world(team, randf_range(map.spawn_min.x, map.spawn_max.x), randf_range(map.spawn_min.y, map.spawn_max.y))
+	# O ponto com menos aliados vivos perto (empate: sorteio).
+	var melhor := Vector3.ZERO
+	var menos := 1 << 20
+	for s in map.spawn_spots:
+		var p := to_world(team, s.x, s.y)
+		var n := 0
+		for u in units:
+			if u.alive and u.team == team and u.global_position.distance_to(p) < 5.0:
+				n += 1
+		if n < menos or (n == menos and randf() < 0.5):
+			menos = n
+			melhor = p
+	var j := map.spawn_jitter
+	return melhor + Vector3(randf_range(-j, j), 0.0, randf_range(-j, j))
 
 
 ## Ponto livre no chão do meio do mapa (espíritos e itens). Evita telhados,
@@ -113,6 +128,23 @@ func clamp_to_arena(p: Vector3) -> Vector3:
 
 var _sun: DirectionalLight3D
 var _static_models: Array[Node3D] = []
+## Torre principal de cada time (a Torre da Máscara anima: ver torre_alarme).
+var keep_node: Array = [null, null]
+
+
+## Máscara roubada: a torre entra em alarme (olhos e fogo crescem, boca abre);
+## volta a respirar quando a máscara está em casa. Torre sem animação: nada.
+func torre_alarme(team: int, ligado: bool) -> void:
+	var k: Node = keep_node[team]
+	if k == null or not is_instance_valid(k):
+		return
+	var ap := k.get_node_or_null("AnimationPlayer") as AnimationPlayer
+	if ap:
+		ap.play("alarme" if ligado else "respirar", 0.4)
+	var f := k.get_node_or_null("Fumaca") as CPUParticles3D
+	if f:
+		f.amount = 24 if ligado else 8
+
 var _env: Environment
 
 
@@ -234,18 +266,22 @@ func _build_castle(team: int) -> void:
 
 	# Torre principal (keep) atrás da princesa.
 	var kp := m.keep_position
-	_model_path(theme.model_path(theme.keep_model, team), to_world(team, kp.x, kp.y), theme.keep_scale, face - PI / 2)
+	var km := m.keep_model if m.keep_model != "" else theme.keep_model
+	keep_node[team] = _model_path(theme.model_path(km, team), to_world(team, kp.x, kp.y), theme.keep_scale if m.keep_model == "" else 1.0, face - PI / 2 if m.keep_model == "" else face)
 	_box_collider(to_world(team, kp.x, kp.y, m.keep_collider_size.y / 2.0), m.keep_collider_size)
 
 	# Muralhas: fundo, laterais e frente com portão (vão em |lz| < gate_half_width).
 	var back := m.wall_back
 	var front := m.wall_front
 	var w := m.wall_half_width
-	_wall(team, Vector2(back, -w), Vector2(back, w))
-	_wall(team, Vector2(back, -w), Vector2(front, -w))
-	_wall(team, Vector2(back, w), Vector2(front, w))
-	_wall(team, Vector2(front, -w), Vector2(front, -m.gate_half_width))
-	_wall(team, Vector2(front, m.gate_half_width), Vector2(front, w))
+	if m.wall_arc_radius > 0.0:
+		_wall_arc(team)
+	else:
+		_wall(team, Vector2(back, -w), Vector2(back, w))
+		_wall(team, Vector2(back, -w), Vector2(front, -w))
+		_wall(team, Vector2(back, w), Vector2(front, w))
+		_wall(team, Vector2(front, -w), Vector2(front, -m.gate_half_width))
+		_wall(team, Vector2(front, m.gate_half_width), Vector2(front, w))
 
 	# Torres com bandeiras.
 	for c in m.tower_spots:
@@ -329,12 +365,92 @@ func _wall(team: int, a: Vector2, b: Vector2) -> void:
 	_nav.add_child(body)
 
 
+## Trechos contínuos do arco [a0, a1] em graus (fora dos vãos), em ordem.
+var _runs_cache: Array = []
+
+
+func wall_arc_runs() -> Array:
+	if not _runs_cache.is_empty():
+		return _runs_cache
+	var gaps: Array = []
+	for gp in map.wall_arc_gaps:
+		gaps.append([gp.x - gp.y, gp.x + gp.y])
+	# Varre de -180 a 180 em passos de 1°: simples e suficiente para poucos vãos.
+	var runs: Array = []
+	var ini := NAN
+	for i in 361:
+		var a := -180.0 + i
+		var livre := i < 360
+		for gp: Array in gaps:
+			for off in [-360.0, 0.0, 360.0]:
+				if a > gp[0] + off and a < gp[1] + off:
+					livre = false
+		if livre and is_nan(ini):
+			ini = a
+		elif not livre and not is_nan(ini):
+			runs.append([ini, a])
+			ini = NAN
+	# Junta o trecho que atravessa ±180.
+	if runs.size() > 1 and runs[0][0] == -180.0 and runs[-1][1] == 180.0:
+		runs[0][0] = runs[-1][0] - 360.0
+		runs.pop_back()
+	# Ajusta as pontas para os vãos exatos.
+	for r: Array in runs:
+		for gp: Array in gaps:
+			for off in [-360.0, 0.0, 360.0]:
+				if absf(r[0] - (gp[1] + off)) <= 1.0:
+					r[0] = gp[1] + off
+				if absf(r[1] - (gp[0] + off)) <= 1.0:
+					r[1] = gp[0] + off
+	_runs_cache = runs
+	return runs
+
+
+func _arc_local(graus: float, r: float) -> Vector2:
+	var a := deg_to_rad(graus)
+	return map.wall_arc_center + Vector2(cos(a), sin(a)) * r
+
+
+## Muralha em ferradura: módulos retos (cordas) ao longo do arco, pilares nas
+## juntas e um portão no meio de cada vão listado em wall_arc_gates.
+func _wall_arc(team: int) -> void:
+	var m := map
+	var R := m.wall_arc_radius
+	for run: Array in wall_arc_runs():
+		var a0: float = run[0]
+		var a1: float = run[1]
+		var n := maxi(1, int(ceil((a1 - a0) / m.wall_arc_step)))
+		for i in n:
+			_wall(team, _arc_local(lerpf(a0, a1, float(i) / n), R), _arc_local(lerpf(a0, a1, float(i + 1) / n), R))
+		if m.wall_arc_pillar_model != "":
+			for i in n + 1:
+				if i % 2 == 1 and i != n:
+					continue
+				var lp := _arc_local(lerpf(a0, a1, float(i) / n), R)
+				var wp := to_world(team, lp.x, lp.y)
+				var c := to_world(team, m.wall_arc_center.x, m.wall_arc_center.y)
+				var fora := (wp - c).normalized()
+				# O pilar tem a lanterna no -x local: -x aponta para dentro.
+				_model_path(theme.model_path(m.wall_arc_pillar_model), wp, 1.0, atan2(-fora.z, fora.x))
+				_cylinder_collider(wp, m.wall_arc_pillar_radius, m.wall_height + 2.0)
+	if m.wall_arc_gate_model != "":
+		for ga in m.wall_arc_gates:
+			var lp := _arc_local(ga, R)
+			var wp := to_world(team, lp.x, lp.y)
+			var c := to_world(team, m.wall_arc_center.x, m.wall_arc_center.y)
+			var fora := (wp - c).normalized()
+			# Portão: o vão fica no z local, as portas abrem para o -x (dentro).
+			_model_path(theme.model_path(m.wall_arc_gate_model), wp, 1.0, atan2(-fora.z, fora.x))
+
+
 ## Muralha com passarela: bloco maciço até `wall_height` (dá para andar em
 ## cima) e uma mureta do lado de fora. O modelo tem a mureta no +z local; se o
 ## lado de fora for o -z, ele é girado meia volta.
 func _wall_walk(team: int, wa: Vector3, wb: Vector3, angle: float, length: float) -> void:
 	var mid := (wa + wb) / 2.0
 	var centro := to_world(team, (map.wall_back + map.wall_front) / 2.0, 0.0)
+	if map.wall_arc_radius > 0.0:
+		centro = to_world(team, map.wall_arc_center.x, map.wall_arc_center.y)
 	var local_z := Vector3(sin(angle), 0, cos(angle))
 	var fora := 1.0 if local_z.dot(mid - centro) > 0.0 else -1.0
 	var pieces := _static_models.slice(_static_models.size() - int(ceil(length / theme.wall_module_length)))
