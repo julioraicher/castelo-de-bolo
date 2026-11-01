@@ -42,29 +42,8 @@ func setup(game: Game, shooter: Unit, origin: Vector3, dir: Vector3, p_kind: Str
 const SOM_LANCAR := {"flecha": "shoot", "shuriken": "lancar_metal", "bomba": "pavio", "fogo": "fogo", "chi": "luz", "magia": "sombra"}
 const SOM_ACERTO := {"flecha": "flecha_chao", "shuriken": "tinido", "bomba": "explosao", "fogo": "brasa", "chi": "sino", "magia": "implosao"}
 var nivel := 1  # 2 = tiro carregado (rastro e impacto maiores)
-
-
-static var _star: ArrayMesh
 var kind := "flecha"
 var _spin: Node3D
-
-
-static func _star_mesh() -> ArrayMesh:
-	if _star:
-		return _star
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for i in 4:
-		var a := TAU * i / 4.0
-		var p := Vector3(cos(a), sin(a), 0) * 0.3
-		var e := Vector3(cos(a + PI / 4), sin(a + PI / 4), 0) * 0.08
-		var d := Vector3(cos(a - PI / 4), sin(a - PI / 4), 0) * 0.08
-		for f in [[Vector3.ZERO, d, p], [Vector3.ZERO, p, e], [Vector3.ZERO, p, d], [Vector3.ZERO, e, p]]:
-			for v in f:
-				st.add_vertex(v)
-	st.generate_normals()
-	_star = st.commit()
-	return _star
 
 
 ## Carga máxima: flecha/shuriken atravessa carga_perfura inimigos e fica maior

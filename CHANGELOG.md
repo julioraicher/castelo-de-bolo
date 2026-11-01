@@ -15,7 +15,8 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 - **Docs**: apagados `docs/identidade.md` (fase "Clãs de Neon"), `docs/design-jogo.md`
   (substituído por `docs/elenco-ciclo-2.4.md`) e `docs/revisao-2.4.md` (relatório
   pontual). ROADMAP com os Ciclos 2.3 a 2.5 marcados; AULA sem o Clérigo.
-- Duas constantes sem uso em `scripts/ui/estilo.gd`. Nenhuma regra de jogo mudou.
+- Duas constantes sem uso em `scripts/ui/estilo.gd` e a malha de estrela antiga do
+  `projectile.gd` (sobrou depois que os efeitos foram para `fx_projetil.gd`). Nenhuma regra de jogo mudou.
 - **O que testar**: nada novo para jogar. Só confira que o jogo abre e as 4 maquininhas
   do pátio aparecem como antes.
 
