@@ -72,6 +72,11 @@ var _poderes := false
 var _poderes_t := 2.0
 var _shots_dir := ""
 var _menu_print := ""
+var _clipe_dir := ""  # --clipe=DIR [--clipe-ini=s]: grava os quadros de um clipe do tutorial
+var _clipe_ini := 10.0
+var _clipe_n := 0
+var _clipe_cena := ""  # --clipe-cena=mascara: põe o jogador do lado da máscara inimiga
+var _tutorial_dir := ""  # --tutorial=DIR: print de cada aba do "Como jogar" e sai
 var _vista := ""
 var _print_poder := false
 var _print_atraso := 0.15
@@ -120,6 +125,14 @@ func _ready() -> void:
 			_classe_jogador = arg.trim_prefix("--classe=")
 		elif arg.begins_with("--filme="):
 			_filme_dir = arg.trim_prefix("--filme=")
+		elif arg.begins_with("--clipe="):
+			_clipe_dir = arg.trim_prefix("--clipe=")
+		elif arg.begins_with("--clipe-cena="):
+			_clipe_cena = arg.trim_prefix("--clipe-cena=")
+		elif arg.begins_with("--clipe-ini="):
+			_clipe_ini = float(arg.trim_prefix("--clipe-ini="))
+		elif arg.begins_with("--tutorial="):
+			_tutorial_dir = arg.trim_prefix("--tutorial=")
 		elif arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
 		elif arg.begins_with("--menu="):
@@ -285,6 +298,43 @@ func _ready() -> void:
 			menus.mostrar_para_print(_menu_print)
 	else:
 		menus.show_start()
+	if _tutorial_dir != "":
+		_prints_tutorial.call_deferred(menus)
+
+
+## Clipe do tutorial: 1 quadro a cada 6 de física (10 por s), 45 quadros,
+## 384 px de largura, JPG. Depois: tools/importar_clipes.sh deixa leve (WebP).
+func _gravar_clipe() -> void:
+	if _clipe_n == 0 and _clipe_cena == "mascara" and is_instance_valid(player):
+		_clipe_cena = ""
+		var m := princesses[1 - player.team]
+		player.global_position = m.global_position - arena.forward(player.team) * 2.5
+		player.reset_physics_interpolation()
+		camera.snap()
+	if Engine.get_physics_frames() % 6 != 0:
+		return
+	var full := get_viewport().get_texture().get_image()
+	# Recorte do meio da tela (onde fica o boneco), 60% do tamanho.
+	var w := int(full.get_width() * 0.6)
+	var h := int(full.get_height() * 0.6)
+	var img := full.get_region(Rect2i((full.get_width() - w) / 2, (full.get_height() - h) / 2, w, h))
+	img.resize(384, 216, Image.INTERPOLATE_LANCZOS)
+	img.save_jpg("%s/%02d.jpg" % [_clipe_dir, _clipe_n], 0.8)
+	_clipe_n += 1
+	if _clipe_n >= 45:
+		get_tree().quit()
+
+
+## --tutorial=DIR: abre o "Como jogar", fotografa cada aba e sai.
+func _prints_tutorial(menus: Menus) -> void:
+	menus._abrir_tutorial()
+	var tabs: TabContainer = menus._tutorial._tabs
+	for i in tabs.get_tab_count():
+		tabs.current_tab = i
+		for f in 20:
+			await get_tree().process_frame
+		get_viewport().get_texture().get_image().save_jpg("%s/tutorial_%d.jpg" % [_tutorial_dir, i], 0.85)
+	get_tree().quit()
 
 
 func _on_started() -> void:
@@ -335,6 +385,8 @@ func _physics_process(delta: float) -> void:
 		_take_shot()
 	if _filme_dir != "" and _time >= 3.0:
 		_filme()
+	if _clipe_dir != "" and _time >= _clipe_ini:
+		_gravar_clipe()
 	if Input.is_action_just_pressed("restart"):
 		get_tree().reload_current_scene()
 		return
