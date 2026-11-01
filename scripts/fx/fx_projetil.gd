@@ -555,7 +555,9 @@ static func soltar_rastro(p: Node3D, g: Node) -> void:
 			g.add_child(c)
 			c.global_transform = xf
 			c.emitting = false
-			g.get_tree().create_timer(c.lifetime + 0.05).timeout.connect(c.queue_free)
+			var tw := c.create_tween()
+			tw.tween_interval(c.lifetime + 0.05)
+			tw.tween_callback(c.queue_free)
 
 
 # --- Impactos -----------------------------------------------------------------------
@@ -594,9 +596,11 @@ static func impacto(g: Node, at: Vector3, kind: String, dir: Vector3, nivel := 1
 		"magia":  # implosão: a sombra se fecha no ponto e estala
 			ps(g, at, quad("fumaca", tex_fumaca()), Color(0.12, 0.04, 0.2, 0.85), 1, 0.28, {"s0": 2.2 * k, "curva": "implode"})
 			ps(g, at, quad("brilho", tex_brilho()), COR_VAZIO, _qtd(int(8 * k)), 0.28, {"esfera": 1.3 * k, "radial": -28.0, "s0": 0.2, "s1": 0.35})
-			g.get_tree().create_timer(0.24).timeout.connect(func() -> void:
-				if is_instance_valid(g):
-					brilho(g, at, COR_VAZIO, 1.2 * k, 0.16))
+			# O estalo sai 0,24 s depois; o tween morre junto com o nó (sem
+			# chamar nada solto se a partida acabar antes).
+			var tw := g.create_tween()
+			tw.tween_interval(0.24)
+			tw.tween_callback(brilho.bind(g, at, COR_VAZIO, 1.2 * k, 0.16))
 		"bomba":
 			explosao(g, at, 2.0 * k)
 		"terra":  # pisão/fúria: poeira e pedrinhas
@@ -676,10 +680,11 @@ static func marca_corpo(u: Node3D, kind: String) -> void:
 		antiga.name = "MarcaVelha"
 	var p := ps(u, Vector3(0, 1.2, 0), mesh, cor, n, vida, o)
 	p.name = "MarcaCorpo"
-	u.get_tree().create_timer(1.0).timeout.connect(func() -> void:
-		if is_instance_valid(p):
-			p.emitting = false
-			p.get_tree().create_timer(vida).timeout.connect(p.queue_free))
+	var tw := p.create_tween()
+	tw.tween_interval(1.0)
+	tw.tween_callback(p.set_emitting.bind(false))
+	tw.tween_interval(vida)
+	tw.tween_callback(p.queue_free)
 
 
 ## Flecha/shuriken cravada (no corpo ou no chão) por alguns segundos.
@@ -699,7 +704,9 @@ static func cravar(parent: Node3D, at: Vector3, dir: Vector3, kind: String, vida
 	if kind == "shuriken":
 		mi.rotate_object_local(Vector3.RIGHT, PI / 2)
 		mi.scale = Vector3.ONE * 0.8
-	parent.get_tree().create_timer(vida).timeout.connect(mi.queue_free)
+	var tw := mi.create_tween()
+	tw.tween_interval(vida)
+	tw.tween_callback(mi.queue_free)
 
 
 ## Esquenta os materiais daqui (no navegador cada shader novo compila na

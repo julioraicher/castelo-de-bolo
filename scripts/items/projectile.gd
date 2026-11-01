@@ -31,8 +31,6 @@ func setup(game: Game, shooter: Unit, origin: Vector3, dir: Vector3, p_kind: Str
 	velocity = dir.normalized() * shooter.stats.projectile_speed
 	damage = shooter.stats.damage * shooter.damage_mult()
 	kind = {"arrow": "flecha", "magic": "magia"}.get(p_kind, p_kind)
-	# Forma, cor e rastro de cada projétil: FxProjetil (docs/direcao-efeitos.md).
-	_spin = FxProjetil.montar(self, kind, Config.team_color(shooter.team))
 	# Leque/Chuva soltam vários de uma vez: um som só por rajada.
 	var agora := Time.get_ticks_msec()
 	if agora - int(shooter.get_meta("som_t", -1000)) > 60:
@@ -83,6 +81,9 @@ func carregar() -> void:
 
 
 func _ready() -> void:
+	# Forma, cor e rastro de cada projétil: FxProjetil (docs/direcao-efeitos.md).
+	# Aqui (já na árvore): o rastro em coordenadas do mundo lê a posição global.
+	_spin = FxProjetil.montar(self, kind, Config.team_color(owner_unit.team))
 	if velocity.length_squared() > 1e-6:  # look_at falha com alvo na mesma posição
 		look_at(global_position + velocity, Vector3.UP)
 
