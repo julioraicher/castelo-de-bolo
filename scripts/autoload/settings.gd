@@ -8,7 +8,7 @@ signal changed
 const PATH := "user://configuracoes.cfg"
 const DIFFICULTIES := ["Fácil", "Normal", "Difícil"]
 const QUALITIES := ["Mínima", "Baixa", "Média", "Alta"]
-const KEYS := ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty", "quality", "show_fps", "theme", "auto_quality", "mapa"]
+const KEYS := ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty", "quality", "show_fps", "theme", "auto_quality", "mapa", "tutorial_visto"]
 
 var music_volume := 0.8      # 0..1
 var sfx_volume := 0.9        # 0..1
@@ -23,6 +23,7 @@ var auto_quality := true
 var show_fps := false
 var theme := 0               # índice em GameConfig.themes
 var mapa := 0                # índice em GameConfig.maps
+var tutorial_visto := false  # "Como jogar" abre sozinho só na 1ª partida
 
 
 func _ready() -> void:

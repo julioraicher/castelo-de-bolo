@@ -12,6 +12,8 @@ const GOLD := Estilo.OURO
 
 var _start_panel: Control
 var _pause_panel: Control
+var _tutorial_panel: Control  # "Como jogar" por cima da tela inicial
+var _tutorial: Tutorial
 var _tabs: TabContainer
 var _started := false  # fica falso no modo teste (--autoplay), que não deve pausar sozinho
 
@@ -25,11 +27,29 @@ func _ready() -> void:
 	_pause_panel = _build_pause()
 	_pause_panel.visible = false
 	add_child(_pause_panel)
+	_tutorial_panel = _build_tutorial()
+	_tutorial_panel.visible = false
+	add_child(_tutorial_panel)
 
 
 func show_start() -> void:
 	_start_panel.visible = true
 	get_tree().paused = true
+	if not Settings.tutorial_visto:
+		_abrir_tutorial()
+
+
+func _abrir_tutorial(aba := "") -> void:
+	_tutorial_panel.visible = true
+	if aba != "":
+		_tutorial.abrir(aba)
+
+
+func _fechar_tutorial() -> void:
+	_tutorial_panel.visible = false
+	if not Settings.tutorial_visto:
+		Settings.tutorial_visto = true
+		Settings.save()
 
 
 ## Só para prints (--menu=inicio|pausa): mostra a tela sem pausar o jogo.
@@ -38,13 +58,18 @@ func mostrar_para_print(qual: String) -> void:
 
 
 func is_open() -> bool:
-	return _start_panel.visible or _pause_panel.visible
+	return _start_panel.visible or _pause_panel.visible or _tutorial_panel.visible
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("fullscreen"):
 		Settings.toggle_fullscreen()
 		get_viewport().set_input_as_handled()
+		return
+	if _tutorial_panel.visible:
+		if event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
+			_fechar_tutorial()
+			get_viewport().set_input_as_handled()
 		return
 	if _start_panel.visible:
 		if event.is_action_pressed("ui_accept"):
@@ -106,11 +131,17 @@ func _build_start() -> Control:
 		dicas.add_child(_dica(tip[0], tip[1], tip[2], tip[3]))
 	box.add_child(dicas)
 	box.add_child(_controls_grid(2))
+	var botoes := HBoxContainer.new()
+	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
+	botoes.add_theme_constant_override("separation", 16)
+	var como := _button("Como jogar")
+	como.pressed.connect(_abrir_tutorial)
+	botoes.add_child(como)
 	var play := _button("JOGAR   ·   Enter")
 	play.custom_minimum_size = Vector2(300, 58)
-	play.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	play.pressed.connect(_begin)
-	box.add_child(play)
+	botoes.add_child(play)
+	box.add_child(botoes)
 	play.call_deferred("grab_focus")
 	return root
 
@@ -137,7 +168,7 @@ func _dica(icone: String, cor: Color, titulo: String, texto: String) -> PanelCon
 
 func _build_pause() -> Control:
 	var root := _backdrop()
-	var box := _card(root, Vector2(700, 0))
+	var box := _card(root, Vector2(1000, 0))
 	box.add_child(Estilo.titulo("Pausado", 64, GOLD))
 	box.add_child(Estilo.ornamento(300.0))
 	_tabs = TabContainer.new()
@@ -148,6 +179,10 @@ func _build_pause() -> Control:
 	_margins(controls, 16)
 	controls.add_child(_controls_grid())
 	_tabs.add_child(controls)
+	var como := Tutorial.new()
+	como.name = "Como jogar"
+	_tabs.add_child(como)
+	_tabs.move_child(como, 0)
 	var settings := MarginContainer.new()
 	settings.name = "Configurações"
 	_margins(settings, 16)
@@ -172,6 +207,21 @@ func _build_pause() -> Control:
 			get_tree().quit())
 		row.add_child(quit)
 	box.add_child(row)
+	return root
+
+
+## "Como jogar" sozinho (1ª partida e botão da tela inicial).
+func _build_tutorial() -> Control:
+	var root := _backdrop()
+	var box := _card(root, Vector2(1100, 0))
+	box.add_child(Estilo.titulo("Como jogar", 56, GOLD))
+	box.add_child(Estilo.ornamento(360.0))
+	_tutorial = Tutorial.new()
+	box.add_child(_tutorial)
+	var ok := _button("Entendi   ·   Esc")
+	ok.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	ok.pressed.connect(_fechar_tutorial)
+	box.add_child(ok)
 	return root
 
 

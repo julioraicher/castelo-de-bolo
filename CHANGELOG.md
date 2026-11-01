@@ -5,6 +5,24 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.5g (2026-11-01), Jogabilidade + Interface: página "Como jogar"
+- **Como jogar** (`scripts/ui/tutorial.gd`): 5 abas, Objetivo, Classes (4 papéis com as
+  variações, de onde saem e a Q de cada), Madeira (cortar, pegar, entregar, construir;
+  inclui o corte do Bombardeiro), Casinhas e níveis (maquininhas, oficinas, nível 2) e
+  Luz e Sombra (caminho que sela o outro, níveis 2 a 5). Os números saem do
+  `game_config`: mudou um custo lá, o texto muda junto. Visual com o Estilo "Festival
+  sombrio".
+- Abre sozinha na **1ª partida** (`Settings.tutorial_visto`), tem botão **Como jogar** ao
+  lado de JOGAR e é a 1ª aba do menu de pausa (Esc), junto de Controles e Configurações.
+- **Clipes** em cada aba, gravados do jogo (`assets/tutorial/<aba>/NN.jpg`, 10 quadros/s,
+  importados em WebP com perdas, ~1,5 MB no total). Só carregam quando a aba abre.
+  Ferramentas: `--tutorial=DIR` (print das abas) e `--clipe=DIR --clipe-ini=s
+  --classe=X [--clipe-cena=mascara]` (grava um clipe novo).
+- **O que testar**: (1) Abra o jogo (na 1ª vez a página abre sozinha; depois, botão
+  "Como jogar" na tela inicial ou Esc > Como jogar). (2) Passe pelas 5 abas: o texto
+  explica o Construtor de um jeito que dá para seguir? (3) Os clipes ajudam ou é melhor
+  trocar por cenas montadas (ex.: alguém roubando a máscara)?
+
 ## Ciclo 2.5f (2026-10-31), Visual + Jogabilidade: pátio em ferradura e Torre da Máscara
 - **Pátio em ferradura** (prancha aprovada pelo Julio): muralha com passarela em arco de raio
   22 m (antes era um retângulo de 32 × 28 m), aberta para o inimigo, com uma **saída larga** de
