@@ -675,7 +675,6 @@ func _attack_hit() -> void:
 		"ranged":
 			_shoot_arrow(1.0, 1.0)
 		"healer":
-			Sfx.play("magic", global_position)
 			var alvo := _aim_assist(dir)
 			if alvo:
 				dir = _assisted_dir(dir, alvo)
@@ -728,7 +727,6 @@ func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZE
 		# O arco cai na distância do alvo (senão a flecha passa por cima).
 		to = mirado.global_position - global_position
 		to.y = 0
-	Sfx.play("shoot", global_position)
 	var p := game.spawn_projectile(self, global_position + Vector3(0, 1.4, 0) + dir * 0.9, dir, stats.projetil)
 	p.damage *= dmg_mult
 	p.velocity *= speed_mult
@@ -739,6 +737,13 @@ func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZE
 		var alvo := global_position + to.normalized() * dist
 		p.aim_ballistic(dist, game.arena.ground_y(alvo.x, alvo.z, maxf(global_position.y, aim_point.y) + 3.0))
 	return p
+
+
+## Projétil de poder (Leque): rastro e impacto de nível 2, sem mudar o dano.
+func _poder_visual(p: Projectile) -> void:
+	if p:
+		p.nivel = 2
+		FxProjetil.carregar(p, p.kind)
 
 
 ## Multiplicador de dano de buffs (Fúria, item de dano).
@@ -881,7 +886,7 @@ func _pisao() -> void:
 		d.y = 0
 		if d.length() <= stats.skill_radius:
 			var f := 1.0 - 0.5 * d.length() / stats.skill_radius
-			other.take_damage(stats.skill_value * damage_mult() * f, self, d.normalized() if d.length() > 0.1 else _facing(), 1.4, true)
+			other.take_damage(stats.skill_value * damage_mult() * f, self, d.normalized() if d.length() > 0.1 else _facing(), 1.4, true, "terra", 2)
 			other.launch(4.5 * f)
 			acertou = true
 	if acertou:
@@ -980,23 +985,26 @@ func _heal() -> void:
 	var healed := 0.0
 	for other in game.units:
 		if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.heal_radius:
-			healed += other.heal(stats.heal_amount * Config.cfg.vida_mult)
+			healed += other.heal(stats.heal_amount * Config.cfg.vida_mult, self)
 	add_power(healed * Config.cfg.power_per_damage)
 
 
 ## Cura e devolve quanto curou de fato.
-func heal(amount: float) -> float:
+func heal(amount: float, quem: Unit = null) -> float:
 	if hp >= max_hp() or not alive:
 		return 0.0
 	var before := hp
 	hp = minf(hp + amount, max_hp())
-	Fx.damage_number(game, global_position, "+%d" % int(hp - before), Color(0.5, 1, 0.55))
+	if is_player or (quem and quem.is_player):  # só a cura que você deu ou levou
+		Fx.damage_number(game, global_position, "+%d" % int(hp - before), Color(0.5, 1, 0.55))
 	_update_hp_bar()
 	return hp - before
 
 
 ## dir = direção do golpe (de quem bate para quem apanha).
-func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0, melee := false) -> void:
+## elemento: o que bateu ("shuriken", "fogo", "bomba", ...; vazio = golpe
+## comum), para o impacto e a marca no corpo (FxProjetil). nivel 2 = Q.
+func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0, melee := false, elemento := "", nivel := 1) -> void:
 	if not alive:
 		return
 	if _dodge_t > 0.0:
@@ -1034,10 +1042,14 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 	_flash_t = 0.14 if forte else 0.1
 	_mola(-5.0 if forte else -3.0, -3.0 if forte else -1.5)
 	_tremor_t = 0.22 if forte else 0.15
-	var col := Color(1, 0.9, 0.3) if attacker and attacker.is_player else Color(1, 1, 1)
-	if blocked:
-		col = Color(0.6, 0.8, 1.0)
-	Fx.damage_number(game, global_position, str(int(amount)), col, 0.6 if blocked else maxf(knock_mult, 1.0) * (1.25 if attacker and attacker.is_player else 1.0), dir)
+	# Número de dano: cada jogador vê só o dano que deu e o que levou
+	# (amarelo = seu golpe, vermelho = você apanhou, azul = bloqueado).
+	var do_jogador := attacker != null and attacker.is_player
+	if do_jogador or is_player:
+		var col := Color(1, 0.9, 0.3) if do_jogador else Color(1, 0.45, 0.4)
+		if blocked:
+			col = Color(0.6, 0.8, 1.0)
+		Fx.damage_number(game, global_position, str(int(amount)), col, 0.6 if blocked else maxf(knock_mult, 1.0), dir)
 	if blocked:
 		Fx.burst(game, global_position + Vector3(0, 1.3, 0) - dir * 0.6, Color(0.8, 0.9, 1.0), 10, 6.0)
 		Sfx.play("block", global_position, 0.1)
@@ -1049,9 +1061,11 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 			attacker.hitstop(Config.cfg.hitstop_time * 0.7)
 			attacker._mola(-2.0, -3.0)
 	else:
-		Fx.burst(game, global_position + Vector3(0, 1.2, 0), Color(1, 0.85, 0.5), 8 if knock_mult <= 1.0 else 14, 5.0 * maxf(knock_mult, 1.0))
+		_impacto(attacker, dir, forte, melee, elemento, nivel)
 		# Golpe forte soa mais grave (mais "massa"); acerto de longe, mais agudo.
-		Sfx.play("hit", global_position, 0.08, 0.82 if forte else (1.12 if not melee else 1.0), 2.0 if forte else 0.0)
+		Sfx.play("hit", global_position, 0.08, 0.82 if forte else (1.12 if not melee else 1.0), (2.0 if forte else 0.0) - (4.0 if elemento != "" else 0.0))
+		if Projectile.SOM_ACERTO.has(elemento) and elemento != "bomba":
+			Sfx.play(Projectile.SOM_ACERTO[elemento], global_position, 0.1)
 	if melee:
 		hitstop(Config.cfg.hitstop_time * (1.6 if knock_mult > 1.0 else 1.0))
 	elif attacker and attacker.is_player and amount > 0.0:
@@ -1069,6 +1083,25 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		_play_once("Hit_A" if randf() < 0.5 else "Hit_B", 0.25)
 
 
+## Impacto no corpo: faísca de corte no golpe corpo a corpo, o efeito do
+## elemento no tiro (estilhaço, cruz de luz, implosão...) e a marca no corpo.
+func _impacto(attacker: Unit, dir: Vector3, forte: bool, melee: bool, elemento: String, nivel: int) -> void:
+	var at := global_position + Vector3(0, 1.2, 0)
+	if elemento == "" or elemento == "corte":
+		var cor := Color(1.0, 0.85, 0.45)
+		if attacker:
+			cor = cor.lerp(attacker.stats.hat_color, 0.3)
+		FxProjetil.faisca_corte(game, at - dir * 0.3, dir, cor if not forte else Color(1.0, 0.55, 0.15), forte)
+		return
+	if elemento == "bomba":
+		FxProjetil.faiscas(game, at, Color(1.0, 0.7, 0.3), 4, 5.0, dir + Vector3.UP, 60.0)
+	else:
+		FxProjetil.impacto(game, at - dir * 0.3, elemento, dir, nivel)
+	if elemento in ["flecha", "shuriken"]:
+		FxProjetil.cravar(self, at + Vector3(randf_range(-0.15, 0.15), randf_range(-0.2, 0.15), 0), dir, elemento, 0.9)
+	FxProjetil.marca_corpo(self, elemento)
+
+
 ## Esquiva perfeita: um golpe passou por dentro do dash. O dash continua
 ## igual (pedido do Julio); só ganha recompensa e aviso: Chi, "ESQUIVA!",
 ## rastro e, para o jogador, um instante de câmera lenta.
@@ -1081,7 +1114,7 @@ func _leque_onda2(n: int, base: Vector3) -> void:
 	for i in maxi(n - 1, 1):
 		var t := (float(i) + 0.5) / maxf(n - 1, 1)
 		var ang := deg_to_rad(lerpf(-stats.power_radius, stats.power_radius, t) * 0.5)
-		_shoot_arrow(stats.power_value * Config.cfg.dano_poder_mult / maxf(stats.damage, 0.1), 1.2, base.rotated(Vector3.UP, ang))
+		_poder_visual(_shoot_arrow(stats.power_value * Config.cfg.dano_poder_mult / maxf(stats.damage, 0.1), 1.2, base.rotated(Vector3.UP, ang)))
 
 
 ## Bombardeiro: fila de explosões de pólvora até a mira; a última deixa fumaça.
@@ -1127,7 +1160,7 @@ func _explosao(at: Vector3, dano: float, r: float) -> void:
 		d.y = 0
 		if d.length() <= r:
 			var f := 1.0 - 0.5 * d.length() / r
-			u.take_damage(dano * f, self, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, f)
+			u.take_damage(dano * f, self, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, f, false, "bomba", 3)
 			u.launch(5.0 * f)
 
 
@@ -1254,6 +1287,9 @@ func _use_power() -> void:
 	else:
 		game.camera.shake_at(global_position, 0.2)
 	FxPoder.lancar(self)
+	# Nível 3 (E): marca no chão que fica e o som cheio (taiko + estrondo).
+	FxProjetil.marca_chao(game, global_position, Color(stats.hat_color.darkened(0.6), 0.6), maxf(stats.power_radius, 2.5) * 0.75, 3.0)
+	Sfx.play("poder_boom", global_position, 0.04)
 	match stats.power:
 		"redemoinho":
 			_spin_t = stats.power_duration
@@ -1281,7 +1317,7 @@ func _use_power() -> void:
 			for other in game.units:
 				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
 					FxPoder.em_aliado(other, Color(1, 0.9, 0.5))
-					other.heal(other.max_hp() * stats.power_value)
+					other.heal(other.max_hp() * stats.power_value, self)
 					other.give_shield(stats.power_shield, stats.power_duration)
 		"furia":
 			# Ronin Oni: pancada no chão (onda de choque) e dano x1,8 por um tempo.
@@ -1300,7 +1336,7 @@ func _use_power() -> void:
 					continue
 				d.y = 0
 				if d.length() <= stats.power_radius:
-					other.take_damage(stats.power_value * Config.cfg.dano_poder_mult, self, d.normalized() if d.length() > 0.1 else _facing(), 1.6, true)
+					other.take_damage(stats.power_value * Config.cfg.dano_poder_mult, self, d.normalized() if d.length() > 0.1 else _facing(), 1.6, true, "terra", 3)
 					other.launch(7.0)  # a onda de choque arremessa
 					hit_any = true
 			if hit_any:
@@ -1312,7 +1348,7 @@ func _use_power() -> void:
 			var base := aim_dir.normalized()
 			for i in n:
 				var ang := deg_to_rad(lerpf(-stats.power_radius, stats.power_radius, float(i) / maxf(n - 1, 1)) * 0.5)
-				_shoot_arrow(stats.power_value * Config.cfg.dano_poder_mult / maxf(stats.damage, 0.1), 1.1, base.rotated(Vector3.UP, ang))
+				_poder_visual(_shoot_arrow(stats.power_value * Config.cfg.dano_poder_mult / maxf(stats.damage, 0.1), 1.1, base.rotated(Vector3.UP, ang)))
 			Fx.burst(game, global_position + Vector3(0, 1.4, 0) + base, Color(0.4, 1.0, 1.0), 16, 8.0)
 			FxPoder.leque(self, base)
 			_leque_onda2(n, base)

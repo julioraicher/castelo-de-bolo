@@ -123,6 +123,8 @@ func _ready() -> void:
 			_filme_dir = arg.trim_prefix("--filme=")
 		elif arg.begins_with("--vitrine="):
 			_vitrine_dir = arg.trim_prefix("--vitrine=")
+			Settings.auto_quality = false  # o xvfb é lento: sem isso cairia para a Mínima
+			Settings.quality = 2
 		elif arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
 		elif arg.begins_with("--vista="):
@@ -448,8 +450,8 @@ func _vitrine() -> void:
 			u.reset_physics_interpolation()
 			u.move_intent = Vector3.ZERO
 			u.aim_dir = -frente if i < 3 else frente
-	var foco := _vitrine_p0 + frente * (2.0 if corpo else 4.0)
-	camera.global_position = foco + Vector3(0, 7.0, 9.0)
+	var foco := _vitrine_p0 + frente * (1.6 if corpo else 4.6)
+	camera.global_position = foco + Vector3(0, 6.2, 8.0)
 	camera.look_at(foco + Vector3(0, 0.8, 0))
 	p.move_intent = Vector3.ZERO
 	p.aim_dir = frente
@@ -473,6 +475,7 @@ func _vitrine() -> void:
 			p.wants_power = true
 		480:
 			get_tree().quit()
+
 	if f % 3 == 0 and f >= 6:
 		get_viewport().get_texture().get_image().save_png("%s/f_%03d.png" % [_vitrine_dir, f / 3])
 
@@ -667,6 +670,8 @@ func _score_point(u: Unit) -> void:
 	Sfx.play_ui("score")
 	camera.add_trauma(0.3)
 	Fx.burst(self, arena.princess_spot[u.team] + Vector3(0, 2, 0), Config.team_color(u.team).lightened(0.4), 40, 12.0)
+	FxPoder.coluna_captura(self, arena.princess_spot[u.team], Config.team_color(u.team))
+	Sfx.play("captura", arena.princess_spot[u.team], 0.0, 1.0, 4.0)
 	var mine := u.team == player.team
 	hud.show_big("PONTO DO %s!" % Config.TEAM_NAMES[u.team].to_upper(), Config.team_color(u.team).lightened(0.4))
 	if score[u.team] >= Config.cfg.score_to_win:

@@ -53,7 +53,7 @@ func setup(game: Game, owner_unit: Unit, center: Vector3, kind: String, radius: 
 				var a0 := TAU * i / 10.0
 				var a1 := TAU * (i + 1) / 10.0
 				Fx.zap(game, center + Vector3(cos(a0) * radius, 0.6, sin(a0) * radius), center + Vector3(cos(a1) * radius, 0.6, sin(a1) * radius), col, 3)
-			Sfx.play("magic", center)
+			Sfx.play("sombra", center)
 			_apply_seal()
 		"coluna_fogo":
 			_mat = Fx.unshaded(Color(col.r * 1.6, col.g * 1.6, col.b * 1.6, 0.75), true)  # cor do chapéu de quem lança
@@ -67,7 +67,7 @@ func setup(game: Game, owner_unit: Unit, center: Vector3, kind: String, radius: 
 			for i in 3:
 				var a := TAU * i / 3.0
 				_part(cyl, Vector3(cos(a), 0, sin(a)) * radius * 0.5 + Vector3(0, 2.2, 0), _mat)
-			Sfx.play("magic", center)
+			Sfx.play("fogo", center, 0.05, 0.8)
 	scale = Vector3(0.2, 1, 0.2)
 	create_tween().tween_property(self, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
@@ -109,7 +109,7 @@ func _physics_process(delta: float) -> void:
 				continue
 			d.y = 0
 			if d.length() <= _radius:
-				u.take_damage(_value, _owner, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.15)
+				u.take_damage(_value, _owner, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.15, false, {"coluna_fogo": "fogo", "selo": "magia"}.get(_kind, "nuvem"), 3)
 				if _kind == "nuvem":
 					u.apply_slow(0.55, PULSE + 0.1)
 		if _kind == "coluna_fogo":
@@ -130,7 +130,7 @@ func _apply_seal() -> void:
 			continue
 		d.y = 0
 		if d.length() <= _radius:
-			u.take_damage(_value, _owner, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.2)
+			u.take_damage(_value, _owner, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.2, false, "magia", 3)
 			u.silence(_duration)
 
 
