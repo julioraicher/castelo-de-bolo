@@ -144,7 +144,7 @@ arquivo). Duas ideias importantes:
 Mais ou menos pontos que o normal? Por quê?
 
 **Experimento 4.2** [ ]: escreva uma regra nova: "se a minha vida está
-abaixo de 25% e há um Clérigo aliado a menos de 15 m, ir até ele". Onde na
+abaixo de 25% e há uma Kitsune da Luz aliada (ela cura) a menos de 15 m, ir até ela". Onde na
 lista ela deve entrar para não quebrar a prioridade 1?
 
 > Minhas notas:

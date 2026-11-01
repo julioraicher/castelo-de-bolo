@@ -27,15 +27,16 @@ Aqui só entram correções, sensação de jogo (*game feel*), equilíbrio e des
 
 ## Fase 2: o "jogo de semanas" (mecânicas do estilo Fat Princess)
 
-Detalhes em [docs/design-jogo.md](docs/design-jogo.md) (classes, poderes, progressão).
+Elenco atual em [docs/elenco-ciclo-2.4.md](docs/elenco-ciclo-2.4.md); ideias em [docs/ideias.md](docs/ideias.md).
 
-- [x] Nova identidade v1: Clãs de Neon, Máscara Oni + espíritos no lugar de princesa + bolo ([docs/identidade.md](docs/identidade.md))
+- [x] Mundo ninja fixo: Máscara Oni + espíritos no lugar de princesa + bolo
 - [x] Papel Construtor (4º papel) e Clérigo → Monge (nomes provisórios)
 - [x] Itens no chão: poção, escudo, velocidade
 - [ ] Gatilhos de poder (sequência de abates, ao morrer, Hora do Caos)
-- [ ] **Ciclo 2.3: Economia do Construtor** (aberto 2026-10-31): madeira e bambu em 3 estágios, Construtor carrega toras, maquininhas de chapéu com estoque, casinhas custam madeira com contador, QA automático do mapa: [docs/direcao-ciclo-2.3.md](docs/direcao-ciclo-2.3.md)
-- [ ] Oficinas sobem de nível (nível 2 das maquininhas: Etapa 2 do Ciclo 2.3)
-- [ ] **Ciclo 2.4**: habilidade "uau" por personagem e interface nova
+- [x] **Ciclo 2.3: Economia do Construtor** madeira e bambu em 3 estágios, Construtor carrega toras, maquininhas de chapéu com estoque, casinhas custam madeira com contador, QA automático do mapa: [docs/direcao-ciclo-2.3.md](docs/direcao-ciclo-2.3.md)
+- [x] Oficinas sobem de nível (nível 2 das maquininhas: Etapa 2 do Ciclo 2.3)
+- [x] **Ciclo 2.4**: elenco novo, habilidade "uau" por personagem e interface nova
+- [x] **Ciclo 2.5**: pátio em ferradura, Torre da Máscara, identidade "Festival sombrio", página "Como jogar"
 - [ ] Catapulta (carregar, mirar, lançar aliados/pedras)
 - [ ] Portão do castelo que pode ser quebrado e consertado
 - [ ] Atalho que abre durante a partida

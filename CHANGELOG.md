@@ -5,6 +5,20 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Limpeza 2.5h (2026-11-01), revisão rápida: peso morto e docs velhos
+- Revisão do código: sem funções mortas, sem campos velhos nos `.tres`; testes de regra
+  167/167. A limpeza grande já tinha sido a 2.5c (PR #21).
+- **Build ~4,6 MB menor**: saíram as maquininhas de Ronin Oni, Yumi e Kitsune Luz/Sombria
+  dos 4 temas (16 `.scn`). O jogo nunca as carregava: só as 4 classes do pátio têm
+  maquininha. `tools/gerar_economia.gd` (`MAQUINAS`) e `prancha_economia.gd` passaram a
+  gerar só essas 4; os desenhos das outras continuam no gerador (ver comentário).
+- **Docs**: apagados `docs/identidade.md` (fase "Clãs de Neon"), `docs/design-jogo.md`
+  (substituído por `docs/elenco-ciclo-2.4.md`) e `docs/revisao-2.4.md` (relatório
+  pontual). ROADMAP com os Ciclos 2.3 a 2.5 marcados; AULA sem o Clérigo.
+- Duas constantes sem uso em `scripts/ui/estilo.gd`. Nenhuma regra de jogo mudou.
+- **O que testar**: nada novo para jogar. Só confira que o jogo abre e as 4 maquininhas
+  do pátio aparecem como antes.
+
 ## Ciclo 2.5g (2026-11-01), Jogabilidade + Interface: página "Como jogar"
 - **Como jogar** (`scripts/ui/tutorial.gd`): 5 abas, Objetivo, Classes (4 papéis com as
   variações, de onde saem e a Q de cada), Madeira (cortar, pegar, entregar, construir;

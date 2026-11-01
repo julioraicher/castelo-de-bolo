@@ -65,7 +65,7 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
   depois de o Julio aprovar os poderes atuais.
 - Outros mapas da prancha `cenario/03-ideias-de-mapa.png` (Bambuzal de Três
   Trilhas, Templo Central) usando as peças do Rio.
-- Segundo poder por variação (o "forte", com gatilho), como no `docs/design-jogo.md`.
+- Segundo poder por variação (o "forte", com gatilho), (gatilho: sequência de abates, ao morrer ou Hora do Caos).
 - Efeito de chão por clima: poças que refletem o neon, pétalas caindo, névoa baixa.
 - Animação de vitória do time (todos comemoram em volta da máscara).
 - Sons próprios por poder (shuriken, talismã, fogo-raposa, explosão de pólvora).
