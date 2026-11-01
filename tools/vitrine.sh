@@ -12,7 +12,7 @@ if [ "$1" = "--gif" ]; then
     c=$(basename "$dir")
     [ -d "$A/$c" ] || continue
     ffmpeg -loglevel error -y -framerate 20 -i "$A/$c/f_%03d.png" -framerate 20 -i "$D/$c/f_%03d.png" \
-      -filter_complex "[0]scale=400:-2,drawtext=text='ANTES':x=8:y=6:fontsize=18:fontcolor=white:borderw=2[a];[1]scale=400:-2,drawtext=text='DEPOIS':x=8:y=6:fontsize=18:fontcolor=white:borderw=2[b];[a][b]hstack,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer:bayer_scale=4" \
+      -filter_complex "[0]crop=640:360:40:50,scale=400:-2,drawtext=text='ANTES':x=8:y=6:fontsize=18:fontcolor=white:borderw=2[a];[1]crop=640:360:40:50,scale=400:-2,drawtext=text='DEPOIS':x=8:y=6:fontsize=18:fontcolor=white:borderw=2[b];[a][b]hstack,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer:bayer_scale=4" \
       "$OUT/$c.gif"
     echo "$OUT/$c.gif"
   done

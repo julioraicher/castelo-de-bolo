@@ -444,8 +444,8 @@ static func montar(p: Node3D, kind: String, time_cor: Color) -> Node3D:
 			p.add_child(gira)
 			for i in 3:
 				var a := TAU * i / 3.0
-				brilho_fixo(gira, Vector3(cos(a), sin(a), 0) * 0.32, Color(COR_RAPOSA, 0.95), 0.6, false)
-				brilho_fixo(gira, Vector3(cos(a), sin(a), 0) * 0.32, Color(1.0, 0.85, 0.95), 0.22, false)
+				brilho_fixo(gira, Vector3(cos(a), sin(a), 0) * 0.4, Color(COR_RAPOSA, 0.95), 0.8, false)
+				brilho_fixo(gira, Vector3(cos(a), sin(a), 0) * 0.4, Color(1.0, 0.85, 0.95), 0.3, false)
 			brilho_fixo(p, Vector3.ZERO, Color(0.45, 0.05, 0.3, 0.7), 0.45, false)
 			corpo.free()
 			if rastro:  # brasas rosas soltas
