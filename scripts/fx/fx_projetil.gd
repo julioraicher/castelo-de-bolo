@@ -16,8 +16,8 @@ extends RefCounted
 
 const COR_METAL := Color(0.78, 0.86, 0.95)
 const COR_CIANO := Color(0.35, 1.0, 1.0)
-const COR_OURO := Color(1.0, 0.82, 0.35)
-const COR_RAPOSA := Color(1.0, 0.35, 0.75)
+const COR_OURO := Color(1.0, 0.68, 0.12)
+const COR_RAPOSA := Color(0.95, 0.2, 0.6)
 const COR_VAZIO := Color(0.55, 0.2, 1.0)
 const COR_TINTA := Color(0.09, 0.03, 0.14)
 
@@ -290,7 +290,7 @@ static func ps(parent: Node, pos: Vector3, mesh: Mesh, cor: Color, n: int, vida:
 	return p
 
 
-static func brilho(g: Node, pos: Vector3, cor: Color, tam: float, vida := 0.18, aditivo := true, curva_nome := "estoura") -> void:
+static func brilho(g: Node, pos: Vector3, cor: Color, tam: float, vida := 0.18, aditivo := false, curva_nome := "estoura") -> void:
 	ps(g, pos, quad("brilho", tex_brilho(), aditivo), cor, 1, vida, {"s0": tam, "curva": curva_nome})
 
 
@@ -382,9 +382,9 @@ static func malha_lanca() -> ArrayMesh:
 			var a: Vector3 = anel_v[i]
 			var b: Vector3 = anel_v[(i + 1) % 4]
 			for tri in [[f, a, b], [t, b, a]]:
-				st.set_color(Color(2.2, 2.0, 1.4))
+				st.set_color(Color(1.0, 0.97, 0.8))
 				st.add_vertex(tri[0])
-				st.set_color(Color(1.4, 1.0, 0.3))
+				st.set_color(Color(0.95, 0.55, 0.05))
 				st.add_vertex(tri[1])
 				st.add_vertex(tri[2])
 		return st.commit())
@@ -444,21 +444,21 @@ static func montar(p: Node3D, kind: String, time_cor: Color) -> Node3D:
 			p.add_child(gira)
 			for i in 3:
 				var a := TAU * i / 3.0
-				brilho_fixo(gira, Vector3(cos(a), sin(a), 0) * 0.32, COR_RAPOSA, 0.55, true)
-				brilho_fixo(gira, Vector3(cos(a), sin(a), 0) * 0.32, Color(1.4, 1.1, 1.3), 0.22, true)
-			brilho_fixo(p, Vector3.ZERO, COR_RAPOSA, 0.5)
+				brilho_fixo(gira, Vector3(cos(a), sin(a), 0) * 0.32, Color(COR_RAPOSA, 0.95), 0.6, false)
+				brilho_fixo(gira, Vector3(cos(a), sin(a), 0) * 0.32, Color(1.0, 0.85, 0.95), 0.22, false)
+			brilho_fixo(p, Vector3.ZERO, Color(0.45, 0.05, 0.3, 0.7), 0.45, false)
 			corpo.free()
 			if rastro:  # brasas rosas soltas
-				ps(p, Vector3.ZERO, quad("brilho", tex_brilho(), true), COR_RAPOSA, 8, 0.35, {"one_shot": false, "esfera": 0.3, "dir": Vector3.UP, "spread": 30.0, "v0": 0.5, "v1": 1.5, "s0": 0.18, "s1": 0.32, "curva": "encolhe", "local_pos": true})
+				ps(p, Vector3.ZERO, quad("brilho", tex_brilho()), COR_RAPOSA, 8, 0.35, {"one_shot": false, "esfera": 0.3, "dir": Vector3.UP, "spread": 30.0, "v0": 0.5, "v1": 1.5, "s0": 0.18, "s1": 0.32, "curva": "encolhe", "local_pos": true})
 		"chi":
 			# Lança dourada da Kitsune da Luz, com brilhos piscando no caminho.
 			corpo.mesh = malha_lanca()
 			corpo.material_override = mat_solido()
 			p.add_child(corpo)
-			brilho_fixo(p, Vector3(0, 0, -0.5), COR_OURO, 0.8, true)
+			brilho_fixo(p, Vector3(0, 0, -0.5), Color(COR_OURO, 0.8), 0.8, false)
 			if rastro:
-				ps(p, Vector3.ZERO, quad("brilho", tex_brilho(), true), Color(1.3, 1.1, 0.6), 8, 0.5, {"one_shot": false, "esfera": 0.25, "s0": 0.15, "s1": 0.3, "rampa": "pisca", "local_pos": true})
-				_fita(p, Color(COR_OURO, 0.55), 0.18, 1.4, true)
+				ps(p, Vector3.ZERO, quad("brilho", tex_brilho()), COR_OURO, 8, 0.5, {"one_shot": false, "esfera": 0.25, "s0": 0.15, "s1": 0.3, "rampa": "pisca", "local_pos": true})
+				_fita(p, Color(COR_OURO, 0.7), 0.2, 1.5)
 		"magia":
 			# Orbe do vazio (Kitsune Sombria): bola escura, aura roxa, um olho.
 			corpo.mesh = malha_bola(COR_TINTA, 0.2)
@@ -541,7 +541,7 @@ static func carregar(p: Node3D, kind: String) -> void:
 	if not rastro_ligado():
 		return
 	var cor: Color = {"shuriken": COR_CIANO, "flecha": Color(1, 1, 1), "magia": COR_VAZIO, "chi": COR_OURO, "fogo": COR_RAPOSA, "bomba": Color(1.0, 0.6, 0.2)}.get(kind, Color.WHITE)
-	ps(p, Vector3.ZERO, quad("brilho", tex_brilho(), true), cor, 12, 0.35, {"one_shot": false, "esfera": 0.2, "s0": 0.3, "s1": 0.55, "curva": "encolhe", "local_pos": true})
+	ps(p, Vector3.ZERO, quad("brilho", tex_brilho()), cor, 12, 0.35, {"one_shot": false, "esfera": 0.2, "s0": 0.3, "s1": 0.55, "curva": "encolhe", "local_pos": true})
 	if kind != "bomba" and kind != "magia":
 		_fita(p, Color(cor, 0.5), 0.5, 2.6, true)
 
@@ -585,18 +585,18 @@ static func impacto(g: Node, at: Vector3, kind: String, dir: Vector3, nivel := 1
 			faiscas(g, at, Color(0.9, 0.8, 0.6), int(4 * k), 5.0, -dir + Vector3.UP, 60.0, 0.16)
 			brilho(g, at, Color(1, 1, 1, 0.8), 0.7 * k, 0.1)
 		"fogo":  # faíscas + anel
-			faiscas(g, at, COR_RAPOSA * 1.3, int(7 * k), 6.0, Vector3.UP, 80.0, 0.22)
+			faiscas(g, at, Color(1.0, 0.45, 0.8), int(7 * k), 6.0, Vector3.UP, 80.0, 0.22)
 			brilho(g, at, COR_RAPOSA, 1.4 * k, 0.22)
 			anel_chao(g, Vector3(at.x, at.y - 1.0, at.z), Color(COR_RAPOSA, 0.8), 1.1 * k)
 		"chi":  # cruz de luz
 			cruz(g, at, COR_OURO, 1.6 * k)
-			ps(g, at, quad("brilho", tex_brilho(), true), Color(1.3, 1.1, 0.6), _qtd(int(6 * k)), 0.5, {"esfera": 0.5, "v0": 1.0, "v1": 2.0, "s0": 0.15, "s1": 0.3, "rampa": "pisca"})
+			ps(g, at, quad("brilho", tex_brilho()), COR_OURO, _qtd(int(6 * k)), 0.5, {"esfera": 0.5, "v0": 1.0, "v1": 2.0, "s0": 0.15, "s1": 0.3, "rampa": "pisca"})
 		"magia":  # implosão: a sombra se fecha no ponto e estala
 			ps(g, at, quad("fumaca", tex_fumaca()), Color(0.12, 0.04, 0.2, 0.85), 1, 0.28, {"s0": 2.2 * k, "curva": "implode"})
-			ps(g, at, quad("brilho", tex_brilho(), true), COR_VAZIO, _qtd(int(8 * k)), 0.28, {"esfera": 1.3 * k, "radial": -28.0, "s0": 0.2, "s1": 0.35})
+			ps(g, at, quad("brilho", tex_brilho()), COR_VAZIO, _qtd(int(8 * k)), 0.28, {"esfera": 1.3 * k, "radial": -28.0, "s0": 0.2, "s1": 0.35})
 			g.get_tree().create_timer(0.24).timeout.connect(func() -> void:
 				if is_instance_valid(g):
-					brilho(g, at, COR_VAZIO * 1.4, 1.2 * k, 0.16))
+					brilho(g, at, COR_VAZIO, 1.2 * k, 0.16))
 		"bomba":
 			explosao(g, at, 2.0 * k)
 		"terra":  # pisão/fúria: poeira e pedrinhas
@@ -616,9 +616,9 @@ static func explosao(g: Node, at: Vector3, r: float) -> void:
 
 ## Clarão em cruz (Luz): uma barra em pé e outra deitada, viradas para a câmera.
 static func cruz(g: Node, at: Vector3, cor: Color, tam: float) -> void:
-	ps(g, at, quad("raio_v", tex_brilho(), true, Vector2(0.18, 1.0)), cor, 1, 0.3, {"s0": tam * 1.6, "curva": "estoura"})
-	ps(g, at, quad("raio_h", tex_brilho(), true, Vector2(1.0, 0.18)), cor, 1, 0.3, {"s0": tam * 1.2, "curva": "estoura"})
-	brilho(g, at, Color(1.5, 1.4, 1.1), tam * 0.6, 0.15)
+	ps(g, at, quad("raio_v", tex_brilho(), false, Vector2(0.18, 1.0)), cor, 1, 0.3, {"s0": tam * 1.6, "curva": "estoura"})
+	ps(g, at, quad("raio_h", tex_brilho(), false, Vector2(1.0, 0.18)), cor, 1, 0.3, {"s0": tam * 1.2, "curva": "estoura"})
+	brilho(g, at, Color(1.0, 0.95, 0.75), tam * 0.5, 0.15)
 
 
 ## Faísca do golpe corpo a corpo: risco de luz no ângulo do corte + fagulhas.
@@ -654,7 +654,7 @@ static func marca_corpo(u: Node3D, kind: String) -> void:
 	var o := {"one_shot": false, "esfera": 0.35, "local_pos": true}
 	var n := 5
 	var vida := 0.5
-	var mesh: Mesh = quad("brilho", tex_brilho(), true)
+	var mesh: Mesh = quad("brilho", tex_brilho())
 	match kind:
 		"fogo", "bomba":  # brasa subindo
 			cor = COR_RAPOSA if kind == "fogo" else Color(1.0, 0.5, 0.15)
@@ -665,7 +665,7 @@ static func marca_corpo(u: Node3D, kind: String) -> void:
 			o.merge({"g": Vector3(0, -5, 0), "s0": 0.8, "s1": 1.3, "rampa": "some"})
 			vida = 0.6
 		"chi":  # brilho
-			cor = Color(1.3, 1.1, 0.6)
+			cor = COR_OURO
 			o.merge({"s0": 0.12, "s1": 0.25, "rampa": "pisca"})
 			n = 4
 		_:

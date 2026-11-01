@@ -5,6 +5,47 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.6a (2026-11-01), Diretor Visual: efeitos dos poderes (direção do Quiz dos Efeitos)
+- **Seis camadas por projétil** (`scripts/fx/fx_projetil.gd`, novo): cor, forma, rastro,
+  impacto, reação do alvo (só visual, ~1 s) e som, como em `docs/direcao-efeitos.md`.
+  - Shuriken de **aço** (lâmina clara, fio brilhando), lascas de metal no caminho, estilhaço
+    e tinido no acerto; fica cravada no alvo ou no chão um instante.
+  - Flecha **de verdade** (haste, ponta, penas na cor do time), fita de vento fina, poeira
+    e marca no chão; crava no chão ou no corpo.
+  - Bomba com faíscas do pavio e fumacinha; explosão com bola de fogo, fumaça escura
+    subindo e chão queimado por ~2 s (vale também para a mina).
+  - Kitsune: **três fogos-fátuos** rosas girando em volta do tiro; faíscas e anel no acerto;
+    brasa no corpo.
+  - Kitsune da Luz: **lança dourada** com brilhos piscando; **cruz de luz** no acerto.
+  - Kitsune Sombria: **orbe do vazio com um olho** e fita de sombra; **implode** no acerto
+    e deixa tinta escorrendo no corpo.
+- **Orçamento por frequência**: ataque básico leve (≤ 8 partículas no rastro), Q
+  (tiro carregado, Leque) com rastro maior e impacto próprio, E com tudo + marca no chão +
+  som cheio (taiko e estrondo). Na qualidade **Mínima** o rastro, a marca no corpo e as
+  flechas cravadas desligam, e os impactos caem pela metade.
+- **Golpe corpo a corpo**: o arco ganhou um fio claro na borda (lê como lâmina) e o acerto
+  solta um risco de luz, fagulhas de aço quente e respingos de tinta escura (a faísca
+  branca sumia no corpo que pisca branco).
+- **Oficina sobe de nível**: três anéis dourados sobem pela casa e o letreiro "NÍVEL N!".
+- **Captura da máscara**: coluna de luz na cor do time no castelo, anéis subindo e gongo.
+- **Números de dano um pouco menores** e cada um vê só o dano que deu (amarelo) e o que
+  levou (vermelho); a cura idem. Bots contra bots não enchem mais a tela de número.
+- **Sons novos** (`tools/gerar_sons.py efeitos`): lançar metal, pavio, fogo, luz, sombra;
+  tinido, flecha no chão, brasa, sino, implosão, explosão; estrondo do E, nível, captura.
+  Volume pela distância (já era 3D).
+- Custo: tudo é `CPUParticles3D` com malha e material em cache (1 draw call por sistema,
+  nenhum shader novo na luta; `FxProjetil.prewarm` esquenta no começo). Medida em
+  partida de 90 s com todo mundo soltando poder a cada 4 s (`--poderes --perf=2`, xvfb):
+  FPS médio 7,1 → 6,9 (−3%, dentro do ruído e do orçamento de 10%), draw calls 560 → 510.
+- Ferramenta: `--vitrine=<pasta>` + `tools/vitrine.sh` (mesmo roteiro por classe, câmera
+  fixa) gera o GIF antes/depois de cada poder.
+- Toque em código de Jogabilidade (aviso): `Unit.take_damage` ganhou `elemento` e `nivel`
+  opcionais (só visual); `Unit.heal` ganhou `quem`.
+- **O que testar**: jogue de Ninja de Shuriken, Yumi, Bombardeiro e das três Kitsunes e
+  veja se dá para reconhecer cada tiro sem ler nada; se o golpe do Samurai/Ronin ficou com
+  mais peso; suba uma oficina de mago de nível (anéis + letreiro) e capture a máscara
+  (coluna de luz). Diga se ficou muito ou pouco na tela e se o FPS caiu.
+
 ## Limpeza 2.5c (2026-10-31), revisão de código: tirar o que sobrou de versões antigas
 - **Nada muda no jogo** (regras, números, visual e controles iguais). Testes 155/155 e 5 min
   simulados sem erro, antes e depois.

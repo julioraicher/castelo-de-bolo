@@ -1288,7 +1288,7 @@ func _use_power() -> void:
 		game.camera.shake_at(global_position, 0.2)
 	FxPoder.lancar(self)
 	# Nível 3 (E): marca no chão que fica e o som cheio (taiko + estrondo).
-	FxProjetil.marca_chao(game, global_position, Color(stats.hat_color.darkened(0.6), 0.6), maxf(stats.power_radius, 2.5) * 0.75, 3.0)
+	FxProjetil.marca_chao(game, global_position, Color(stats.hat_color.darkened(0.7), 0.4), 1.8, 2.5)
 	Sfx.play("poder_boom", global_position, 0.04)
 	match stats.power:
 		"redemoinho":
