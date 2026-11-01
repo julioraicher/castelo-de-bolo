@@ -40,6 +40,10 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
   com um golpe de "virar a luta" (ex.: Samurai corta todos em linha num traço só).
 
 ## B — depois
+- **Clipes roteirizados no "Como jogar"** (2026-11-01): os clipes das abas Objetivo e
+  Casinhas saíram fracos (gravados de partida de bots: ninguém roubou nem construiu na hora).
+  Montar cenas com `--clipe-cena` (já existe `mascara`): roubo e entrega da máscara, obra
+  subindo até a oficina ficar pronta. Gravar com `--clipe=DIR --clipe-ini=s --classe=X`.
 - **Construtor mais simples e menos classes** (Julio, 2026-10-31): talvez só o
   Construtor + 3 ou 4 classes. O Construtor faz quase tudo da economia (cortar,
   levar, upar casinhas), e cada casinha upada deixa guerreiros, arqueiros etc.
