@@ -5,6 +5,16 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Publicação (2026-11-04): versão de teste também no itch.io
+- CI (`build.yml`): na `main`, depois dos testes, manda web, Windows e Linux para o
+  itch.io com o `butler` (canais `web`, `windows`, `linux`). Só liga quando existirem o
+  segredo `BUTLER_API_KEY` e a variável `ITCH_ALVO` (ex.: `julioraicher/castelo-de-bolo`).
+- GitHub Pages só publica com o repositório público; no privado o passo é pulado sem
+  quebrar a CI. A release `ultima-versao` continua (no privado, só com login).
+- `docs/ideias.md`: "Lançar na Steam (PC)" em B, Play Store/App Store em C.
+- **O que testar:** depois de configurar o itch.io, abrir a página oculta e jogar a
+  versão web; o .exe aparece na mesma página. Nenhuma regra de jogo mudou.
+
 ## Ciclo 2.6c (2026-11-01), Jogabilidade: mira nova (piloto do mouse aprovado)
 - **Cursor próprio "Mira de ouro"** (`scripts/ui/mira.gd`, novo): aro + 4 marcas + ponto,
   na **cor do seu time**. É cursor de hardware (`Input.set_custom_mouse_cursor`, desenhado
