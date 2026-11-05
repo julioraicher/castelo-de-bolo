@@ -137,6 +137,14 @@ func _build_start() -> Control:
 	var como := _button("Como jogar")
 	como.pressed.connect(_abrir_tutorial)
 	botoes.add_child(como)
+	# Modo teste (sandbox): sem bots, oficinas prontas. Recarrega a cena.
+	var g := get_parent() as Game
+	var modo := _button("Partida normal" if g and g.sandbox else "Modo teste (sem bots)")
+	modo.pressed.connect(func():
+		Game.sandbox_pedido = not (g and g.sandbox)
+		get_tree().paused = false
+		get_tree().reload_current_scene())
+	botoes.add_child(modo)
 	var play := _button("JOGAR   ·   Enter")
 	play.custom_minimum_size = Vector2(300, 58)
 	play.pressed.connect(_begin)
