@@ -30,6 +30,15 @@ var gate_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var _nav: NavigationRegion3D
 
 
+## Modo teste (Game.sandbox): mapa leve, só chão, rio, colinas, pontes e
+## castelos. Sem enfeites do chão, floresta da borda, partículas nem as
+## casas e árvores do meio (modelo e colisor saem juntos: não sobra parede
+## invisível). Menos para a GPU desenhar enquanto se testa um poder.
+var leve := false
+const LEVE_FICA := ["rio_a.scn", "rio_b.scn", "colina.scn", "escada_colina.scn", "ponte_lateral.scn", "ponte_grande.scn",
+		"lago.scn", "cachoeira.scn"]
+
+
 func build() -> void:
 	map = Config.map()
 	theme = Config.theme()
@@ -42,8 +51,9 @@ func build() -> void:
 		_build_castle(team)
 	_build_middle()
 	_build_borders()
-	_build_decor()
-	_build_particles()
+	if not leve:
+		_build_decor()
+		_build_particles()
 	_bake_navigation()
 	_batch_static_meshes()
 	_registrar_contornos.call_deferred()
@@ -479,6 +489,8 @@ func _wall_walk(team: int, wa: Vector3, wb: Vector3, angle: float, length: float
 
 func _build_middle() -> void:
 	for prop in map.middle_props:
+		if leve and prop.model != "" and not LEVE_FICA.has(prop.model):
+			continue
 		for p in prop.positions():
 			_place_prop(prop, p, 0.0)
 
@@ -514,6 +526,8 @@ func _build_borders() -> void:
 	# Floresta e montanhas em volta, só decoração (semente fixa: sempre igual).
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
+	if leve:
+		return
 	var trees := theme.border_trees
 	var x := -hw - 6.0
 	while x <= hw + 6.0 and not trees.is_empty():

@@ -180,6 +180,7 @@ func _ready() -> void:
 		_shot_times = [1e9, 1e9, 1e9, 1e9, 1e9, 1e9]  # quem marca a hora é o poder
 	arena = Arena.new()
 	arena.name = "Arena"
+	arena.leve = sandbox
 	add_child(arena)
 	arena.build()
 

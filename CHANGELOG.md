@@ -12,10 +12,13 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 - Na casa de uma oficina comum, **[F] troca a classe** (Ronin Oni, Yumi, Armadilheiro,
   Bombardeiro; o pedestal ganha o chapéu novo). Na casa de um mago, **[F] sobe o nível**
   até o 5.
+- **Mapa leve** no modo teste (`Arena.leve`): saem os enfeites do chão (capim, flores),
+  a floresta da borda, as partículas e as casas/árvores/lanternas do meio (com o colisor).
+  Ficam chão, rio, pontes, colinas, castelos e as árvores de madeira.
 - Como abrir: botão **"Modo teste (sem bots)"** na tela inicial (o mesmo botão volta para
   a partida normal); na web, o endereço com `?sandbox`; na linha de comando, `--sandbox`.
 - Mexe em `game.gd` (`sandbox`, `_montar_sandbox`, `_regras_sandbox`), `oficina.gd`
-  (`concluir_ja`, `trocar_pronta`) e `menus.gd` (botão). A partida normal não muda.
+  (`concluir_ja`, `trocar_pronta`), `arena.gd` (`leve`) e `menus.gd` (botão). A partida normal não muda.
 - **O que testar**: abra o link com `?sandbox` (ou o botão na tela inicial), pegue cada
   chapéu, troque as oficinas com F e suba a Kitsune da Luz e a Sombria até o nível 5.
 
