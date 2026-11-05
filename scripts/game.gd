@@ -70,6 +70,13 @@ var _time := 0.0
 #                       (até 30 linhas) e, com tela, qa_mapa.jpg; implica --autoplay
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
+## Modo teste (sandbox): só o jogador no mapa, todas as oficinas prontas e,
+## nelas, [F] troca a classe (comuns) ou sobe o nível (magos). Liga com
+## --sandbox, com "?sandbox" no endereço da versão web ou pelo botão da tela
+## inicial (sandbox_pedido sobrevive ao reload da cena).
+static var sandbox_pedido := false
+var sandbox := false
+var _montando_sandbox := false
 var _variacoes := false
 var _variacoes_giro := 0
 var _equilibrio := false
@@ -114,6 +121,8 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--autoplay":
 			_autoplay = true
+		elif arg == "--sandbox":
+			sandbox_pedido = true
 		elif arg == "--variacoes":
 			_variacoes = true
 		elif arg.begins_with("--variacoes="):
@@ -164,10 +173,14 @@ func _ready() -> void:
 		elif arg.begins_with("--qa-mapa="):
 			_qa_dir = arg.trim_prefix("--qa-mapa=")
 			_autoplay = true
+	if OS.has_feature("web") and str(JavaScriptBridge.eval("window.location.search", true)).contains("sandbox"):
+		sandbox_pedido = true
+	sandbox = sandbox_pedido
 	if _print_poder:
 		_shot_times = [1e9, 1e9, 1e9, 1e9, 1e9, 1e9]  # quem marca a hora é o poder
 	arena = Arena.new()
 	arena.name = "Arena"
+	arena.leve = sandbox
 	add_child(arena)
 	arena.build()
 
@@ -218,10 +231,12 @@ func _ready() -> void:
 		start_classes = cfg.hat_classes() + cfg.oficina_classes + cfg.magos_opostos
 	for team in 2:
 		for i in cfg.units_per_team:
+			var is_player := team == Config.TEAM_BLUE and i == 0
+			if sandbox and not is_player:
+				continue  # modo teste: sem bots
 			var u := Unit.new()
 			u.name = "%s_%d" % [Config.TEAM_NAMES[team], i]
 			add_child(u)
-			var is_player := team == Config.TEAM_BLUE and i == 0
 			var cls: ClassStats = cfg.villager if is_player else start_classes[(i + _variacoes_giro) % start_classes.size()]
 			if is_player and _classe_jogador != "":
 				cls = load("res://config/classes/%s.tres" % _classe_jogador)
@@ -309,6 +324,8 @@ func _ready() -> void:
 	if _vista != "":
 		hud.visible = false
 	add_child(auto_q)
+	if sandbox:
+		_montar_sandbox()
 	var menus := Menus.new()
 	add_child(menus)
 	menus.started.connect(_on_started)
@@ -357,7 +374,25 @@ func _prints_tutorial(menus: Menus) -> void:
 	get_tree().quit()
 
 
+## Modo teste: todas as oficinas do time azul prontas (as duas dos magos
+## também, sem selo) e todas as maquininhas no nível 2.
+func _montar_sandbox() -> void:
+	_montando_sandbox = true
+	_caminho_avisado = true
+	for of in oficinas:
+		if of.team == Config.TEAM_BLUE:
+			of.concluir_ja()
+	for pad in hat_pads:
+		if pad.team == Config.TEAM_BLUE:
+			pad.subir_nivel()
+	_montando_sandbox = false
+
+
 func _on_started() -> void:
+	if sandbox:
+		hud.show_big("MODO TESTE\nPegue qualquer chapéu. Nas oficinas, F troca a classe ou sobe o nível.", Color(1, 0.9, 0.5), 4.0)
+		Sfx.start_music()
+		return
 	hud.show_big("Roube a Máscara Oni vermelha!\nTraga-a para o seu castelo.", Color(1, 0.9, 0.5), 3.5)
 	Sfx.start_music()
 
@@ -649,6 +684,9 @@ func _rules() -> void:
 					u.start_equip(pad.take(), from)
 				break
 
+	if sandbox:
+		hint = _regras_sandbox(hint)
+
 	# Oficina: o jogador troca a opção do terreno com F.
 	if player.alive and not player.carried_princess and hint == "":
 		var of := nearest_oficina(player.team, player.global_position, Oficina.BUILD_RADIUS + 0.5, true)
@@ -725,6 +763,32 @@ func _rules() -> void:
 	elif player.has_cake:
 		hint = "Leve o espírito até a sua máscara"
 	hud.set_hint(hint)
+
+
+## Modo teste: maquininhas repõem o chapéu em 1 s; perto da casa de uma
+## oficina pronta, [F] troca a classe (comum) ou sobe o nível (mago).
+func _regras_sandbox(hint: String) -> String:
+	for pad in hat_pads:
+		pad.intervalo = minf(pad.intervalo, 1.0)
+	if hint != "" or not player.alive or player.carried_princess:
+		return hint
+	var aperta := player_brain != null and player_brain.interact_pressed
+	for of in oficinas:
+		if of.team != player.team or of.estado != Oficina.Estado.PRONTA \
+				or player.global_position.distance_to(of.global_position) > Oficina.BUILD_RADIUS:
+			continue
+		if of.caminho >= 0:
+			if of.nivel >= Config.cfg.mago_nivel_max:
+				return "%s no nível máximo (%d)" % [of.opcao().display_name, of.nivel]
+			if aperta:
+				of.subir_nivel()
+				caminho_classe[of.team] = of.opcao().id
+				caminho_nivel[of.team] = of.nivel
+			return "[F] subir %s para o nível %d" % [of.opcao().display_name, of.nivel + 1]
+		if aperta:
+			of.trocar_pronta()
+		return "[F] trocar a oficina: %s" % of.opcao().display_name
+	return hint
 
 
 ## Máscara caída com alguém do time ladrão perto: ninguém a devolve.
@@ -1040,9 +1104,11 @@ func on_oficina_pronta(of: Oficina) -> void:
 	for pad in hat_pads:
 		if base != &"" and pad.team == of.team and pad.stats.id == base and pad.subir_nivel():
 			_log("maquininha %s nível 2: %s" % [Config.TEAM_NAMES[of.team], pad.stats.display_name])
-			if of.team == player.team:
+			if of.team == player.team and not _montando_sandbox:
 				hud.show_big("Oficina pronta: %s!\nMaquininha de %s no nível 2" % [of.opcao().display_name, pad.stats.display_name], of.opcao().hat_color.lightened(0.3), 2.4)
 				return
+	if _montando_sandbox:
+		return
 	if of.team == player.team:
 		hud.show_big("Oficina pronta: %s!" % of.opcao().display_name, of.opcao().hat_color.lightened(0.3), 2.0)
 	else:

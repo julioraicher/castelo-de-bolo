@@ -351,17 +351,48 @@ func _finish() -> void:
 	tw.tween_callback(func(): Fx.burst(_game, global_position + Vector3(0, 2.2, 0), Color(0.75, 0.65, 0.5), 16, 5.0))
 	Fx.pillar(_game, global_position, Config.team_color(team).lightened(0.3), 3.0)
 	Sfx.play("score", global_position, 0.05)
-	pad = HatPad.new()
-	_game.add_child(pad)
-	# Ao lado da casa, do lado do portão: atrás dela (z menor) a câmera não vê.
-	var lado := signf(_game.arena.spawn_center[team].x - global_position.x)
-	pad.setup(team, opcao(), global_position + Vector3(lado * 3.0, 0, 0))
-	_game.hat_pads.append(pad)
+	_novo_pad()
 	if caminho >= 0:
 		nivel = 2
 	_label.position.y = _alt_label + (0.4 if _titulo else 1.0)
 	_update_label()
 	_game.on_oficina_pronta(self)
+
+
+## Pedestal com o chapéu da opção atual, ao lado da casa, do lado do portão
+## (atrás dela, z menor, a câmera não vê).
+func _novo_pad() -> void:
+	pad = HatPad.new()
+	_game.add_child(pad)
+	var lado := signf(_game.arena.spawn_center[team].x - global_position.x)
+	pad.setup(team, opcao(), global_position + Vector3(lado * 3.0, 0, 0))
+	_game.hat_pads.append(pad)
+
+
+## Modo teste: a casa fica pronta na hora, sem obra nem madeira.
+func concluir_ja() -> void:
+	if estado == Estado.PRONTA or selada:
+		return
+	madeira_entregue = custo()
+	progresso = 1.0
+	_casa.visible = true
+	_finish()
+
+
+## Modo teste: troca a classe de uma oficina comum já pronta; o pedestal
+## é refeito com o chapéu novo. Devolve true se trocou.
+func trocar_pronta() -> bool:
+	if estado != Estado.PRONTA or caminho >= 0 or _lista.size() < 2:
+		return false
+	opcao_i = (opcao_i + 1) % _lista.size()
+	if pad:
+		_game.hat_pads.erase(pad)
+		pad.queue_free()
+	_novo_pad()
+	Sfx.play("pickup", global_position, 0.1)
+	_update_label()
+	_game.on_oficina_pronta(self)
+	return true
 
 
 func _update_label() -> void:
