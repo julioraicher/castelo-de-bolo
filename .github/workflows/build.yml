@@ -4,6 +4,9 @@
 # Na main, só depois dele passar, exporta o jogo:
 #  - versão Web publicada no GitHub Pages (link para jogar no navegador)
 #  - .exe (Windows) e Linux anexados à release "ultima-versao"
+#  - itch.io (página oculta de teste): web, Windows e Linux via butler.
+#    Só roda se existir o segredo BUTLER_API_KEY e a variável ITCH_ALVO
+#    (ex.: "julioraicher/castelo-de-bolo"). Pages só roda com repo público.
 name: Build e publicação
 
 on:
@@ -106,12 +109,30 @@ jobs:
           gh release create ultima-versao build/CasteloDeBolo-windows.zip build/CasteloDeBolo-linux.zip \
             --title "Última versão" --notes "Gerada automaticamente a partir de ${GITHUB_SHA::7}." --prerelease
 
+      - name: Publicar no itch.io (butler)
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_ALVO: ${{ vars.ITCH_ALVO }}
+        run: |
+          if [ -z "$BUTLER_API_KEY" ] || [ -z "$ITCH_ALVO" ]; then
+            echo "::notice::itch.io ainda não configurado (falta BUTLER_API_KEY ou ITCH_ALVO)."
+            exit 0
+          fi
+          curl -sSL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -q butler.zip -d butler && chmod +x butler/butler
+          v="${GITHUB_SHA::7}"
+          ./butler/butler push build/web "$ITCH_ALVO:web" --userversion "$v"
+          ./butler/butler push build/windows "$ITCH_ALVO:windows" --userversion "$v"
+          ./butler/butler push build/linux "$ITCH_ALVO:linux" --userversion "$v"
+
       - uses: actions/upload-pages-artifact@v3
+        if: ${{ !github.event.repository.private }}
         with:
           path: build/web
 
   pages:
     needs: export
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
