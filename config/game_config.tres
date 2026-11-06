@@ -9,8 +9,6 @@
 [ext_resource type="Resource" path="res://config/classes/ronin_oni.tres" id="of_ronin_oni"]
 [ext_resource type="Resource" path="res://config/classes/arqueiro_yumi.tres" id="of_arqueiro_yumi"]
 [ext_resource type="Resource" path="res://config/classes/kitsune.tres" id="of_kitsune"]
-[ext_resource type="Resource" path="res://config/classes/armadilheiro.tres" id="of_armadilheiro"]
-[ext_resource type="Resource" path="res://config/classes/bombardeiro.tres" id="of_bombardeiro"]
 [ext_resource type="Resource" path="res://config/classes/kitsune_luz.tres" id="of_kitsune_luz"]
 [ext_resource type="Resource" path="res://config/classes/kitsune_sombria.tres" id="of_kitsune_sombria"]
 [ext_resource type="Resource" path="res://config/mapas/rio_lanternas.tres" id="7_rio"]
@@ -27,7 +25,7 @@ villager = ExtResource("2")
 hat_class_list = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource("4"), ExtResource("of_kitsune"), ExtResource("11")])
 bot_start_classes = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource("4"), ExtResource("of_kitsune"), ExtResource("11"), ExtResource("2")])
 inicio_calmo = 30.0
-oficina_classes = Array[ExtResource("1_3yous")]([ExtResource("of_ronin_oni"), ExtResource("of_arqueiro_yumi"), ExtResource("of_armadilheiro"), ExtResource("of_bombardeiro")])
+oficina_classes = Array[ExtResource("1_3yous")]([ExtResource("of_ronin_oni"), ExtResource("of_arqueiro_yumi")])
 magos_opostos = Array[ExtResource("1_3yous")]([ExtResource("of_kitsune_luz"), ExtResource("of_kitsune_sombria")])
 themes = Array[ExtResource("8_txtu1")]([ExtResource("11_dia"), ExtResource("12_crep"), ExtResource("9_f5mmm"), ExtResource("10_wo1y8")])
 map = ExtResource("7_rio")

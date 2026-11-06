@@ -29,12 +29,47 @@ func _ready() -> void:
 	_caminho_magos()
 	await _alma()
 	_ferradura()
+	_lote_2_7()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
 	for f in _falhas:
 		print("TESTE FALHOU: ", f)
 	get_tree().quit(1 if not _falhas.is_empty() else 0)
+
+
+## Lote 2.7 (2026-11-06): Chi pelo tempo, Q mais curto, 3º tiro forte,
+## Construtor sem variação e item perto da briga.
+func _lote_2_7() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var u = _alvo()
+	if u == null:
+		_check(false, "lote 2.7: faltou boneco")
+		return
+	u.set_class(load("res://config/classes/guerreiro.tres"))
+	u.power = 0.0
+	u._power_active_t = 0.0
+	u._tick_power(1.0)
+	_check(u.power >= cfg.power_regen - 0.01, "Chi por tempo: 1 s deveria dar %.1f, deu %.2f" % [cfg.power_regen, u.power])
+	_check(_perto(u.quick_cooldown(), u.stats.skill_cooldown * cfg.rapida_cooldown_mult, 1e-4), "Q: recarga deveria ser skill_cooldown × rapida_cooldown_mult")
+	for id in ["kitsune", "arqueiro"]:
+		u.set_class(load("res://config/classes/%s.tres" % id))
+		_check(u.stats.combo_tiros == 3, "%s deveria ter combo de 3 tiros" % id)
+		var finais := []
+		for i in 3:
+			u._attack_cd = 0.0
+			u._attack()
+			finais.append(u._golpe_final)
+			if u._windup_t > 0.0:
+				u._attack_hit()
+		_check(finais == [false, false, true], "%s: só o 3º tiro deveria ser o forte (%s)" % [id, str(finais)])
+	var construtor = load("res://config/classes/construtor.tres")
+	_check(construtor.skill == "armadilha", "Construtor: Q deveria armar estrepes")
+	for c in cfg.oficina_classes:
+		_check(c.classe_base != &"construtor", "Construtor não deveria ter variação (%s)" % c.id)
+	var p = game._spot_perto_da_briga()
+	_check(p == null or p is Vector3, "item perto da briga: posição inválida")
+	_check(cfg.final_arco_mult > 0.0 and cfg.final_arco_mult < 1.0, "golpe final vertical deveria ser mais estreito")
 
 
 func _check(ok: bool, nome: String) -> void:

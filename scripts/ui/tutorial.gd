@@ -34,7 +34,7 @@ func _ready() -> void:
 	_aba_classes()
 	_aba("Madeira", "madeira", [
 		["martelo", Estilo.OURO, "1. Corte",
-			"Só o Construtor e as variações dele (Armadilheiro, Bombardeiro) cortam. Siga a seta dourada até uma árvore ou bambu crescido e clique colado nela. O Bombardeiro também corta: perto da planta o clique vira machadada; longe, joga bomba."],
+			"Só o Construtor corta. Siga a seta dourada até uma árvore ou bambu crescido e clique colado nela."],
 		["martelo", Estilo.OURO, "2. Pegue",
 			"Cada golpe solta uma tora (árvore adulta rende %d; bambu, %d). Passe por cima dela e ela vem para os braços. Você leva 1 por vez: o HUD mostra CARREGANDO 1/1 e você anda %d%% mais devagar, sem atacar." % [cfg.arvore_toras, cfg.bambu_varas, roundi((1.0 - cfg.tora_vel_mult) * 100.0)]],
 		["martelo", Estilo.OURO, "3. Entregue",
@@ -46,7 +46,7 @@ func _ready() -> void:
 		["katana", Estilo.OURO, "Maquininhas do pátio",
 			"Cada maquininha fabrica um chapéu a cada %d s, até %d guardados. Chegue perto e aperte F para trocar de classe." % [roundi(cfg.maquina_intervalo), cfg.maquina_estoque_max]],
 		["martelo", Estilo.OURO, "Oficinas (%d madeiras)" % cfg.oficina_custo_madeira,
-			"Os terrenos vazios viram oficinas de classes novas: Ronin Oni, Arqueiro Yumi, Armadilheiro ou Bombardeiro. Perto do terreno, F troca qual classe construir (antes da obra começar)."],
+			"Os terrenos vazios viram oficinas de classes novas: Ronin Oni ou Arqueiro Yumi. Perto do terreno, F troca qual classe construir (antes da obra começar)."],
 		["losango", Estilo.OURO, "Nível 2 da maquininha",
 			"A maquininha sobe para o nível 2 quando a oficina da variação dela fica pronta (ex.: Ronin Oni sobe a do Samurai) ou com %d madeiras de um Construtor. Nível 2: até %d chapéus, um a cada %d s." % [cfg.maquina_n2_custo, cfg.maquina_n2_estoque, roundi(cfg.maquina_n2_intervalo)]],
 	])
@@ -102,7 +102,7 @@ func _aba_classes() -> void:
 		["Guerreiro", "Linha de frente, combo de 3 golpes.", ["guerreiro", "ronin_oni"]],
 		["Atirador", "De longe; segure o clique para carregar o tiro.", ["arqueiro", "arqueiro_yumi"]],
 		["Mago", "Cura ou amaldiçoa; fica atrás dos guerreiros.", ["kitsune", "kitsune_luz", "kitsune_sombria"]],
-		["Construtor", "Corta madeira, ergue oficinas. Q: Corrida. E: Mutirão.", ["construtor", "armadilheiro", "bombardeiro"]],
+		["Construtor", "Corta madeira, ergue oficinas, arma estrepes. Q: Estrepes. E: Mutirão.", ["construtor"]],
 	]
 	for p in papeis:
 		var linhas: PackedStringArray = []

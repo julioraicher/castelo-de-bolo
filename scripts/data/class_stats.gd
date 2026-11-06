@@ -54,6 +54,9 @@ extends Resource
 @export var combo_anims: PackedStringArray = []
 ## O último golpe do combo multiplica dano e empurrão por este valor.
 @export var combo_finisher_mult := 1.4
+## Classes de tiro: tiros seguidos até o golpe final (0 = sem combo). O final
+## do shuriken vira um leque; o de fogo explode (combo_finisher_mult no dano).
+@export var combo_tiros := 0
 
 @export_group("Defesa (botão direito) e habilidade rápida (Q)")
 ## Botão direito = DEFESA para todas as classes (bloqueio + contra-golpe).

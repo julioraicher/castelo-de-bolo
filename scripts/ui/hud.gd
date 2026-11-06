@@ -36,6 +36,7 @@ var _fps: Label
 var _abates: Label
 var _quedas: Label
 var _flash: ColorRect
+var _machucado: TextureRect  # borda vermelha com vida baixa
 var _end_panel: Control
 var _end_title: Label
 var _end_score: Label
@@ -100,6 +101,30 @@ func _ready() -> void:
 	_big.pivot_offset = Vector2(550, 70)
 	_big.modulate.a = 0.0
 	root.add_child(_big)
+
+	# Borda "machucado": gradiente radial (centro limpo, cantos vermelho-escuro).
+	# Uma textura 256² esticada na tela: custo ~zero, até no navegador.
+	var grad := Gradient.new()
+	grad.set_color(0, Color(0.55, 0.0, 0.02, 0.0))
+	grad.set_color(1, Color(0.45, 0.0, 0.0, 0.9))
+	grad.add_point(0.55, Color(0.55, 0.0, 0.02, 0.0))
+	grad.add_point(0.8, Color(0.6, 0.02, 0.02, 0.35))
+	var tex := GradientTexture2D.new()
+	tex.gradient = grad
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 1.0)
+	tex.width = 256
+	tex.height = 256
+	_machucado = TextureRect.new()
+	_machucado.texture = tex
+	_machucado.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_machucado.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_machucado.stretch_mode = TextureRect.STRETCH_SCALE
+	_machucado.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_machucado.modulate.a = 0.0
+	root.add_child(_machucado)
+	root.move_child(_machucado, 0)  # embaixo do resto do HUD
 
 	# Clarão da tela inteira (poder do jogador). Só um ColorRect: custo ~zero.
 	_flash = ColorRect.new()
@@ -406,7 +431,16 @@ func update_state(game: Game) -> void:
 	var ratio := u.hp_ratio()
 	_hp_bar.value = ratio * 100.0
 	_hp_text.text = "%d / %d" % [ceili(u.hp), int(u.max_hp())] if u.alive else ""
-	Estilo.cor_barra(_hp_bar, time_cor if ratio > 0.3 else Estilo.PERIGO.lerp(Color.WHITE, pulso * 0.4))
+	var baixa := Config.cfg.vida_baixa_frac
+	Estilo.cor_barra(_hp_bar, time_cor if ratio > baixa else Estilo.PERIGO.lerp(Color.WHITE, pulso * 0.4))
+	# Borda vermelha: cresce conforme a vida cai abaixo de vida_baixa_frac e
+	# pulsa como batimento (mais rápido quanto menos vida).
+	var alvo := 0.0
+	if u.alive and ratio < baixa:
+		var k := 1.0 - ratio / maxf(baixa, 0.01)
+		var bat := 0.5 + 0.5 * sin(Time.get_ticks_msec() * (0.006 + 0.008 * k))
+		alvo = 0.45 + 0.4 * k + 0.15 * bat
+	_machucado.modulate.a = move_toward(_machucado.modulate.a, alvo, 0.08)
 	_power_bar.value = u.power
 	var tem_poder := u.stats.power != "nenhum"
 	_power_bar.visible = tem_poder

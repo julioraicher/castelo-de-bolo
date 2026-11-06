@@ -575,9 +575,9 @@ func _vitrine() -> void:
 		if i == 3 and f < 150:
 			u.hp = u.max_hp() * 0.4
 	match f:
-		20, 55, 90:
+		20, 70, 120:  # 50 quadros: cabe a recarga de qualquer classe e o combo não zera
 			p.wants_attack = true
-		21, 56, 91:
+		21, 71, 121:
 			p.wants_attack = false
 		165:
 			p.wants_quick = true
@@ -844,10 +844,52 @@ func _spawn_pickups(delta: float) -> void:
 	if _pickup_t > 0.0 or pickups.size() >= Config.cfg.max_pickups:
 		return
 	_pickup_t = Config.cfg.pickup_interval
+	var pos := arena.random_cake_spot()
+	if randf() < Config.cfg.pickup_perto_da_briga:
+		var perto: Variant = _spot_perto_da_briga()
+		if perto != null:
+			pos = perto
 	var it := Pickup.new()
 	add_child(it)
-	it.setup(Pickup.KINDS.pick_random(), arena.random_cake_spot())
+	it.setup(Pickup.KINDS.pick_random(), pos)
 	pickups.append(it)
+
+
+## Onde a briga está mais cheia: o soldado (fora dos castelos) com mais gente
+## dos dois times a até 9 m. O item cai a 3-7 m dele, em chão baixo e longe de
+## outro item. null = ninguém brigando ou sem chão bom.
+func _spot_perto_da_briga() -> Variant:
+	var best: Unit = null
+	var best_n := 2
+	for u in units:
+		if not u.alive or _perto_de_castelo(u.global_position):
+			continue
+		var n := 0
+		for o in units:
+			if o.alive and o.global_position.distance_to(u.global_position) < 9.0:
+				n += 1
+		if n > best_n:
+			best_n = n
+			best = u
+	if best == null:
+		return null
+	for i in 10:
+		var a := randf() * TAU
+		var p := best.global_position + Vector3(cos(a), 0.0, sin(a)) * randf_range(3.0, 7.0)
+		p.y = 0.0
+		if arena.ground_y(p.x, p.z) >= 0.3 or _perto_de_castelo(p):
+			continue
+		if nearest_pickup(p, 4.0) != null:
+			continue
+		return p
+	return null
+
+
+func _perto_de_castelo(p: Vector3) -> bool:
+	for c in arena.spawn_center:
+		if Vector2(p.x - c.x, p.z - c.z).length() < 22.0:
+			return true
+	return false
 
 
 func nearest_pickup(from: Vector3, max_dist: float) -> Pickup:

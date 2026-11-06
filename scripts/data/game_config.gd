@@ -33,7 +33,7 @@ extends Resource
 
 @export_group("Poder (medidor de Glacê, 0 a 100)")
 ## Fontes do medidor: dG/dt = a·(dano causado) + b·(dano sofrido) + eventos − G/τ.
-@export var power_per_damage := 0.3
+@export var power_per_damage := 0.4
 @export var power_per_damage_taken := 0.15
 @export var power_per_kill := 15.0
 @export var power_per_cake := 25.0
@@ -44,6 +44,21 @@ extends Resource
 @export var power_leak_tau := 60.0
 ## Fração do medidor mantida ao morrer.
 @export_range(0.0, 1.0) var power_keep_on_death := 0.5
+## Chi por segundo só de estar vivo (o E vem mesmo sem acertar ninguém).
+## Sozinho enche em 100/power_regen s; com briga, bem antes. 0 desliga e
+## volta o vazamento acima.
+@export var power_regen := 3.0
+## Multiplica a recarga de toda habilidade rápida (Q). 1,0 = número do .tres.
+@export var rapida_cooldown_mult := 0.7
+
+@export_group("Combo (3º golpe)")
+## Corpo a corpo: o golpe final é vertical e pega só esta fração do arco normal
+## (mais dano, menos área). O dano vem de combo_finisher_mult da classe.
+@export var final_arco_mult := 0.45
+## Tiro: o golpe final do shuriken vira este número de shurikens em leque, com
+## esta abertura total (graus). Cada um dá combo_finisher_mult × dano.
+@export var final_leque_n := 3
+@export var final_leque_graus := 28.0
 
 @export_group("Itens no chão")
 ## Um item novo a cada tantos segundos, até o máximo, na área do meio.
@@ -51,15 +66,20 @@ extends Resource
 ## TTK = vida / (DPS · taxa de acerto). vida_mult multiplica a vida de todas as
 ## classes e, junto, curas e escudos (que são números absolutos), para eles
 ## valerem a mesma fração da vida. 1,0 = números dos .tres de classe.
-@export var vida_mult := 1.4
+@export var vida_mult := 1.7
 ## Dano dos poderes do Q (todos), para eles não ficarem fracos com a vida maior.
 @export var dano_poder_mult := 1.2
 ## Fora de combate (sem bater nem apanhar) por regen_delay s, cura
 ## regen_rate da vida máxima por segundo. Briga perdida não "vaza" para a próxima.
 @export var regen_delay := 4.0
 @export var regen_rate := 0.06
-@export var pickup_interval := 15.0
-@export var max_pickups := 3
+@export var pickup_interval := 9.0
+@export var max_pickups := 5
+## Chance de o item nascer perto de onde a briga está mais cheia (em vez de
+## sorteado na área toda); cai a 3-7 m do bolo de gente.
+@export_range(0.0, 1.0) var pickup_perto_da_briga := 0.65
+## Abaixo desta fração de vida a tela ganha a borda vermelha (e a mira pulsa).
+@export_range(0.0, 1.0) var vida_baixa_frac := 0.3
 ## Poção: fração da vida máxima curada.
 @export var pickup_heal := 0.5
 @export var pickup_shield := 40.0
