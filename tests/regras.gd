@@ -194,6 +194,28 @@ func _torretas() -> void:
 		"torreta com madeira entregue e obra atrás: o Construtor deveria ir construir")
 	t.madeira_entregue = 0
 	game.madeira[t.team] = m0
+	# 2.12d: com outra torreta do time de pé e o mago podendo subir, o terreno
+	# vazio espera (a madeira vai antes para o mago).
+	var mago = null
+	for of in game.oficinas:
+		if of.team == t.team and of.caminho >= 0 and of.estado == of.Estado.PRONTA and not of.selada:
+			mago = of
+	var outra = null
+	for x in game.torretas:
+		if x != t and x.team == t.team:
+			outra = x
+	_check(mago != null and outra != null, "torreta x mago: faltou o mago pronto ou a 2ª torreta do time")
+	if mago and outra:
+		var n0: int = mago.nivel
+		mago.nivel = cfg.mago_nivel_max - 1
+		outra.concluir_ja()
+		_check(game.torreta_para_obra(t.team, t.global_position) == null,
+			"torreta vazia deveria esperar o mago subir com a outra torreta de pé")
+		mago.nivel = cfg.mago_nivel_max
+		_check(game.torreta_para_obra(t.team, t.global_position) == t,
+			"mago no máximo: a torreta vazia volta a ser obra")
+		mago.nivel = n0
+		outra.take_hit(outra.max_hp() + 1.0, 1 - outra.team)
 
 
 ## Catapulta (2.9b): sobe, lança com força 1 e cai perto da muralha inimiga;
@@ -787,7 +809,7 @@ func _maquina() -> void:
 	_check(cheio == cfg.maquina_estoque_max, "máquina deveria encher até maquina_estoque_max")
 	pad.take()
 	_check(pad.estoque == cheio - 1 and pad.available, "pegar chapéu deveria tirar 1 do estoque")
-	pad.avancar(cfg.maquina_intervalo - 0.05)
+	pad.avancar(cfg.maquina_intervalo * pad.stats.chapeu_tempo_mult - 0.05)
 	_check(pad.estoque == cheio - 1, "máquina fabricou antes do intervalo")
 	pad.avancar(0.1)
 	_check(pad.estoque == cheio, "máquina não fabricou no intervalo")
@@ -847,7 +869,7 @@ func _nivel2() -> void:
 					of.madeira_entregue = of.custo()
 					of.add_progress(1.0, null)
 					_check(of.estado == 2, "nível 2: oficina deveria ficar pronta")
-					_check(pad.nivel == 2 and pad.estoque_max == cfg.maquina_n2_estoque and _perto(pad.intervalo, cfg.maquina_n2_intervalo, 1e-4),
+					_check(pad.nivel == 2 and pad.estoque_max == cfg.maquina_n2_estoque and _perto(pad.intervalo, cfg.maquina_n2_intervalo * pad.stats.chapeu_tempo_mult, 1e-4),
 						"nível 2: maquininha de %s não subiu (nivel %d, max %d)" % [pad.stats.id, pad.nivel, pad.estoque_max])
 					_check(pad.estoque == e0, "nível 2: deveria ganhar 1 chapéu na hora (%d -> %d)" % [e0, pad.estoque])
 					_check(not pad.subir_nivel(), "nível 2: não sobe duas vezes")

@@ -48,7 +48,7 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 	stats = p_stats
 	position = pos
 	estoque_max = Config.cfg.maquina_estoque_max
-	intervalo = Config.cfg.maquina_intervalo
+	intervalo = Config.cfg.maquina_intervalo * stats.chapeu_tempo_mult
 	estoque = estoque_max
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # chapéu animado em _process
 	var th: ThemeConfig = Config.theme()
@@ -230,7 +230,7 @@ func subir_nivel() -> bool:
 	if _contador:
 		_contador.visible = false
 	estoque_max = Config.cfg.maquina_n2_estoque
-	intervalo = Config.cfg.maquina_n2_intervalo
+	intervalo = Config.cfg.maquina_n2_intervalo * stats.chapeu_tempo_mult
 	_fab_t = 0.0
 	for n in _n2:
 		n.visible = true

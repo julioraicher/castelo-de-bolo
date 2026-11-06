@@ -6,6 +6,7 @@
 [resource]
 script = ExtResource("2_7n6q6")
 id = &"guerreiro"
+chapeu_tempo_mult = 0.9
 display_name = "Samurai"
 epiteto = "A lâmina do clã"
 descricao = "Guerreiro jurado à Máscara Oni do próprio castelo: enquanto ela estiver no pedestal, ele não recua. Disciplinado e orgulhoso, é o primeiro a entrar na briga e o último a sair. Aprendeu com os ninjas a sumir na sombra por um instante, só para voltar com o golpe certo."
