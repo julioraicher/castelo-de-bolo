@@ -34,6 +34,8 @@ func _ready() -> void:
 	_torretas()
 	_catapulta()
 	_equilibrio_2_10()
+	_respawn_cresce()
+	_bolo_mascara_cheia()
 	await _mira()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
@@ -373,6 +375,54 @@ func _mira() -> void:
 	e.brain = brains[1]
 	cam.target = alvo_cam
 	cam.set_process(true)
+
+
+## 2.13: máscara no peso máximo não aceita espírito e o bot com bolo na mão
+## não fica plantado embaixo dela (o "guarda-costas eterno" do Julio).
+func _bolo_mascara_cheia() -> void:
+	var u: Unit = null
+	for b in game.units:
+		if b.brain is BotBrain and b.alive and not b.carried_princess:
+			u = b
+			break
+	if u == null:
+		_check(false, "bolo: faltou bot vivo")
+		return
+	var p = game.princesses[u.team]
+	var fat0: float = p.fatness
+	var cake0: bool = u.has_cake
+	p.fatness = 1.0
+	_check(not p.feed(), "máscara cheia não deveria aceitar espírito")
+	u.has_cake = true
+	var brain: BotBrain = u.brain
+	brain._think()
+	_check(brain._goal.distance_to(p.global_position) > 1.0,
+			"bot com bolo e máscara cheia não deveria acampar embaixo dela")
+	p.fatness = fat0
+	p._apply_fatness()
+	u.has_cake = cake0
+
+
+## 2.13: a morte pesa mais no fim: renascer cresce com o tempo e tem teto.
+func _respawn_cresce() -> void:
+	var cfg = Config.cfg
+	var t0: float = game._time
+	var sb: bool = game.sandbox
+	game.sandbox = false
+	game._time = 0.0
+	_check(_perto(game.respawn_atual(), cfg.respawn_time, 0.01),
+			"respawn: no início deveria ser o base")
+	game._time = 240.0
+	_check(_perto(game.respawn_atual(), cfg.respawn_time + cfg.respawn_cresce * 4.0, 0.01),
+			"respawn: aos 4 min deveria ter crescido respawn_cresce por minuto")
+	game._time = 3600.0
+	_check(_perto(game.respawn_atual(), cfg.respawn_max, 0.01),
+			"respawn: deveria parar no teto respawn_max")
+	game.sandbox = true
+	_check(_perto(game.respawn_atual(), cfg.respawn_time, 0.01),
+			"respawn: no modo teste não deveria crescer")
+	game.sandbox = sb
+	game._time = t0
 
 
 func _check(ok: bool, nome: String) -> void:

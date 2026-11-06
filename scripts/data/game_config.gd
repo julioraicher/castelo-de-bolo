@@ -5,7 +5,13 @@ extends Resource
 @export_group("Partida")
 @export var units_per_team := 8
 @export var score_to_win := 3
-@export var respawn_time := 6.0
+@export var respawn_time := 7.0
+## Morrer custa mais caro conforme a partida avança: o renascer ganha
+## +respawn_cresce s por minuto de jogo, até respawn_max. No fim travado
+## (tudo upado), quedas abrem janelas para o time unido roubar a máscara.
+## No modo teste não cresce (lá a espera só atrapalha).
+@export var respawn_cresce := 0.75
+@export var respawn_max := 13.0
 
 @export_group("Princesa e bolo")
 ## Quanto cada bolo engorda a princesa (0 = magra, 1 = gordíssima).

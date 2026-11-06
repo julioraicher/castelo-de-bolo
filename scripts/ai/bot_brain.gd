@@ -186,7 +186,9 @@ func _think() -> void:
 	if unit.carried_princess:
 		_goal = arena.princess_spot[unit.team]
 		return
-	if unit.has_cake and my_princess.state == Princess.State.HOME:
+	# Máscara no peso máximo não aceita espírito: sem este `fatness`, o bot
+	# ficava plantado embaixo dela com o bolo na mão, de guarda-costas eterno.
+	if unit.has_cake and my_princess.state == Princess.State.HOME and my_princess.fatness < 1.0:
 		_goal = my_princess.global_position
 		return
 	if unit.is_villager():
