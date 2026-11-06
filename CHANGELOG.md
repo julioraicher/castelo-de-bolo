@@ -5,6 +5,25 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.8 (2026-11-06), Jogabilidade: SUPER poder na tecla R (piloto, pitaco do Julio)
+- **Barra de ouro** embaixo do Chi. Não enche com o tempo: dano causado (×0,12), abate
+  (+22), item pego (+12), espírito entregue na máscara (+30) e captura (+50). Não cai ao
+  morrer. Cheia: **R** solta o super (abertura dourada, câmera lenta, letreiro).
+- **Samurai: Passo da Sombra**: some por 3,5 s (o inimigo não vê o corpo nem a vida; os
+  bots inimigos só enxergam a até 2 m), anda 35% mais rápido e o primeiro golpe sai como
+  golpe final ×2,5 e encerra a sombra. Para chegar em quem atira de longe.
+- **Outras classes**: o poder do E em versão gigante (raio ×1,6, dano ×2, duração ×1,6).
+  O Chi do E não é gasto.
+- Bots usam: a sombra contra quem atira de 4-16 m (ou para fugir com pouca vida); o resto
+  com a mesma leitura do E.
+- **Reiniciar** saiu do R e foi para o **F5** (também no menu de pausa).
+- Config: grupo "Super (R)" em `game_config.gd`; `super_tipo`/`super_nome` em `ClassStats`.
+  Teste de regra `_super` (todas as classes). Vitrine: o super sai no quadro 470.
+- GIF: `jogabilidade/10-super-poder.gif` (pasta do projeto).
+- **O que testar**: jogue até a barra de ouro encher (abates e espíritos enchem rápido),
+  aperte R de Samurai e chegue em um Ninja ou Kitsune sem ser visto. Teste o R de Kitsune
+  e de Ninja num grupo de inimigos. A barra enche rápido ou devagar demais?
+
 ## Ciclo 2.7b (2026-11-06), Jogabilidade: limpeza e equilíbrio pequeno
 - **Limpeza**: os três leques de shuriken (poder E, 2ª onda e 3º tiro do combo) usam um
   helper só (`Unit._leque`, `_mult_poder`); saiu `_trap_cd` (nunca lido); texto do Q no

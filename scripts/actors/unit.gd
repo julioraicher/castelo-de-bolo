@@ -50,10 +50,18 @@ var wants_attack := false
 var wants_block := false
 var wants_quick := false  # Q: habilidade rápida (recarga curta)
 var wants_power := false  # E: poder de Chi (medidor cheio)
+var wants_super := false  # R: super (barra dourada cheia)
 var wants_dodge := false
 
 ## Medidor de Glacê (0 a POWER_MAX). Cheio = poder do Q liberado.
 var power := 0.0
+## Barra do super (0 a POWER_MAX): só enche jogando (dano, abates, itens,
+## espíritos, captura), nunca com o tempo, e não cai ao morrer.
+var super_carga := 0.0
+var _super_t := 0.0  # super "maior" ativo: stats trocado por uma cópia ampliada
+var _stats_normal: ClassStats = null
+var _sombra_t := 0.0  # super "sombra": invisível
+var _sombra_mat: StandardMaterial3D
 
 var nav_agent: NavigationAgent3D
 
@@ -174,6 +182,10 @@ func setup(p_game: Game, p_team: int, p_is_player: bool, start_class: ClassStats
 
 
 func set_class(new_stats: ClassStats) -> void:
+	_super_t = 0.0
+	_stats_normal = null
+	if _sombra_t > 0.0:
+		_fim_sombra()
 	stats = new_stats
 	if not lenhador():
 		drop_tora()
@@ -440,6 +452,8 @@ func current_speed() -> float:
 		s *= _boost_mult
 	if _slow_t > 0.0:
 		s *= _slow_mult
+	if _sombra_t > 0.0:
+		s *= Config.cfg.sombra_vel
 	return s
 
 
@@ -559,6 +573,11 @@ func _physics_process(delta: float) -> void:
 		wants_power = false
 		if _silence_t <= 0.0:
 			_use_power()
+	if wants_super:
+		wants_super = false
+		if _silence_t <= 0.0:
+			_use_super()
+	_tick_super(delta)
 	if _windup_t > 0.0:
 		_windup_t -= delta
 		if _windup_t <= 0.0:
@@ -648,6 +667,11 @@ func _attack() -> void:
 		_combo_t = _attack_cd + COMBO_WINDOW
 	_attack_t = minf(_attack_cd, 0.45)
 	_play_upper(anim, 1.35)
+	if _sombra_t > 0.0:
+		# Golpe de surpresa saindo da sombra.
+		mult *= Config.cfg.sombra_golpe_mult
+		finisher = true
+		_fim_sombra()
 	_golpe_mult = mult
 	_golpe_final = finisher
 	# Antecipação: o corpo encolhe e recua um instante antes do dano sair
@@ -1107,6 +1131,7 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 	if attacker:
 		attacker._calm_t = 0.0
 		attacker.add_power(amount * Config.cfg.power_per_damage)
+		attacker.add_super(amount * Config.cfg.super_por_dano)
 	add_power(amount * Config.cfg.power_per_damage_taken)
 	if _fury_t > 0.0:
 		knock_mult *= 0.2  # gigante: quase não é empurrado
@@ -1323,7 +1348,10 @@ func _die(killer: Unit) -> void:
 	Sfx.play("death", global_position)
 	if killer and killer != self:
 		killer.add_power(Config.cfg.power_per_kill)
+		killer.add_super(Config.cfg.super_por_abate)
 	power *= Config.cfg.power_keep_on_death
+	if _sombra_t > 0.0:
+		_fim_sombra()
 	died.emit(self, killer)
 
 
@@ -1367,6 +1395,116 @@ func _tick_power(delta: float) -> void:
 	_power_idle += delta
 	if _power_idle > cfg.power_leak_delay and power < POWER_MAX:
 		power = maxf(power - power / cfg.power_leak_tau * delta, 0.0)
+
+
+# --- Super (R) -------------------------------------------------------------------
+
+func super_ready() -> bool:
+	return super_carga >= POWER_MAX and stats.power != "nenhum"
+
+
+func super_nome() -> String:
+	return stats.super_nome if stats.super_nome != "" else "Super " + stats.power_name
+
+
+func add_super(amount: float) -> void:
+	if amount <= 0.0 or not alive or _super_t > 0.0 or _sombra_t > 0.0 or stats.power == "nenhum":
+		return
+	var was_ready := super_carga >= POWER_MAX
+	super_carga = minf(super_carga + amount, POWER_MAX)
+	if is_player and not was_ready and super_carga >= POWER_MAX:
+		Sfx.play_ui("power_ready")
+		game.hud.show_big("SUPER pronto! R: %s" % super_nome(), Color(1.0, 0.82, 0.3), 1.6)
+
+
+## Invisível para os bots inimigos (a mais de sombra_visto m)?
+func na_sombra_para(quem: Unit) -> bool:
+	return _sombra_t > 0.0 and quem.team != team \
+		and quem.global_position.distance_to(global_position) > Config.cfg.sombra_visto
+
+
+func _use_super() -> void:
+	if not super_ready() or not alive or carried_princess or _dodge_t > 0.0 or _equip_t > 0.0 or _spin_t > 0.0:
+		return
+	var cfg := Config.cfg
+	super_carga = 0.0
+	# Abertura do super: mais forte que a do E (tela dourada, tempo quase para).
+	if is_player:
+		game.camera.add_trauma(0.5)
+		game.camera.punch_fov(6.0)
+		game.hud.flash(Color(1.0, 0.8, 0.3, 0.35), 0.45)
+		game.slowmo(0.2, 0.25)
+		game.hud.show_big(super_nome() + "!", Color(1.0, 0.82, 0.3), 1.2)
+	else:
+		game.camera.shake_at(global_position, 0.35)
+	Fx.pillar(game, global_position, Color(1.0, 0.8, 0.3), 2.2)
+	Fx.ring(game, global_position, Color(1.0, 0.8, 0.3, 0.9), 4.5)
+	Sfx.play("poder_boom", global_position, 0.04, 0.8)
+	match stats.super_tipo:
+		"sombra":
+			_sombra_t = cfg.sombra_tempo
+			if _sombra_mat == null:
+				_sombra_mat = StandardMaterial3D.new()
+				_sombra_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				_sombra_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+				_sombra_mat.albedo_color = Color(0.12, 0.05, 0.22, 0.7)
+			for mi in _meshes:
+				mi.material_overlay = _sombra_mat
+			_aplicar_sombra(true)
+			Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(0.15, 0.1, 0.25), 30, 6.0)
+			_play_once("Dodge_Forward", 0.3)
+		_:
+			# O poder E da classe em versão gigante: o stats vira uma cópia
+			# ampliada enquanto o poder age (quem lê stats durante o efeito,
+			# como o giro do Redemoinho, também vê os números grandes).
+			_stats_normal = stats
+			var s: ClassStats = stats.duplicate()
+			s.power_radius *= cfg.super_mult_raio
+			s.power_value *= cfg.super_mult_valor
+			s.power_duration *= cfg.super_mult_duracao
+			stats = s
+			_super_t = s.power_duration + 1.5
+			var p0 := power
+			power = POWER_MAX
+			_power_active_t = 0.0
+			_use_power()
+			if power > 0.0:  # o poder não saiu (ocupado): devolve tudo
+				stats = _stats_normal
+				_stats_normal = null
+				_super_t = 0.0
+				super_carga = POWER_MAX
+			power = p0  # o super não gasta o Chi do E
+
+
+func _tick_super(delta: float) -> void:
+	if _super_t > 0.0:
+		_super_t -= delta
+		if _super_t <= 0.0 and _stats_normal:
+			stats = _stats_normal
+			_stats_normal = null
+	if _sombra_t > 0.0:
+		_sombra_t -= delta
+		if _sombra_t <= 0.0:
+			_fim_sombra()
+
+
+## Esconde (ou mostra) o corpo para quem é do outro time do jogador: o inimigo
+## vê só um vulto que some; o próprio time vê o corpo escuro (overlay).
+func _aplicar_sombra(sumir: bool) -> void:
+	var inimigo_do_jogador := game.player != null and game.player.team != team
+	if _visual:
+		_visual.visible = not (sumir and inimigo_do_jogador)
+	if _hp_root:
+		_hp_root.visible = not (sumir and inimigo_do_jogador)
+
+
+func _fim_sombra() -> void:
+	_sombra_t = 0.0
+	_aplicar_sombra(false)
+	for mi in _meshes:
+		mi.material_overlay = null
+	if game:
+		Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(0.15, 0.1, 0.25), 18, 5.0)
 
 
 func _use_power() -> void:
@@ -1804,7 +1942,7 @@ func _update_flash(delta: float) -> void:
 	if _flash_t > 0.0:
 		_flash_t -= delta
 		for mi in _meshes:
-			mi.material_overlay = _flash_mat if _flash_t > 0.0 else null
+			mi.material_overlay = _flash_mat if _flash_t > 0.0 else (_sombra_mat if _sombra_t > 0.0 else null)
 
 
 func _build_team_ring() -> void:

@@ -21,11 +21,12 @@ const CONTROLS := [
 	["Clique direito", "defender (segure). Erguido na hora do golpe, contra-ataca"],
 	["Q", "habilidade rápida da classe (recarga curta): investida, pisão, tiro perfurante, cura, mina ou estrepes"],
 	["E", "poder especial, quando a barra de Chi enche"],
+	["R", "SUPER, quando a barra dourada enche (abates, dano, itens e espíritos)"],
 	["Espaço ou Shift", "esquiva (rolamento rápido)"],
 	["F", "pegar chapéu ou máscara · escolher a oficina do terreno"],
 	["Esc ou P", "pausa, controles e configurações"],
 	["F11", "tela cheia"],
-	["R", "reiniciar a partida"],
+	["F5", "reiniciar a partida"],
 ]
 
 var cfg: GameConfig = preload("res://config/game_config.tres")
@@ -60,7 +61,8 @@ func _setup_input() -> void:
 	_bind_keys("move_right", [KEY_D, KEY_RIGHT])
 	_bind_keys("interact", [KEY_F])
 	_bind_keys("dodge", [KEY_SPACE, KEY_SHIFT])
-	_bind_keys("restart", [KEY_R])
+	_bind_keys("restart", [KEY_F5])
+	_bind_keys("super", [KEY_R])
 	_bind_keys("quick", [KEY_Q])
 	_bind_keys("power", [KEY_E])
 	_bind_keys("pause", [KEY_ESCAPE, KEY_P])

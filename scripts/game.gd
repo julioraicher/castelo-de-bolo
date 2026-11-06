@@ -584,7 +584,14 @@ func _vitrine() -> void:
 		300:
 			p.fill_power()
 			p.wants_power = true
-		480:
+		470:  # depois do E acabar (o Redemoinho segura o super enquanto gira)
+			p.super_carga = p.POWER_MAX
+			p.wants_super = true
+		600:
+			p.wants_attack = p.stats.super_tipo == "sombra"  # golpe saindo da sombra
+		601:
+			p.wants_attack = false
+		700:
 			get_tree().quit()
 
 	if f % 3 == 0 and f >= 6:
@@ -641,6 +648,7 @@ func _rules() -> void:
 			if own_p.feed():
 				u.has_cake = false
 				u.add_power(Config.cfg.power_per_cake)
+				u.add_super(Config.cfg.super_por_espirito)
 				if u.is_player:
 					hud.show_big("Espírito preso! Máscara mais pesada", Color(1, 0.6, 0.8), 1.2)
 
@@ -665,6 +673,7 @@ func _rules() -> void:
 		for it in pickups:
 			if pos.distance_to(it.global_position) < 1.6:
 				it.apply_to(u)
+				u.add_super(Config.cfg.super_por_item)
 				pickups.erase(it)
 				it.queue_free()
 				break
@@ -804,6 +813,7 @@ func _score_point(u: Unit) -> void:
 	var p := u.carried_princess
 	u.carried_princess = null
 	u.add_power(Config.cfg.power_per_capture)
+	u.add_super(Config.cfg.super_por_captura)
 	u.play_cheer(1.2)
 	p.return_home()
 	score[u.team] += 1

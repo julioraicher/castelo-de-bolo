@@ -351,7 +351,7 @@ func _nearest_enemy(radius: float) -> Unit:
 	var best: Unit = null
 	var best_d := radius
 	for u in game.units:
-		if u.alive and u.team != unit.team:
+		if u.alive and u.team != unit.team and not u.na_sombra_para(unit):
 			var d := u.global_position.distance_to(unit.global_position)
 			# Quem carrega a princesa é alvo prioritário.
 			if u.carried_princess:
@@ -366,7 +366,7 @@ func _nearest_enemy_to(at: Vector3, radius: float) -> Unit:
 	var best: Unit = null
 	var best_d := radius
 	for u in game.units:
-		if u.alive and u.team != unit.team:
+		if u.alive and u.team != unit.team and not u.na_sombra_para(unit):
 			var d := u.global_position.distance_to(at)
 			if d < best_d:
 				best_d = d
@@ -408,8 +408,12 @@ func _combat() -> void:
 	unit.wants_block = false
 	if unit.quick_ready():
 		unit.wants_quick = _should_use_quick()
+	if _target and _target.na_sombra_para(unit):
+		_target = null  # sumiu na sombra
 	if unit.power_ready():
 		unit.wants_power = _should_use_power()
+	if unit.super_ready() and not unit.wants_power:
+		unit.wants_super = _should_use_super()
 	if _target == null or not _target.alive or unit.carried_princess:
 		if _planta and _planta.adulta() and not unit.carried_tora:
 			var to_p := _planta.global_position - unit.global_position
@@ -439,6 +443,19 @@ func _combat() -> void:
 
 
 ## Quando vale gastar o medidor cheio. Os números aqui são o "bom senso" do bot.
+## Super: a sombra serve para chegar em quem atira de longe (ou fugir com
+## pouca vida); o "maior" segue a mesma leitura do poder E.
+func _should_use_super() -> bool:
+	if unit.stats.super_tipo == "sombra":
+		if unit.hp_ratio() < 0.3 and _nearest_enemy(6.0) != null:
+			return true
+		if _target == null or not _target.alive:
+			return false
+		var d := unit.global_position.distance_to(_target.global_position)
+		return d > 4.0 and d < 16.0 and (_target.stats.attack_kind != "melee" or _target.carried_princess != null)
+	return _should_use_power()
+
+
 func _should_use_power() -> bool:
 	var me := unit.global_position
 	var r := unit.stats.power_radius
