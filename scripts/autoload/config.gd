@@ -19,7 +19,7 @@ const CONTROLS := [
 	["Mouse", "mirar"],
 	["Clique esquerdo", "atacar (segure para golpear sem parar)"],
 	["Clique direito", "defender (segure). Erguido na hora do golpe, contra-ataca"],
-	["Q", "habilidade rápida da classe (recarga curta): investida, pisão, tiro perfurante, cura, mina ou corrida"],
+	["Q", "habilidade rápida da classe (recarga curta): investida, pisão, tiro perfurante, cura, mina ou estrepes"],
 	["E", "poder especial, quando a barra de Chi enche"],
 	["Espaço ou Shift", "esquiva (rolamento rápido)"],
 	["F", "pegar chapéu ou máscara · escolher a oficina do terreno"],

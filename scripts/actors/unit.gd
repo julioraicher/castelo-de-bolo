@@ -104,7 +104,6 @@ var _boost_mult := 1.0
 var _boost_fx_t := 0.0
 var _slow_t := 0.0
 var _slow_mult := 1.0
-var _trap_cd := 0.0
 var _quick_cd := 0.0  # recarga do Q
 var _escudo_def: MeshInstance3D  # arco na frente enquanto defende
 var _silence_t := 0.0   # Selo do Onmyoji: sem ataque, botão direito nem poder
@@ -744,16 +743,13 @@ func _attack_hit() -> void:
 ## 3º tiro do Ninja: leque de shurikens (cada uma com o dano do golpe final).
 func _leque_final() -> void:
 	var cfg := Config.cfg
-	var n := maxi(cfg.final_leque_n, 1)
 	var base := aim_dir.normalized()
 	var alvo := _aim_assist(base)
 	if alvo:
 		base = _assisted_dir(base, alvo)
-	for i in n:
-		var ang := deg_to_rad(lerpf(-cfg.final_leque_graus, cfg.final_leque_graus, float(i) / maxf(n - 1, 1)) * 0.5)
-		var p := _shoot_arrow(stats.combo_finisher_mult, 1.05, base.rotated(Vector3.UP, ang))
-		if p and i == n / 2:
-			_poder_visual(p)
+	var ps := _leque(maxi(cfg.final_leque_n, 1), cfg.final_leque_graus, stats.combo_finisher_mult, 1.05, base)
+	if not ps.is_empty():
+		_poder_visual(ps[ps.size() / 2])
 	Fx.burst(game, global_position + Vector3(0, 1.4, 0) + base, Color(0.4, 1.0, 1.0), 8, 5.0)
 	_mola(3.0, 8.0)
 
@@ -1007,7 +1003,6 @@ func _tick_escudo_def(delta: float) -> void:
 
 ## Estrepes nos pés; passou do limite, a mais antiga do mesmo dono some.
 func _place_trap() -> void:
-	_trap_cd = stats.trap_cooldown
 	var mine: Array[Node] = []
 	for t in get_tree().get_nodes_in_group("traps"):
 		if t.owner_unit == self and not t.is_queued_for_deletion() and not t.has_meta("do_poder"):
@@ -1189,10 +1184,26 @@ func _leque_onda2(n: int, base: Vector3) -> void:
 	if not alive or not is_inside_tree():
 		return
 	_play_upper("Throw", 1.8)
-	for i in maxi(n - 1, 1):
-		var t := (float(i) + 0.5) / maxf(n - 1, 1)
-		var ang := deg_to_rad(lerpf(-stats.power_radius, stats.power_radius, t) * 0.5)
-		_poder_visual(_shoot_arrow(stats.power_value * Config.cfg.dano_poder_mult / maxf(stats.damage, 0.1), 1.2, base.rotated(Vector3.UP, ang)))
+	for p in _leque(maxi(n - 1, 1), stats.power_radius, _mult_poder(), 1.2, base, true):
+		_poder_visual(p)
+
+
+## Leque de n tiros abrindo `graus` no total em volta de `base`. entre = a 2ª
+## onda do Leque, que sai nos vãos da primeira.
+func _leque(n: int, graus: float, dmg_mult: float, vel_mult: float, base: Vector3, entre := false) -> Array[Projectile]:
+	var out: Array[Projectile] = []
+	for i in n:
+		var t := (float(i) + (0.5 if entre else 0.0)) / maxf(n - 1, 1)
+		var ang := deg_to_rad(lerpf(-graus, graus, t) * 0.5)
+		var p := _shoot_arrow(dmg_mult, vel_mult, base.rotated(Vector3.UP, ang))
+		if p:
+			out.append(p)
+	return out
+
+
+## Dano de um projétil de poder (power_value) como múltiplo do dano normal.
+func _mult_poder() -> float:
+	return stats.power_value * Config.cfg.dano_poder_mult / maxf(stats.damage, 0.1)
 
 
 ## Bombardeiro: fila de explosões de pólvora até a mira; a última deixa fumaça.
@@ -1435,9 +1446,8 @@ func _use_power() -> void:
 			_play_upper("Throw", 1.6)
 			var n := int(stats.power_duration)
 			var base := aim_dir.normalized()
-			for i in n:
-				var ang := deg_to_rad(lerpf(-stats.power_radius, stats.power_radius, float(i) / maxf(n - 1, 1)) * 0.5)
-				_poder_visual(_shoot_arrow(stats.power_value * Config.cfg.dano_poder_mult / maxf(stats.damage, 0.1), 1.1, base.rotated(Vector3.UP, ang)))
+			for p in _leque(n, stats.power_radius, _mult_poder(), 1.1, base):
+				_poder_visual(p)
 			Fx.burst(game, global_position + Vector3(0, 1.4, 0) + base, Color(0.4, 1.0, 1.0), 16, 8.0)
 			FxPoder.leque(self, base)
 			_leque_onda2(n, base)
