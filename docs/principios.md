@@ -27,3 +27,12 @@ aqui e anote no CHANGELOG.
 11. **Git:** `git pull --rebase origin main` antes de push; nunca force push.
 12. **Economia de tokens:** seguir `docs/economia-de-tokens.md` (modelo por
     papel, arquivos grandes por trecho, logs filtrados).
+13. **Peça nova na tela = peça completa, e pitaco antes.** Vale para qualquer
+    coisa nova que o jogador vê (personagem, casinha, torreta, catapulta, item,
+    efeito, marca no chão), em qualquer papel, inclusive jogabilidade. Ordem:
+    (a) quiz ou prancha com 2-3 opções desenhadas, antes de código;
+    (b) piloto já com silhueta própria, cor do time acendendo e três animações
+    (parada, ação, fim/quebra), seguindo `docs/direcao-ciclo-2.2.md`;
+    (c) lapidar a escolhida (VFX, som). Primitivas soltas (caixa + cilindro +
+    cone) só como esqueleto interno, nunca apresentadas como piloto. Regra do
+    Julio de 2026-10-31, reforçada em 2026-11-06 depois da torreta 2.9.
