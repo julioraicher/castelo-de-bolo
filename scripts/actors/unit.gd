@@ -735,7 +735,9 @@ func _attack_hit() -> void:
 		return
 	match stats.attack_kind:
 		"melee":
-			Sfx.play("swing", global_position, 0.12)
+			Sfx.play("swing", global_position, 0.12, 0.85 if finisher else 1.0)
+			if finisher and Sfx.has(stats.som_golpe_final):
+				Sfx.play(stats.som_golpe_final, global_position, 0.05)
 			# Golpes alternam a inclinação do corte; o último é maior e dourado.
 			var tilt := 0.0 if combo.size() == 0 else (22.0 if _combo_i % 2 == 0 else -22.0)
 			var col := Color(1.0, 0.78, 0.25) if finisher else Color(1, 1, 1)
@@ -766,6 +768,7 @@ func _attack_hit() -> void:
 				var costas := mult_costas(other, to)
 				if costas > 1.0:
 					Fx.burst(game, other.global_position + Vector3(0, 1.3, 0), Color(1, 0.85, 0.35), 6, 4.0)
+					Sfx.play("corte_critico", other.global_position, 0.06)
 				other.take_damage(stats.damage * mult * damage_mult() * costas, self, to.normalized(), mult, true)
 				if finisher:
 					other.launch(3.5)  # golpe final tira o alvo do chão
@@ -811,6 +814,8 @@ func _leque_final() -> void:
 	var ps := _leque(maxi(cfg.final_leque_n, 1), cfg.final_leque_graus, stats.combo_finisher_mult, 1.05, base)
 	if not ps.is_empty():
 		_poder_visual(ps[ps.size() / 2])
+	if Sfx.has(stats.som_golpe_final):
+		Sfx.play(stats.som_golpe_final, global_position, 0.05)
 	Fx.burst(game, global_position + Vector3(0, 1.4, 0) + base, Color(0.4, 1.0, 1.0), 8, 5.0)
 	_mola(3.0, 8.0)
 
@@ -1419,6 +1424,7 @@ func _respawn() -> void:
 	_gigante = 1.0
 	set_class(Config.cfg.villager)  # quem morre perde o chapéu
 	Fx.ring(game, global_position, Config.team_color(team), 2.0)
+	Sfx.play("renascer", global_position, 0.04)
 	_play_once("Lie_StandUp", 0.7)
 
 
@@ -1484,7 +1490,10 @@ func _use_super() -> void:
 		game.camera.shake_at(global_position, 0.35)
 	Fx.pillar(game, global_position, Color(1.0, 0.8, 0.3), 2.2)
 	Fx.ring(game, global_position, Color(1.0, 0.8, 0.3, 0.9), 4.5)
-	Sfx.play("poder_boom", global_position, 0.04, 0.8)
+	if Sfx.has(stats.som_super):
+		Sfx.play(stats.som_super, global_position, 0.02, 1.0, 2.0)
+	else:
+		Sfx.play("poder_boom", global_position, 0.04, 0.8)
 	match stats.super_tipo:
 		"sombra":
 			_sombra_t = cfg.sombra_tempo
@@ -1550,6 +1559,8 @@ func _fim_sombra() -> void:
 		mi.material_overlay = null
 	if game:
 		Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(0.15, 0.1, 0.25), 18, 5.0)
+		if alive:
+			Sfx.play("sombra_sai", global_position, 0.05)
 
 
 func _use_power() -> void:
@@ -1559,7 +1570,9 @@ func _use_power() -> void:
 		return
 	power = 0.0
 	_cancel_skill()
-	Sfx.play("power", global_position, 0.03)
+	var som_proprio := Sfx.has(stats.som_poder)
+	if not som_proprio:
+		Sfx.play("power", global_position, 0.03)
 	if is_player:
 		# "Super flash": clarão na cor do papel, zoom e o tempo quase para.
 		game.camera.add_trauma(0.35)
@@ -1572,7 +1585,10 @@ func _use_power() -> void:
 	FxPoder.lancar(self)
 	# Nível 3 (E): marca no chão que fica e o som cheio (taiko + estrondo).
 	FxProjetil.marca_chao(game, global_position, Color(stats.hat_color.darkened(0.7), 0.4), 1.8, 2.5)
-	Sfx.play("poder_boom", global_position, 0.04)
+	if som_proprio:
+		Sfx.play(stats.som_poder, global_position, 0.03, 1.0, 2.5)
+	else:
+		Sfx.play("poder_boom", global_position, 0.04)
 	match stats.power:
 		"redemoinho":
 			_spin_t = stats.power_duration

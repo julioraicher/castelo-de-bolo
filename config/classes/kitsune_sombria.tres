@@ -38,3 +38,5 @@ anim_attack = "Spellcast_Shoot"
 charge_time = 1.0
 charge_damage_mult = 2.0
 classe_base = &"kitsune"
+som_poder = "sombra_poder"
+som_super = "kitsune_super"

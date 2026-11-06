@@ -30,7 +30,7 @@ Trocar som = trocar arquivo. Nenhum código de jogo muda, então o gasto é só 
 2. Julio responde "hit = impact_punch_heavy_000, _001". Não ouvir por ele; se ele pedir
    sugestão, escolher pelo nome do arquivo (punch = soco, metal = espada, plate = armadura).
 3. Aplicar: `tools/sons/trocar_som.sh hit <arq1> <arq2> [--vol=-3] [--corte=0.4]`
-   (normaliza pico -2 dB, tira silêncio inicial, mono .ogg). Desfazer: `--voltar hit`.
+   (normaliza para pico ~-2 dB, tira silêncio inicial, mono .ogg). Desfazer: `--voltar hit`.
 4. `godot --headless --import --path .`, testes de regra e 5 min simulados, CHANGELOG
    com "O que testar" (ex.: "acerto de espada soa mais pesado").
 5. Créditos: Kenney é CC0 (crédito opcional); som de outra fonte vai em

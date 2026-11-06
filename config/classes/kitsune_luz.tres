@@ -40,3 +40,5 @@ anim_attack = "Spellcast_Shoot"
 power_shield = 25.0
 velocidade_obra = 0.0
 classe_base = &"kitsune"
+som_poder = "luz_poder"
+som_super = "kitsune_super"

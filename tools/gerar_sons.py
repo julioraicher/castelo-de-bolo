@@ -232,13 +232,135 @@ def torretas():
     save("catapulta_meteoro", ganho(assobio, 0.5) + bum, 0.8)
 
 
+def membrana(f0, sec, queda=0.35):
+    """Taiko: modos de uma membrana circular (zeros de Bessel: 1, 1,59, 2,14,
+    2,30, 2,65) com o tom caindo um pouco no ataque (a pele relaxa)."""
+    modos = ((1.0, 1.0, 6), (1.594, 0.5, 9), (2.136, 0.3, 12), (2.296, 0.25, 14), (2.653, 0.15, 18))
+    out = []
+    for i in range(n(sec)):
+        t = i / SR
+        f = f0 * (1 + queda * math.exp(-t * 30))
+        out.append(sum(a * math.sin(2 * math.pi * f * r * t) * math.exp(-t * d) for r, a, d in modos))
+    return mix(out, noise(0.04, cutoff=lambda x: 0.6))
+
+
+def tigela(f0, sec):
+    """Rin (tigela de templo): parciais 1; 2,71; 5,15; 8,4 e cada uma em par
+    levemente desafinado, o que dá o batimento ("uáu-uáu") típico."""
+    parc = []
+    for r, a, d in ((1.0, 1.0, 1.2), (2.71, 0.6, 2.0), (5.15, 0.3, 3.5), (8.4, 0.15, 6.0)):
+        parc += [(r, a, d), (r * 1.004, a * 0.8, d)]
+    return sino(f0, sec, tuple(parc))
+
+
+def guizos(sec, densidade=40, f_min=3500, f_max=6500):
+    """Kagura suzu: muitos sininhos pequenos batendo em tempos aleatórios."""
+    out = [0.0] * n(sec)
+    for _ in range(int(densidade * sec)):
+        t0 = n(random.uniform(0, sec * 0.85))
+        b = suave(sino(random.uniform(f_min, f_max), 0.12, ((1.0, 1.0, 35), (2.3, 0.4, 50))), 0.002)
+        for j, v in enumerate(b):
+            if t0 + j < len(out):
+                out[t0 + j] += v * random.uniform(0.15, 0.4) * (1 - t0 / len(out))
+    return out
+
+
+def coro(notas, sec, vogal=(700, 1150), ataque=0.25):
+    """Coro "ah" baixo: série harmônica pesada por duas ressonâncias (formantes
+    F1 e F2 da vogal A). Três vozes levemente desafinadas por nota."""
+    out = [0.0] * n(sec)
+    for f0 in notas:
+        for det in (0.996, 1.0, 1.005):
+            f = f0 * det
+            hs = [(h, math.exp(-((h * f - vogal[0]) / 250) ** 2) + 0.6 * math.exp(-((h * f - vogal[1]) / 300) ** 2) + 0.05)
+                  for h in range(1, int(3000 / f))]
+            for i in range(len(out)):
+                t = i / SR
+                e = min(1.0, t / ataque) * (1 - i / len(out)) ** 1.5
+                out[i] += e * sum(a * math.sin(2 * math.pi * f * h * t + h) for h, a in hs[:12]) / 12
+    return out
+
+
+def sopro(f0, sec, curva=-0.08):
+    """Shakuhachi: seno com vibrato e muito ar (ruído) em volta, caindo de leve."""
+    tom = tone(lambda x: f0 * (1 + curva * x), sec, vib=0.012, release_pow=1.2)
+    ar = noise(sec, cutoff=lambda x: 0.25, release_pow=1.2)
+    return mix(ganho(tom, 0.6), ganho(ar, 0.5))
+
+
+def suave(track, ataque=0.006):
+    """Rampa de ataque curta: sino que começa seco vira um clique de banda larga."""
+    k = max(1, n(ataque))
+    return [v * min(1.0, i / k) for i, v in enumerate(track)]
+
+
+def atraso(track, seg):
+    return [0.0] * n(seg) + track
+
+
+def elementos():
+    """Assinatura sonora por classe (sons/direcao-sonora.md): o som segue o
+    elemento, não o evento. Usados por ClassStats.som_poder/som_super/
+    som_golpe_final. Semente própria. Rode: gerar_sons.py elementos"""
+    random.seed(53)
+
+    def save(name, track, gain=0.8):  # cauda suave: nada de corte seco no fim
+        k = len(track)
+        ini = int(k * 0.7)
+        globals()["save"](name, [v * (1.0 if i < ini else (1 - (i - ini) / (k - ini)) ** 2) for i, v in enumerate(track)], gain)
+    aco = lambda f, s: sino(f, s, ((1.0, 1.0, 9), (2.41, 0.6, 12), (3.9, 0.4, 16), (6.3, 0.2, 22)))
+    corte = noise(0.18, cutoff=lambda x: 0.15 + 0.8 * x, release_pow=1.5)
+    # Samurai: aço + taiko.
+    save("samurai_final", mix(ganho(membrana(75, 0.7), 1.4), corte, atraso(ganho(aco(1900, 0.68), 0.35), 0.02)), 0.85)
+    giro = noise(1.1, cutoff=lambda x: 0.06 + 0.12 * (0.5 + 0.5 * math.sin(2 * math.pi * 7 * x)), release_pow=0.8)
+    save("samurai_poder", mix(giro, ganho(aco(1500, 1.0), 0.3), ganho(membrana(70, 0.6), 0.9)), 0.75)
+    batida = lambda: membrana(48, 0.25, 0.1)
+    coracao = mix(atraso(batida(), 0.35), atraso(ganho(batida(), 0.7), 0.6))
+    save("sombra_entra", mix(ganho(sopro(560, 1.2, -0.2), 1.3), ganho(ao_contrario(noise(0.5, cutoff=lambda x: 0.1)), 0.6), coracao), 0.65)
+    save("sombra_sai", ao_contrario(noise(0.3, cutoff=lambda x: 0.05 + 0.3 * x, release_pow=2.0)) + mix(corte, ganho(aco(2100, 0.4), 0.3)), 0.6)
+    # Ninja: metal fino (assobios e tinidos).
+    assobio = lambda: tone(lambda x: 2600 - 900 * x, 0.25, release_pow=1.0)
+    rajada = mix(*(atraso(ganho(assobio(), 0.4), k * 0.045) for k in range(7)))
+    tin = lambda f: sino(f, 0.25, ((1.0, 1.0, 20), (2.4, 0.6, 28), (4.1, 0.3, 38)))
+    save("ninja_poder", mix(rajada, noise(0.5, cutoff=lambda x: 0.1 + 0.5 * x, release_pow=1.2),
+                            atraso(ganho(tin(1700), 0.5), 0.3), atraso(ganho(tin(2100), 0.4), 0.38)), 0.7)
+    save("ninja_final", mix(*(atraso(ganho(tin(f), 0.6), k * 0.06) for k, f in enumerate((1500, 1800, 2200)))), 0.6)
+    # Kitsune: fogo azul subindo + rin + guizos + coro baixo.
+    chama = noise(1.4, cutoff=lambda x: 0.03 + 0.25 * x * (1 - x) * 4 * 0.5, release_pow=1.0)
+    save("kitsune_poder", mix(ganho(chama, 1.0), ganho(tigela(392, 2.0), 0.6), guizos(1.0, 30),
+                              atraso(ganho(coro((196, 293.7), 1.3), 0.5), 0.1)), 0.8)
+    uivo = tone(lambda x: 380 + 300 * math.sin(math.pi * x) - 80 * x, 1.4, vib=0.02, release_pow=1.0)
+    save("kitsune_super", mix(ganho(uivo, 0.35), *(atraso(ganho(tigela(f, 2.2), 0.45), k * 0.12) for k, f in enumerate((220, 261.6, 329.6))),
+                              guizos(1.4, 55), ganho(coro((110, 164.8), 2.0, ataque=0.4), 0.6)), 0.85)
+    brilho = mix(*(atraso(ganho(suave(sino(random.uniform(2500, 5000), 0.3, ((1.0, 1.0, 12),))), 0.25), random.uniform(0, 0.9)) for _ in range(24)))
+    save("luz_poder", mix(brilho, ganho(coro((261.6, 329.6, 392), 1.4), 0.7), ganho(tigela(523, 1.6), 0.5)), 0.75)
+    succao = ao_contrario(noise(0.6, cutoff=lambda x: 0.04 + 0.4 * x, release_pow=2.5))
+    sussurro = [v * (0.5 + 0.5 * math.sin(2 * math.pi * 9 * i / SR)) for i, v in enumerate(noise(0.9, cutoff=lambda x: 0.7, release_pow=1.0))]
+    save("sombra_poder", mix(succao + ganho(membrana(40, 0.7, 0.2), 1.5), ganho(sussurro, 0.12)), 0.8)
+    # Construtor: marteladas em ritmo (madeira).
+    madeira = lambda f: mix(tone(lambda x: f * (1 - 0.3 * x), 0.09, release_pow=4), noise(0.03, cutoff=lambda x: 0.5))
+    save("mutirao", mix(*(atraso(madeira(f), t) for t, f in ((0, 420), (0.16, 380), (0.32, 450), (0.4, 400), (0.56, 430)))), 0.7)
+    # Super genérico (classes sem assinatura própria): dois taikos + brilho subindo + gongo.
+    save("super_maior", mix(ganho(membrana(60, 0.9), 1.3), atraso(ganho(membrana(55, 0.9), 1.0), 0.22),
+                            noise(0.8, cutoff=lambda x: 0.02 + 0.3 * x, release_pow=0.6),
+                            atraso(sino(98, 1.8, ((1.0, 1.0, 1.5), (2.1, 0.6, 2.2), (3.3, 0.4, 3.0))), 0.25)), 0.85)
+    # Golpe pelas costas (crítico): estalo seco + aço agudo curto, distinto do 3º golpe.
+    save("corte_critico", mix(noise(0.08, cutoff=lambda x: 0.9 - 0.5 * x, release_pow=2.0),
+                              ganho(suave(aco(2800, 0.35), 0.002), 0.5), ganho(membrana(140, 0.15, 0.2), 0.6)), 0.7)
+    # Renascer: sininho de templo + ar subindo (suave, toca muito).
+    save("renascer", mix(ganho(tigela(784, 0.9), 0.5), noise(0.4, cutoff=lambda x: 0.05 + 0.3 * x, release_pow=0.8)), 0.4)
+
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1:] == ["efeitos"]:
         efeitos()
     elif sys.argv[1:] == ["torretas"]:
         torretas()
+    elif sys.argv[1:] == ["elementos"]:
+        elementos()
     else:
         main()
         efeitos()
         torretas()
+        elementos()

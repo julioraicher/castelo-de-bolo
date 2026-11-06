@@ -7,7 +7,11 @@ extends Node
 
 const SOUNDS := ["swing", "hit", "shoot", "magic", "heal", "pickup", "hat", "eat", "death", "score", "alarm", "dodge", "win", "lose", "block", "power", "power_ready",
 	"lancar_metal", "pavio", "fogo", "luz", "sombra", "tinido", "flecha_chao", "brasa", "sino", "implosao", "explosao", "poder_boom", "nivel", "captura",
-	"besta_virote", "besta_devolve", "torreta_pronta", "torreta_cai", "catapulta_arma", "catapulta_lanca", "catapulta_meteoro"]
+	"besta_virote", "besta_devolve", "torreta_pronta", "torreta_cai", "catapulta_arma", "catapulta_lanca", "catapulta_meteoro",
+	# Assinatura por classe (ClassStats.som_*) e eventos que estavam mudos.
+	"samurai_poder", "samurai_final", "sombra_entra", "sombra_sai", "ninja_poder", "ninja_final",
+	"kitsune_poder", "kitsune_super", "luz_poder", "sombra_poder", "mutirao", "super_maior",
+	"madeira_golpe", "renascer", "corte_critico"]
 const POOL_SIZE := 32
 
 const MAX_VARIACOES := 8
@@ -72,6 +76,10 @@ func play(sound: String, at: Vector3, pitch_jitter := 0.08, pitch := 1.0, volume
 	p.pitch_scale = pitch + randf_range(-pitch_jitter, pitch_jitter)
 	p.volume_db = volume_db
 	p.play()
+
+
+func has(sound: String) -> bool:
+	return _streams.has(sound)
 
 
 func play_ui(sound: String) -> void:
