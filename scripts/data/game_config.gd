@@ -278,3 +278,13 @@ extends Resource
 
 func hat_classes() -> Array[ClassStats]:
 	return hat_class_list
+
+@export_group("Modo teste (sandbox)")
+## Tudo disponível e recarregando rápido para testar poderes sem bots
+## (Game.sandbox). Chi enche power_regen × sandbox_chi_mult por segundo,
+## o Super enche do zero em sandbox_super_s, o Q e a catapulta recarregam
+## nesta fração do tempo normal.
+@export var sandbox_chi_mult := 8.0
+@export var sandbox_super_s := 6.0
+@export var sandbox_q_mult := 0.25
+@export var sandbox_catapulta_mult := 0.2

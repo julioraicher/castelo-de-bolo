@@ -23,6 +23,9 @@ enum Estado { VAZIO, OBRA, PRONTA }
 const RAIO_OBRA := 3.0
 const RAIO_CORPO := 1.0  # para golpes e tiros acertarem a torreta
 const ALTURA_ARMA := 2.6
+const ALT_LABEL := 4.5    # estado (madeira, %, vida)
+const ALT_EMBLEMA := 5.3  # emblema da besta girando
+const ALT_TITULO := 6.2   # "TORRETA"
 
 var team := 0
 var estado := Estado.VAZIO
@@ -36,6 +39,9 @@ var _arma: Node3D
 var _selo: Node3D
 var _selo_mat: StandardMaterial3D
 var _label: Label3D
+var _titulo: Label3D
+var _emblema: Node3D
+var _emblema_mat: StandardMaterial3D
 var _tiro_t := 0.0
 var _puxar_t := 0.0
 var _dust_t := 0.0
@@ -58,8 +64,19 @@ func setup(game: Game, p_team: int, pos: Vector3) -> void:
 	_label.outline_size = 10
 	_label.outline_modulate = Estilo.TINTA
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.position.y = 4.4
+	_label.position.y = ALT_LABEL
 	add_child(_label)
+	_titulo = Label3D.new()
+	_titulo.font = Estilo.TITULO
+	_titulo.font_size = 60
+	_titulo.pixel_size = 0.011
+	_titulo.outline_size = 14
+	_titulo.outline_modulate = Estilo.TINTA
+	_titulo.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_titulo.position.y = ALT_TITULO
+	_titulo.text = "TORRETA"
+	add_child(_titulo)
+	_montar_emblema()
 	_zerar()
 
 
@@ -91,6 +108,7 @@ func _zerar() -> void:
 	_casa.scale = Vector3(1, 0.05, 1)
 	if _arma:
 		_arma.position = Vector3(0, ALTURA_ARMA, 0)
+	_emblema.visible = true
 	_atualizar_label()
 
 
@@ -107,8 +125,11 @@ func _physics_process(delta: float) -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	_selo.rotation.y += delta * 0.25
-	var a := 0.12 if estado == Estado.PRONTA else 0.38 + 0.22 * sin(_t * 2.2)
+	var a := 0.3 if estado == Estado.PRONTA else 0.45 + 0.25 * sin(_t * 2.2)
 	_selo_mat.albedo_color.a = a
+	_emblema.rotation.y += delta * 1.3
+	_emblema.position.y = ALT_EMBLEMA + 0.14 * sin(_t * 2.0)
+	_emblema_mat.albedo_color.a = (0.95 if estado == Estado.PRONTA else 0.6 + 0.25 * sin(_t * 2.2))
 	if _arma and _arma.position.z != 0.0:
 		_arma.position.z = lerpf(_arma.position.z, 0.0, minf(delta * 9.0, 1.0))
 		if absf(_arma.position.z) < 0.005:
@@ -267,6 +288,7 @@ func _cair() -> void:
 	madeira_entregue = 0
 	hp = 0.0
 	_atualizar_label()
+	_emblema.visible = false
 	Fx.burst(_game, global_position + Vector3(0, 1.2, 0), Color(0.55, 0.4, 0.25), 24, 6.0)
 	_game.camera.shake_at(global_position, 0.4)
 	Sfx.play("torreta_cai", global_position, 0.1)
@@ -297,14 +319,17 @@ func encosta(p: Vector3, r: float) -> bool:
 func _atualizar_label() -> void:
 	match estado:
 		Estado.VAZIO:
-			_label.text = "Torreta · %d madeiras" % custo() if madeira_entregue == 0 else "Torreta · faltam %d" % faltam()
-			_label.modulate = Color(1, 1, 1, 0.75)
+			_label.text = "%d madeiras · Construtor" % custo() if madeira_entregue == 0 else "faltam %d madeiras" % faltam()
+			_label.modulate = Color(1, 1, 1, 0.85)
+			_titulo.modulate = Color(1, 1, 1, 0.8)
 		Estado.OBRA:
-			_label.text = "Torreta %d%% · faltam %d" % [roundi(progresso * 100.0), faltam()]
+			_label.text = "%d%% · faltam %d" % [roundi(progresso * 100.0), faltam()]
 			_label.modulate = Color(1, 0.9, 0.6)
+			_titulo.modulate = Color(1, 0.9, 0.6)
 		Estado.PRONTA:
-			_label.text = "Torreta %d/%d" % [ceili(hp), int(max_hp())]
+			_label.text = "%d/%d" % [ceili(hp), int(max_hp())]
 			_label.modulate = Config.team_color(team).lightened(0.4)
+			_titulo.modulate = Config.team_color(team).lightened(0.45)
 	_label.visible = estado != Estado.PRONTA or hp < max_hp()
 
 
@@ -313,6 +338,7 @@ func _atualizar_label() -> void:
 func _montar_selo() -> void:
 	_selo = Node3D.new()
 	_selo.position.y = 0.04
+	_selo.scale = Vector3(1.6, 1, 1.6)  # passa da base da torre: lê de cima, ao redor
 	_selo_mat = Fx.unshaded(Color(Config.team_color(team), 0.4), true)
 	var pecas: Array = []
 	var fora := TorusMesh.new()
@@ -343,6 +369,47 @@ func _montar_selo() -> void:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_selo.add_child(mi)
 	add_child(_selo)
+
+
+## Emblema flutuante em cima da torre (pedido do Julio, 2026-11-06: "mais
+## identificável, algo em cima"): anel com a besta estilizada dentro (arco,
+## coronha e virote), na cor do time, sem sombra; gira e sobe/desce em _process.
+## É marcação de interface (como o selo), não a peça em si.
+func _montar_emblema() -> void:
+	_emblema = Node3D.new()
+	_emblema.position.y = ALT_EMBLEMA
+	_emblema.scale = Vector3.ONE * 1.35
+	_emblema_mat = Fx.unshaded(Color(Config.team_color(team).lightened(0.25), 0.9), true)
+	var pecas: Array = []
+	var anel := TorusMesh.new()
+	anel.inner_radius = 0.5
+	anel.outer_radius = 0.6
+	anel.rings = 24
+	anel.ring_segments = 6
+	pecas.append([anel, Transform3D(Basis.from_euler(Vector3(PI / 2.0, 0, 0)), Vector3.ZERO)])
+	var arco := TorusMesh.new()  # arco da besta: meio toro deitado, cortado pelo anel
+	arco.inner_radius = 0.3
+	arco.outer_radius = 0.38
+	arco.rings = 16
+	arco.ring_segments = 4
+	pecas.append([arco, Transform3D(Basis.from_euler(Vector3(PI / 2.0, 0, 0)).scaled(Vector3(1, 0.55, 1)), Vector3(0, 0.08, 0))])
+	var coronha := BoxMesh.new()
+	coronha.size = Vector3(0.09, 0.62, 0.06)
+	pecas.append([coronha, Transform3D(Basis(), Vector3(0, -0.05, 0))])
+	var corda := BoxMesh.new()
+	corda.size = Vector3(0.7, 0.04, 0.04)
+	pecas.append([corda, Transform3D(Basis(), Vector3(0, 0.08, 0))])
+	var ponta := PrismMesh.new()
+	ponta.size = Vector3(0.2, 0.2, 0.06)
+	pecas.append([ponta, Transform3D(Basis(), Vector3(0, 0.36, 0))])
+	for p in pecas:
+		var mi := MeshInstance3D.new()
+		mi.mesh = p[0]
+		mi.transform = p[1]
+		mi.material_override = _emblema_mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_emblema.add_child(mi)
+	add_child(_emblema)
 
 
 ## Modelo do tema. Sem contorno de tinta abaixo da qualidade Alta (igual à

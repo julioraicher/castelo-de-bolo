@@ -5,6 +5,11 @@ Lista viva. Qualquer frente anota aqui; o Julio escolhe o que sobe de nível.
 a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 
 ## A — próxima
+- **Revisão geral 2026-11-06** (pasta do projeto: `revisao/revisao-geral-2026-11-06.md` +
+  `revisao/01-revisao-geral.jpg`): máscara quase nunca chega (1 ponto em 8 partidas),
+  Samurai K/D 0,42, madeira trava depois da 1ª oficina, bots lançam catapulta demais,
+  telhados escondem a briga, textos se sobrepõem no mundo, time pinta o corpo todo
+  (classe pouco legível). Lote barato recomendado: itens 1, 2, 3, 4, 6 e 9.
 - **Lote de feedback 2026-11-06, parte 2** (precisa de pitaco antes; thread própria):
   **Super poder** (3ª tecla, enche devagar; abates, dano e poderzinho entregue à máscara
   adiantam), **invisibilidade curta** do Samurai (2-3 s, pode virar o super dele),
