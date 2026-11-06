@@ -60,9 +60,9 @@ extends Resource
 @export var torreta_dano := 9.0
 @export var torreta_cadencia := 1.2
 @export var torreta_alcance := 12.0
-## Escudo (botão direito) virado para o virote segura esta fração do dano.
-## Escudo virado para o virote: ele volta e acerta a torreta (× devolve, pouco).
+## Escudo (botão direito) segura esta fração do dano do virote (qualquer classe).
 @export_range(0.0, 1.0) var torreta_bloqueio := 0.9
+## Escudo virado para o virote: ele volta e acerta a torreta (torreta_dano × devolve, pouco).
 @export var torreta_devolve := 1.5
 ## Estilo do modelo (tools/gerar_torretas.gd): a yagura, b santuário, c posto da raposa.
 @export var torreta_estilo := "c"
@@ -275,10 +275,6 @@ extends Resource
 ## chapéu, cortam madeira e se posicionam na própria metade.
 @export var inicio_calmo := 30.0
 
-
-func hat_classes() -> Array[ClassStats]:
-	return hat_class_list
-
 @export_group("Modo teste (sandbox)")
 ## Tudo disponível e recarregando rápido para testar poderes sem bots
 ## (Game.sandbox). Chi enche power_regen × sandbox_chi_mult por segundo,
@@ -302,3 +298,7 @@ func hat_classes() -> Array[ClassStats]:
 ## Chance de um bot esquivar (dash) de um projétil que vai acertá-lo
 ## (a cada 0,2 s; bots inimigos: dividida pelo tempo de reação da dificuldade).
 @export var bot_esquiva_projetil := 0.35
+
+
+func hat_classes() -> Array[ClassStats]:
+	return hat_class_list

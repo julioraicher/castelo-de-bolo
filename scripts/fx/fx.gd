@@ -256,6 +256,31 @@ static func unshaded(color: Color, transparent := false) -> StandardMaterial3D:
 	return mat
 
 
+## Marcação de interface no mundo (selo, emblema, mira): cada peça [Mesh,
+## Transform3D] vira um MeshInstance3D sem sombra com o mesmo material.
+static func montar_pecas(pai: Node3D, pecas: Array, mat: Material) -> void:
+	for p in pecas:
+		var mi := MeshInstance3D.new()
+		mi.mesh = p[0]
+		mi.transform = p[1]
+		mi.material_override = mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		pai.add_child(mi)
+
+
+## Modelo gerado (pintura.gdshader + contorno de tinta no next_pass): abaixo da
+## qualidade Alta, tira o contorno de cada superfície (cópia do material, o
+## recurso original fica intacto para o próximo tema/partida).
+static func tirar_contorno(raiz: Node) -> void:
+	for mi: MeshInstance3D in raiz.find_children("*", "MeshInstance3D", true, false):
+		for s in mi.mesh.get_surface_count():
+			var mat := mi.mesh.surface_get_material(s) as ShaderMaterial
+			if mat and mat.next_pass:
+				var m: ShaderMaterial = mat.duplicate()
+				m.next_pass = null
+				mi.set_surface_override_material(s, m)
+
+
 static func lit(color: Color, roughness := 0.6) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = color

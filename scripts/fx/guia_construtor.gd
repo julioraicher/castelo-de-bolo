@@ -117,10 +117,9 @@ func calcular() -> void:
 			alvo = of.global_position
 			verbo = "CONSTRUA"
 			return
-	# Torreta do time esperando madeira (mesma regra dos bots: depois da 1ª oficina).
-	var tor: Torreta = game.torreta_para_obra(u.team, pos)
-	if tor and (of == null or not of.comecada()) and game.oficinas_prontas(u.team) >= 1 \
-			and (tor.madeira_entregue > 0 or game.madeira[u.team] >= 1):
+	# Torreta do time esperando madeira (mesma regra dos bots: Game.torreta_para_construir).
+	var tor := game.torreta_para_construir(u.team, pos, of)
+	if tor:
 		alvo = tor.global_position
 		verbo = "CONSTRUA"
 		return

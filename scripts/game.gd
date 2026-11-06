@@ -1187,6 +1187,17 @@ func torreta_para_obra(team: int, from: Vector3) -> Torreta:
 	return best
 
 
+## A torreta que o Construtor deve erguer agora, ou null: só depois da 1ª
+## oficina, entre uma obra e outra (nunca larga uma oficina começada, `of` =
+## obra_do_time), e só se há madeira (na torreta ou no estoque). Vale para os
+## bots (BotBrain._lenhador) e para a seta-guia do jogador (GuiaConstrutor).
+func torreta_para_construir(team: int, from: Vector3, of: Oficina) -> Torreta:
+	var tor := torreta_para_obra(team, from)
+	if tor == null or not (of == null or (not of.comecada() and oficinas_prontas(team) >= 1)):
+		return null
+	return tor if tor.madeira_entregue > 0 or madeira[team] >= 1 else null
+
+
 func catapulta_do_time(team: int) -> Catapulta:
 	for c in catapultas:
 		if c.team == team:

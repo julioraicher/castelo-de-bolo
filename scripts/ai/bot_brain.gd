@@ -36,7 +36,7 @@ var role := Role.ATTACK
 var _think_t := randf() * 0.3
 var _goal := Vector3.ZERO
 var _target: Unit
-var _torreta: Torreta  # torreta inimiga que o bot foi derrubar = null
+var _torreta: Torreta  # torreta inimiga que o bot foi derrubar
 var _last_nav_goal := Vector3.INF
 var _nav_t := 0.0
 var _wander := Vector3.ZERO
@@ -342,13 +342,11 @@ func _lenhador(me: Vector3) -> bool:
 	# Obra pendente e madeira no estoque para terminá-la: construir.
 	var of := game.obra_do_time(unit.team, me)
 	var falta := of.faltam() if of else 0
-	# Torreta na frente do castelo: depois da 1ª oficina, entre uma obra e
-	# outra (nunca larga uma oficina começada), ou quando todas estão de pé.
-	var tor: Torreta = game.torreta_para_obra(unit.team, me)
-	if tor and (of == null or (not of.comecada() and game.oficinas_prontas(unit.team) >= 1)):
-		if tor.madeira_entregue > 0 or game.madeira[unit.team] >= 1:
-			_goal = tor.global_position + (me - tor.global_position).normalized() * 1.6
-			return true
+	# Torreta na frente do castelo (regra em Game.torreta_para_construir).
+	var tor := game.torreta_para_construir(unit.team, me, of)
+	if tor:
+		_goal = tor.global_position + (me - tor.global_position).normalized() * 1.6
+		return true
 	if of and ((falta > 0 and game.madeira[unit.team] >= falta) or (falta == 0 and of.progresso < 1.0)):
 		_goal = of.global_position + (me - of.global_position).normalized() * 1.2
 		return true

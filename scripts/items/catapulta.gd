@@ -37,7 +37,7 @@ var _casa: Node3D
 var _braco: Node3D
 var _recarga_t := 0.0
 var _subindo := true
-var _voo: Array = []  # [unit, t, T, p0, p1, h, brilho, rastro_t]
+var _voo: Array[Voo] = []  # passageiros no ar
 var _marca: Node3D
 var _marca_mat: StandardMaterial3D
 
@@ -138,7 +138,15 @@ func lancar() -> void:
 	brilho.material_override = Fx.unshaded(Color(cor.lightened(0.3), 0.4), true)
 	brilho.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	u.add_child(brilho)
-	_voo.append([u, -SOLTA_T, Config.cfg.catapulta_voo, mao_pos(), p1, h, brilho, 0.0])
+	var voo := Voo.new()
+	voo.unit = u
+	voo.t = -SOLTA_T
+	voo.T = Config.cfg.catapulta_voo
+	voo.p0 = mao_pos()
+	voo.p1 = p1
+	voo.h = h
+	voo.brilho = brilho
+	_voo.append(voo)
 	# Braço: golpe rápido para a frente, volta devagar enquanto recarrega.
 	if _braco:
 		var tw := _braco.create_tween()
@@ -191,23 +199,21 @@ func _physics_process(delta: float) -> void:
 	# Voos em andamento.
 	var i := _voo.size() - 1
 	while i >= 0:
-		var v: Array = _voo[i]
-		var u: Unit = v[0]
-		v[1] += delta
-		if v[1] < 0.0:
-			v[3] = mao_pos()  # ainda na mão: solta em t = 0
-			u.global_position = v[3] + Vector3(0, 0.15, 0)
+		var v := _voo[i]
+		var u := v.unit
+		v.t += delta
+		if v.t < 0.0:
+			v.p0 = mao_pos()  # ainda na mão: solta em t = 0
+			u.global_position = v.p0 + Vector3(0, 0.15, 0)
 		else:
-			var s: float = minf(v[1] / v[2], 1.0)
-			var p0: Vector3 = v[3]
-			var p1: Vector3 = v[4]
-			u.global_position = p0.lerp(p1, s) + Vector3(0, 4.0 * v[5] * s * (1.0 - s), 0)
-			v[7] -= delta
-			if v[7] <= 0.0:
-				v[7] = 0.07
+			var s := minf(v.t / v.T, 1.0)
+			u.global_position = v.p0.lerp(v.p1, s) + Vector3(0, 4.0 * v.h * s * (1.0 - s), 0)
+			v.rastro_t -= delta
+			if v.rastro_t <= 0.0:
+				v.rastro_t = 0.07
 				Fx.burst(_game, u.global_position + Vector3(0, 0.9, 0), Config.team_color(team).lightened(0.3), 3, 1.5)
 			if s >= 1.0:
-				_aterrissar(u, p1, v[6])
+				_aterrissar(u, v.p1, v.brilho)
 				_voo.remove_at(i)
 		i -= 1
 
@@ -260,13 +266,7 @@ func _montar() -> Node3D:
 	if _braco:
 		_braco.rotation.x = deg_to_rad(BRACO_REPOUSO)
 	if Settings.quality < 3:
-		for mi: MeshInstance3D in casa.find_children("*", "MeshInstance3D", true, false):
-			for s in mi.mesh.get_surface_count():
-				var mat := mi.mesh.surface_get_material(s) as ShaderMaterial
-				if mat and mat.next_pass:
-					var m: ShaderMaterial = mat.duplicate()
-					m.next_pass = null
-					mi.set_surface_override_material(s, m)
+		Fx.tirar_contorno(casa)
 	return raiz
 
 
@@ -286,11 +286,17 @@ func _montar_marca() -> void:
 		var b := BoxMesh.new()
 		b.size = Vector3(0.1, 0.02, 1.4)
 		pecas.append([b, Transform3D(Basis.from_euler(Vector3(0, k * PI / 2.0, 0)), Vector3.ZERO)])
-	for p in pecas:
-		var mi := MeshInstance3D.new()
-		mi.mesh = p[0]
-		mi.transform = p[1]
-		mi.material_override = _marca_mat
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		_marca.add_child(mi)
+	Fx.montar_pecas(_marca, pecas, _marca_mat)
 	add_child(_marca)
+
+
+## Um passageiro no ar: p(s) = lerp(p0, p1, s) + ŷ·4h·s(1−s), s = t/T.
+class Voo:
+	var unit: Unit
+	var t := 0.0          # começa em −SOLTA_T: a mão ainda segura
+	var T := 1.0          # duração do voo (catapulta_voo)
+	var p0 := Vector3.ZERO
+	var p1 := Vector3.ZERO
+	var h := 0.0          # altura do ápice acima da corda p0-p1
+	var brilho: Node3D
+	var rastro_t := 0.0
