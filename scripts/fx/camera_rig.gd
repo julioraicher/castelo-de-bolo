@@ -98,6 +98,67 @@ func _process(delta: float) -> void:
 	global_position = _focus + cfg.camera_offset + offset
 	look_at(_focus + Vector3(0, 1, 0) + offset, Vector3.UP)
 	_trauma = maxf(_trauma - delta * 1.6, 0.0)
+	_atualizar_recorte(delta)
+
+
+# --- Recorte dos telhados (recorte.gdshaderinc) ---------------------------------
+# Até 4 focos: o jogador sempre, e as 3 brigas mais perto dele. Cada foco abre e
+# fecha o raio com uma rampa (0,25 s) para o telhado não piscar ao trocar de briga.
+const RECORTE_RAIO := 2.6        # m em volta do boneco (cone visto da câmera)
+const RECORTE_BRIGA := 5.0       # inimigo a menos disso = briga
+const RECORTE_CALMA := 2.0       # s desde o último golpe dado/levado
+const RECORTE_ALCANCE := 34.0    # brigas longe do jogador não contam (fora da tela)
+const RECORTE_RAMPA := RECORTE_RAIO / 0.25
+const RECORTE_GLOBAIS: Array[StringName] = [&"recorte_foco0", &"recorte_foco1", &"recorte_foco2", &"recorte_foco3"]
+var _recorte := {}  # Node3D -> raio atual (m)
+var _sem_recorte := "--sem-recorte" in OS.get_cmdline_user_args()  # prancha de antes
+
+
+func _atualizar_recorte(delta: float) -> void:
+	if _sem_recorte:
+		RenderingServer.global_shader_parameter_set(&"raio_x_forca", 0.0)
+		return
+	var alvo := {}
+	if target is Node3D and target.is_inside_tree():
+		alvo[target] = RECORTE_RAIO
+	var game := get_parent()
+	if game != null and "units" in game:
+		var perto: Array = []
+		var base: Vector3 = target.global_position
+		for u in game.units:
+			if u == target or not u.alive or u.global_position.distance_to(base) > RECORTE_ALCANCE:
+				continue
+			if u._calm_t > RECORTE_CALMA:
+				continue
+			for v in game.units:
+				if v.team != u.team and v.alive and v.global_position.distance_to(u.global_position) < RECORTE_BRIGA:
+					perto.append(u)
+					break
+		perto.sort_custom(func(a, b): return a.global_position.distance_squared_to(base) < b.global_position.distance_squared_to(base))
+		for i in mini(perto.size(), 3):
+			alvo[perto[i]] = RECORTE_RAIO
+	for n in alvo:
+		if not _recorte.has(n):
+			_recorte[n] = 0.0
+	var vivos: Array = []
+	for n in _recorte.keys():
+		if not is_instance_valid(n):
+			_recorte.erase(n)
+			continue
+		_recorte[n] = move_toward(_recorte[n], alvo.get(n, 0.0), RECORTE_RAMPA * delta)
+		if _recorte[n] <= 0.0 and not alvo.has(n):
+			_recorte.erase(n)
+		else:
+			vivos.append(n)
+	# O jogador primeiro; depois os de raio maior (os que estão abrindo ganham dos que fecham).
+	vivos.sort_custom(func(a, b): return a == target or (b != target and _recorte[a] > _recorte[b]))
+	for i in RECORTE_GLOBAIS.size():
+		var v := Vector4.ZERO
+		if i < vivos.size():
+			var n: Node3D = vivos[i]
+			var p := n.get_global_transform_interpolated().origin + Vector3(0, 1.0, 0)
+			v = Vector4(p.x, p.y, p.z, _recorte[n])
+		RenderingServer.global_shader_parameter_set(RECORTE_GLOBAIS[i], v)
 
 
 ## Ponto do chão (plano y = 0) sob o cursor do mouse.

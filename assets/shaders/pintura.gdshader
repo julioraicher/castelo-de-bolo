@@ -18,6 +18,10 @@ shader_type spatial;
 //    Tamanhos de 20-35 cm; fwidth() apaga o desenho quando ele fica denso demais
 //    para a tela, o mesmo papel do mipmap numa textura.
 render_mode specular_disabled;
+// Stencil 2 = "aqui na frente tem cenário": o raio X dos bonecos só acende sobre isso.
+stencil_mode write, compare_always, 2;
+
+#include "res://assets/shaders/recorte.gdshaderinc"
 
 uniform float forca_pincel : hint_range(0.0, 0.6) = 0.32;
 uniform float escala_pincel = 1.0;
@@ -106,6 +110,7 @@ void vertex() {
 }
 
 void fragment() {
+	recorte(v_mundo, CAMERA_POSITION_WORLD, FRAGCOORD.xy);
 	vec3 n = abs(v_normal_mundo);
 	bool deitado = n.y > 0.6;
 	float lado = n.x > n.z ? v_mundo.z : v_mundo.x;   // coordenada horizontal da face
