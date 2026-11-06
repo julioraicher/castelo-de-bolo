@@ -80,6 +80,7 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
 	_label.outline_modulate = Estilo.TINTA
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.position.y = 3.4 if _maquina else 2.6
+	_label.add_to_group("letreiro_perto")  # some de longe (Game._letreiros_perto)
 	_label.modulate = stats.hat_color.lightened(0.3)
 	add_child(_label)
 	_contador = ContadorMadeira.new()

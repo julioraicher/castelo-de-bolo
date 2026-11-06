@@ -76,7 +76,9 @@ var _time := 0.0
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
 ## Modo teste (sandbox): só o jogador no mapa, todas as oficinas prontas e,
-## nelas, [F] troca a classe (comuns) ou sobe o nível (magos). Liga com
+## nelas, [F] troca a classe (comuns) ou sobe o nível (magos); torretas de pé,
+## catapultas prontas e Q/E/R/catapulta recarregando rápido (grupo "Modo teste"
+## do game_config). REGRA: feature nova na main entra aqui disponível. Liga com
 ## --sandbox, com "?sandbox" no endereço da versão web ou pelo botão da tela
 ## inicial (sandbox_pedido sobrevive ao reload da cena).
 static var sandbox_pedido := false
@@ -85,6 +87,10 @@ var _montando_sandbox := false
 var _variacoes := false
 var _variacoes_giro := 0
 var _equilibrio := false
+## --equilibrio: por classe, dano causado, cura dada e segundos vivo (RESUMO a cada 60 s).
+var _eq: Dictionary = {}
+var _eq_t := 0.0
+var _letreiros_t := 0.0
 var _poderes := false
 var _poderes_t := 2.0
 var _shots_dir := ""
@@ -432,7 +438,7 @@ func _montar_sandbox() -> void:
 
 func _on_started() -> void:
 	if sandbox:
-		hud.show_big("MODO TESTE\nPegue qualquer chapéu. Nas oficinas, F troca a classe ou sobe o nível.", Color(1, 0.9, 0.5), 4.0)
+		hud.show_big("MODO TESTE\nTudo pronto e recarregando rápido (Q, E, R, catapulta).\nNas oficinas, F troca a classe ou sobe o nível.", Color(1, 0.9, 0.5), 4.5)
 		Sfx.start_music()
 		return
 	hud.show_big("Roube a Máscara Oni vermelha!\nTraga-a para o seu castelo.", Color(1, 0.9, 0.5), 3.5)
@@ -493,12 +499,31 @@ func _physics_process(delta: float) -> void:
 		return
 	_spawn_cakes(delta)
 	_spawn_pickups(delta)
+	if _equilibrio:
+		for u in units:
+			if u.alive:
+				eq_somar(u.stats.id, "vivo", delta)
+		_eq_t += delta
+		if _eq_t >= 60.0:
+			_eq_t = 0.0
+			for id in _eq:
+				var e: Dictionary = _eq[id]
+				print("RESUMO %s %.0f %.0f %.0f" % [id, e.get("dano", 0.0), e.get("cura", 0.0), e.get("vivo", 0.0)])
+	_letreiros_t -= delta
+	if _letreiros_t <= 0.0:
+		_letreiros_t = 0.15
+		_letreiros_perto()
 	if _poderes:
 		_poderes_t -= delta
 		if _poderes_t <= 0.0:
 			_poderes_t = 4.0
 			for u in units:
 				u.fill_power()
+	if sandbox:
+		# Modo teste: Chi e Super enchem rápido para testar E e R toda hora.
+		for u in units:
+			u.add_power(Config.cfg.power_regen * (Config.cfg.sandbox_chi_mult - 1.0) * delta)
+			u.add_super(Unit.POWER_MAX / maxf(Config.cfg.sandbox_super_s, 0.5) * delta)
 	_rules()
 	# O HUD não precisa de 60 atualizações por segundo: 20 Hz bastam ao olho
 	# e cada atualização mexe em vários textos e barras.
@@ -1184,6 +1209,9 @@ func catapulta_para_bot(u: Unit) -> Catapulta:
 		return null
 	if u.global_position.distance_to(cat.global_position) > 22.0 or randf() > Config.cfg.catapulta_bots:
 		return null
+	# Lançar = ir roubar: só com a máscara inimiga em casa (revisão 2026-11-06).
+	if princesses.size() == 2 and princesses[1 - u.team].state != Princess.State.HOME:
+		return null
 	cat.reservado = u
 	cat.reserva_t = _time
 	return cat
@@ -1346,9 +1374,31 @@ func nearest_cake(from: Vector3) -> Cake:
 	return best
 
 
+func eq_somar(id: StringName, campo: String, v: float) -> void:
+	if not _eq.has(id):
+		_eq[id] = {}
+	_eq[id][campo] = _eq[id].get(campo, 0.0) + v
+
+
+## Letreiros de estado (grupo "letreiro_perto": oficinas, maquininhas, depósito,
+## torreta) somem de longe: opacos até 11 m do jogador, transparentes a 15 m.
+## Os títulos grandes (TORRETA, caminho dos magos) ficam sempre: orientam.
+func _letreiros_perto() -> void:
+	if player == null:
+		return
+	var foco := player.global_position
+	for n in get_tree().get_nodes_in_group("letreiro_perto"):
+		var l := n as Label3D
+		if l == null:
+			continue
+		var d := Vector2(l.global_position.x - foco.x, l.global_position.z - foco.z).length()
+		l.transparency = clampf((d - 11.0) / 4.0, 0.0, 1.0)
+
+
 func spawn_projectile(shooter: Unit, origin: Vector3, dir: Vector3, kind: String) -> Projectile:
 	var p := Projectile.new()
 	p.setup(self, shooter, origin, dir, kind)
+	p.add_to_group("projeteis")  # bots olham para esquivar (BotBrain._esquiva_projetil)
 	add_child(p)
 	return p
 

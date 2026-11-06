@@ -36,3 +36,4 @@ power_duration = 3.0
 anim_attack = "2H_Ranged_Shoot"
 classe_base = &"arqueiro"
 som_super = "super_maior"
+move_speed = 6.3

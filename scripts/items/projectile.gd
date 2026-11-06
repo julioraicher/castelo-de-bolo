@@ -24,12 +24,14 @@ var raio_mult := 1.0
 ## 3º tiro da Kitsune: explode como bomba onde bater (ou no fim do voo).
 var explode_final := false
 var _acertados: Array[Unit] = []
+var _origem := Vector3.ZERO
 
 
 func setup(game: Game, shooter: Unit, origin: Vector3, dir: Vector3, p_kind: String) -> void:
 	_game = game
 	owner_unit = shooter
 	position = origin
+	_origem = origin
 	velocity = dir.normalized() * shooter.stats.projectile_speed
 	damage = shooter.stats.damage * shooter.damage_mult()
 	kind = {"arrow": "flecha", "magic": "magia"}.get(p_kind, p_kind)
@@ -132,7 +134,7 @@ func _physics_process(delta: float) -> void:
 				if kind == "bomba" or explode_final:
 					_explode(global_position)
 				else:
-					u.take_damage(damage, owner_unit, velocity.normalized(), 1.0, false, kind, nivel)
+					u.take_damage(damage * queda(), owner_unit, velocity.normalized(), 1.0, false, kind, nivel)
 					if perfura > 0:
 						perfura -= 1
 						damage *= 0.8
@@ -143,6 +145,20 @@ func _physics_process(delta: float) -> void:
 
 
 ## Bomba: dano em área, mais forte no centro (cai linearmente até 50% na borda).
+## Queda do dano com a distância (ClassStats.queda_*): linear de 1 em
+## queda_dist_ini até queda_dano_min no alcance.
+func queda() -> float:
+	return queda_em(Vector2(global_position.x - _origem.x, global_position.z - _origem.z).length())
+
+
+func queda_em(d: float) -> float:
+	var st := owner_unit.stats
+	if st.queda_dist_ini <= 0.0:
+		return 1.0
+	var k := clampf((d - st.queda_dist_ini) / maxf(st.attack_range - st.queda_dist_ini, 0.1), 0.0, 1.0)
+	return lerpf(1.0, st.queda_dano_min, k)
+
+
 func _explode(at: Vector3) -> void:
 	var r := owner_unit.stats.explosao_raio * raio_mult
 	FxProjetil.explosao(_game, at, r)

@@ -81,6 +81,7 @@ var _knock := Vector3.ZERO      # velocidade do empurrão (separada da caminhada
 var _launch_vy := 0.0
 var _calm_t := 0.0              # s desde a última vez que bateu ou apanhou (regeneração)           # impulso para cima pendente (Fúria, explosões, golpe final)
 var _move_vel := Vector3.ZERO   # velocidade da caminhada/esquiva
+var _tiro_lento_t := 0.0  # atirou há pouco: anda mais devagar (atirador_lento_*)
 var _flash_t := 0.0
 var _respawn_t := 0.0
 var _hp_root: Node3D
@@ -455,7 +456,34 @@ func current_speed() -> float:
 		s *= _slow_mult
 	if _sombra_t > 0.0:
 		s *= Config.cfg.sombra_vel
+	if _tiro_lento_t > 0.0:
+		s *= Config.cfg.atirador_lento_mult
+	if game and _em_escolta():
+		s *= 1.0 + Config.cfg.escolta_vel
 	return s
+
+
+## Golpe pelas costas ou pelo lado (ClassStats.dano_costas): o alvo não está
+## de frente para quem bate. to = de quem bate para o alvo; de frente,
+## facing·to ≈ −1; de lado ≈ 0; de costas ≈ +1. Limite −0,25 (~105°).
+func mult_costas(other: Unit, to: Vector3) -> float:
+	if stats.dano_costas <= 0.0 or to.length_squared() < 1e-6:
+		return 1.0
+	return 1.0 + stats.dano_costas if other._facing().dot(to.normalized()) > -0.25 else 1.0
+
+
+## Escolta: carregando a máscara com um aliado perto, ou perto do aliado que
+## carrega. Junta o time em volta do carregador (o ponto vem de grupo).
+func _em_escolta() -> bool:
+	var r2 := Config.cfg.escolta_raio * Config.cfg.escolta_raio
+	if carried_princess:
+		for u in game.units:
+			if u != self and u.alive and u.team == team and u.global_position.distance_squared_to(global_position) < r2:
+				return true
+		return false
+	var p: Princess = game.princesses[1 - team] if game.princesses.size() == 2 else null
+	return p != null and p.carrier != null and p.carrier != self and p.carrier.team == team \
+			and p.carrier.global_position.distance_squared_to(global_position) < r2
 
 
 func power_ready() -> bool:
@@ -737,7 +765,11 @@ func _attack_hit() -> void:
 					continue
 				if to.length() > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > arco / 2.0:
 					continue
-				other.take_damage(stats.damage * mult * damage_mult(), self, to.normalized(), mult, true)
+				var costas := mult_costas(other, to)
+				if costas > 1.0:
+					Fx.burst(game, other.global_position + Vector3(0, 1.3, 0), Color(1, 0.85, 0.35), 6, 4.0)
+					Sfx.play("corte_critico", other.global_position, 0.06)
+				other.take_damage(stats.damage * mult * damage_mult() * costas, self, to.normalized(), mult, true)
 				if finisher:
 					other.launch(3.5)  # golpe final tira o alvo do chão
 				hit_any = true
@@ -836,6 +868,7 @@ func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZE
 		to.y = 0
 	var p := game.spawn_projectile(self, global_position + Vector3(0, 1.4, 0) + dir * 0.9, dir, stats.projetil)
 	p.damage *= dmg_mult
+	_tiro_lento_t = Config.cfg.atirador_lento_t
 	p.velocity *= speed_mult
 	var dist := clampf(to.length(), 6.0 if stats.projetil != "bomba" else 3.0, stats.attack_range * 1.4 * speed_mult)
 	if stats.projetil == "shuriken":
@@ -928,6 +961,8 @@ func tem_rapida() -> bool:
 
 func quick_cooldown() -> float:
 	var m := Config.cfg.rapida_cooldown_mult
+	if game and game.sandbox:
+		m *= Config.cfg.sandbox_q_mult  # modo teste: Q toda hora
 	match stats.skill:
 		"cura":
 			return stats.heal_cooldown * m
@@ -1102,6 +1137,8 @@ func heal(amount: float, quem: Unit = null) -> float:
 		return 0.0
 	var before := hp
 	hp = minf(hp + amount, max_hp())
+	if quem and game and game._equilibrio:
+		game.eq_somar(quem.stats.id, "cura", hp - before)
 	if is_player or (quem and quem.is_player):  # só a cura que você deu ou levou
 		Fx.damage_number(game, global_position, "+%d" % int(hp - before), Color(0.5, 1, 0.55))
 	_update_hp_bar()
@@ -1136,6 +1173,8 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		_shield -= absorbed
 		amount -= absorbed
 	hp -= amount
+	if attacker and game and game._equilibrio and attacker.team != team:
+		game.eq_somar(attacker.stats.id, "dano", minf(amount, hp + amount))
 	_calm_t = 0.0
 	if carried_tora and amount > 0.0:
 		drop_tora()  # apanhou: a tora cai (qualquer Construtor pega, até o inimigo)
@@ -1769,6 +1808,7 @@ func _tick_buffs(delta: float) -> void:
 		_fury_t -= delta
 		if fmod(_fury_t, 0.15) < delta:
 			Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(1.0, 0.15, 0.1), 3, 3.0)
+	_tiro_lento_t = maxf(_tiro_lento_t - delta, 0.0)
 	if _dmg_boost_t > 0.0:
 		_dmg_boost_t -= delta
 		if fmod(_dmg_boost_t, 0.25) < delta:

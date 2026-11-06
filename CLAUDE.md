@@ -134,6 +134,13 @@ repo: `.claude/skills/`.
 - Coisa nova (cenário, poder, feature) vai num branch e só entra na `main`
   com aprovação do Julio ou quando estável (testes de regra + 5 min simulados).
 - Toda entrega na `main` ganha um bloco **"O que testar"** na entrada do CHANGELOG.
+- **Modo teste (sandbox) espelha a `main`** (Julio, 2026-11-06): é a versão em que ele
+  testa cada peça sozinho (botão "Modo teste" na tela inicial, `?sandbox` na web,
+  `--sandbox`). Lá tudo fica disponível o tempo inteiro: oficinas prontas, maquininhas
+  no nível 2, torretas de pé, catapultas, chapéu em 1 s, Q/E/R/catapulta recarregando
+  rápido (grupo "Modo teste" do `game_config.gd`; `Game._montar_sandbox`,
+  `_regras_sandbox`). Feature nova na `main` = na mesma entrega, deixá-la pronta e
+  disponível no sandbox e dizer isso no CHANGELOG.
 - Ideias para futuras atualizações vão em `docs/ideias.md` (A = próxima, B = depois,
   C = talvez). Qualquer frente pode anotar; o Julio escolhe o que sobe.
 

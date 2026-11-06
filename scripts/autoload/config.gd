@@ -23,7 +23,7 @@ const CONTROLS := [
 	["E", "poder especial, quando a barra de Chi enche"],
 	["R", "SUPER, quando a barra dourada enche (abates, dano, itens e espíritos)"],
 	["Espaço ou Shift", "esquiva (rolamento rápido)"],
-	["F", "pegar chapéu ou máscara · escolher a oficina do terreno"],
+	["F", "pegar chapéu ou máscara · escolher a oficina do terreno · subir e lançar na catapulta"],
 	["Esc ou P", "pausa, controles e configurações"],
 	["F11", "tela cheia"],
 	["F5", "reiniciar a partida"],

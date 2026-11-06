@@ -94,8 +94,10 @@ func _tatica(delta: float) -> void:
 		return
 	if not unit.dash_pronto():
 		return
-	var dir := Vector3.ZERO
-	if unit.carried_tora and perto and me.distance_to(perto.global_position) < 4.5 and randf() < 0.5:
+	var dir := _esquiva_projetil(me)
+	if dir != Vector3.ZERO:
+		pass  # projétil chegando: a esquiva (invulnerável) ganha de tudo
+	elif unit.carried_tora and perto and me.distance_to(perto.global_position) < 4.5 and randf() < 0.5:
 		dir = unit.move_intent  # foge para o depósito
 	elif perto and unit.hp_ratio() < 0.35 and me.distance_to(perto.global_position) < 3.5 and randf() < 0.5:
 		dir = me - perto.global_position  # pouca vida: sai da briga
@@ -116,6 +118,35 @@ func _tatica(delta: float) -> void:
 	if dir.length() > 0.1:
 		unit.move_intent = dir.normalized()
 		unit.wants_dodge = true
+
+
+## Projétil inimigo que vai passar a < 1 m nos próximos 0,35 s: dash para o
+## lado (perpendicular ao voo), com chance bot_esquiva_projetil. Gente faz
+## isso; sem isso a sonda superestima quem atira (revisão 2026-11-06).
+func _esquiva_projetil(me: Vector3) -> Vector3:
+	var chance := Config.cfg.bot_esquiva_projetil
+	if unit.team != Config.TEAM_BLUE:
+		chance /= Settings.bot_reaction_mult()
+	if chance <= 0.0 or unit.carried_princess:
+		return Vector3.ZERO
+	for n in unit.get_tree().get_nodes_in_group("projeteis"):
+		var p := n as Projectile
+		if p == null or p.owner_unit == null or p.owner_unit.team == unit.team:
+			continue
+		var rel := me - p.global_position
+		rel.y = 0
+		var v := Vector3(p.velocity.x, 0, p.velocity.z)
+		var v2 := v.length_squared()
+		if v2 < 1.0 or rel.length_squared() > 100.0:
+			continue
+		var t := rel.dot(v) / v2  # instante da menor distância
+		if t < 0.0 or t > 0.35 or (rel - v * t).length() > 1.0:
+			continue
+		if randf() >= chance:
+			return Vector3.ZERO
+		var lado := v.normalized().rotated(Vector3.UP, PI / 2.0)
+		return lado if lado.dot(rel - v * t) >= 0.0 else -lado
+	return Vector3.ZERO
 
 
 func _check_stuck(delta: float) -> void:

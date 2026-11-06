@@ -55,7 +55,8 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
 1. Cada time tem uma **Máscara Oni** no pedestal do seu castelo.
 2. **Ponto:** leve a máscara **inimiga** até o pedestal do **seu** castelo.
    Primeiro a 3 vence.
-3. Quem carrega a máscara anda mais devagar e não ataca. Se morrer, ela cai
+3. Quem carrega a máscara anda mais devagar, não ataca e leva menos dano. Com
+   um aliado a até 6 m, os dois andam 15% mais rápido (escolta). Se morrer, ela cai
    no chão. Um inimigo dela pode pegar de novo; um aliado dela fica perto por
    1,5 s para devolvê-la. Se ninguém mexer, ela volta sozinha depois de 15 s.
 4. **Chapéus** saem das maquininhas do pátio: chegue perto e aperte **F**.
@@ -79,3 +80,12 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
 8. Morreu? Volta em alguns segundos como recruta no seu castelo.
 
 Para mudar teclas ou números, veja o [GUIA.md](GUIA.md).
+
+## Classes (Ciclo 2.10)
+
+- **Atirar deixa lento**: por 0,4 s depois de cada tiro, quem atira anda a 80%.
+  O atirador escolhe entre correr e atirar; quem é de perto alcança.
+- **Samurai**: golpe pelas costas ou pelo lado do alvo dá +25% de dano.
+- **Ninja de Shuriken**: o mais rápido e frágil; o shuriken perde força de longe
+  (100% até 8 m, 80% no alcance máximo).
+- **Ronin Oni**: o grandão, com mais vida e mais lento que todos.

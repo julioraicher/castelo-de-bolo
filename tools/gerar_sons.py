@@ -344,6 +344,9 @@ def elementos():
     save("super_maior", mix(ganho(membrana(60, 0.9), 1.3), atraso(ganho(membrana(55, 0.9), 1.0), 0.22),
                             noise(0.8, cutoff=lambda x: 0.02 + 0.3 * x, release_pow=0.6),
                             atraso(sino(98, 1.8, ((1.0, 1.0, 1.5), (2.1, 0.6, 2.2), (3.3, 0.4, 3.0))), 0.25)), 0.85)
+    # Golpe pelas costas (crítico): estalo seco + aço agudo curto, distinto do 3º golpe.
+    save("corte_critico", mix(noise(0.08, cutoff=lambda x: 0.9 - 0.5 * x, release_pow=2.0),
+                              ganho(suave(aco(2800, 0.35), 0.002), 0.5), ganho(membrana(140, 0.15, 0.2), 0.6)), 0.7)
     # Renascer: sininho de templo + ar subindo (suave, toca muito).
     save("renascer", mix(ganho(tigela(784, 0.9), 0.5), noise(0.4, cutoff=lambda x: 0.05 + 0.3 * x, release_pow=0.8)), 0.4)
 

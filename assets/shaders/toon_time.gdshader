@@ -8,6 +8,10 @@ uniform vec4 cor_time : source_color = vec4(0.16, 0.45, 1.0, 1.0);
 uniform bool usar_cor_fixa = false;
 uniform bool usar_cor_vertice = false;  // peças montadas por código (cor no vértice, sRGB)
 uniform vec4 cor_fixa : source_color = vec4(1.0);
+// Piloto "cor da classe" (revisão 2026-11-06, item 7; só a prancha liga):
+// roupa na cor da classe e o time numa faixa (cinto, punhos, gola).
+uniform bool usar_cor_classe = false;
+uniform vec4 cor_classe : source_color = vec4(0.3, 0.3, 0.32, 1.0);
 uniform float aro = 0.7;
 // Medidor do poder [Q] deste boneco (Unit._tick_aura), 0..1. Por instância:
 // o material é dividido por todos do time. O contraluz acende com a carga,
@@ -66,6 +70,13 @@ void fragment() {
 			c = mix(vec3(0.02, 0.025, 0.06), vec3(0.3, 0.36, 0.5), lum);  // metal
 		} else {
 			c = cor_time.rgb * (0.25 + 1.0 * lum);  // roupa
+			if (usar_cor_classe && v_tem_repouso > 0.5) {
+				vec3 p = v_repouso;
+				bool braco = abs(p.x) > 0.3 && p.y > 0.85;
+				float faixa = braco ? step(0.6, abs(p.x)) * step(abs(p.x), 0.74)
+						: max(step(0.5, p.y) * step(p.y, 0.64), step(0.96, p.y) * step(p.y, 1.06));
+				c = mix(cor_classe.rgb * (0.35 + 1.0 * lum), c * 1.15, faixa);
+			}
 		}
 	}
 	float pronto = step(0.999, poder_carga) * (0.6 + 0.4 * sin(TIME * 7.0));

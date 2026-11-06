@@ -49,6 +49,7 @@ func setup(game: Game, p_team: int, pos: Vector3) -> void:
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.no_depth_test = true
 	_label.position.y = _alt_label
+	_label.add_to_group("letreiro_perto")  # some de longe (Game._letreiros_perto)
 	add_child(_label)
 	_sinalizar()
 	atualizar(0)

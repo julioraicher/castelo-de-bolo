@@ -278,3 +278,27 @@ extends Resource
 
 func hat_classes() -> Array[ClassStats]:
 	return hat_class_list
+
+@export_group("Modo teste (sandbox)")
+## Tudo disponível e recarregando rápido para testar poderes sem bots
+## (Game.sandbox). Chi enche power_regen × sandbox_chi_mult por segundo,
+## o Super enche do zero em sandbox_super_s, o Q e a catapulta recarregam
+## nesta fração do tempo normal.
+@export var sandbox_chi_mult := 8.0
+@export var sandbox_super_s := 6.0
+@export var sandbox_q_mult := 0.25
+@export var sandbox_catapulta_mult := 0.2
+
+@export_group("Equilíbrio 2.10")
+## Atirar deixa lento: depois de cada tiro, atirador_lento_t s a
+## atirador_lento_mult da velocidade. Corrida de perseguição: o corpo a corpo
+## fecha a distância se v_perto > v_atirador × mult (6,8 > 7,1 × 0,8 = 5,7).
+@export var atirador_lento_mult := 0.8
+@export var atirador_lento_t := 0.4
+## Escolta da máscara: quem carrega com um aliado a até escolta_raio m, e os
+## aliados perto dele, andam (1 + escolta_vel) mais rápido.
+@export var escolta_raio := 6.0
+@export var escolta_vel := 0.15
+## Chance de um bot esquivar (dash) de um projétil que vai acertá-lo
+## (a cada 0,2 s; bots inimigos: dividida pelo tempo de reação da dificuldade).
+@export var bot_esquiva_projetil := 0.35

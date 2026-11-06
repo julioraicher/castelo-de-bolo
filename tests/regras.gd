@@ -33,6 +33,7 @@ func _ready() -> void:
 	_super()
 	_torretas()
 	_catapulta()
+	_equilibrio_2_10()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -193,6 +194,49 @@ func _catapulta() -> void:
 		"catapulta: deveria cair em x=%.1f, caiu em x=%.1f" % [alvo.x, u.global_position.x])
 	var fwd: Vector3 = game.arena.forward(cat.team)
 	_check(alvo.x * fwd.x > game.arena.map.castle_distance * 0.3, "catapulta: a queda com força 1 fica na metade inimiga")
+
+
+## Ciclo 2.10: atirar deixa lento, Samurai pelas costas, queda do shuriken,
+## escolta da máscara.
+func _equilibrio_2_10() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var a = null
+	var b = null
+	for x in game.units:
+		if x.alive and not x.is_player:
+			if a == null and x.team == 0:
+				a = x
+			elif b == null and x.team == 1:
+				b = x
+	if a == null or b == null:
+		_check(false, "2.10: faltou boneco")
+		return
+	a.set_class(load("res://config/classes/arqueiro.tres"))
+	a._boost_t = 0.0
+	a._slow_t = 0.0
+	a.carried_princess = null
+	a._tiro_lento_t = 0.0
+	a._sombra_t = 0.0
+	var livre = a.current_speed()
+	a._tiro_lento_t = 0.3
+	_check(_perto(a.current_speed(), livre * cfg.atirador_lento_mult, 0.01), "atirou: deveria andar a %.2f da velocidade" % cfg.atirador_lento_mult)
+	a._tiro_lento_t = 0.0
+	var p = load("res://scripts/items/projectile.gd").new()
+	p.owner_unit = a
+	_check(_perto(p.queda_em(4.0), 1.0, 1e-4), "shuriken perto: dano cheio")
+	_check(_perto(p.queda_em(a.stats.attack_range), a.stats.queda_dano_min, 1e-3), "shuriken no alcance: dano mínimo")
+	p.free()
+	var sam = load("res://config/classes/guerreiro.tres")
+	_check(sam.dano_costas > 0.0, "Samurai deveria ter bônus pelas costas")
+	a.set_class(sam)
+	b._visual.rotation.y = atan2(1.0, 0.0)  # b olha para +x
+	_check(_perto(a.mult_costas(b, Vector3(-1, 0, 0)), 1.0, 1e-4), "Samurai de frente: sem bônus")
+	_check(_perto(a.mult_costas(b, Vector3(1, 0, 0)), 1.0 + sam.dano_costas, 1e-4), "Samurai pelas costas: com bônus")
+	_check(_perto(a.mult_costas(b, Vector3(0, 0, 1)), 1.0 + sam.dano_costas, 1e-4), "Samurai pelo lado: com bônus")
+	var ronin = load("res://config/classes/ronin_oni.tres")
+	var ninja = load("res://config/classes/arqueiro.tres")
+	_check(ronin.move_speed < sam.move_speed and ninja.move_speed > sam.move_speed, "velocidades: Ninja > Samurai > Ronin")
+	_check(ronin.max_hp > sam.max_hp and sam.max_hp > ninja.max_hp, "vidas: Ronin > Samurai > Ninja")
 
 
 func _check(ok: bool, nome: String) -> void:

@@ -15,7 +15,8 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
   shakuhachi e coração), Ninja (assobios, tinidos em cascata), Construtor (marteladas),
   super genérico e renascer.
 - Kenney CC0 no jogo: `hit` (4 variações), `block` (3), `madeira_golpe` (3, novo).
-- Estavam mudos e ganharam som: bater na torreta, sair da sombra, renascer. Cortar árvore
+- Estavam mudos e ganharam som: bater na torreta, sair da sombra, renascer e o golpe
+  pelas costas do Samurai (2.10, `corte_critico`). Cortar árvore
   usava o som de soco e agora usa madeira.
 - Torreta e catapulta (2.9) mantêm os sons da thread de jogabilidade; a troca por IA
   fica para quando houver `HF_TOKEN`.
@@ -23,6 +24,75 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 - **O que testar**: solte o E de Kitsune, Samurai e Ninja e veja se dá para saber quem
   foi de olhos fechados. Dê o 3º golpe de Samurai e bata numa torreta. O soco e o
   bloqueio novos cansam depois de 5 min?
+## Ciclo 2.10 (2026-11-06), Jogabilidade: equilíbrio das classes e lote da revisão geral
+Pedido do Julio: "duvide de tudo" da sonda de bots, diferença notável entre as classes mas
+nunca roubada, o grandão lento de verdade. Proposta em `jogabilidade/proposta-equilibrio-classes.md`.
+- **Atirar deixa lento**: 0,4 s a 80% da velocidade depois de cada tiro. Física da
+  perseguição: o corpo a corpo fecha a distância se v_perto > v_atirador × 0,8.
+- **Samurai**: +25% de dano pelas costas ou pelo lado (faísca dourada), investida 6 → 4,5 s,
+  vida 140 → 165, velocidade 6,5 → 6,8.
+- **Ninja de Shuriken**: o mais rápido (7,1) e frágil (80); o shuriken cai para 80% do dano
+  entre 8 m e o alcance máximo.
+- **Ronin Oni**: o grandão (vida 190, velocidade 5,6), dano 30 → 24 e golpe a cada 1,1 s.
+- **Kitsunes** a 6,6 m/s; Sombria dano 16 → 13; Luz cura 26 → 22. **Yumi** 6,3 m/s.
+- **Bots esquivam de projétil** (dash invulnerável, chance `bot_esquiva_projetil`): a sonda
+  fica mais perto de gente, e os bots ficam mais difíceis de acertar.
+- **Sonda nova**: além de K/D, abates, dano e cura por minuto vivo de cada classe.
+- **Revisão geral** (itens 1, 3, 4, 6 e 9): escolta da máscara (carregador com aliado a 6 m
+  e o aliado andam +15%); árvore cresce em 25 s por estágio (era 40); bots só sobem na
+  catapulta com a máscara inimiga em casa (lançar = ir roubar); letreiros de estado
+  (oficina, maquininha, depósito, torreta) somem longe do jogador; aba nova "Torreta e
+  catapulta" no Como jogar, com clipes.
+- **Piloto do item 7** (só prancha, nada no jogo): roupa na cor da classe e o time no cinto,
+  punho, gola e chapéu: `revisao/02-cor-da-classe-piloto.jpg`, `tools/prancha_cor_classe.gd`
+  (uniform `usar_cor_classe` desligado no jogo).
+
+Sonda de 8 partidas (K/D; abates por minuto vivo):
+
+| Classe | Antes | Depois | Abates/min |
+|---|---|---|---|
+| Samurai | 0,42 | 0,68 | 2,1 |
+| Ninja de Shuriken | 0,93 | 0,97 | 2,0 |
+| Arqueiro Yumi | 0,80 | 1,24 | 2,1 |
+| Kitsune | 1,64 | 1,19 | 1,4 |
+| Kitsune Sombria | 2,91 | 1,62 | 1,6 |
+| Kitsune da Luz | 2,83 | 1,55 | 0,5 (cura 300/min) |
+| Ronin Oni | 1,68 | 1,78 | 2,6 |
+
+Pontos nas 8 partidas: 1 → 3-4. O Samurai é o que mais morre (vai na frente), mas abate
+tanto quanto os atiradores. Modo teste: tudo vale lá igual (nada novo a ligar).
+- Mexe em `unit.gd`, `projectile.gd`, `bot_brain.gd`, `game.gd`, `tutorial.gd`, `torreta.gd`,
+  `oficina.gd`, `hat_pad.gd`, `pilha.gd`, `class_stats.gd`, `game_config.gd`, 7 classes,
+  `toon_time.gdshader` (uniform desligado), `tools/sonda_equilibrio.sh`, CONTROLES.md.
+  Teste de regra `_equilibrio_2_10`: 225/225.
+- **O que testar**: de Samurai, chegue num Ninja que está atirando (ele fica lento) e bata
+  pelas costas (faísca dourada). De Ninja, sinta que você é o mais rápido mas cai fácil, e
+  que de muito longe o shuriken tira menos. De Ronin, ande ao lado de um Samurai: a
+  diferença de velocidade tem que ser clara. Carregue a máscara com um aliado do lado. Veja
+  se os bots esquivando dos seus tiros ficaram chatos ou bons. Abra a aba "Torreta e
+  catapulta" no Como jogar. Diga se a diferença entre as classes ficou do tamanho que você
+  quer, e o que acha da prancha da cor da classe.
+
+## Ciclo 2.9b (2026-11-06), Jogabilidade + Visual: torreta mais identificável
+- **Em cima**: letreiro "TORRETA" a pincel (branco no terreno vazio, âmbar na obra, cor
+  do time pronta) e um **emblema da besta** (anel com arco, coronha e virote) na cor do
+  time, sem sombra, que gira e sobe/desce. Some quando a torreta tomba e volta com o selo.
+- **Ao redor**: o selo no chão ficou 60% maior (passa da base da torre e lê de cima) e
+  mais forte (pronta 0,12 → 0,30 de alfa; na obra pulsa 0,2-0,7).
+- Linha de estado embaixo do letreiro: "2 madeiras · Construtor", "45% · faltam 1" ou a
+  vida quando machucada. Teclas: o F na tela inicial agora cita a catapulta.
+- **Modo teste (sandbox) conferido** contra a ideia do Julio ("tudo disponível o tempo
+  inteiro, poder recarregando rápido"): já tinha oficinas prontas, maquininhas no nível 2,
+  chapéu em 1 s, F troca classe/sobe nível, torretas dos dois lados de pé (2.9). **Faltava
+  a recarga rápida**: agora o Chi enche 8× mais rápido (~4 s), o Super do zero em 6 s, o Q
+  recarrega em 1/4 do tempo e a catapulta em 1/5 (grupo "Modo teste" no `game_config.gd`).
+  Regra nova no CLAUDE.md: feature na main entra no sandbox na mesma entrega.
+- Mexe em `torreta.gd`, `config.gd`, `game.gd`, `unit.gd` (Q), `catapulta.gd`,
+  `game_config.gd`, CLAUDE.md. Testes 216/216.
+- **O que testar**: de longe, com a câmera do jogo, a torreta (vazia, em obra e pronta)
+  se destaca do cenário? O emblema girando incomoda ou ajuda? No modo teste, veja se o E,
+  o R e o Q voltam rápido o bastante para testar poder atrás de poder, e se a catapulta
+  (F na base) recarrega sem espera.
 
 ## Ciclo 2.9 (2026-11-06), Jogabilidade + Visual: torretas do Construtor, catapulta e o padrão de peça nova
 Quiz do Julio (respostas em `quiz/quiz-torretas.html` + chat): torre de vigia mais baixa com
