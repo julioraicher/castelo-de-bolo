@@ -5,6 +5,25 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.9s (2026-11-06), Sons: cada classe com som próprio (esperando o ok do Julio)
+- **O som segue o elemento, não o evento.** Antes todo poder E e todo super tocavam o
+  mesmo `poder_boom` (taiko + estrondo), e por isso a magia soava como explosão. Agora
+  `ClassStats` tem `som_poder`, `som_super` e `som_golpe_final`; vazio = som antigo.
+- Sons novos por síntese (`tools/gerar_sons.py elementos`, com a física no código): Kitsune
+  (fogo azul + tigela rin com batimento + guizos + coro), Luz (brilhos + coro maior),
+  Sombria (sucção + baque), Samurai (vento + aço + taiko; 3º golpe com taiko; sombra com
+  shakuhachi e coração), Ninja (assobios, tinidos em cascata), Construtor (marteladas),
+  super genérico e renascer.
+- Kenney CC0 no jogo: `hit` (4 variações), `block` (3), `madeira_golpe` (3, novo).
+- Estavam mudos e ganharam som: bater na torreta, sair da sombra, renascer. Cortar árvore
+  usava o som de soco e agora usa madeira.
+- Torreta e catapulta (2.9) mantêm os sons da thread de jogabilidade; a troca por IA
+  fica para quando houver `HF_TOKEN`.
+- Antes/depois para ouvir: `sons/antes-depois.html` (pasta do projeto).
+- **O que testar**: solte o E de Kitsune, Samurai e Ninja e veja se dá para saber quem
+  foi de olhos fechados. Dê o 3º golpe de Samurai e bata numa torreta. O soco e o
+  bloqueio novos cansam depois de 5 min?
+
 ## Ciclo 2.9 (2026-11-06), Jogabilidade + Visual: torretas do Construtor, catapulta e o padrão de peça nova
 Quiz do Julio (respostas em `quiz/quiz-torretas.html` + chat): torre de vigia mais baixa com
 toque de santuário da raposa e besta encantada; virote; selo no chão; catapulta de bambu com a

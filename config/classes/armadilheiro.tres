@@ -36,3 +36,4 @@ power_radius = 3.0
 power_value = 0.0
 power_duration = 6.0
 carry_speed_mult = 0.85
+som_super = "super_maior"

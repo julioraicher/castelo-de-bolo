@@ -246,6 +246,7 @@ func take_hit(amount: float, from_team: int) -> void:
 	hp -= amount
 	Fx.damage_number(_game, global_position + Vector3(0, 2.5, 0), str(int(amount)), Color(1, 0.85, 0.6))
 	Fx.burst(_game, global_position + Vector3(0, 1.6, 0), Color(0.6, 0.45, 0.3), 6, 4.0)
+	Sfx.play("madeira_golpe", global_position, 0.12)
 	if hp <= 0.0:
 		_cair()
 		return

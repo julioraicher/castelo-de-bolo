@@ -119,6 +119,13 @@ extends Resource
 ## Nome no HUD. Vazio = "Super " + power_name.
 @export var super_nome := ""
 
+@export_group("Sons (assinatura da classe)")
+## Nomes em Sfx.SOUNDS. Vazio = som genérico antigo. O som segue o elemento
+## da classe (docs: sons/direcao-sonora.md), não o evento.
+@export var som_poder := ""
+@export var som_super := ""
+@export var som_golpe_final := ""
+
 @export_group("Cura (clérigo)")
 @export var heal_amount := 0.0
 @export var heal_radius := 0.0

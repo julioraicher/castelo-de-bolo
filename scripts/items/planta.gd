@@ -82,7 +82,7 @@ func golpe(by: Unit) -> bool:
 	dir.y = 0
 	_game.soltar_tora(global_position + Vector3(0, 0.4, 0), -dir.normalized() if dir.length() > 0.01 else Vector3.RIGHT)
 	Fx.burst(_game, global_position + Vector3(0, 1.2, 0), Color(0.7, 0.5, 0.25), 8, 4.0)
-	Sfx.play("hit", global_position, 0.15)
+	Sfx.play("madeira_golpe", global_position, 0.15)
 	if estagio == Estagio.ADULTA:
 		restantes -= 1
 		if restantes > 0:

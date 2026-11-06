@@ -40,3 +40,5 @@ heal_amount = 15.0
 heal_radius = 6.0
 heal_cooldown = 3.5
 anim_attack = "Spellcast_Shoot"
+som_poder = "kitsune_poder"
+som_super = "kitsune_super"

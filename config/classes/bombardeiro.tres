@@ -40,3 +40,4 @@ power_value = 22.0
 power_duration = 5.0
 carry_speed_mult = 0.8
 anim_attack = "Throw"
+som_super = "super_maior"

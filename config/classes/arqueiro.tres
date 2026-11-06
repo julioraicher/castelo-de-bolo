@@ -36,3 +36,6 @@ power_radius = 70.0
 power_value = 14.0
 power_duration = 9.0
 anim_attack = "Throw"
+som_poder = "ninja_poder"
+som_super = "super_maior"
+som_golpe_final = "ninja_final"
