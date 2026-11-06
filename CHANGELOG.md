@@ -5,6 +5,26 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.9 (2026-11-06), Jogabilidade: torretas do Construtor (piloto, pitaco do Julio)
+- **2 terrenos de torreta por time** na frente da saída do castelo (`MapLayout.torreta_spots`,
+  Rio: (29, ±8)). O Construtor ergue como uma oficina: 4 madeiras (do depósito ou levando a
+  **tora direto** na torreta) e 8 s de obra. Os bots começam a torreta depois da 1ª oficina.
+- **Tiro**: virote a cada 1,2 s no inimigo mais perto a até 12 m (9 de dano). Quem está no
+  Passo da Sombra não é visto. A esquiva atravessa o virote.
+- **Escudo (botão direito) contra torreta**: virado para o virote segura **90%** do dano, em
+  qualquer classe. Erguido **na hora** (janela do contra-golpe) o virote **volta** e acerta a
+  torreta (×3) e você ganha Chi.
+- **Derrubar**: golpes e tiros inimigos tiram a vida dela (160 × vida_mult); caída, o terreno
+  volta a vazio e pode ser erguido de novo.
+- **Visual provisório** (pedra, pernas de madeira, telhado na cor do time, besta que gira):
+  espera o pitaco do Julio antes da arte final. Print: `jogabilidade/11-torretas-piloto.jpg`.
+- Modo teste: as 4 torretas já nascem prontas (a vermelha serve de treino de escudo).
+- Config: grupo "Torretas (Construtor)" em `game_config.gd`. Teste de regra `_torretas`.
+- Partida de 5 min com bots: 1 torreta erguida (t ≈ 286 s); a madeira compete com as oficinas.
+- **O que testar**: no modo teste, chegue perto da torreta vermelha, segure o botão direito
+  virado para ela e depois tente erguer o escudo bem na hora do tiro (o virote volta). Na
+  partida normal, de Construtor, leve uma tora até o terreno de torreta na frente do castelo.
+
 ## Ciclo 2.8 (2026-11-06), Jogabilidade: SUPER poder na tecla R (piloto, pitaco do Julio)
 - **Barra de ouro** embaixo do Chi. Não enche com o tempo: dano causado (×0,12), abate
   (+22), item pego (+12), espírito entregue na máscara (+30) e captura (+50). Não cai ao

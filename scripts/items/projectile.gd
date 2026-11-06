@@ -112,6 +112,14 @@ func _physics_process(delta: float) -> void:
 	global_position = to
 	if gravity > 0.0 and velocity.length_squared() > 1e-6:
 		look_at(to + velocity, Vector3.UP)
+	for t in _game.torretas:
+		if t.team != owner_unit.team and t.encosta(global_position, 0.3):
+			if kind == "bomba" or explode_final:
+				_explode(global_position)
+			t.take_hit(damage, owner_unit.team)
+			_bateu(global_position)
+			_fim()
+			return
 	for u in _game.units:
 		if u.alive and u.team != owner_unit.team:
 			# Cápsula do boneco (0,7 m de raio somando o projétil, dos pés até 2,1 m).

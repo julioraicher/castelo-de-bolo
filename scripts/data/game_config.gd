@@ -51,6 +51,20 @@ extends Resource
 ## Multiplica a recarga de toda habilidade rápida (Q). 1,0 = número do .tres.
 @export var rapida_cooldown_mult := 0.7
 
+@export_group("Torretas (Construtor)")
+## Torreta de defesa nos terrenos de MapLayout.torreta_spots. Obra como a das
+## oficinas (madeira do time + Construtor perto). Vida × vida_mult.
+@export var torreta_custo := 4
+@export var torreta_obra := 8.0
+@export var torreta_vida := 160.0
+@export var torreta_dano := 9.0
+@export var torreta_cadencia := 1.2
+@export var torreta_alcance := 12.0
+## Escudo (botão direito) virado para o virote segura esta fração do dano.
+## Na janela do contra-golpe o virote volta e acerta a torreta (× devolve).
+@export_range(0.0, 1.0) var torreta_bloqueio := 0.9
+@export var torreta_devolve := 3.0
+
 @export_group("Super (R)")
 ## Barra dourada, 0 a 100, que NÃO enche com o tempo: só jogando bem.
 ## Fontes: dano causado × super_por_dano, abate, item pego, espírito

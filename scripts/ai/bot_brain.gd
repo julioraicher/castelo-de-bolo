@@ -279,14 +279,26 @@ func _lenhador(me: Vector3) -> bool:
 	_set_planta(null)
 	var perigo := _nearest_enemy(5.0)
 	if unit.carried_tora:
-		# Com a tora nos braços não dá para bater: segue para a pilha (foge).
-		_goal = game.pilhas[unit.team].global_position
+		# Com a tora nos braços não dá para bater: segue para a pilha (foge),
+		# ou direto para a torreta do time que espera madeira (depois da 1ª oficina).
+		var tt: Torreta = game.torreta_para_obra(unit.team, me)
+		if tt and tt.faltam() > 0 and game.oficinas_prontas(unit.team) >= 1:
+			_goal = tt.global_position
+		else:
+			_goal = game.pilhas[unit.team].global_position
 		return true
 	if perigo:
 		return false  # larga a tarefa e briga (prioridades de combate abaixo)
 	# Obra pendente e madeira no estoque para terminá-la: construir.
 	var of := game.obra_do_time(unit.team, me)
 	var falta := of.faltam() if of else 0
+	# Torreta na frente do castelo: depois da 1ª oficina, entre uma obra e
+	# outra (nunca larga uma oficina começada), ou quando todas estão de pé.
+	var tor: Torreta = game.torreta_para_obra(unit.team, me)
+	if tor and (of == null or (not of.comecada() and game.oficinas_prontas(unit.team) >= 1)):
+		if tor.madeira_entregue > 0 or game.madeira[unit.team] >= 1:
+			_goal = tor.global_position + (me - tor.global_position).normalized() * 1.6
+			return true
 	if of and ((falta > 0 and game.madeira[unit.team] >= falta) or (falta == 0 and of.progresso < 1.0)):
 		_goal = of.global_position + (me - of.global_position).normalized() * 1.2
 		return true

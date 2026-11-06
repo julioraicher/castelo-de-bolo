@@ -31,6 +31,7 @@ func _ready() -> void:
 	_ferradura()
 	_lote_2_7()
 	_super()
+	_torretas()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -113,6 +114,50 @@ func _super() -> void:
 			u._tick_super(999.0)
 			_check(u.stats == c, "super %s: stats deveria voltar ao normal" % c.id)
 		u.reset_physics_interpolation()
+
+
+## Torretas: dano do virote, escudo segura torreta_bloqueio, escudo na hora
+## devolve o virote, e a torreta derrubada volta a terreno vazio.
+func _torretas() -> void:
+	var cfg = get_node("/root/Config").cfg
+	_check(game.torretas.size() == 4, "torretas: esperado 2 por time, há %d" % game.torretas.size())
+	if game.torretas.is_empty():
+		return
+	var t = game.torretas[0]
+	t.concluir_ja()
+	_check(t.pronta() and _perto(t.hp, t.max_hp(), 0.01), "torreta pronta deveria nascer com vida cheia")
+	var u = null
+	for x in game.units:
+		if x.alive and x.team != t.team and not x.is_player:
+			u = x
+			break
+	if u == null:
+		_check(false, "torretas: faltou alvo")
+		return
+	u.set_class(load("res://config/classes/guerreiro.tres"))
+	u._sombra_t = 0.0
+	u._shield = 0.0
+	u._dodge_t = 0.0
+	u.global_position = t.global_position + Vector3(6, 0, 0)
+	var V = t.get_script().Virote
+	var casos = [["sem escudo", false, 99.0, cfg.torreta_dano], ["escudo", true, 99.0, cfg.torreta_dano * (1.0 - cfg.torreta_bloqueio)], ["escudo na hora", true, 0.0, 0.0]]
+	for c in casos:
+		u.hp = u.max_hp()
+		u._blocking = c[1]
+		u._block_t = c[2]
+		u._visual.rotation.y = atan2(-1.0, 0.0)  # virado para a torreta (-x)
+		var v = V.new()
+		game.add_child(v)
+		v.setup(game, t, t.global_position + Vector3(0, 2.6, 0), u)
+		v._dir = Vector3(1, 0, 0)
+		v._acertar()
+		_check(_perto(u.max_hp() - u.hp, c[3], 0.05), "torreta %s: dano esperado %.1f, deu %.2f" % [c[0], c[3], u.max_hp() - u.hp])
+		if c[0] == "escudo na hora":
+			_check(v._volta, "torreta: escudo na hora deveria devolver o virote")
+		v.queue_free()
+	u._blocking = false
+	t.take_hit(t.max_hp() + 1.0, 1 - t.team)
+	_check(not t.pronta() and t.madeira_entregue == 0, "torreta derrubada deveria voltar a terreno vazio")
 
 
 func _check(ok: bool, nome: String) -> void:

@@ -13,6 +13,7 @@ var hat_pads: Array[HatPad] = []
 var cakes: Array[Cake] = []
 var pickups: Array[Pickup] = []
 var oficinas: Array[Oficina] = []
+var torretas: Array[Torreta] = []
 ## Economia do Construtor (Ciclo 2.3): plantas, toras soltas/carregadas,
 ## pilha de cada castelo e o estoque de madeira de cada time.
 var plantas: Array[Planta] = []
@@ -221,6 +222,11 @@ func _ready() -> void:
 				add_child(of)
 				of.setup(self, team, arena.mago_spots[team][i], i, magos, i)
 				oficinas.append(of)
+		for tp in arena.torreta_spots[team]:
+			var tor := Torreta.new()
+			add_child(tor)
+			tor.setup(self, team, tp)
+			torretas.append(tor)
 		_montar_economia(team)
 
 	_registrar_modelos()
@@ -385,6 +391,9 @@ func _montar_sandbox() -> void:
 	for pad in hat_pads:
 		if pad.team == Config.TEAM_BLUE:
 			pad.subir_nivel()
+	# Torretas dos dois lados de pé: a vermelha serve de treino de escudo.
+	for t in torretas:
+		t.concluir_ja()
 	_montando_sandbox = false
 
 
@@ -1044,6 +1053,11 @@ func _regras_madeira(u: Unit) -> String:
 		if pos.distance_to(pilhas[u.team].global_position) < Config.cfg.pilha_raio:
 			entregar_tora(u)
 			return ""
+		# A tora também serve direto numa torreta do time que ainda falta madeira.
+		for tor in torretas:
+			if tor.team == u.team and tor.faltam() > 0 and pos.distance_to(tor.global_position) < Torreta.RAIO_OBRA:
+				tor.receber_tora(u)
+				return ""
 		return "Siga a seta: entregue a tora no DEPÓSITO do seu castelo (ícone de tora)"
 	var t := nearest_tora_solta(pos, 1.6)
 	if t and not u.is_equipping():
@@ -1081,6 +1095,36 @@ func obra_do_time(team: int, from: Vector3) -> Oficina:
 			best_v = v
 			best = of
 	return best if best else nearest_oficina(team, from, 1e9, true)
+
+
+## Terreno de torreta do time para o Construtor: a obra começada, senão o
+## terreno vazio mais perto. null = todas de pé.
+func torreta_para_obra(team: int, from: Vector3) -> Torreta:
+	var best: Torreta = null
+	for t in torretas:
+		if t.team != team or t.pronta():
+			continue
+		if best == null or t.madeira_entregue > best.madeira_entregue or (t.madeira_entregue == best.madeira_entregue \
+				and from.distance_to(t.global_position) < from.distance_to(best.global_position)):
+			best = t
+	return best
+
+
+## Golpe corpo a corpo de u acerta torretas inimigas no alcance e no arco.
+func golpear_torretas(u: Unit, dir: Vector3, alcance: float, arco_deg: float, dano: float) -> bool:
+	var acertou := false
+	for t in torretas:
+		if t.team == u.team or not t.pronta():
+			continue
+		var to := t.global_position - u.global_position
+		to.y = 0
+		if to.length() > alcance + Torreta.RAIO_CORPO:
+			continue
+		if to.length() > 1.2 and rad_to_deg(dir.angle_to(to.normalized())) > arco_deg / 2.0:
+			continue
+		t.take_hit(dano, u.team)
+		acertou = true
+	return acertou
 
 
 ## Maquininha nível 1 do time para o Construtor subir com madeira: a que já

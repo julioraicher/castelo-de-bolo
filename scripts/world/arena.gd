@@ -20,6 +20,7 @@ var theme: ThemeConfig
 var princess_spot: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var hat_spots: Array = [[], []]          # [time] -> lista de Vector3
 var oficina_spots: Array = [[], []]      # [time] -> lista de Vector3
+var torreta_spots: Array = [[], []]      # [time] -> lista de Vector3
 var mago_spots: Array = [[], []]         # [time] -> [cima, baixo] (Vector3)
 var tree_spots: Array = [[], []]         # [time] -> lista de Vector3 (bosque seguro)
 var bamboo_spots: Array = [[], []]       # [time] -> bambus do lado desse castelo (mundo)
@@ -328,6 +329,10 @@ func _build_castle(team: int) -> void:
 	for os in m.oficina_spots:
 		ofs.append(to_world(team, os.x, os.y))
 	oficina_spots[team] = ofs
+	var tos := []
+	for ts in m.torreta_spots:
+		tos.append(to_world(team, ts.x, ts.y))
+	torreta_spots[team] = tos
 	var mgs := []
 	for ms in m.mago_spots:
 		mgs.append(to_world(team, ms.x, ms.y))

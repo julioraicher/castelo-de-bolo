@@ -737,6 +737,8 @@ func _attack_hit() -> void:
 				hit_any = true
 			if lenhador() and game.golpear_plantas(self, dir, stats.attack_range + 0.6, stats.attack_arc_deg):
 				hit_any = true
+			if game.golpear_torretas(self, dir, alcance, arco, stats.damage * mult * damage_mult()):
+				hit_any = true
 			if hit_any:
 				hitstop(Config.cfg.hitstop_time * (1.6 if finisher else 1.0))
 				if is_player:
@@ -1118,7 +1120,8 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		_contra_golpe(attacker, dir)
 		return
 	if blocked:
-		amount *= 1.0 - stats.block_reduction
+		# Contra torreta o escudo segura quase tudo (vale para qualquer classe).
+		amount *= 1.0 - (Config.cfg.torreta_bloqueio if elemento == "torreta" else stats.block_reduction)
 		knock_mult *= 0.3
 	if _shield > 0.0:
 		var absorbed := minf(_shield, amount)

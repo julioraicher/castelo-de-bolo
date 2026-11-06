@@ -2263,6 +2263,7 @@ tower_spots = PackedVector2Array(18.646444, -14.988525, 18.646444, 14.988525)
 tower_collider_radius = 2.0
 princess_spot = Vector2(-9.5, 0)
 hat_spots = PackedVector2Array(-5.948789, -12.720721, -5.948789, 12.720721, -10.720721, -7.948789, -10.720721, 7.948789)
+torreta_spots = PackedVector2Array(29, -8, 29, 8)
 oficina_spots = PackedVector2Array(7.9937053, -14.834942, 7.9937053, 14.834942)
 mago_spots = PackedVector2Array(14.256711, -10.284602, 14.256711, 10.284602)
 tree_spots = PackedVector2Array(-1, 27.5, 4.5, 28.5)
