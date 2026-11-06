@@ -1247,13 +1247,16 @@ func torreta_para_obra(team: int, from: Vector3) -> Torreta:
 
 ## A torreta que o Construtor deve erguer agora, ou null: só depois da 1ª
 ## oficina, entre uma obra e outra (nunca larga uma oficina começada, `of` =
-## obra_do_time), e só se há madeira (na torreta ou no estoque). Vale para os
-## bots (BotBrain._lenhador) e para a seta-guia do jogador (GuiaConstrutor).
+## obra_do_time), e só se há o que fazer lá: madeira no estoque para puxar ou
+## madeira já entregue que a obra ainda não alcançou (Ciclo 2.12: antes o
+## Construtor ficava parado na torreta com a obra travada no teto, sem estoque).
+## Vale para os bots (BotBrain._lenhador) e para a seta-guia do jogador (GuiaConstrutor).
 func torreta_para_construir(team: int, from: Vector3, of: Oficina) -> Torreta:
 	var tor := torreta_para_obra(team, from)
 	if tor == null or not (of == null or (not of.comecada() and oficinas_prontas(team) >= 1)):
 		return null
-	return tor if tor.madeira_entregue > 0 or madeira[team] >= 1 else null
+	var teto := float(tor.madeira_entregue) / maxf(tor.custo(), 1)
+	return tor if madeira[team] >= 1 or tor.progresso < teto - 1e-4 else null
 
 
 func catapulta_do_time(team: int) -> Catapulta:

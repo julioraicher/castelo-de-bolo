@@ -19,6 +19,8 @@ func tick(_delta: float) -> void:
 	if to.length() > 0.2:
 		unit.aim_dir = to.normalized()
 	unit.aim_point = aim_point
+	# Clicou em cima de um inimigo? O tiro vai nele, em qualquer altura.
+	unit.aim_unit = game.camera.mira_unidade
 	unit.wants_attack = Input.is_action_pressed("attack")
 	# Enfeite do cursor sai antes do corpo gastar o poder/recarga.
 	if game.mira:

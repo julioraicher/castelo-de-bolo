@@ -114,7 +114,7 @@ func _ready() -> void:
 		if o != origem_ant:
 			origem_ant = o
 			var cab := Estilo.rotulo(o.to_upper(), Estilo.T_MIN, Estilo.TEXTO_FRACO, Estilo.espacada(Estilo.NUMERO, 1))
-			cab.clip_text = true  # "OFICINA (6 MADEIRAS)" não empurra a lista
+			cab.clip_text = true  # "OFICINA (N MADEIRAS)" não empurra a lista
 			col.add_child(cab)
 		var b := Button.new()
 		b.toggle_mode = true
