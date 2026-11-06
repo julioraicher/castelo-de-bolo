@@ -36,6 +36,8 @@ var _hint_a: Label
 var _hint_key: PanelContainer
 var _hint_b: Label
 var _big: Label
+var _cat_box: VBoxContainer
+var _cat_bar: ProgressBar
 var _fps: Label
 var _abates: Label
 var _quedas: Label
@@ -544,6 +546,27 @@ func set_hint(text: String) -> void:
 		_hint_key.visible = false
 	_hint_a.visible = _hint_a.text != ""
 	_hint_b.visible = _hint_b.text != ""
+
+
+## Barra de força da catapulta (0..1) no centro, embaixo do aviso; < 0 esconde.
+func catapulta_forca(frac: float) -> void:
+	if _cat_box == null:
+		_cat_box = VBoxContainer.new()
+		_cat_box.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+		_cat_box.position = Vector2(-150, -150)
+		_cat_box.custom_minimum_size = Vector2(300, 0)
+		_cat_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_cat_box.alignment = BoxContainer.ALIGNMENT_CENTER
+		add_child(_cat_box)
+		var r := Estilo.rotulo("FORÇA  ·  [F] lançar", Estilo.T_PEQUENO + 2, Estilo.OURO, Estilo.LETREIRO)
+		r.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_cat_box.add_child(r)
+		_cat_bar = Estilo.barra(Estilo.OURO, Vector2(300, 16))
+		_cat_box.add_child(_cat_bar)
+	_cat_box.visible = frac >= 0.0
+	if frac >= 0.0:
+		_cat_bar.value = frac * 100.0
+		Estilo.cor_barra(_cat_bar, Estilo.OURO.lerp(Color(1, 0.35, 0.2), frac))
 
 
 func show_big(text: String, color := Color.WHITE, duration := 2.2) -> void:

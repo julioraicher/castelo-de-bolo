@@ -196,10 +196,49 @@ def efeitos():
                         ganho(taiko, 0.8)), 0.8)
 
 
+def torretas():
+    """Sons PROVISÓRIOS da torreta e da catapulta (Ciclo 2.9b). Os nomes são os
+    eventos que o jogo chama (Sfx.SOUNDS); a thread de sons troca só o arquivo.
+    Timbre pedido: a besta é madeira + cristal encantado na cor do time
+    (fogo-fátuo de raposa); a catapulta é bambu que range + mão de Oni de
+    pedra; o meteoro de Chi é energia (luz), não bomba.
+    Semente própria. Rode: gerar_sons.py torretas"""
+    random.seed(29)
+    # Besta: corda de madeira solta ("toc" grave) + tinido do cristal.
+    save("besta_virote", mix(pluck(130, 0.22, 0.985), noise(0.04, cutoff=lambda x: 0.5),
+                             ganho(sino(2100, 0.25, ((1.0, 1.0, 25), (2.5, 0.5, 35))), 0.3)), 0.6)
+    # Escudo devolve o virote: tinido agudo subindo.
+    save("besta_devolve", mix(sino(1500, 0.3, ((1.0, 1.0, 14), (2.0, 0.6, 20), (3.2, 0.3, 30))),
+                              ganho(tone(lambda x: 900 + 700 * x, 0.18, release_pow=1.5), 0.3)), 0.5)
+    # Torreta de pé: madeira assentando + sino curto.
+    save("torreta_pronta", mix(tone(lambda x: 120 - 40 * x, 0.25, release_pow=2.5),
+                               [0.0] * n(0.12) + ganho(sino(1050, 0.5), 0.7)), 0.6)
+    # Torreta cai: estalos de madeira + queda grave + poeira.
+    estalos = noise(0.5, cutoff=lambda x: 0.9 if random.random() < 0.08 else 0.1, release_pow=1.5)
+    save("torreta_cai", mix(estalos, [0.0] * n(0.2) + ganho(tone(lambda x: 75 - 35 * x, 0.5, release_pow=2.0), 1.3),
+                            [0.0] * n(0.25) + noise(0.6, cutoff=lambda x: 0.06, release_pow=1.5)), 0.8)
+    # Catapulta arma: bambu rangendo (vibrato lento) + corda esticando.
+    save("catapulta_arma", mix(tone(lambda x: 90 + 30 * x, 0.7, vib=0.12, release_pow=0.8),
+                               noise(0.7, cutoff=lambda x: 0.12 + 0.1 * math.sin(40 * x), release_pow=0.8)), 0.5)
+    # Catapulta lança: "tum" do braço batendo + vento subindo.
+    save("catapulta_lanca", mix(ganho(tone(lambda x: 70 - 20 * x, 0.3, release_pow=2.5), 1.3),
+                                noise(0.06, cutoff=lambda x: 0.7),
+                                [0.0] * n(0.08) + noise(0.6, cutoff=lambda x: 0.08 + 0.5 * x, release_pow=1.0)), 0.7)
+    # Meteoro de Chi: assobio caindo + estrondo de energia (sino grave, não bomba).
+    assobio = tone(lambda x: 1400 - 1100 * x, 0.55, release_pow=0.6)
+    bum = mix(ganho(tone(lambda x: 60 - 20 * x, 0.6, release_pow=2.0), 1.2),
+              sino(220, 0.8, ((1.0, 1.0, 2.5), (2.0, 0.5, 4), (3.1, 0.3, 6))),
+              noise(0.3, cutoff=lambda x: 0.1, release_pow=1.5))
+    save("catapulta_meteoro", ganho(assobio, 0.5) + bum, 0.8)
+
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1:] == ["efeitos"]:
         efeitos()
+    elif sys.argv[1:] == ["torretas"]:
+        torretas()
     else:
         main()
         efeitos()
+        torretas()

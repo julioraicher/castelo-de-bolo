@@ -117,6 +117,13 @@ func calcular() -> void:
 			alvo = of.global_position
 			verbo = "CONSTRUA"
 			return
+	# Torreta do time esperando madeira (mesma regra dos bots: depois da 1ª oficina).
+	var tor: Torreta = game.torreta_para_obra(u.team, pos)
+	if tor and (of == null or not of.comecada()) and game.oficinas_prontas(u.team) >= 1 \
+			and (tor.madeira_entregue > 0 or game.madeira[u.team] >= 1):
+		alvo = tor.global_position
+		verbo = "CONSTRUA"
+		return
 	# Árvore/bambu adulto mais perto (as do próprio bosque contam como mais perto).
 	var melhor := INF
 	for p in game.plantas:

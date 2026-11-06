@@ -38,6 +38,11 @@ extends Resource
 ## Um pedestal de chapéu por classe de GameConfig.hat_class_list, na ordem.
 @export var hat_spots: PackedVector2Array = [Vector2(5, -8.5), Vector2(5, 8.5), Vector2(-3, -8.5), Vector2(-3, 8.5)]
 ## Terrenos de oficina (o time escolhe que variação construir em cada um).
+## Terrenos de torreta do Construtor (local do castelo, x para o inimigo).
+## Vazio = sem torretas neste mapa.
+@export var torreta_spots: PackedVector2Array = []
+## Catapulta do time (coordenadas locais do castelo); INF = sem catapulta.
+@export var catapulta_spot := Vector2(INF, INF)
 @export var oficina_spots: PackedVector2Array = [Vector2(-7.5, -8.5), Vector2(-7.5, 8.5)]
 ## Terrenos dos magos opostos: [0] lado de cima (z-, magos_opostos[0]) e
 ## [1] lado de baixo (z+, magos_opostos[1]). Vazio = sem caminho de magos.

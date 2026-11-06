@@ -137,6 +137,15 @@ func _draw() -> void:
 		pts.append(pts[0])
 		draw_polyline(pts, Config.team_color(pr.team).darkened(0.3), 1.5)
 
+	# Onde a catapulta vai te jogar: alvo na cor do time, pulsando.
+	if game.catapulta_alvo != Vector3.INF:
+		var c := _p(game.catapulta_alvo)
+		var ct := Config.team_color(me.team)
+		draw_circle(c, 5.0 + 2.0 * pulso, Color(ct, 0.35))
+		draw_arc(c, 5.0 + 2.0 * pulso, 0, TAU, 20, ct.lightened(0.4), 1.5)
+		draw_line(c + Vector2(-8, 0), c + Vector2(8, 0), ct.lightened(0.4), 1.0)
+		draw_line(c + Vector2(0, -8), c + Vector2(0, 8), ct.lightened(0.4), 1.0)
+
 	# Linha até o alvo da seta-guia do Construtor.
 	if alvo_guia != Vector3.INF and me.alive:
 		_tracejado(_p(me.global_position), _p(alvo_guia), Color(Estilo.OURO, 0.85))

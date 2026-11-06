@@ -51,6 +51,11 @@ extends Resource
 ## Casa da oficina pronta ({cor} = time). Vazio = casinha simples feita por código.
 ## Nós "Telhado" (cai quando a obra acaba) e "Gira_*" (engrenagens) são opcionais.
 @export var oficina_model := ""
+## Torreta do Construtor ({estilo} = game_config.torreta_estilo, {cor} = time).
+## Nó "Arma" gira para o alvo. Gerado por tools/gerar_torretas.gd.
+@export var torreta_model := "torreta_{estilo}_{cor}.scn"
+## Catapulta ({cor} = time). Nó "Braco" é o braço que lança.
+@export var catapulta_model := "catapulta_{cor}.scn"
 ## Economia do Construtor. Vazio = formas provisórias feitas por código.
 ## Planta: 3 cenas (broto, jovem, adulta).
 @export var arvore_estagios: Array[PackedScene] = []
