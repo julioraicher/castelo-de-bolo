@@ -5,6 +5,15 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Publicação (2026-11-04): versão de teste também no itch.io
+- CI (`build.yml`): na `main`, depois dos testes, manda web, Windows e Linux para o
+  itch.io com o `butler` (canais `web`, `windows`, `linux`). Só liga quando existirem o
+  segredo `BUTLER_API_KEY` e a variável `ITCH_ALVO` (ex.: `julioraicher/castelo-de-bolo`).
+- GitHub Pages só publica com o repositório público; no privado o passo é pulado sem
+  quebrar a CI. A release `ultima-versao` continua (no privado, só com login).
+- **O que testar:** depois de configurar o itch.io, abrir a página oculta e jogar a
+  versão web; o .exe aparece na mesma página. Nenhuma regra de jogo mudou.
+
 ## Ciclo 2.6d (2026-11-05), Jogabilidade: modo teste (sandbox)
 - **Modo teste**: só você no mapa, **sem bots**. Todas as oficinas do seu castelo já
   prontas (inclusive as **duas** dos magos, Luz e Sombria, sem selo) e todas as
