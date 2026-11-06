@@ -14,6 +14,7 @@ extends CharacterBody3D
 signal died(unit: Unit, killer: Unit)
 signal class_changed(unit: Unit)
 
+const TOON_FANTASMA := preload("res://assets/shaders/toon_fantasma.gdshader")
 const ACCEL := 70.0
 const DODGE_SPEED := 17.0
 const DODGE_TIME := 0.24
@@ -64,7 +65,7 @@ var super_carga := 0.0
 var _super_t := 0.0  # super "maior" ativo: stats trocado por uma cópia ampliada
 var _stats_normal: ClassStats = null
 var _sombra_t := 0.0  # super "sombra": invisível
-var _sombra_mat: StandardMaterial3D
+static var _fantasma_cache := {}  # material opaco -> versão translúcida (Passo da Sombra)
 
 var nav_agent: NavigationAgent3D
 
@@ -1527,13 +1528,6 @@ func _use_super() -> void:
 	match stats.super_tipo:
 		"sombra":
 			_sombra_t = cfg.sombra_tempo
-			if _sombra_mat == null:
-				_sombra_mat = StandardMaterial3D.new()
-				_sombra_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-				_sombra_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-				_sombra_mat.albedo_color = Color(0.12, 0.05, 0.22, 0.7)
-			for mi in _meshes:
-				mi.material_overlay = _sombra_mat
 			_aplicar_sombra(true)
 			Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(0.15, 0.1, 0.25), 30, 6.0)
 			_play_once("Dodge_Forward", 0.3)
@@ -1573,20 +1567,71 @@ func _tick_super(delta: float) -> void:
 
 
 ## Esconde (ou mostra) o corpo para quem é do outro time do jogador: o inimigo
-## vê só um vulto que some; o próprio time vê o corpo escuro (overlay).
+## vê só um vulto que some; o próprio time vê o corpo translúcido, de fantasma.
 func _aplicar_sombra(sumir: bool) -> void:
 	var inimigo_do_jogador := game.player != null and game.player.team != team
+	# Aliado: corpo translúcido de fantasma. Troca o material de cada pedaço pela
+	# versão translúcida (cache) e devolve no fim; sem sombra no chão enquanto dura.
+	# (GeometryInstance3D.transparency não pega no Compatibility/WebGL com o toon.)
+	for mi in _meshes:
+		if sumir and not mi.has_meta("sombra_orig"):
+			var orig := []
+			if mi.material_override:
+				orig.append(mi.material_override)
+				mi.material_override = _fantasma_de(mi.material_override)
+			else:
+				for i in mi.get_surface_override_material_count():
+					orig.append(mi.get_surface_override_material(i))
+					mi.set_surface_override_material(i, _fantasma_de(mi.get_active_material(i)))
+			mi.set_meta("sombra_orig", orig)
+			mi.set_meta("sombra_cast", mi.cast_shadow)
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		elif not sumir and mi.has_meta("sombra_orig"):
+			var orig: Array = mi.get_meta("sombra_orig")
+			if mi.material_override:
+				mi.material_override = orig[0]
+			else:
+				for i in orig.size():
+					mi.set_surface_override_material(i, orig[i])
+			mi.cast_shadow = mi.get_meta("sombra_cast")
+			mi.remove_meta("sombra_orig")
+			mi.remove_meta("sombra_cast")
 	if _visual:
 		_visual.visible = not (sumir and inimigo_do_jogador)
 	if _hp_root:
 		_hp_root.visible = not (sumir and inimigo_do_jogador)
 
 
+## Versão translúcida de um material do corpo: o toon troca de shader (mesmos
+## parâmetros, sem contorno nem raio X); o neon e o resto ganham alfa.
+static func _fantasma_de(m: Material) -> Material:
+	if m == null:
+		return null
+	var f: Material = _fantasma_cache.get(m)
+	if f:
+		return f
+	var alfa: float = Config.cfg.sombra_alfa
+	if m is ShaderMaterial:
+		var sm := m.duplicate() as ShaderMaterial
+		sm.shader = TOON_FANTASMA
+		sm.next_pass = null
+		sm.set_shader_parameter("fantasma", alfa)
+		f = sm
+	elif m is BaseMaterial3D:
+		var bm := m.duplicate() as BaseMaterial3D
+		bm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_DEPTH_PRE_PASS
+		bm.albedo_color.a *= 1.0 - alfa
+		bm.next_pass = null
+		f = bm
+	else:
+		f = m
+	_fantasma_cache[m] = f
+	return f
+
+
 func _fim_sombra() -> void:
 	_sombra_t = 0.0
 	_aplicar_sombra(false)
-	for mi in _meshes:
-		mi.material_overlay = null
 	if game:
 		Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(0.15, 0.1, 0.25), 18, 5.0)
 		if alive:
@@ -2051,7 +2096,7 @@ func _update_flash(delta: float) -> void:
 	if _flash_t > 0.0:
 		_flash_t -= delta
 		for mi in _meshes:
-			mi.material_overlay = _flash_mat if _flash_t > 0.0 else (_sombra_mat if _sombra_t > 0.0 else null)
+			mi.material_overlay = _flash_mat if _flash_t > 0.0 else null
 
 
 func _build_team_ring() -> void:

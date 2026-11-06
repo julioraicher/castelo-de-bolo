@@ -102,16 +102,30 @@ func _super() -> void:
 		u._dodge_t = 0.0
 		u._equip_t = 0.0
 		u._spin_t = 0.0
+		var mats0 := []
+		for mi in u._meshes:
+			mats0.append(mi.material_override)
 		u._use_super()
 		_check(u.super_carga == 0.0, "super %s: não saiu" % c.id)
 		if c.super_tipo == "sombra":
 			_check(u._sombra_t > 0.0, "super sombra: deveria ficar invisível")
+			# O próprio time vê o corpo translúcido (fantasma), não opaco.
+			var fantasma := false
+			for mi in u._meshes:
+				var m := mi.material_override as ShaderMaterial
+				if m and m.shader == u.TOON_FANTASMA and float(m.get_shader_parameter("fantasma")) > 0.3:
+					fantasma = true
+			_check(fantasma, "super sombra: corpo deveria ficar translúcido para o time")
 			if inimigo:
 				var p0: Vector3 = u.global_position
 				u.global_position = inimigo.global_position + Vector3(cfg.sombra_visto + 3.0, 0, 0)
 				_check(u.na_sombra_para(inimigo), "super sombra: bot inimigo a %.0f m não deveria ver" % (cfg.sombra_visto + 3.0))
 				u.global_position = p0
 			u._fim_sombra()
+			var volta := true
+			for i in u._meshes.size():
+				volta = volta and u._meshes[i].material_override == mats0[i] and not u._meshes[i].has_meta("sombra_orig")
+			_check(volta, "super sombra: material do corpo deveria voltar ao opaco")
 		else:
 			_check(_perto(u.stats.power_radius, c.power_radius * cfg.super_mult_raio, 0.01), "super %s: raio deveria crescer" % c.id)
 			u._tick_super(999.0)

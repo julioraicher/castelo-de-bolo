@@ -102,6 +102,8 @@ extends Resource
 @export var sombra_vel := 1.35
 @export var sombra_golpe_mult := 2.5
 @export var sombra_visto := 2.0
+## Quanto o corpo some para o próprio time na sombra (0 = opaco, 1 = invisível).
+@export_range(0.0, 1.0) var sombra_alfa := 0.6
 
 @export_group("Combo (3º golpe)")
 ## Corpo a corpo: o golpe final é vertical e pega só esta fração do arco normal
