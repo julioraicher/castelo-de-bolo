@@ -5,25 +5,56 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
-## Ciclo 2.9 (2026-11-06), Jogabilidade: torretas do Construtor (piloto, pitaco do Julio)
-- **2 terrenos de torreta por time** na frente da saída do castelo (`MapLayout.torreta_spots`,
-  Rio: (29, ±8)). O Construtor ergue como uma oficina: 4 madeiras (do depósito ou levando a
-  **tora direto** na torreta) e 8 s de obra. Os bots começam a torreta depois da 1ª oficina.
-- **Tiro**: virote a cada 1,2 s no inimigo mais perto a até 12 m (9 de dano). Quem está no
-  Passo da Sombra não é visto. A esquiva atravessa o virote.
-- **Escudo (botão direito) contra torreta**: virado para o virote segura **90%** do dano, em
-  qualquer classe. Erguido **na hora** (janela do contra-golpe) o virote **volta** e acerta a
-  torreta (×3) e você ganha Chi.
-- **Derrubar**: golpes e tiros inimigos tiram a vida dela (160 × vida_mult); caída, o terreno
-  volta a vazio e pode ser erguido de novo.
-- **Visual provisório** (pedra, pernas de madeira, telhado na cor do time, besta que gira):
-  espera o pitaco do Julio antes da arte final. Print: `jogabilidade/11-torretas-piloto.jpg`.
-- Modo teste: as 4 torretas já nascem prontas (a vermelha serve de treino de escudo).
-- Config: grupo "Torretas (Construtor)" em `game_config.gd`. Teste de regra `_torretas`.
-- Partida de 5 min com bots: 1 torreta erguida (t ≈ 286 s); a madeira compete com as oficinas.
-- **O que testar**: no modo teste, chegue perto da torreta vermelha, segure o botão direito
-  virado para ela e depois tente erguer o escudo bem na hora do tiro (o virote volta). Na
-  partida normal, de Construtor, leve uma tora até o terreno de torreta na frente do castelo.
+## Ciclo 2.9 (2026-11-06), Jogabilidade + Visual: torretas do Construtor, catapulta e o padrão de peça nova
+Quiz do Julio (respostas em `quiz/quiz-torretas.html` + chat): torre de vigia mais baixa com
+toque de santuário da raposa e besta encantada; virote; selo no chão; catapulta de bambu com a
+mão do Oni; pouso em meteoro de Chi; mira por barra de força com o ponto de queda no minimapa.
+Regra nova no repo: **princípio 13** (`docs/principios.md`): peça nova na tela = quiz antes,
+piloto com silhueta própria, cor do time e animações; nunca primitivas como entrega.
+
+- **Torreta "Posto da raposa"** (escolhida entre 3 pilotos, `jogabilidade/12-torretas-pilotos.jpg`):
+  modelo pintado como o cenário (`tools/gerar_torretas.gd` → `torreta_c_{cor}.scn`, 2,5 mil
+  triângulos; estilos a/b/c em `game_config.torreta_estilo` ou `--torreta=`), pernas de yagura
+  sobre pedra, guarda-corpo de torii na cor do time com shimenawa, telhado curvo só atrás (a
+  besta fica à vista na câmera), raposa de guarda, lanternas que balançam. **Besta encantada**:
+  cristal e corda que acendem na cor do time, três fogos-fátuos orbitando (giram no shader).
+- **Animações**: obra cresce do chão e "pula" ao ficar de pé; besta gira para o alvo e dá o
+  coice no tiro (clarão na boca); tranco ao levar dano; **derrubada tomba, afunda e some**, e
+  o terreno volta a "a construir". **Selo** na cor do time marca o terreno (gira e pulsa; fraco
+  com a torreta de pé).
+- **Escudo contra torreta** (quiz): virado para o virote, ele **volta** e acerta a torreta
+  (×1,5 do dano: pouco, de propósito). Sem janela de tempo; o "na hora certa" foi para
+  `docs/ideias.md` B. O jeito de tirar uma torreta é **derrubar na porrada**: os bots agora
+  vão até a torreta inimiga (até 9 m, vida > 40%) e batem nela.
+- **Guia do Construtor** aponta a torreta (CONSTRUA) quando ela espera madeira e a dica do
+  HUD cita "oficina ou torreta". Construtor revisado: jogabilidade já é a pedida (sem
+  upgrade, estrepes no caminho, torretas, barraquinhas); o visual ganhou uma sugestão em
+  `docs/ideias.md` B (peça que acende), que pede pitaco.
+- **Catapulta** (`scripts/items/catapulta.gd`, modelo `catapulta_{cor}.scn`: cavaletes de
+  bambu amarrados, eixo de ferro com tampas do time, sarilho que gira, estandarte, lanterna,
+  cesto de pedras e a **mão de pedra do Oni** com o aro aceso). Fica na base
+  (`MapLayout.catapulta_spot`, Rio: (-9, -12)), virada para o inimigo, sempre de pé.
+  **F** perto dela sobe na mão; a **barra de força** (centro da tela) vai e volta e o
+  **minimapa mostra onde cai** (anel no chão também); **F de novo lança**. Queda na metade
+  inimiga: da beira do rio (força 0) até 8 m da muralha (força 1). Voo em parábola de 2,4 s
+  (no ar nada acerta), braço dá o golpe e volta devagar; recarga de 12 s.
+  **Meteoro de Chi** no pouso: pilar, rachaduras, tranco de câmera, 14 de dano + empurrão
+  forte a 3,5 m (torretas inimigas também levam). Bots atacantes saindo da base usam
+  (50% das decisões; 12 lançamentos por time em 5 min simulados).
+- **Sons provisórios** com nome próprio em `Sfx.SOUNDS` (a thread de sons troca só o
+  arquivo): `besta_virote`, `besta_devolve`, `torreta_pronta`, `torreta_cai`,
+  `catapulta_arma`, `catapulta_lanca`, `catapulta_meteoro` (`tools/gerar_sons.py torretas`).
+  Timbre pedido: besta = madeira + cristal/fogo-fátuo de raposa na cor do time; catapulta =
+  bambu rangendo + pedra do Oni; meteoro = energia de Chi (luz), não bomba.
+- Ferramentas: `tools/prancha_torretas.gd` (prancha dos modelos), `--vista=torreta`,
+  `--clipe-cena=catapulta|torreta`, `--clipe-n=N`. Testes de regra `_torretas` (regra nova do
+  escudo) e `_catapulta` (216/216). GIFs: `jogabilidade/13-catapulta.gif`,
+  `jogabilidade/14-torreta-posto-da-raposa.gif`.
+- **O que testar**: (1) de qualquer classe, vá à catapulta da base (canto do pátio, lado
+  esquerdo olhando para a saída), aperte F, espere a barra e aperte F de novo: você vira um
+  meteoro e cai na metade inimiga. (2) No modo teste, chegue na torreta vermelha segurando o
+  botão direito virado para ela: o virote volta. (3) De Construtor, depois da 1ª oficina,
+  siga a seta até o selo da torreta e construa; depois veja a besta girar e atirar nos bots.
 
 ## Ciclo 2.8 (2026-11-06), Jogabilidade: SUPER poder na tecla R (piloto, pitaco do Julio)
 - **Barra de ouro** embaixo do Chi. Não enche com o tempo: dano causado (×0,12), abate

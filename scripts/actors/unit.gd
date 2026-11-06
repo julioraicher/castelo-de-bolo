@@ -137,6 +137,7 @@ var _carga_vista := -1.0  # último poder_carga mandado ao material
 var _morte_t := -1.0  # s desde a morte (pulinho cômico); < 0 = vivo
 ## Construindo uma oficina (marcado pela Oficina a cada quadro).
 var building_t := 0.0
+var em_voo := false  # na catapulta ou voando: o corpo é da Catapulta, nada acerta
 
 static var _flash_mat: StandardMaterial3D
 static var _merged_body := {}  # caminho do .tres da classe -> ArrayMesh do corpo
@@ -493,6 +494,9 @@ func _physics_process(delta: float) -> void:
 		if _respawn_t <= 0.0:
 			_respawn()
 		return
+
+	if em_voo:
+		return  # a catapulta move o corpo (Catapulta._physics_process)
 
 	# Hitstop: no impacto de um golpe, atacante e alvo congelam por ~60 ms.
 	# É o Δt do contato (J = F·Δt) ficando visível; o empurrão sai depois.
@@ -1104,7 +1108,7 @@ func heal(amount: float, quem: Unit = null) -> float:
 ## elemento: o que bateu ("shuriken", "fogo", "bomba", ...; vazio = golpe
 ## comum), para o impacto e a marca no corpo (FxProjetil). nivel 2 = Q.
 func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0, melee := false, elemento := "", nivel := 1) -> void:
-	if not alive:
+	if not alive or em_voo:
 		return
 	if _dodge_t > 0.0:
 		if attacker and amount > 0.0:
@@ -1835,6 +1839,23 @@ func _play(anim_name: String, blend := 0.15) -> void:
 		return
 	_current_anim = anim_name
 	_anim.play(anim_name, blend)
+
+
+## Na mão da catapulta / voando: pose de salto, sem física própria.
+func pose_voo(ligado: bool) -> void:
+	velocity = Vector3.ZERO
+	_knock = Vector3.ZERO
+	_move_vel = Vector3.ZERO
+	if ligado:
+		_play("Jump_Idle", 0.1)
+	else:
+		_current_anim = ""
+
+
+## Pouso do meteoro de Chi: levanta do chão e fica um instante parado.
+func aterrissagem() -> void:
+	_play_once("Lie_StandUp", 0.6)
+	_tremor_t = 0.25
 
 
 func _play_once(anim_name: String, lock: float) -> void:

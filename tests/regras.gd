@@ -32,6 +32,7 @@ func _ready() -> void:
 	_lote_2_7()
 	_super()
 	_torretas()
+	_catapulta()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -140,24 +141,58 @@ func _torretas() -> void:
 	u._dodge_t = 0.0
 	u.global_position = t.global_position + Vector3(6, 0, 0)
 	var V = t.get_script().Virote
-	var casos = [["sem escudo", false, 99.0, cfg.torreta_dano], ["escudo", true, 99.0, cfg.torreta_dano * (1.0 - cfg.torreta_bloqueio)], ["escudo na hora", true, 0.0, 0.0]]
+	# Quiz 2026-11-06: escudo virado para a torreta devolve o virote (sem janela
+	# de tempo); de costas, o virote acerta normal.
+	var casos = [["sem escudo", false, -1.0, cfg.torreta_dano], ["escudo", true, -1.0, 0.0], ["escudo de costas", true, 1.0, cfg.torreta_dano]]
 	for c in casos:
 		u.hp = u.max_hp()
 		u._blocking = c[1]
-		u._block_t = c[2]
-		u._visual.rotation.y = atan2(-1.0, 0.0)  # virado para a torreta (-x)
+		u._block_t = 5.0
+		u._visual.rotation.y = atan2(c[2], 0.0)  # -1 = virado para a torreta (-x)
 		var v = V.new()
 		game.add_child(v)
 		v.setup(game, t, t.global_position + Vector3(0, 2.6, 0), u)
 		v._dir = Vector3(1, 0, 0)
 		v._acertar()
 		_check(_perto(u.max_hp() - u.hp, c[3], 0.05), "torreta %s: dano esperado %.1f, deu %.2f" % [c[0], c[3], u.max_hp() - u.hp])
-		if c[0] == "escudo na hora":
-			_check(v._volta, "torreta: escudo na hora deveria devolver o virote")
+		if c[0] == "escudo":
+			_check(v._volta, "torreta: escudo virado deveria devolver o virote")
 		v.queue_free()
 	u._blocking = false
 	t.take_hit(t.max_hp() + 1.0, 1 - t.team)
 	_check(not t.pronta() and t.madeira_entregue == 0, "torreta derrubada deveria voltar a terreno vazio")
+
+
+## Catapulta (2.9b): sobe, lança com força 1 e cai perto da muralha inimiga;
+## no ar nada acerta; no chão volta a ter física própria.
+func _catapulta() -> void:
+	var cfg := Config.cfg
+	if game.catapultas.is_empty():
+		_check(false, "catapulta: o mapa não tem catapulta_spot")
+		return
+	var cat: Catapulta = game.catapultas[0]
+	var u: Unit = null
+	for c in game.units:
+		if c.team == cat.team and c.alive and not c.is_player:
+			u = c
+			break
+	_check(cat.pronta(), "catapulta deveria começar pronta")
+	cat.embarcar(u)
+	_check(u.em_voo and cat.passageiro == u, "catapulta: embarcar deveria prender o passageiro")
+	var hp0 := u.hp
+	u.take_damage(50.0, null, Vector3.FORWARD)
+	_check(_perto(u.hp, hp0, 0.01), "catapulta: no ar nada acerta")
+	cat.forca = 1.0
+	var alvo := cat.ponto_queda(1.0)
+	cat.lancar()
+	_check(not cat.pronta() and cat.passageiro == null, "catapulta: lançou e entrou em recarga")
+	for i in int((cfg.catapulta_voo + 0.5) * 60.0):
+		cat._physics_process(1.0 / 60.0)
+	_check(not u.em_voo, "catapulta: depois do voo o passageiro volta ao chão")
+	_check(_perto(u.global_position.x, alvo.x, 1.0) and _perto(u.global_position.z, alvo.z, 1.0),
+		"catapulta: deveria cair em x=%.1f, caiu em x=%.1f" % [alvo.x, u.global_position.x])
+	var fwd: Vector3 = game.arena.forward(cat.team)
+	_check(alvo.x * fwd.x > game.arena.map.castle_distance * 0.3, "catapulta: a queda com força 1 fica na metade inimiga")
 
 
 func _check(ok: bool, nome: String) -> void:

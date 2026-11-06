@@ -14,6 +14,10 @@ var cakes: Array[Cake] = []
 var pickups: Array[Pickup] = []
 var oficinas: Array[Oficina] = []
 var torretas: Array[Torreta] = []
+var catapultas: Array[Catapulta] = []     # [time]; vazio no mapa sem catapulta_spot
+var catapulta_alvo := Vector3.INF         # onde o jogador vai cair (minimapa)
+var catapulta_alvo_time := -1
+var torreta_estilo := ""  # --torreta=a|b|c (pranchas); vazio = game_config.torreta_estilo
 ## Economia do Construtor (Ciclo 2.3): plantas, toras soltas/carregadas,
 ## pilha de cada castelo e o estoque de madeira de cada time.
 var plantas: Array[Planta] = []
@@ -89,6 +93,7 @@ var _menu_print := ""
 var _clipe_dir := ""  # --clipe=DIR [--clipe-ini=s]: grava os quadros de um clipe do tutorial
 var _clipe_ini := 10.0
 var _clipe_n := 0
+var _clipe_max := 45  # --clipe-n=N
 var _clipe_cena := ""  # --clipe-cena=mascara: põe o jogador do lado da máscara inimiga
 var _tutorial_dir := ""  # --tutorial=DIR: print de cada aba do "Como jogar" e sai
 var _vista := ""
@@ -145,6 +150,8 @@ func _ready() -> void:
 			_mira_print = true
 		elif arg.begins_with("--classe="):
 			_classe_jogador = arg.trim_prefix("--classe=")
+		elif arg.begins_with("--torreta="):
+			torreta_estilo = arg.trim_prefix("--torreta=")
 		elif arg.begins_with("--filme="):
 			_filme_dir = arg.trim_prefix("--filme=")
 		elif arg.begins_with("--vitrine="):
@@ -157,6 +164,8 @@ func _ready() -> void:
 			_clipe_cena = arg.trim_prefix("--clipe-cena=")
 		elif arg.begins_with("--clipe-ini="):
 			_clipe_ini = float(arg.trim_prefix("--clipe-ini="))
+		elif arg.begins_with("--clipe-n="):
+			_clipe_max = int(arg.trim_prefix("--clipe-n="))
 		elif arg.begins_with("--tutorial="):
 			_tutorial_dir = arg.trim_prefix("--tutorial=")
 		elif arg.begins_with("--shots="):
@@ -227,6 +236,11 @@ func _ready() -> void:
 			add_child(tor)
 			tor.setup(self, team, tp)
 			torretas.append(tor)
+		if arena.catapulta_spot[team] != Vector3.INF:
+			var cat := Catapulta.new()
+			add_child(cat)
+			cat.setup(self, team, arena.catapulta_spot[team])
+			catapultas.append(cat)
 		_montar_economia(team)
 
 	_registrar_modelos()
@@ -287,6 +301,11 @@ func _ready() -> void:
 			camera.fov = 42
 			camera.position = Vector3(cx, 0, 0) + Vector3(0, 21, 19) * 1.55
 			camera.look_at(Vector3(cx, 0, 0))
+		elif _vista == "torreta" and not torretas.is_empty():  # a 1ª torreta azul, com a câmera do jogo
+			var tp: Vector3 = torretas[0].global_position
+			camera.fov = 42
+			camera.position = tp + Config.cfg.camera_offset * 0.55
+			camera.look_at(tp + Vector3(0, 1.2, 0))
 		elif _vista.count(",") == 5:  # --vista=px,py,pz,ax,ay,az: câmera em p olhando para a
 			var v := _vista.split_floats(",")
 			camera.fov = 42
@@ -348,10 +367,24 @@ func _ready() -> void:
 ## Clipe do tutorial: 1 quadro a cada 6 de física (10 por s), 45 quadros,
 ## 384 px de largura, JPG. Depois: tools/importar_clipes.sh deixa leve (WebP).
 func _gravar_clipe() -> void:
-	if _clipe_n == 0 and _clipe_cena == "mascara" and is_instance_valid(player):
+	if _clipe_n == 0 and _clipe_cena != "" and is_instance_valid(player):
+		match _clipe_cena:
+			"mascara":
+				var m := princesses[1 - player.team]
+				player.global_position = m.global_position - arena.forward(player.team) * 2.5
+			"catapulta":  # o jogador (bot) sobe na própria catapulta e lança
+				var cat := catapulta_do_time(player.team)
+				if cat:
+					player.global_position = cat.global_position - arena.forward(player.team) * 2.0
+					cat.reservado = player
+					cat.reserva_t = _time
+			"torreta":  # torreta inimiga de pé na frente do jogador
+				for t in torretas:
+					if t.team != player.team:
+						t.concluir_ja()
+						player.global_position = t.global_position - arena.forward(player.team) * 7.0
+						break
 		_clipe_cena = ""
-		var m := princesses[1 - player.team]
-		player.global_position = m.global_position - arena.forward(player.team) * 2.5
 		player.reset_physics_interpolation()
 		camera.snap()
 	if Engine.get_physics_frames() % 6 != 0:
@@ -364,7 +397,7 @@ func _gravar_clipe() -> void:
 	img.resize(384, 216, Image.INTERPOLATE_LANCZOS)
 	img.save_jpg("%s/%02d.jpg" % [_clipe_dir, _clipe_n], 0.8)
 	_clipe_n += 1
-	if _clipe_n >= 45:
+	if _clipe_n >= _clipe_max:
 		get_tree().quit()
 
 
@@ -619,11 +652,30 @@ func _take_shot() -> void:
 
 func _rules() -> void:
 	var hint := ""
+	# Jogador na mão da catapulta: F lança (o corpo é da catapulta até cair).
+	if player and player.em_voo and player_brain != null and player_brain.interact_pressed:
+		for cat in catapultas:
+			if cat.passageiro == player:
+				cat.lancar()
 	for u in units:
-		if not u.alive:
+		if not u.alive or u.em_voo:
 			continue
 		var pos := u.global_position
 		var wants_interact := u.is_player and player_brain != null and player_brain.interact_pressed
+
+		# Catapulta do time: o jogador sobe com F; o bot que a reservou sobe e lança.
+		var cat := catapulta_do_time(u.team)
+		if cat and cat.pronta() and not u.carried_princess and pos.distance_to(cat.global_position) < Catapulta.ALCANCE_EMBARQUE:
+			if u.is_player and not (u.brain is BotBrain):
+				hint = "[F] subir na catapulta"
+				if wants_interact:
+					cat.embarcar(u)
+					continue
+			elif cat.reservado == u:
+				cat.embarcar(u)
+				cat.forca = randf_range(0.55, 0.95)
+				cat.lancar()
+				continue
 		var enemy_p := princesses[1 - u.team]
 		var own_p := princesses[u.team]
 
@@ -774,7 +826,7 @@ func _rules() -> void:
 			"PEGUE":
 				hint = "Pegue a tora no chão: é só encostar"
 			"CONSTRUA":
-				hint = "Tem madeira no depósito: siga a seta e construa a oficina"
+				hint = "Tem madeira no depósito: siga a seta e construa (oficina ou torreta)"
 
 	if player.alive and player.carried_princess:
 		hint = "Leve-a até o SEU castelo!  ([F] soltar)"
@@ -1106,6 +1158,47 @@ func torreta_para_obra(team: int, from: Vector3) -> Torreta:
 			continue
 		if best == null or t.madeira_entregue > best.madeira_entregue or (t.madeira_entregue == best.madeira_entregue \
 				and from.distance_to(t.global_position) < from.distance_to(best.global_position)):
+			best = t
+	return best
+
+
+func catapulta_do_time(team: int) -> Catapulta:
+	for c in catapultas:
+		if c.team == team:
+			return c
+	return null
+
+
+## Catapulta para um bot atacante: a do time, pronta e livre (ou já reservada
+## por ele). Sorteia uma vez por decisão (catapulta_bots).
+func catapulta_para_bot(u: Unit) -> Catapulta:
+	var cat := catapulta_do_time(u.team)
+	if cat == null or not cat.pronta():
+		return null
+	if cat.reservado == u:
+		cat.reserva_t = _time
+		return cat
+	# Reserva de outro bot vale enquanto ele renova (a cada decisão); se ele
+	# mudou de ideia ou morreu, libera.
+	if cat.reservado and cat.reservado.alive and _time - cat.reserva_t < 4.0:
+		return null
+	if u.global_position.distance_to(cat.global_position) > 22.0 or randf() > Config.cfg.catapulta_bots:
+		return null
+	cat.reservado = u
+	cat.reserva_t = _time
+	return cat
+
+
+## Torreta inimiga de pé mais perto de `from` (até r). Bots vão derrubá-la.
+func torreta_inimiga_perto(team: int, from: Vector3, r: float) -> Torreta:
+	var best: Torreta = null
+	var best_d := r
+	for t in torretas:
+		if t.team == team or not t.pronta():
+			continue
+		var d := from.distance_to(t.global_position)
+		if d < best_d:
+			best_d = d
 			best = t
 	return best
 

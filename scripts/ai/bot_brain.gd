@@ -35,7 +35,8 @@ var role := Role.ATTACK
 
 var _think_t := randf() * 0.3
 var _goal := Vector3.ZERO
-var _target: Unit = null
+var _target: Unit
+var _torreta: Torreta  # torreta inimiga que o bot foi derrubar = null
 var _last_nav_goal := Vector3.INF
 var _nav_t := 0.0
 var _wander := Vector3.ZERO
@@ -141,6 +142,7 @@ func _check_stuck(delta: float) -> void:
 
 func _think() -> void:
 	_target = null
+	_torreta = null
 	if _unstuck_t > 0.0:
 		_goal = _unstuck_goal
 		return
@@ -177,10 +179,27 @@ func _think() -> void:
 	if unit.lenhador() and _lenhador(me):
 		return
 
+	# Atacante ainda na própria base: a catapulta leva até perto do castelo inimigo.
+	if role == Role.ATTACK and not unit.has_cake and not unit.is_villager() and not game.inicio_calmo() \
+			and (me - arena.gate_spot[unit.team]).dot(arena.forward(unit.team)) < 2.0:
+		var cat: Catapulta = game.catapulta_para_bot(unit)
+		if cat:
+			_goal = cat.global_position
+			return
+
 	# Item no chão a poucos passos: vale o desvio se não tem inimigo colado.
 	var item := game.nearest_pickup(me, 10.0)
 	if item and _nearest_enemy(5.0) == null and (item.kind != "pocao" or unit.hp_ratio() < 0.8):
 		_goal = item.global_position
+		return
+
+	# Torreta inimiga de pé por perto e ninguém colado: derrubar é o jeito de
+	# passar (quiz 2026-11-06). Com pouca vida, não insiste.
+	var tor: Torreta = game.torreta_inimiga_perto(unit.team, me, 9.0)
+	if tor and unit.hp_ratio() > 0.4 and _nearest_enemy(4.0) == null:
+		var alc := unit.stats.attack_range if unit.stats.attack_kind == "melee" else minf(unit.stats.attack_range, 8.0)
+		_goal = tor.global_position + (me - tor.global_position).normalized() * maxf(alc - 0.3, 1.2)
+		_torreta = tor
 		return
 
 	# Máscara inimiga caída por perto: retomar antes que a devolvam (revezamento).
@@ -427,6 +446,14 @@ func _combat() -> void:
 	if unit.super_ready() and not unit.wants_power:
 		unit.wants_super = _should_use_super()
 	if _target == null or not _target.alive or unit.carried_princess:
+		if _torreta and _torreta.pronta() and not unit.carried_princess:
+			var to_t := _torreta.global_position - unit.global_position
+			to_t.y = 0
+			unit.aim_dir = to_t.normalized()
+			unit.aim_point = _torreta.global_position + Vector3(0, 1.5, 0)
+			if to_t.length() <= unit.stats.attack_range + Torreta.RAIO_CORPO:
+				unit.wants_attack = true
+				return
 		if _planta and _planta.adulta() and not unit.carried_tora:
 			var to_p := _planta.global_position - unit.global_position
 			to_p.y = 0

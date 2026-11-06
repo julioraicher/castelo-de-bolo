@@ -1,14 +1,22 @@
 class_name Torreta
 extends Node3D
-## Torreta de defesa do Construtor (Ciclo 2.9, piloto). Fica num terreno fixo
-## na frente do castelo (MapLayout.torreta_spots). Construtor por perto ergue
-## com madeira do time, como as oficinas: d(progresso)/dt = Σv / torreta_obra.
-## Pronta, atira um virote no inimigo mais perto a até torreta_alcance m.
+## Torreta de defesa do Construtor (Ciclo 2.9b). Fica num terreno fixo na
+## frente do castelo (MapLayout.torreta_spots), marcado por um SELO na cor do
+## time. Construtor por perto ergue com madeira do time, como as oficinas:
+## d(progresso)/dt = Σv / torreta_obra. Pronta, a besta encantada gira para o
+## inimigo mais perto (torreta_alcance) e atira um virote.
+##
+## Visual (princípio 13): modelo do tema (ThemeConfig.torreta_model, estilo
+## game_config.torreta_estilo ou --torreta=a|b|c), gerado por
+## tools/gerar_torretas.gd. Nó "Arma" = a besta (frente +Z, pivô em
+## ALTURA_ARMA); "Arma/Gira_magia" = fogos-fátuos que orbitam no shader.
+## Animações: obra (cresce do chão e "pula" no fim), tiro (coice da besta e
+## clarão), dano (tranco) e queda (tomba e some, o terreno volta ao selo).
 ##
 ## Defesa (botão direito) contra torreta: o escudo segura torreta_bloqueio do
-## dano; erguido na janela do contra-golpe (parry_janela), o virote VOLTA e
-## acerta a própria torreta (torreta_devolve × dano). Esquiva atravessa.
-## Golpes e tiros inimigos derrubam a torreta; caída, o terreno volta a vazio.
+## dano e, virado para o virote, ele VOLTA e acerta a própria torreta
+## (torreta_devolve × dano, pouco: o jeito de tirar uma torreta é derrubá-la
+## na porrada). Esquiva atravessa. Golpes e tiros inimigos derrubam a torreta.
 
 enum Estado { VAZIO, OBRA, PRONTA }
 
@@ -25,12 +33,14 @@ var hp := 0.0
 var _game: Game
 var _casa: Node3D
 var _arma: Node3D
+var _selo: Node3D
+var _selo_mat: StandardMaterial3D
 var _label: Label3D
 var _tiro_t := 0.0
 var _puxar_t := 0.0
 var _dust_t := 0.0
-var _flash_t := 0.0
-var _mats: Array[StandardMaterial3D] = []
+var _caindo := false
+var _t := 0.0
 
 
 func setup(game: Game, p_team: int, pos: Vector3) -> void:
@@ -38,7 +48,7 @@ func setup(game: Game, p_team: int, pos: Vector3) -> void:
 	team = p_team
 	position = pos
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	_montar_terreno()
+	_montar_selo()
 	_casa = _montar_torre()
 	add_child(_casa)
 	_label = Label3D.new()
@@ -75,22 +85,34 @@ func _zerar() -> void:
 	progresso = 0.0
 	madeira_entregue = 0
 	hp = 0.0
+	_caindo = false
 	_casa.visible = false
+	_casa.transform = Transform3D(Basis(), Vector3.ZERO)
 	_casa.scale = Vector3(1, 0.05, 1)
+	if _arma:
+		_arma.position = Vector3(0, ALTURA_ARMA, 0)
 	_atualizar_label()
 
 
 func _physics_process(delta: float) -> void:
-	if _game.game_over:
+	if _game.game_over or _caindo:
 		return
-	if _flash_t > 0.0:
-		_flash_t -= delta
-		for m in _mats:
-			m.emission_enabled = _flash_t > 0.0
 	if estado == Estado.PRONTA:
 		_atirar(delta)
 		return
 	_obra(delta)
+
+
+## Animações leves: o selo gira e pulsa, a besta volta do coice.
+func _process(delta: float) -> void:
+	_t += delta
+	_selo.rotation.y += delta * 0.25
+	var a := 0.12 if estado == Estado.PRONTA else 0.38 + 0.22 * sin(_t * 2.2)
+	_selo_mat.albedo_color.a = a
+	if _arma and _arma.position.z != 0.0:
+		_arma.position.z = lerpf(_arma.position.z, 0.0, minf(delta * 9.0, 1.0))
+		if absf(_arma.position.z) < 0.005:
+			_arma.position.z = 0.0
 
 
 # --- Obra -----------------------------------------------------------------------
@@ -161,8 +183,13 @@ func _concluir() -> void:
 	hp = max_hp()
 	_casa.scale = Vector3.ONE
 	_tiro_t = 0.6
+	# "Pula" ao ficar de pé, como a oficina.
+	var tw := _casa.create_tween()
+	tw.tween_property(_casa, "scale", Vector3(0.92, 1.14, 0.92), 0.12)
+	tw.tween_property(_casa, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	Fx.pillar(_game, global_position, Config.team_color(team).lightened(0.3), 2.0)
-	Sfx.play("score", global_position, 0.05)
+	Fx.burst(_game, global_position + Vector3(0, 1.0, 0), Color(0.75, 0.65, 0.5), 16, 5.0)
+	Sfx.play("torreta_pronta", global_position, 0.05)
 	_atualizar_label()
 
 
@@ -193,37 +220,65 @@ func _alvo() -> Unit:
 
 func _atirar(delta: float) -> void:
 	var alvo := _alvo()
-	if alvo:
+	if alvo and _arma:
 		var to := alvo.global_position - global_position
 		_arma.rotation.y = lerp_angle(_arma.rotation.y, atan2(to.x, to.z), minf(delta * 10.0, 1.0))
 	_tiro_t -= delta
 	if alvo == null or _tiro_t > 0.0:
 		return
 	_tiro_t = Config.cfg.torreta_cadencia
+	var boca := global_position + Vector3(0, ALTURA_ARMA + 0.1, 0)
+	if _arma:
+		_arma.position.z = -0.22  # coice (volta em _process)
+		boca += _arma.global_transform.basis.z * 0.7
 	var v := Virote.new()
 	_game.add_child(v)
-	v.setup(_game, self, global_position + Vector3(0, ALTURA_ARMA, 0), alvo)
-	Sfx.play("shoot", global_position, 0.1)
+	v.setup(_game, self, boca, alvo)
+	Fx.burst(_game, boca, Config.team_color(team).lightened(0.5), 5, 2.5)
+	Sfx.play("besta_virote", global_position, 0.1)
 
 
 # --- Dano na torreta ----------------------------------------------------------------
 
 func take_hit(amount: float, from_team: int) -> void:
-	if estado != Estado.PRONTA or from_team == team:
+	if estado != Estado.PRONTA or from_team == team or _caindo:
 		return
 	hp -= amount
-	_flash_t = 0.1
-	for m in _mats:
-		m.emission_enabled = true
 	Fx.damage_number(_game, global_position + Vector3(0, 2.5, 0), str(int(amount)), Color(1, 0.85, 0.6))
 	Fx.burst(_game, global_position + Vector3(0, 1.6, 0), Color(0.6, 0.45, 0.3), 6, 4.0)
 	if hp <= 0.0:
-		Fx.burst(_game, global_position + Vector3(0, 1.2, 0), Color(0.55, 0.4, 0.25), 30, 7.0)
-		_game.camera.shake_at(global_position, 0.4)
-		Sfx.play("explosao", global_position, 0.1)
-		_zerar()
-	else:
-		_atualizar_label()
+		_cair()
+		return
+	# Tranco: encolhe e torce um pouco, volta com mola.
+	_casa.scale = Vector3(1.07, 0.93, 1.07)
+	_casa.rotation.z = randf_range(-0.07, 0.07)
+	var tw := _casa.create_tween().set_parallel(true)
+	tw.tween_property(_casa, "scale", Vector3.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(_casa, "rotation:z", 0.0, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_atualizar_label()
+
+
+## Derrubada: tomba para um lado, afunda e some; o terreno volta ao selo.
+func _cair() -> void:
+	_game._log("TORRETA %s derrubada (t=%.0fs)" % [Config.TEAM_NAMES[team], _game._time])
+	_caindo = true
+	estado = Estado.VAZIO
+	progresso = 0.0
+	madeira_entregue = 0
+	hp = 0.0
+	_atualizar_label()
+	Fx.burst(_game, global_position + Vector3(0, 1.2, 0), Color(0.55, 0.4, 0.25), 24, 6.0)
+	_game.camera.shake_at(global_position, 0.4)
+	Sfx.play("torreta_cai", global_position, 0.1)
+	var lado := randf_range(0.0, TAU)
+	var eixo := Vector3(cos(lado), 0, sin(lado))
+	var tw := _casa.create_tween().set_parallel(true)
+	tw.tween_property(_casa, "rotation", eixo * 1.25, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_property(_casa, "position:y", -0.5, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(func():
+		Fx.burst(_game, global_position + Vector3(0, 0.4, 0), Color(0.6, 0.5, 0.35), 30, 7.0)
+		Fx.ring(_game, global_position + Vector3(0, 0.1, 0), Config.team_color(team), 2.2)
+		_zerar())
 
 
 ## Alvo de golpe/tiro: horizontal a até RAIO_CORPO + r e na altura do corpo.
@@ -237,7 +292,7 @@ func encosta(p: Vector3, r: float) -> bool:
 	return d.length() <= RAIO_CORPO + r
 
 
-# --- Visual (provisório: primitivas, aguardando o pitaco do Julio) ---------------
+# --- Visual ---------------------------------------------------------------------------
 
 func _atualizar_label() -> void:
 	match estado:
@@ -253,86 +308,64 @@ func _atualizar_label() -> void:
 	_label.visible = estado != Estado.PRONTA or hp < max_hp()
 
 
-func _mat(c: Color) -> StandardMaterial3D:
-	var m := Fx.lit(c)
-	m.emission = Color(1, 1, 1)
-	m.emission_energy_multiplier = 0.6
-	_mats.append(m)
-	return m
+## Selo no chão (quiz 2026-11-06, T3): dois anéis, quatro traços e o losango
+## do meio, na cor do time, sem sombra; gira e pulsa em _process.
+func _montar_selo() -> void:
+	_selo = Node3D.new()
+	_selo.position.y = 0.04
+	_selo_mat = Fx.unshaded(Color(Config.team_color(team), 0.4), true)
+	var pecas: Array = []
+	var fora := TorusMesh.new()
+	fora.inner_radius = 1.28
+	fora.outer_radius = 1.42
+	fora.rings = 24
+	fora.ring_segments = 4
+	pecas.append([fora, Transform3D(Basis.from_scale(Vector3(1, 0.06, 1)), Vector3.ZERO)])
+	var dentro := TorusMesh.new()
+	dentro.inner_radius = 0.56
+	dentro.outer_radius = 0.66
+	dentro.rings = 16
+	dentro.ring_segments = 4
+	pecas.append([dentro, Transform3D(Basis.from_scale(Vector3(1, 0.06, 1)), Vector3.ZERO)])
+	for k in 4:
+		var traco := BoxMesh.new()
+		traco.size = Vector3(0.09, 0.02, 0.62)
+		var a := PI / 4.0 + k * PI / 2.0
+		pecas.append([traco, Transform3D(Basis.from_euler(Vector3(0, a, 0)), Vector3(sin(a), 0, cos(a)) * 0.97)])
+	var meio := BoxMesh.new()
+	meio.size = Vector3(0.34, 0.02, 0.34)
+	pecas.append([meio, Transform3D(Basis.from_euler(Vector3(0, PI / 4.0, 0)), Vector3.ZERO)])
+	for p in pecas:
+		var mi := MeshInstance3D.new()
+		mi.mesh = p[0]
+		mi.transform = p[1]
+		mi.material_override = _selo_mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_selo.add_child(mi)
+	add_child(_selo)
 
 
-func _montar_terreno() -> void:
-	var anel := MeshInstance3D.new()
-	var t := TorusMesh.new()
-	t.inner_radius = 1.3
-	t.outer_radius = 1.5
-	anel.mesh = t
-	anel.scale = Vector3(1, 0.05, 1)
-	anel.position.y = 0.05
-	anel.material_override = Fx.unshaded(Color(Config.team_color(team), 0.5), true)
-	anel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(anel)
-
-
+## Modelo do tema. Sem contorno de tinta abaixo da qualidade Alta (igual à
+## oficina). Sem modelo (tema antigo): fica só o selo e um aviso.
 func _montar_torre() -> Node3D:
 	var raiz := Node3D.new()
-	var pedra := Color(0.42, 0.4, 0.38)
-	var madeira := Color(0.45, 0.3, 0.18)
-	var cor := Config.team_color(team)
-	var base := MeshInstance3D.new()
-	var cil := CylinderMesh.new()
-	cil.top_radius = 0.85
-	cil.bottom_radius = 1.05
-	cil.height = 1.2
-	base.mesh = cil
-	base.position.y = 0.6
-	base.material_override = _mat(pedra)
-	raiz.add_child(base)
-	for i in 4:  # pernas de madeira
-		var perna := MeshInstance3D.new()
-		var bx := BoxMesh.new()
-		bx.size = Vector3(0.18, 1.3, 0.18)
-		perna.mesh = bx
-		var a := TAU * (i + 0.5) / 4.0
-		perna.position = Vector3(cos(a) * 0.55, 1.8, sin(a) * 0.55)
-		perna.material_override = _mat(madeira)
-		raiz.add_child(perna)
-	var piso := MeshInstance3D.new()
-	var pb := BoxMesh.new()
-	pb.size = Vector3(1.6, 0.16, 1.6)
-	piso.mesh = pb
-	piso.position.y = 2.45
-	piso.material_override = _mat(madeira)
-	raiz.add_child(piso)
-	var teto := MeshInstance3D.new()
-	var cone := CylinderMesh.new()
-	cone.top_radius = 0.05
-	cone.bottom_radius = 1.15
-	cone.height = 0.8
-	cone.radial_segments = 4
-	teto.mesh = cone
-	teto.position.y = 3.65
-	teto.rotation.y = PI / 4.0
-	teto.material_override = _mat(cor.darkened(0.35))
-	raiz.add_child(teto)
-	# Besta que gira para o alvo.
-	_arma = Node3D.new()
-	_arma.position.y = ALTURA_ARMA + 0.15
-	raiz.add_child(_arma)
-	var corpo := MeshInstance3D.new()
-	var cb := BoxMesh.new()
-	cb.size = Vector3(0.18, 0.18, 1.1)
-	corpo.mesh = cb
-	corpo.position.z = 0.25
-	corpo.material_override = _mat(madeira.darkened(0.2))
-	_arma.add_child(corpo)
-	var arco := MeshInstance3D.new()
-	var ab := BoxMesh.new()
-	ab.size = Vector3(1.0, 0.1, 0.1)
-	arco.mesh = ab
-	arco.position.z = 0.65
-	arco.material_override = _mat(cor)
-	_arma.add_child(arco)
+	var th := _game.arena.theme
+	var estilo: String = _game.torreta_estilo if _game.torreta_estilo != "" else Config.cfg.torreta_estilo
+	var path := th.model_path(th.torreta_model.replace("{estilo}", estilo), team)
+	if not ResourceLoader.exists(path):
+		push_warning("Torreta sem modelo: " + path)
+		return raiz
+	var casa: Node3D = (load(path) as PackedScene).instantiate()
+	raiz.add_child(casa)
+	_arma = casa.get_node_or_null("Arma")
+	if Settings.quality < 3:
+		for mi: MeshInstance3D in casa.find_children("*", "MeshInstance3D", true, false):
+			for s in mi.mesh.get_surface_count():
+				var mat := mi.mesh.surface_get_material(s) as ShaderMaterial
+				if mat and mat.next_pass:
+					var m: ShaderMaterial = mat.duplicate()
+					m.next_pass = null
+					mi.set_surface_override_material(s, m)
 	return raiz
 
 
@@ -353,13 +386,26 @@ class Virote extends Node3D:
 		position = origem
 		physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 		_dir = (alvo.global_position + Vector3(0, 1.1, 0) - origem).normalized()
+		var cor := Config.team_color(dono.team).lightened(0.5)
 		var mi := MeshInstance3D.new()
 		var b := BoxMesh.new()
-		b.size = Vector3(0.08, 0.08, 0.7)
+		b.size = Vector3(0.07, 0.07, 0.75)
 		mi.mesh = b
-		mi.material_override = Fx.unshaded(Config.team_color(dono.team).lightened(0.5))
+		mi.material_override = Fx.unshaded(cor)
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mi)
+		# Ponta encantada: um brilho na frente.
+		var ponta := MeshInstance3D.new()
+		var e := SphereMesh.new()
+		e.radius = 0.11
+		e.height = 0.22
+		e.radial_segments = 6
+		e.rings = 3
+		ponta.mesh = e
+		ponta.position.z = 0.4
+		ponta.material_override = Fx.unshaded(Color(cor, 0.8), true)
+		ponta.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(ponta)
 
 	func _physics_process(delta: float) -> void:
 		_vida -= delta
@@ -388,12 +434,12 @@ class Virote extends Node3D:
 		var dir := _dir
 		dir.y = 0
 		dir = dir.normalized() if dir.length() > 0.01 else Vector3.FORWARD
-		# Escudo virado para o virote: na janela do contra-golpe, ele volta.
-		if _alvo._blocking and _alvo._facing().dot(-dir) > Unit.BLOCK_COS and _alvo._block_t <= cfg.parry_janela:
+		# Escudo virado para o virote: ele volta (sem janela de tempo; quiz 2026-11-06).
+		if _alvo._blocking and _alvo._facing().dot(-dir) > Unit.BLOCK_COS:
 			_volta = true
 			_vida = 1.6
 			Fx.burst(_game, global_position, Color(1, 0.9, 0.5), 10, 6.0)
-			Sfx.play("block", global_position, 0.1)
+			Sfx.play("besta_devolve", global_position, 0.1)
 			if _alvo.is_player:
 				Fx.damage_number(_game, _alvo.global_position + Vector3(0, 0.5, 0), "DEVOLVEU!", Color(1, 0.9, 0.5))
 			_alvo.add_power(cfg.chi_esquiva)

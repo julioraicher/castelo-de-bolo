@@ -48,6 +48,13 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
   com um golpe de "virar a luta" (ex.: Samurai corta todos em linha num traço só).
 
 ## B — depois
+
+- **Torreta: "na hora certa" devolve com mais força** (Julio, quiz 2026-11-06): hoje
+  qualquer escudo virado devolve o virote (dano baixo na torreta). Ideia: escudo erguido
+  na janela do contra-golpe devolve ×3 e dá Chi extra.
+- **Construtor com luz própria** (revisão 2.9b): é a única classe sem peça que acende na
+  cor do time (Samurai tem a katana, Ninja os shurikens, Kitsune os fogos). Sugestão:
+  lanterna pendurada no cesto e martelo maior. Pede pitaco (princípio 13).
 - **Clipes roteirizados no "Como jogar"** (2026-11-01): os clipes das abas Objetivo e
   Casinhas saíram fracos (gravados de partida de bots: ninguém roubou nem construiu na hora).
   Montar cenas com `--clipe-cena` (já existe `mascara`): roubo e entrega da máscara, obra

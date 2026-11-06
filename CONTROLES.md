@@ -9,12 +9,12 @@ Os mesmos controles aparecem no jogo: na tela inicial e em **Esc > Controles**.
 | **W A S D** | andar |
 | **Mouse** | mirar (o personagem olha para o cursor) |
 | **Clique esquerdo** | atacar (segure para atacar sem parar). Combo de 3: o 3º é o forte (Samurai corta na vertical, Ninja solta um leque, Kitsune uma bola que explode) |
-| **Clique direito** (segurar) | **defender** (todas as classes): reduz o dano que vem pela frente e quem bate no escudo quica. Erguido na hora do golpe = **contra-golpe** |
+| **Clique direito** (segurar) | **defender** (todas as classes): reduz o dano que vem pela frente e quem bate no escudo quica. Erguido na hora do golpe = **contra-golpe**. Virado para uma **torreta**, o virote dela **volta** e acerta a torreta |
 | **Q** | **habilidade rápida** da classe, recarga curta (barra dourada no HUD). Tabela abaixo |
 | **E** | **poder de Chi**, quando o medidor (barra rosa) enche |
 | **R** | **SUPER**, quando a barra de ouro enche (só enche jogando: dano, abates, itens, espíritos e captura). Samurai: Passo da Sombra (some 3,5 s, mais rápido, golpe de surpresa x2,5). Outras classes: o poder do E em versão gigante |
 | **Espaço** ou **Shift** | esquivar: rolamento rápido, com recarga |
-| **F** | pegar um chapéu (perto do pedestal); pegar ou soltar a máscara; perto de um terreno vazio, trocar qual oficina construir |
+| **F** | pegar um chapéu (perto do pedestal); pegar ou soltar a máscara; perto de um terreno vazio, trocar qual oficina construir; **perto da catapulta da base, subir** (F de novo lança: a barra de força vai e volta e o minimapa mostra onde cai) |
 | **Esc** ou **P** | pausar e abrir Controles / Configurações |
 | **F5** | reiniciar a partida |
 | **F11** | tela cheia (liga/desliga) |

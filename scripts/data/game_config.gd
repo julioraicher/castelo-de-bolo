@@ -61,9 +61,26 @@ extends Resource
 @export var torreta_cadencia := 1.2
 @export var torreta_alcance := 12.0
 ## Escudo (botão direito) virado para o virote segura esta fração do dano.
-## Na janela do contra-golpe o virote volta e acerta a torreta (× devolve).
+## Escudo virado para o virote: ele volta e acerta a torreta (× devolve, pouco).
 @export_range(0.0, 1.0) var torreta_bloqueio := 0.9
-@export var torreta_devolve := 3.0
+@export var torreta_devolve := 1.5
+## Estilo do modelo (tools/gerar_torretas.gd): a yagura, b santuário, c posto da raposa.
+@export var torreta_estilo := "c"
+
+@export_group("Catapulta")
+## Catapulta na base (MapLayout.catapulta_spot): F sobe, F de novo lança; a
+## barra de força vai e volta e marca onde cai (metade inimiga, até perto da
+## muralha). Pouso em "meteoro de Chi": dano e empurrão em volta.
+@export var catapulta_recarga := 12.0
+@export var catapulta_voo := 2.4
+@export var catapulta_dano := 14.0
+@export var catapulta_raio := 3.5
+## Queda mais curta (força 0) e mais longa (força 1), em m a partir do meio do
+## mapa para o lado inimigo; a longa é limitada pela muralha inimiga menos a folga.
+@export var catapulta_queda_min := 14.0
+@export var catapulta_folga_muralha := 8.0
+## Bots: chance (por decisão) de um atacante na base pegar a catapulta.
+@export_range(0.0, 1.0) var catapulta_bots := 0.5
 
 @export_group("Super (R)")
 ## Barra dourada, 0 a 100, que NÃO enche com o tempo: só jogando bem.
