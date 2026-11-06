@@ -65,6 +65,7 @@ func setup(game: Game, p_team: int, pos: Vector3) -> void:
 	_label.outline_modulate = Estilo.TINTA
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.position.y = ALT_LABEL
+	_label.add_to_group("letreiro_perto")  # some de longe (Game._letreiros_perto)
 	add_child(_label)
 	_titulo = Label3D.new()
 	_titulo.font = Estilo.TITULO

@@ -50,6 +50,14 @@ func _ready() -> void:
 		["losango", Estilo.OURO, "Nível 2 da maquininha",
 			"A maquininha sobe para o nível 2 quando a oficina da variação dela fica pronta (ex.: Ronin Oni sobe a do Samurai) ou com %d madeiras de um Construtor. Nível 2: até %d chapéus, um a cada %d s." % [cfg.maquina_n2_custo, cfg.maquina_n2_estoque, roundi(cfg.maquina_n2_intervalo)]],
 	])
+	_aba("Torreta e catapulta", "torreta", [
+		["martelo", Estilo.OURO, "Torreta (%d madeiras)" % cfg.torreta_custo,
+			"Na frente do castelo há um selo no chão com o letreiro TORRETA. Depois da 1ª oficina, o Construtor leva madeira até lá e ergue o Posto da raposa: uma besta encantada que atira no inimigo mais perto."],
+		["shuriken", Estilo.AZUL, "Escudo devolve",
+			"Defenda (botão direito) virado para o virote: ele volta e acerta a própria torreta. Para derrubar de vez, bata nela. Derrubada, ela volta a \"a construir\"."],
+		["mascara", Estilo.VERMELHO, "Catapulta (F)",
+			"Na base do seu castelo, F sobe na mão do Oni. A barra de força vai e volta; o ponto de queda aparece no chão e no minimapa. F de novo lança: você voa sem levar dano e cai como um meteoro de Chi, com dano em volta."],
+	])
 	var custos: PackedStringArray = []
 	for c in cfg.mago_nivel_custo:
 		custos.append(str(c))
