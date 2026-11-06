@@ -57,6 +57,9 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
 
 ## Armadilhas já pagas (não repetir)
 
+- Torreta 2.9 (2026-11-06): entrou como "lógica" e ganhou visual de primitivas
+  sem pitaco. Toda peça visível segue o princípio 13 (quiz, piloto com detalhe,
+  animações), mesmo quando a thread é de jogabilidade.
 - `editor/export/convert_text_resources_to_binary` deve ficar **false**: a
   conversão perdia `visible_meshes` e os personagens ficavam invisíveis no export.
 - Empurrão: velocidade de andar (`_move_vel`) e de empurrão (`_knock`) são
@@ -140,5 +143,9 @@ repo: `.claude/skills/`.
 
 - Manter o dash/esquiva como está.
 - Quer prints a cada marco e explicações com a física por trás.
+- **Peça nova na tela** (torreta, catapulta, casinha, personagem, item, efeito):
+  princípio 13 de `docs/principios.md`. Quiz/prancha antes, piloto com silhueta
+  própria + cor do time + animações parada/ação/fim, nunca primitivas como
+  entrega. Vale também para threads de jogabilidade.
 - Fase 1 = polimento (bugs, sensação, equilíbrio, desempenho). Features novas
   (recursos, oficinas, catapulta) são Fase 2, uma conversa por feature.
