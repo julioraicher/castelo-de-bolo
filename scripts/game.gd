@@ -82,6 +82,10 @@ var _autoplay := false
 ## --sandbox, com "?sandbox" no endereço da versão web ou pelo botão da tela
 ## inicial (sandbox_pedido sobrevive ao reload da cena).
 static var sandbox_pedido := false
+## Time do jogador (Config.TEAM_BLUE/RED): escolhido na tela inicial, vale
+## para a partida normal e o modo teste (--time=vermelho, "?time=vermelho" na web).
+static var time_pedido := Config.TEAM_BLUE
+var time_jogador := Config.TEAM_BLUE
 var sandbox := false
 var _montando_sandbox := false
 var _variacoes := false
@@ -96,11 +100,9 @@ var _poderes_t := 2.0
 var _shots_dir := ""
 var _mira_print := false
 var _menu_print := ""
-var _clipe_dir := ""  # --clipe=DIR [--clipe-ini=s]: grava os quadros de um clipe do tutorial
-var _clipe_ini := 10.0
-var _clipe_n := 0
-var _clipe_max := 45  # --clipe-n=N
-var _clipe_cena := ""  # --clipe-cena=mascara: põe o jogador do lado da máscara inimiga
+var _clipe_dir := ""  # --clipe=DIR --cena=NOME [--clipe-n=N]: grava um clipe do "Como jogar" (ClipeCenas)
+var _clipe_max := 40
+var _clipe_cena := ""
 var _tutorial_dir := ""  # --tutorial=DIR: print de cada aba do "Como jogar" e sai
 var _vista := ""
 var _print_poder := false
@@ -135,6 +137,8 @@ func _ready() -> void:
 			_autoplay = true
 		elif arg == "--sandbox":
 			sandbox_pedido = true
+		elif arg.begins_with("--time="):
+			time_pedido = Config.TEAM_RED if arg.trim_prefix("--time=").begins_with("v") else Config.TEAM_BLUE
 		elif arg == "--variacoes":
 			_variacoes = true
 		elif arg.begins_with("--variacoes="):
@@ -166,10 +170,8 @@ func _ready() -> void:
 			Settings.quality = 2
 		elif arg.begins_with("--clipe="):
 			_clipe_dir = arg.trim_prefix("--clipe=")
-		elif arg.begins_with("--clipe-cena="):
-			_clipe_cena = arg.trim_prefix("--clipe-cena=")
-		elif arg.begins_with("--clipe-ini="):
-			_clipe_ini = float(arg.trim_prefix("--clipe-ini="))
+		elif arg.begins_with("--cena="):
+			_clipe_cena = arg.trim_prefix("--cena=")
 		elif arg.begins_with("--clipe-n="):
 			_clipe_max = int(arg.trim_prefix("--clipe-n="))
 		elif arg.begins_with("--tutorial="):
@@ -189,9 +191,14 @@ func _ready() -> void:
 		elif arg.begins_with("--qa-mapa="):
 			_qa_dir = arg.trim_prefix("--qa-mapa=")
 			_autoplay = true
-	if OS.has_feature("web") and str(JavaScriptBridge.eval("window.location.search", true)).contains("sandbox"):
-		sandbox_pedido = true
+	if OS.has_feature("web"):
+		var busca := str(JavaScriptBridge.eval("window.location.search", true))
+		if busca.contains("sandbox"):
+			sandbox_pedido = true
+		if busca.contains("time=vermelho"):
+			time_pedido = Config.TEAM_RED
 	sandbox = sandbox_pedido
+	time_jogador = time_pedido
 	if _print_poder:
 		_shot_times = [1e9, 1e9, 1e9, 1e9, 1e9, 1e9]  # quem marca a hora é o poder
 	arena = Arena.new()
@@ -257,7 +264,7 @@ func _ready() -> void:
 		start_classes = cfg.hat_classes() + cfg.oficina_classes + cfg.magos_opostos
 	for team in 2:
 		for i in cfg.units_per_team:
-			var is_player := team == Config.TEAM_BLUE and i == 0
+			var is_player := team == time_jogador and i == 0
 			if sandbox and not is_player:
 				continue  # modo teste: sem bots
 			var u := Unit.new()
@@ -368,48 +375,27 @@ func _ready() -> void:
 		menus.show_start()
 	if _tutorial_dir != "":
 		_prints_tutorial.call_deferred(menus)
+	if _clipe_dir != "":
+		var cc := ClipeCenas.new()
+		cc.game = self
+		cc.dir = _clipe_dir
+		cc.cena = _clipe_cena
+		cc.max_quadros = _clipe_max
+		add_child(cc)
 
 
-## Clipe do tutorial: 1 quadro a cada 6 de física (10 por s), 45 quadros,
-## 384 px de largura, JPG. Depois: tools/importar_clipes.sh deixa leve (WebP).
-func _gravar_clipe() -> void:
-	if _clipe_n == 0 and _clipe_cena != "" and is_instance_valid(player):
-		match _clipe_cena:
-			"mascara":
-				var m := princesses[1 - player.team]
-				player.global_position = m.global_position - arena.forward(player.team) * 2.5
-			"catapulta":  # o jogador (bot) sobe na própria catapulta e lança
-				var cat := catapulta_do_time(player.team)
-				if cat:
-					player.global_position = cat.global_position - arena.forward(player.team) * 2.0
-					cat.reservado = player
-					cat.reserva_t = _time
-			"torreta":  # torreta inimiga de pé na frente do jogador
-				for t in torretas:
-					if t.team != player.team:
-						t.concluir_ja()
-						player.global_position = t.global_position - arena.forward(player.team) * 7.0
-						break
-		_clipe_cena = ""
-		player.reset_physics_interpolation()
-		camera.snap()
-	if Engine.get_physics_frames() % 6 != 0:
-		return
-	var full := get_viewport().get_texture().get_image()
-	# Recorte do meio da tela (onde fica o boneco), 60% do tamanho.
-	var w := int(full.get_width() * 0.6)
-	var h := int(full.get_height() * 0.6)
-	var img := full.get_region(Rect2i((full.get_width() - w) / 2, (full.get_height() - h) / 2, w, h))
-	img.resize(384, 216, Image.INTERPOLATE_LANCZOS)
-	img.save_jpg("%s/%02d.jpg" % [_clipe_dir, _clipe_n], 0.8)
-	_clipe_n += 1
-	if _clipe_n >= _clipe_max:
-		get_tree().quit()
-
-
-## --tutorial=DIR: abre o "Como jogar", fotografa cada aba e sai.
+## --tutorial=DIR: fotografa cada seção do menu (tela inicial, Controles,
+## Configurações, Classes e cada aba do Como jogar) e sai.
 func _prints_tutorial(menus: Menus) -> void:
-	menus._abrir_tutorial()
+	menus.mostrar_para_print("inicio")
+	var n := 0
+	for secao in ["jogar", "controles", "config", "classes"]:
+		menus._mostrar(secao)
+		for f in 20:
+			await get_tree().process_frame
+		get_viewport().get_texture().get_image().save_jpg("%s/menu_%d_%s.jpg" % [_tutorial_dir, n, secao], 0.85)
+		n += 1
+	menus._mostrar("como_jogar")
 	var tabs: TabContainer = menus._tutorial._tabs
 	for i in tabs.get_tab_count():
 		tabs.current_tab = i
@@ -425,12 +411,12 @@ func _montar_sandbox() -> void:
 	_montando_sandbox = true
 	_caminho_avisado = true
 	for of in oficinas:
-		if of.team == Config.TEAM_BLUE:
+		if of.team == time_jogador:
 			of.concluir_ja()
 	for pad in hat_pads:
-		if pad.team == Config.TEAM_BLUE:
+		if pad.team == time_jogador:
 			pad.subir_nivel()
-	# Torretas dos dois lados de pé: a vermelha serve de treino de escudo.
+	# Torretas dos dois lados de pé: a inimiga serve de treino de escudo.
 	for t in torretas:
 		t.concluir_ja()
 	_montando_sandbox = false
@@ -441,7 +427,8 @@ func _on_started() -> void:
 		hud.show_big("MODO TESTE\nTudo pronto e recarregando rápido (Q, E, R, catapulta).\nNas oficinas, F troca a classe ou sobe o nível.", Color(1, 0.9, 0.5), 4.5)
 		Sfx.start_music()
 		return
-	hud.show_big("Roube a Máscara Oni vermelha!\nTraga-a para o seu castelo.", Color(1, 0.9, 0.5), 3.5)
+	var inimiga := "vermelha" if time_jogador == Config.TEAM_BLUE else "azul"
+	hud.show_big("Roube a Máscara Oni %s!\nTraga-a para o seu castelo." % inimiga, Color(1, 0.9, 0.5), 3.5)
 	Sfx.start_music()
 
 
@@ -490,8 +477,6 @@ func _physics_process(delta: float) -> void:
 		_filme()
 	if _vitrine_dir != "" and _time >= 1.0:
 		_vitrine()
-	if _clipe_dir != "" and _time >= _clipe_ini:
-		_gravar_clipe()
 	if Input.is_action_just_pressed("restart"):
 		get_tree().reload_current_scene()
 		return

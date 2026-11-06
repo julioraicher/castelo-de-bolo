@@ -61,10 +61,6 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 - **Construtor com luz própria** (revisão 2.9b): é a única classe sem peça que acende na
   cor do time (Samurai tem a katana, Ninja os shurikens, Kitsune os fogos). Sugestão:
   lanterna pendurada no cesto e martelo maior. Pede pitaco (princípio 13).
-- **Clipes roteirizados no "Como jogar"** (2026-11-01): os clipes das abas Objetivo e
-  Casinhas saíram fracos (gravados de partida de bots: ninguém roubou nem construiu na hora).
-  Montar cenas com `--clipe-cena` (já existe `mascara`): roubo e entrega da máscara, obra
-  subindo até a oficina ficar pronta. Gravar com `--clipe=DIR --clipe-ini=s --classe=X`.
 - **Construtor mais simples e menos classes** (Julio, 2026-10-31): talvez só o
   Construtor + 3 ou 4 classes. O Construtor faz quase tudo da economia (cortar,
   levar, upar casinhas), e cada casinha upada deixa guerreiros, arqueiros etc.

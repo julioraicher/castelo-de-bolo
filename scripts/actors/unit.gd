@@ -1155,7 +1155,7 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		if attacker and amount > 0.0:
 			_esquiva_perfeita(attacker)
 		return
-	if attacker and attacker.team != Config.TEAM_BLUE:
+	if attacker and attacker.team != game.time_jogador:
 		amount *= Settings.bot_damage_mult()
 	if carried_princess:
 		amount *= Config.cfg.carrier_damage_mult

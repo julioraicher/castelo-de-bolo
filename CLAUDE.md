@@ -23,6 +23,8 @@ godot --headless --path . --fixed-fps 60 --quit-after 18000 -- --autoplay
 # Prints (precisa de xvfb; renderizador do navegador):
 xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
   --rendering-method gl_compatibility --audio-driver Dummy -- --autoplay --shots=DIR
+# Prints de cada seção do menu e aba do Como jogar: --tutorial=DIR (com xvfb, como acima)
+# Regravar os clipes dos menus (xvfb): tools/clipes_tutorial.sh [cena|classe:id ...]
 # QA do mapa (passagem, escondidos da câmera, bots presos): qa_mapa.txt (+ .jpg com tela)
 godot --headless --path . --fixed-fps 60 -- --qa-mapa=DIR
 # Sons: trocar/ouvir/gerar efeitos = skill .claude/skills/efeitos-sonoros (tools/sons/)
@@ -54,7 +56,9 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
     `ResourceSaver.save()` a editar o texto à mão.
 - Autoloads: `Config` (teclas, constantes, `CONTROLS`), `Settings` (preferências
   em `user://configuracoes.cfg`), `Sfx`.
-- UI feita por código: `scripts/ui/hud.gd`, `scripts/ui/menus.gd`.
+- UI feita por código: `scripts/ui/hud.gd`, `scripts/ui/menus.gd` (navegação lateral:
+  Começo, Como jogar = `tutorial.gd`, Classes = `pagina_classes.gd`, Controles,
+  Configurações). Clipes dos menus: `tools/clipes_tutorial.sh` (cenas em `clipe_cenas.gd`).
 
 ## Armadilhas já pagas (não repetir)
 
