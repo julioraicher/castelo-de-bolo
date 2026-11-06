@@ -5,6 +5,17 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.7b (2026-11-06), Jogabilidade: limpeza e equilíbrio pequeno
+- **Limpeza**: os três leques de shuriken (poder E, 2ª onda e 3º tiro do combo) usam um
+  helper só (`Unit._leque`, `_mult_poder`); saiu `_trap_cd` (nunca lido); texto do Q no
+  "Como jogar" fala de estrepes. Varredura de funções, variáveis e campos de config sem uso:
+  nada mais morto (as funções `_ninja`, `_kitsune` etc. do `NinjaVisual` são chamadas pelo nome).
+- **Equilíbrio**: Samurai anda 6,2 → 6,5 e bate 22 → 24; Yumi vida 75 → 85 e dano 17 → 18.
+  Sonda de 8 partidas: Yumi 0,60 → 0,83; Samurai segue o mais baixo (0,75; corpo a corpo é o
+  primeiro alvo). A sonda varia muito entre rodadas (o Ninja foi de 1,35 a 0,62 sem mudança):
+  só vale como tendência.
+- **O que testar**: nada novo de controle. Veja se o Samurai e a Yumi ficaram menos frágeis.
+
 ## Ciclo 2.7 (2026-11-06), Jogabilidade: lote de feedback (poder toda hora, luta mais longa)
 - **Q e E mais frequentes**: o Chi agora enche sozinho com o tempo (`power_regen` = 3/s,
   ~33 s do zero sem lutar) e bater/apanhar só adianta (`power_per_damage` 0,3 → 0,4). O
