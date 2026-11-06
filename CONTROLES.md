@@ -27,12 +27,10 @@ Os mesmos controles aparecem no jogo: na tela inicial e em **Esc > Controles**.
 | Ronin Oni | Pisão: onda curta que arremessa (7 s) | Fúria |
 | Ninja de Shuriken | Shuriken Perfurante: tiro cheio que atravessa (4 s) | Leque de Shuriken |
 | Arqueiro Yumi | Flecha Perfurante (5 s) | Chuva de Flechas |
-| Bombardeiro | Bomba Grande (5 s) | Bombardeio |
 | Kitsune | Cura em volta (3,5 s) | Coluna de Fogo-Raposa |
 | Kitsune da Luz | Cura da Luz (3 s) | Bênção da Raposa |
 | Kitsune Sombria | Orbe Perfurante (4 s) | Selo Sombrio |
-| Armadilheiro | Mina no chão (3,5 s) | Campo Minado |
-| Construtor | Corrida curta, você e quem está perto (8 s) | Mutirão: adianta a obra perto |
+| Construtor | Estrepes no chão (até 3; 4 s) | Mutirão: adianta a obra perto |
 | Recruta | (nada) | (nada) |
 
 ## Configurações (Esc > Configurações)
@@ -62,8 +60,8 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
 4. **Chapéus** saem das maquininhas do pátio: chegue perto e aperte **F**.
    - No começo: Samurai (Redemoinho), Ninja de Shuriken (Leque), Kitsune
      (Colunas de fogo-raposa; cura) e Construtor (corta madeira e constrói; Mutirão).
-   - Oficinas comuns liberam: Ronin Oni (Fúria), Arqueiro Yumi (Chuva de flechas),
-     Armadilheiro (Campo minado) e Bombardeiro (Bombardeio).
+   - Oficinas comuns liberam: Ronin Oni (Fúria) e Arqueiro Yumi (Chuva de flechas).
+     O Construtor não muda de classe: ele corta madeira, arma estrepes e constrói.
    - Caminho dos magos: Kitsune da Luz (Bênção: cura + escudo) **ou** Kitsune
      Sombria (Selo: inimigos sem atacar). Construir um sela o outro; o escolhido
      sobe até o nível 5 com mais madeira.

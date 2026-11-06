@@ -22,6 +22,7 @@ attack_arc_deg = 130.0
 attack_cooldown = 0.75
 knockback = 8.0
 combo_anims = PackedStringArray("1H_Melee_Attack_Slice_Diagonal", "1H_Melee_Attack_Slice_Horizontal", "2H_Melee_Attack_Chop")
+combo_finisher_mult = 2.0
 skill = "investida"
 skill_name = "Investida"
 skill_cooldown = 6.0

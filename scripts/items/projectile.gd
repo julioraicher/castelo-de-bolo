@@ -21,6 +21,8 @@ var _game: Game
 ## primeiro) e multiplicador do raio da bomba.
 var perfura := 0
 var raio_mult := 1.0
+## 3º tiro da Kitsune: explode como bomba onde bater (ou no fim do voo).
+var explode_final := false
 var _acertados: Array[Unit] = []
 
 
@@ -82,6 +84,8 @@ func aim_ballistic(distance: float, chao_alvo := 0.0) -> void:
 func _physics_process(delta: float) -> void:
 	_life -= delta
 	if _life <= 0.0:
+		if explode_final:
+			_explode(global_position)
 		_fim()
 		return
 	var from := global_position
@@ -90,7 +94,7 @@ func _physics_process(delta: float) -> void:
 	if _spin:
 		_spin.rotate_object_local(Vector3.FORWARD, delta * (25.0 if kind == "shuriken" else 9.0))
 	if to.y <= -1.0:  # segurança: o chão é colisor, o raio abaixo já pega
-		if kind == "bomba":
+		if kind == "bomba" or explode_final:
 			_explode(Vector3(to.x, 0.0, to.z))
 		else:
 			_bateu(Vector3(to.x, 0.1, to.z))
@@ -99,7 +103,7 @@ func _physics_process(delta: float) -> void:
 	var query := PhysicsRayQueryParameters3D.create(from, to, Config.LAYER_WORLD)
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
-		if kind == "bomba":
+		if kind == "bomba" or explode_final:
 			_explode(from)
 		else:
 			_bateu(hit.position)
@@ -117,7 +121,7 @@ func _physics_process(delta: float) -> void:
 			var dy := -d.y
 			d.y = 0
 			if d.length() < HIT_RADIUS and dy > -0.2 and dy < 2.1 and not _acertados.has(u):
-				if kind == "bomba":
+				if kind == "bomba" or explode_final:
 					_explode(global_position)
 				else:
 					u.take_damage(damage, owner_unit, velocity.normalized(), 1.0, false, kind, nivel)
@@ -146,7 +150,7 @@ func _explode(at: Vector3) -> void:
 		d.y = 0
 		if d.length() <= r:
 			var f := 1.0 - 0.5 * d.length() / r
-			u.take_damage(damage * f, owner_unit, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, f, false, "bomba", nivel)
+			u.take_damage(damage * f, owner_unit, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, f, false, kind, nivel)
 			u.launch(5.0 * f)
 
 

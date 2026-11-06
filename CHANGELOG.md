@@ -5,6 +5,36 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.7 (2026-11-06), Jogabilidade: lote de feedback (poder toda hora, luta mais longa)
+- **Q e E mais frequentes**: o Chi agora enche sozinho com o tempo (`power_regen` = 3/s,
+  ~33 s do zero sem lutar) e bater/apanhar só adianta (`power_per_damage` 0,3 → 0,4). O
+  vazamento por ficar parado saiu. Toda recarga de Q ficou 30% menor (`rapida_cooldown_mult`).
+- **Mais vida para todos** (`vida_mult` 1,4 → 1,7): a luta dura mais com mais poder na tela.
+- **Construtor sem variação**: Armadilheiro e Bombardeiro saíram das oficinas (os .tres
+  continuam no repo, fora do jogo). O Q do Construtor virou **Estrepes** (até 3 no chão,
+  lentidão + dano). As oficinas comuns agora oferecem só Ronin Oni e Arqueiro Yumi.
+- **3º golpe forte em toda classe de combate**: Samurai/Ronin descem o 3º corte na
+  **vertical** (faixa estreita à frente, `final_arco_mult` 0,45, dano ×2,0/×2,1); o Ninja de
+  Shuriken solta um **leque de 3 shurikens** no 3º tiro; a Kitsune solta uma **bola de fogo
+  que explode** (raio 2,6 m, ×1,8). Campo novo `combo_tiros` em `ClassStats`.
+- **Itens no chão onde está a briga**: 65% dos itens caem a 3-7 m do bolo de gente mais
+  cheio (fora dos castelos); um item a cada 9 s, até 5 no mapa.
+- **Borda vermelha "machucado"** com vida abaixo de 30% (`vida_baixa_frac`): cresce e pulsa
+  como batimento quanto menos vida. Um gradiente na tela, custo ~zero.
+- Tutorial e CONTROLES.md atualizados. Teste de regra novo `_lote_2_7`.
+- `--vitrine`: os 3 ataques agora saem a cada 50 quadros (antes 35; o 3º clique caía na
+  recarga e o golpe final nunca aparecia). Print: `jogabilidade/09-golpe-final-2-7.jpg`.
+- Sonda de equilíbrio (8 partidas): K/D Kitsune 2,5, Luz 1,7, Ninja 1,35, Sombria 1,2,
+  Ronin 1,1, Samurai 0,8, Yumi 0,6; 2 pontos nas 8 partidas. Nenhum número de classe mexido
+  além do combo: Samurai e Yumi baixos são candidatos ao próximo ajuste.
+- Mexe em `unit.gd`, `projectile.gd`, `game.gd`, `hud.gd`, `mira.gd`, `game_config.gd`,
+  `class_stats.gd` e nos .tres de Samurai, Ronin, Ninja, Kitsune e Construtor.
+- **O que testar**: jogue de Samurai e faça o combo de 3 cliques (o 3º desce reto e pega só
+  na frente); de Ninja, 3 tiros seguidos (o 3º é um leque); de Kitsune, 3 tiros (o 3º
+  explode). Veja se o E enche em ~30 s mesmo sem acertar ninguém e se o Q volta rápido.
+  Apanhe até ficar com pouca vida e veja a borda vermelha. Repare se aparecem itens perto
+  da briga do meio. Diga se a vida maior deixou a luta longa demais.
+
 ## Publicação (2026-11-04): versão de teste também no itch.io
 - CI (`build.yml`): na `main`, depois dos testes, manda web, Windows e Linux para o
   itch.io com o `butler` (canais `web`, `windows`, `linux`). Só liga quando existirem o

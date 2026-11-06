@@ -278,7 +278,7 @@ func _desenhar() -> void:
 		var q := u.quick_ratio()
 		_tela.draw_arc(m, 20.0 * f, PI * 0.15, PI * 0.15 + PI * 0.7 * q, 24, Color(0.62, 0.89, 1.0, 0.9), 2.0 * f, true)
 	# Vida baixa: pulso vermelho.
-	if u.alive and u.hp_ratio() < 0.3:
+	if u.alive and u.hp_ratio() < Config.cfg.vida_baixa_frac:
 		var s := sin(_t * 8.0)
 		_tela.draw_arc(m, (22.0 + 2.0 * s) * f, 0.0, TAU, 40, Color(1.0, 0.35, 0.31, 0.4 + 0.4 * s), 2.0 * f, true)
 	# Defesa segurada: hexágono girando.

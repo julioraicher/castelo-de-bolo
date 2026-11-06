@@ -639,6 +639,14 @@ func _attack() -> void:
 		else:
 			_attack_cd *= 0.85
 		_combo_t = _attack_cd + COMBO_WINDOW
+	elif stats.combo_tiros > 0 and stats.attack_kind != "melee":
+		# Tiro: 1, 2 e o 3º é o forte (leque de shurikens ou bola que explode).
+		_combo_i = (_combo_i + 1) % stats.combo_tiros if _combo_t > 0.0 else 0
+		finisher = _combo_i == stats.combo_tiros - 1
+		if finisher:
+			mult = stats.combo_finisher_mult
+			_attack_cd *= 1.3
+		_combo_t = _attack_cd + COMBO_WINDOW
 	_attack_t = minf(_attack_cd, 0.45)
 	_play_upper(anim, 1.35)
 	_golpe_mult = mult
@@ -677,7 +685,17 @@ func _attack_hit() -> void:
 			var tilt := 0.0 if combo.size() == 0 else (22.0 if _combo_i % 2 == 0 else -22.0)
 			var col := Color(1.0, 0.78, 0.25) if finisher else Color(1, 1, 1)
 			var reach := stats.attack_range + (0.9 if finisher else 0.3)
-			Fx.slash(game, global_position + Vector3(0, 1.0, 0), dir, reach, stats.attack_arc_deg + (30.0 if finisher else 0.0), col, tilt, finisher)
+			# O golpe final do combo desce na vertical: mais dano, faixa estreita
+			# à frente (arco × final_arco_mult) e um pouco mais de alcance.
+			var arco := stats.attack_arc_deg
+			var alcance := stats.attack_range + 0.6
+			if finisher and combo.size() > 0:
+				arco *= Config.cfg.final_arco_mult
+				alcance += 0.5
+				Fx.slash(game, global_position + Vector3(0, 1.1, 0) + dir * 0.3, dir, reach + 0.4, 150.0, col, 88.0, true)
+				FxProjetil.marca_chao(game, global_position + dir * (stats.attack_range * 0.8), Color(0.15, 0.1, 0.05, 0.45), 1.0, 1.2)
+			else:
+				Fx.slash(game, global_position + Vector3(0, 1.0, 0), dir, reach, stats.attack_arc_deg + (30.0 if finisher else 0.0), col, tilt, finisher)
 			var hit_any := false
 			for other in game.units:
 				if not other.alive or other.team == team:
@@ -686,9 +704,9 @@ func _attack_hit() -> void:
 				if absf(to.y) > 1.8:  # um em cima da muralha, outro embaixo
 					continue
 				to.y = 0
-				if to.length() > stats.attack_range + 0.6:
+				if to.length() > alcance:
 					continue
-				if to.length() > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > stats.attack_arc_deg / 2.0:
+				if to.length() > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > arco / 2.0:
 					continue
 				other.take_damage(stats.damage * mult * damage_mult(), self, to.normalized(), mult, true)
 				if finisher:
@@ -704,12 +722,40 @@ func _attack_hit() -> void:
 					if finisher:
 						game.camera.punch_fov(2.5)
 		"ranged":
-			_shoot_arrow(1.0, 1.0)
+			if finisher and stats.projetil == "shuriken":
+				_leque_final()
+			else:
+				var p := _shoot_arrow(mult, 1.0)
+				if finisher and p:
+					_poder_visual(p)
 		"healer":
 			var alvo := _aim_assist(dir)
 			if alvo:
 				dir = _assisted_dir(dir, alvo)
-			game.spawn_projectile(self, global_position + Vector3(0, 1.6, 0) + dir * 0.9, dir, stats.projetil)
+			var p := game.spawn_projectile(self, global_position + Vector3(0, 1.6, 0) + dir * 0.9, dir, stats.projetil)
+			if finisher:
+				# 3º tiro: bola maior que explode onde bater (dano em área).
+				p.damage *= mult
+				p.explode_final = true
+				_poder_visual(p)
+				_mola(3.0, 9.0)
+
+
+## 3º tiro do Ninja: leque de shurikens (cada uma com o dano do golpe final).
+func _leque_final() -> void:
+	var cfg := Config.cfg
+	var n := maxi(cfg.final_leque_n, 1)
+	var base := aim_dir.normalized()
+	var alvo := _aim_assist(base)
+	if alvo:
+		base = _assisted_dir(base, alvo)
+	for i in n:
+		var ang := deg_to_rad(lerpf(-cfg.final_leque_graus, cfg.final_leque_graus, float(i) / maxf(n - 1, 1)) * 0.5)
+		var p := _shoot_arrow(stats.combo_finisher_mult, 1.05, base.rotated(Vector3.UP, ang))
+		if p and i == n / 2:
+			_poder_visual(p)
+	Fx.burst(game, global_position + Vector3(0, 1.4, 0) + base, Color(0.4, 1.0, 1.0), 8, 5.0)
+	_mola(3.0, 8.0)
 
 
 ## Assistência de mira leve, só para o jogador: o inimigo mais alinhado com a
@@ -851,12 +897,13 @@ func tem_rapida() -> bool:
 
 
 func quick_cooldown() -> float:
+	var m := Config.cfg.rapida_cooldown_mult
 	match stats.skill:
 		"cura":
-			return stats.heal_cooldown
+			return stats.heal_cooldown * m
 		"armadilha":
-			return stats.trap_cooldown
-	return stats.skill_cooldown
+			return stats.trap_cooldown * m
+	return stats.skill_cooldown * m
 
 
 func quick_ready() -> bool:
@@ -1295,9 +1342,20 @@ func _respawn() -> void:
 
 ## Vazamento do medidor depois de um tempo sem lutar: dG/dt = −G/τ.
 func _tick_power(delta: float) -> void:
+	var cfg := Config.cfg
+	if cfg.power_regen > 0.0:
+		# Enche sozinho com o tempo: o E vem mesmo sem acertar ninguém
+		# (briga só adianta). Sem vazamento nesse modo.
+		if power < POWER_MAX and stats.power != "nenhum":
+			var idle := _power_idle
+			add_power(cfg.power_regen * delta)
+			_power_idle = idle + delta
+		else:
+			_power_idle += delta
+		return
 	_power_idle += delta
-	if _power_idle > Config.cfg.power_leak_delay and power < POWER_MAX:
-		power = maxf(power - power / Config.cfg.power_leak_tau * delta, 0.0)
+	if _power_idle > cfg.power_leak_delay and power < POWER_MAX:
+		power = maxf(power - power / cfg.power_leak_tau * delta, 0.0)
 
 
 func _use_power() -> void:

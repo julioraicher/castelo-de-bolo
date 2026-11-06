@@ -5,6 +5,14 @@ Lista viva. Qualquer frente anota aqui; o Julio escolhe o que sobe de nível.
 a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 
 ## A — próxima
+- **Lote de feedback 2026-11-06, parte 2** (precisa de pitaco antes; thread própria):
+  **Super poder** (3ª tecla, enche devagar; abates, dano e poderzinho entregue à máscara
+  adiantam), **invisibilidade curta** do Samurai (2-3 s, pode virar o super dele),
+  **torretas** do Construtor perto da base e **barraquinhas subindo de nível** (como os
+  magos) em vez de trocar de classe. Custos em
+  `castelo-de-bolo/jogabilidade/lote-feedback-2026-11-06.md` (pasta do projeto).
+- **Efeitos sonoros novos** (thread de pesquisa): recursos prontos (Hugging Face, ElevenLabs,
+  pacotes CC0 como Kenney/Sonniss) no lugar dos sons sintetizados de `tools/gerar_sons.py`.
 - **Ciclo 2.3: Economia do Construtor** (2026-10-31): `docs/direcao-ciclo-2.3.md`.
   Depois dele, o Ciclo 2.4: habilidade "uau" por personagem + interface nova.
 - As ideias de cenário abaixo seguem o estilo pintado e o tom sombrio do
