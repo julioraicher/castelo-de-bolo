@@ -798,7 +798,8 @@ func _rules() -> void:
 
 		# Pegar bolo (bots atacantes ignoram bolo para não se distraírem).
 		var bot := u.brain as BotBrain
-		var takes_cake := bot == null or bot.role != BotBrain.Role.ATTACK
+		var takes_cake := bot == null \
+				or (bot.role != BotBrain.Role.ATTACK and own_p.fatness < 1.0)
 		if takes_cake and not u.has_cake and not u.carried_princess:
 			for c in cakes:
 				if pos.distance_to(c.global_position) < 1.8:
@@ -916,6 +917,15 @@ func _rules() -> void:
 	elif player.has_cake:
 		hint = "Leve o espírito até a sua máscara"
 	hud.set_hint(hint)
+
+
+## Tempo de renascer agora: cresce com o tempo de partida (respawn_cresce s
+## por minuto, até respawn_max) para a morte pesar mais no fim de jogo.
+func respawn_atual() -> float:
+	if sandbox:
+		return Config.cfg.respawn_time
+	return minf(Config.cfg.respawn_time + Config.cfg.respawn_cresce * _time / 60.0,
+			Config.cfg.respawn_max)
 
 
 ## Modo teste: maquininhas repõem o chapéu em 1 s; perto da casa de uma

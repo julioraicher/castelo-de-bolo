@@ -1425,7 +1425,7 @@ func _die(killer: Unit) -> void:
 	velocity = Vector3.ZERO
 	_hp_root.visible = false
 	_play("Death_A" if randf() < 0.5 else "Death_B", 0.1)
-	_respawn_t = Config.cfg.respawn_time
+	_respawn_t = game.respawn_atual()
 	Sfx.play("death", global_position)
 	if killer and killer != self:
 		killer.add_power(Config.cfg.power_per_kill)

@@ -4,6 +4,29 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.13 (2026-11-06), Jogabilidade: morte pesa mais e fim da guarda eterna da máscara
+Pedidos do Julio: penalizar mais a morte (fim de jogo travado, impossível roubar a máscara)
+e tirar o bot que fica sempre plantado embaixo da máscara dando o golpe final.
+- **Renascer cresce com a partida**: base de 6 s → 7 s, +0,75 s por minuto de jogo, teto de
+  13 s (`respawn_time`, `respawn_cresce`, `respawn_max`; `Game.respawn_atual()`). Aos 5 min
+  são ~10,8 s. Física de fila: com N mortes/min no time, a população média fora de combate é
+  N·T/60 (Little); subir T de 6 → ~11 s quase dobra os buracos na defesa no fim, abrindo
+  janelas para o time unido roubar. No começo quase não muda, para não esfriar a porradaria.
+- **Guarda-costas eterno era um bug**: com a máscara no peso máximo, `feed()` recusava o
+  espírito e o bot confeiteiro ficava para sempre embaixo dela com o bolo na mão (visto em
+  simulação: dos 200 s em diante, sempre o mesmo bot lá). Agora bot não pega espírito com a
+  máscara cheia e, se estiver com um na mão, volta ao papel dele. Visitas à máscara ficam
+  só as entregas de verdade ("pode estar às vezes, mas não sempre").
+- Medida (3 partidas de 5 min antes e depois, bots): roubos 9/9/6 antes, 8/15/4 depois —
+  mesma faixa (a variação entre partidas é enorme); roubos tardios (t>200 s) continuam.
+  O efeito real do respawn aparece melhor em partida longa, que a simulação de 5 min não cobre.
+- Testes de regra: 261/261 (novos: respawn cresce/teto/modo teste; máscara cheia recusa
+  espírito e o bot não acampa).
+- Modo teste: o renascer NÃO cresce lá (fica nos 7 s fixos; esperar mais só atrapalharia
+  o teste solo).
+- **O que testar**: morrer no fim da partida deve segurar você uns 11-13 s na tela de
+  renascer (no começo, ~7 s). Chegar de surdina na máscara inimiga cheia não deve mais ter
+  um bot parado embaixo dela o tempo todo; quem aparece ali é quem está entregando espírito.
 ## Ciclo 2.12d (2026-11-06), Jogabilidade: chapéu da classe forte demora mais
 Julio aprovou as propostas 1 e 3 de `jogabilidade/proposta-chapeus-casinhas.md`.
 - **Tempo de chapéu por classe** (campo novo `ClassStats.chapeu_tempo_mult`, padrão 1,0):
