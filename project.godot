@@ -57,3 +57,26 @@ lights_and_shadows/directional_shadow/size.web=2048
 ; Mantém os .tres como texto no jogo exportado. A conversão para binário
 ; perdia a lista visible_meshes das classes (personagens ficavam invisíveis).
 export/convert_text_resources_to_binary=false
+
+[shader_globals]
+
+recorte_foco0={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+recorte_foco1={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+recorte_foco2={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+recorte_foco3={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+raio_x_forca={
+"type": "float",
+"value": 1.0
+}
