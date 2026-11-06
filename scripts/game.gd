@@ -64,6 +64,10 @@ var _time := 0.0
 #   --classe=<nome>     o jogador começa nessa classe (config/classes/<nome>.tres), para prints
 #   --filme=<pasta>     roteiro fixo com o jogador (golpe, dash, pulo, pancada,
 #                       morte) salvando um quadro a cada 2: prancha de animação
+#   --pisca=<pasta>     câmera do jogo sobre a praça do pátio azul andando 1 cm por
+#                       quadro (PISCA_PASSO=m no ambiente muda): salva pisca.jpg com os
+#                       pixels que mudaram de um quadro para o outro em vermelho e
+#                       imprime quantos (chão piscando: z-fighting, desenho fino demais)
 #   --perf=N            mede o desempenho na qualidade N (0-3): a cada 5 s imprime
 #                       ms de CPU por quadro, draw calls, triângulos e objetos
 #   --menu=inicio|pausa com --autoplay: abre essa tela por cima da partida, sem
@@ -110,6 +114,9 @@ var _print_atraso := 0.15
 var _classe_jogador := ""
 var _perf := false
 var _filme_dir := ""
+var _pisca_dir := ""
+var _pisca_f := 0
+var _pisca_imgs: Array[Image] = []
 var _filme_f := -1
 var _filme_y := 0.0
 var _vitrine_dir := ""
@@ -164,6 +171,9 @@ func _ready() -> void:
 			torreta_estilo = arg.trim_prefix("--torreta=")
 		elif arg.begins_with("--filme="):
 			_filme_dir = arg.trim_prefix("--filme=")
+		elif arg.begins_with("--pisca="):
+			_pisca_dir = arg.trim_prefix("--pisca=")
+			Settings.auto_quality = false
 		elif arg.begins_with("--vitrine="):
 			_vitrine_dir = arg.trim_prefix("--vitrine=")
 			Settings.auto_quality = false  # o xvfb é lento: sem isso cairia para a Mínima
@@ -475,6 +485,8 @@ func _physics_process(delta: float) -> void:
 		_take_shot()
 	if _filme_dir != "" and _time >= 3.0:
 		_filme()
+	if _pisca_dir != "" and _time >= 1.0:
+		_pisca()
 	if _vitrine_dir != "" and _time >= 1.0:
 		_vitrine()
 	if Input.is_action_just_pressed("restart"):
@@ -526,6 +538,60 @@ func _log(msg: String) -> void:
 
 ## --filme: o jogador (sem cérebro) faz um roteiro fixo, de lado para a
 ## câmera, e cada 2 quadros vira um PNG.
+## --pisca=DIR: mede o "chão piscando". Com a câmera andando 1 cm por quadro
+## (~0,3 px na tela), só bordas e desenhos mais finos que ~3 px mudam de cor de um
+## quadro para o outro: é o que o olho vê como piscar/tremer ao andar (desenho
+## abaixo de Nyquist, ou faces no mesmo plano brigando na profundidade).
+func _pisca() -> void:
+	var foco := arena.to_world(Config.TEAM_BLUE, -4.0, 0.0)
+	if _pisca_f == 0:
+		player.brain = null
+		player.move_intent = Vector3.ZERO
+		player.visible = false
+		hud.visible = false
+		mira.visible = false
+		camera.set_process(false)
+		camera.set_physics_process(false)
+		camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+		camera.fov = Config.cfg.camera_fov
+	var passo := float(OS.get_environment("PISCA_PASSO")) if OS.has_environment("PISCA_PASSO") else 0.01
+	camera.global_position = foco + Config.cfg.camera_offset + Vector3(passo * _pisca_f, 0, 0)
+	camera.look_at(foco)
+	if _pisca_f >= 5:  # os primeiros quadros ainda trocam de câmera e escondem a interface
+		_pisca_imgs.append(get_viewport().get_texture().get_image())
+	_pisca_f += 1
+	if _pisca_imgs.size() < 6:
+		return
+	var base: Image = _pisca_imgs[0].duplicate()
+	var w := base.get_width()
+	var h := base.get_height()
+	var mudou := 0
+	var marca := Image.create(w, h, false, Image.FORMAT_L8)
+	for i in range(1, _pisca_imgs.size()):
+		var ant: Image = _pisca_imgs[i - 1]
+		var img: Image = _pisca_imgs[i]
+		for y in h:
+			for x in w:
+				if marca.get_pixel(x, y).r > 0.5:
+					continue
+				var a := ant.get_pixel(x, y)
+				var b := img.get_pixel(x, y)
+				if absf(a.r - b.r) + absf(a.g - b.g) + absf(a.b - b.b) > 0.12:
+					marca.set_pixel(x, y, Color.WHITE)
+					mudou += 1
+	for y in h:
+		for x in w:
+			if marca.get_pixel(x, y).r > 0.5:
+				base.set_pixel(x, y, Color(1, 0.1, 0.1))
+	DirAccess.make_dir_recursive_absolute(_pisca_dir)
+	base.save_jpg(_pisca_dir.path_join("pisca.jpg"), 0.85)
+	if OS.has_environment("PISCA_TUDO"):
+		for i in _pisca_imgs.size():
+			_pisca_imgs[i].save_png(_pisca_dir.path_join("pisca_%d.png" % i))
+	print("PISCA: %d pixels de %d mudaram com a câmera andando %.0f mm por quadro (%.2f%%)" % [mudou, w * h, passo * 1000, 100.0 * mudou / (w * h)])
+	get_tree().quit()
+
+
 func _filme() -> void:
 	_filme_f += 1
 	var f := _filme_f

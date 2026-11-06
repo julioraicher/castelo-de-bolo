@@ -4,6 +4,41 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.11b (2026-11-06), Jogabilidade: chão da praça parou de piscar
+Julio, no modo teste: "o chão fica piscando, tremendo, parece uma sombra passando, pedaços
+somem e aparecem", em todas as qualidades, e para quando ele fica parado.
+- **Causa** (medida, não chute): as 2-3 primeiras lajes de cada caminho que sai da praça
+  do pátio ficavam **em cima do disco da praça, no mesmo plano** (topo em y = 0,06 as duas).
+  Duas faces na mesma profundidade empatam no teste de profundidade e quem ganha muda a
+  cada pixel conforme a câmera anda (z-fighting): o desenho de pedra da laje aparecia e
+  sumia em retângulos sobre a praça. Parado, a câmera congela um padrão qualquer.
+  `tools/gerar_mapa_rio.gd` (`_praca_patio`): lajes só fora da praça; `praca_patio.scn`
+  regerado nos 4 temas (os outros .scn ficaram como estavam).
+- **Desenho fino demais para a tela** (`assets/shaders/pintura.gdshader`, mexido pela
+  Jogabilidade): com a câmera do jogo um pixel do chão mede ~3,5 cm e o rejunte das pedras
+  tinha ~2 cm, abaixo de Nyquist: cada quadro cai num ponto diferente da linha e o chão
+  "chuvisca" ao andar. Agora o rejunte alarga até ~1,5 px e o desenho some antes de virar
+  ruído (como já faziam as telhas); o tom por pedra/tábua/telha vira rampa de ~2 px na
+  emenda em vez de degrau. De perto (paredes) nada muda. Custo: zero (mesmas contas).
+- **Faixas de luz** (mesmo shader): o corte seco das 3 faixas virou degrau de 20% de
+  largura. A sombra do sol é reencaixada na câmera a cada quadro e a penumbra oscila um
+  pouco; com o corte seco uma faixa inteira do chão trocava de tom (Alta/Média).
+- **Medidor** `--pisca=DIR` (`scripts/game.gd`): câmera do jogo sobre a praça andando 1 cm
+  por quadro, `pisca.jpg` marca em vermelho o que mudou de um quadro para o outro e imprime
+  a fração. Antes/depois (xvfb, Compatibility): Alta 11,2% → 9,2%, Mínima 9,2% → 7,3%; o
+  que sobra é borda de objeto, sombra, vento e desenho de perto. Imagem:
+  `jogabilidade/17-chao-piscando.jpg` na pasta do projeto.
+- **QA do mapa** ganhou o passo 4, `tests/qa_sobrepostos.gd`: varre todas as faces do
+  cenário e acusa pares no mesmo plano (< 4 mm) que se cobrem, com área e posição
+  (`--qa-rapido` pula os 3 min de bots presos). Achados que ficaram para olhar depois,
+  todos sem flicker visível no medidor: discos de ~30 m² em y ≈ 0 nos pontos das
+  maquininhas e oficinas (peça do jogo sobre peça da cena), e faces de 33 m² em y = 9,4 na
+  torre da máscara (duas faces internas da mesma cor).
+- Modo teste: vale igual, é onde o Julio viu o bug.
+- **O que testar**: andar pela praça do pátio (modo teste ou partida) em qualquer qualidade:
+  o chão tem que ficar parado. Olhar também as lajes dos caminhos, os caminhos de pedra
+  perto das casas e os telhados de longe: o desenho ficou um pouco mais suave de longe; se
+  ficou liso demais, é o `some` do shader.
 ## Ciclo 2.11 (2026-11-06), Interface: menu de jogo de verdade
 Pedido do Julio: menus, Como jogar e configurações estavam desatualizados, apertados e com
 GIFs antigos gravados num canto ruim do mapa. Nada de jogabilidade nem de visual da partida muda.
