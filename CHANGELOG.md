@@ -5,6 +5,22 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Revisão 2.10r (2026-11-06), Jogabilidade: código revisado depois dos ciclos 2.9 a 2.10s
+Só limpeza; **nada muda na jogabilidade nem no visual** (testes de regra e partida
+simulada de 5 min iguais antes e depois).
+- Regra "que torreta o Construtor ergue agora" existia em dois lugares (bots e seta-guia)
+  com a condição escrita diferente: virou `Game.torreta_para_construir`, usada pelos dois.
+- `Fx.montar_pecas` e `Fx.tirar_contorno`: três e duas cópias do mesmo laço (selo, emblema
+  e mira da catapulta; modelo sem contorno abaixo da qualidade Alta) viraram uma função.
+- Voo da catapulta: `Array` posicional (`v[5]` = altura) virou a classe `Catapulta.Voo`.
+- Comentários e ordem de campos arrumados em `map_layout.gd`, `game_config.gd`,
+  `unit.gd` e `bot_brain.gd`.
+- Achados que mudariam comportamento ficaram anotados, não feitos (torreta mira em quem
+  voa; cronômetros param durante o voo): `revisao/revisao-codigo-2026-11-06.md` na pasta
+  do projeto.
+- **O que testar**: nada deve ter mudado. Se o Construtor (bot ou a seta-guia) parar de
+  ir à torreta depois da 1ª oficina, ou a catapulta cair em lugar diferente da mira, é
+  desta rodada.
 ## Ciclo 2.10s (2026-11-06), Sons: cada classe com som próprio
 - **O som segue o elemento, não o evento.** Antes todo poder E e todo super tocavam o
   mesmo `poder_boom` (taiko + estrondo), e por isso a magia soava como explosão. Agora

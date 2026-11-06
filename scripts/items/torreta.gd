@@ -363,13 +363,7 @@ func _montar_selo() -> void:
 	var meio := BoxMesh.new()
 	meio.size = Vector3(0.34, 0.02, 0.34)
 	pecas.append([meio, Transform3D(Basis.from_euler(Vector3(0, PI / 4.0, 0)), Vector3.ZERO)])
-	for p in pecas:
-		var mi := MeshInstance3D.new()
-		mi.mesh = p[0]
-		mi.transform = p[1]
-		mi.material_override = _selo_mat
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		_selo.add_child(mi)
+	Fx.montar_pecas(_selo, pecas, _selo_mat)
 	add_child(_selo)
 
 
@@ -404,13 +398,7 @@ func _montar_emblema() -> void:
 	var ponta := PrismMesh.new()
 	ponta.size = Vector3(0.2, 0.2, 0.06)
 	pecas.append([ponta, Transform3D(Basis(), Vector3(0, 0.36, 0))])
-	for p in pecas:
-		var mi := MeshInstance3D.new()
-		mi.mesh = p[0]
-		mi.transform = p[1]
-		mi.material_override = _emblema_mat
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		_emblema.add_child(mi)
+	Fx.montar_pecas(_emblema, pecas, _emblema_mat)
 	add_child(_emblema)
 
 
@@ -428,13 +416,7 @@ func _montar_torre() -> Node3D:
 	raiz.add_child(casa)
 	_arma = casa.get_node_or_null("Arma")
 	if Settings.quality < 3:
-		for mi: MeshInstance3D in casa.find_children("*", "MeshInstance3D", true, false):
-			for s in mi.mesh.get_surface_count():
-				var mat := mi.mesh.surface_get_material(s) as ShaderMaterial
-				if mat and mat.next_pass:
-					var m: ShaderMaterial = mat.duplicate()
-					m.next_pass = null
-					mi.set_surface_override_material(s, m)
+		Fx.tirar_contorno(casa)
 	return raiz
 
 
