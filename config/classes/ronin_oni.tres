@@ -7,6 +7,8 @@
 script = ExtResource("2_ay0cx")
 id = &"ronin_oni"
 display_name = "Ronin Oni"
+epiteto = "O guerreiro sem senhor"
+descricao = "Ronin que perdeu o senhor e vestiu uma máscara de oni para não perder também o nome. O demônio da máscara o deixou enorme, lento e difícil de derrubar. Fala pouco, pisa forte e, quando a fúria sobe, vira a parede que segura o meio do mapa."
 model = ExtResource("1_x5yf1")
 visible_meshes = PackedStringArray("Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight")
 hat_color = Color(0.85, 0.12, 0.12, 1)
