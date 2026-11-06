@@ -4,6 +4,23 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.12d (2026-11-06), Jogabilidade: chapéu da classe forte demora mais
+Julio aprovou as propostas 1 e 3 de `jogabilidade/proposta-chapeus-casinhas.md`.
+- **Tempo de chapéu por classe** (campo novo `ClassStats.chapeu_tempo_mult`, padrão 1,0):
+  Ronin Oni ×1,2 (20 → 24 s; nível 2, 12 → 14,4 s), Arqueiro Yumi ×1,1 (22 s), Samurai e
+  Ninja de Shuriken ×0,9 (18 s). Kitsunes e Construtor iguais. Física: a maquininha é uma
+  fila com oferta μ = 60/T por minuto; T +20% corta ~17% da oferta do Ronin sem mexer em
+  como ele luta (na sonda ele tinha o dobro do K/D do Samurai).
+- **Bots sobem o mago antes de reerguer a torreta** (`Game.torreta_para_obra`): com uma
+  torreta do time de pé e o mago podendo subir, o terreno vazio da outra espera. Torreta
+  já começada continua recebendo madeira; sem nenhuma de pé, ela volta primeiro.
+- Medida (2 partidas de 10 min): ainda não aparece nível 3 do mago; a coleta dos bots é
+  o gargalo (só 1 bot Construtor por time, que pega o chapéu mais perto; o
+  `bots_construtores_max = 2` é um teto, não uma meta). Fica como ideia, sem mudar.
+- Testes de regra: 255/255 (novo caso torreta x mago; os de maquininha usam o multiplicador).
+- Modo teste: os chapéus continuam saindo em 1 s lá (nada muda).
+- **O que testar**: na partida, a maquininha do Ronin mostra 24 s e a do Samurai/Ninja 18 s
+  no letreiro. Se a torreta de um lado cair, a madeira do time deve ir para o mago antes.
 ## Ciclo 2.12c (2026-11-06), Jogabilidade: Passo da Sombra translúcido para o próprio time
 Julio: no R do Samurai o próprio time ainda via o corpo inteiro (só uma película roxa
 escura por cima); quer o corpo meio transparente para ele e o time, e sumido para o

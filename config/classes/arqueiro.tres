@@ -6,6 +6,7 @@
 [resource]
 script = ExtResource("2_b2vcn")
 id = &"arqueiro"
+chapeu_tempo_mult = 0.9
 display_name = "Ninja de Shuriken"
 epiteto = "A sombra nos telhados"
 descricao = "Shinobi criado nas vielas da vila, leve e debochado. Não acredita em duelo justo: acerta de longe, some antes do troco e volta pelo flanco. Cada shuriken leva um fio de Chi, e dizem que ele nunca erra duas vezes o mesmo alvo."

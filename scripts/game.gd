@@ -1234,15 +1234,26 @@ func obra_do_time(team: int, from: Vector3) -> Oficina:
 
 ## Terreno de torreta do time para o Construtor: a obra começada, senão o
 ## terreno vazio mais perto. null = todas de pé.
+## Ciclo 2.12d: com uma torreta do time já de pé e o mago podendo subir de nível,
+## terreno vazio espera (a madeira vai para o mago antes de reerguer a outra).
 func torreta_para_obra(team: int, from: Vector3) -> Torreta:
 	var best: Torreta = null
+	var espera := mago_para_subir(team) != null and torretas_de_pe(team) >= 1
 	for t in torretas:
-		if t.team != team or t.pronta():
+		if t.team != team or t.pronta() or (espera and t.madeira_entregue == 0):
 			continue
 		if best == null or t.madeira_entregue > best.madeira_entregue or (t.madeira_entregue == best.madeira_entregue \
 				and from.distance_to(t.global_position) < from.distance_to(best.global_position)):
 			best = t
 	return best
+
+
+func torretas_de_pe(team: int) -> int:
+	var n := 0
+	for t in torretas:
+		if t.team == team and t.pronta():
+			n += 1
+	return n
 
 
 ## A torreta que o Construtor deve erguer agora, ou null: só depois da 1ª

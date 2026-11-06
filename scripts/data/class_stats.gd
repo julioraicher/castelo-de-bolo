@@ -102,6 +102,10 @@ extends Resource
 ## estrepes = fura e deixa lento; mina = explode e empurra.
 @export_enum("estrepes", "mina") var trap_kind := "estrepes"
 
+## Multiplica o tempo da maquininha fabricar este chapéu (nível 1 e 2).
+## Classe um pouco mais forte = chapéu um pouco mais raro (Ciclo 2.12d).
+@export var chapeu_tempo_mult := 1.0
+
 @export_group("Construção")
 ## Velocidade de obra nas oficinas (0 = não constrói; Construtor 1 a 2).
 @export var velocidade_obra := 0.0

@@ -6,6 +6,7 @@
 [resource]
 script = ExtResource("2_ay0cx")
 id = &"ronin_oni"
+chapeu_tempo_mult = 1.2
 display_name = "Ronin Oni"
 epiteto = "O guerreiro sem senhor"
 descricao = "Ronin que perdeu o senhor e vestiu uma máscara de oni para não perder também o nome. O demônio da máscara o deixou enorme, lento e difícil de derrubar. Fala pouco, pisa forte e, quando a fúria sobe, vira a parede que segura o meio do mapa."
