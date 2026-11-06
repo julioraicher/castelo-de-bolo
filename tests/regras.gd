@@ -163,6 +163,23 @@ func _torretas() -> void:
 	u._blocking = false
 	t.take_hit(t.max_hp() + 1.0, 1 - t.team)
 	_check(not t.pronta() and t.madeira_entregue == 0, "torreta derrubada deveria voltar a terreno vazio")
+	# 2.12: com a obra no teto da madeira entregue e o estoque vazio, o Construtor
+	# não fica parado na torreta (vai cortar); com estoque ou obra atrás do teto, vai.
+	var m0: int = game.madeira[t.team]
+	t.madeira_entregue = 1
+	t.progresso = 1.0 / maxf(t.custo(), 1)
+	game.madeira[t.team] = 0
+	_check(game.torreta_para_construir(t.team, t.global_position, null) == null,
+		"torreta no teto e sem estoque: o Construtor deveria ir cortar")
+	game.madeira[t.team] = 1
+	_check(game.torreta_para_construir(t.team, t.global_position, null) == t,
+		"torreta com estoque no time: o Construtor deveria ir construir")
+	game.madeira[t.team] = 0
+	t.progresso = 0.0
+	_check(game.torreta_para_construir(t.team, t.global_position, null) == t,
+		"torreta com madeira entregue e obra atrás: o Construtor deveria ir construir")
+	t.madeira_entregue = 0
+	game.madeira[t.team] = m0
 
 
 ## Catapulta (2.9b): sobe, lança com força 1 e cai perto da muralha inimiga;
