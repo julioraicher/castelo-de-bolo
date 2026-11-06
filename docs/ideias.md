@@ -40,12 +40,6 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
   com um golpe de "virar a luta" (ex.: Samurai corta todos em linha num traço só).
 
 ## B — depois
-- **Lançar na Steam (PC)** (pedido do Julio, 2026-11-04; sem urgência, o jogo ainda
-  vai mudar muito). Prioridade **acima** de Play Store/App Store: o jogo já é PC com
-  teclado e mouse e a Godot exporta direto para Windows. Caminho: itch.io grátis
-  primeiro (reação das pessoas) → conta Steamworks (US$ 100, volta após US$ 1.000 em
-  vendas; W-8BEN) → página "Em breve" + trailer para juntar wishlists → demo no Next
-  Fest → lançamento. Guia visual: pasta do projeto `castelo-de-bolo/lancamento/`.
 - **Clipes roteirizados no "Como jogar"** (2026-11-01): os clipes das abas Objetivo e
   Casinhas saíram fracos (gravados de partida de bots: ninguém roubou nem construiu na hora).
   Montar cenas com `--clipe-cena` (já existe `mascara`): roubo e entrega da máscara, obra
@@ -77,8 +71,6 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 - Sons próprios por poder (shuriken, talismã, fogo-raposa, explosão de pólvora).
 
 ## C — talvez
-- **Play Store / App Store** (2026-11-04): abaixo da Steam. Exige refazer os controles
-  para toque e o desempenho em celular; só depois de o jogo estar pronto no PC.
 - **Spotar inimigos no minimapa, estilo Battlefield** (Julio, 2026-10-31): marcar um
   inimigo (tecla ou ao acertar) e ele aparece no minimapa por alguns segundos para o
   time. O Julio ficou em dúvida se é boa ideia; por isso o minimapa (2.4o) não mostra

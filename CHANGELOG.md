@@ -11,7 +11,6 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
   segredo `BUTLER_API_KEY` e a variável `ITCH_ALVO` (ex.: `julioraicher/castelo-de-bolo`).
 - GitHub Pages só publica com o repositório público; no privado o passo é pulado sem
   quebrar a CI. A release `ultima-versao` continua (no privado, só com login).
-- `docs/ideias.md`: "Lançar na Steam (PC)" em B, Play Store/App Store em C.
 - **O que testar:** depois de configurar o itch.io, abrir a página oculta e jogar a
   versão web; o .exe aparece na mesma página. Nenhuma regra de jogo mudou.
 
