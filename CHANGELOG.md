@@ -4,6 +4,29 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.12b (2026-11-06), Interface: fichas das classes cabem na moldura e ganharam identidade
+Julio: na seção Classes as barras de vida/velocidade/dano e os cartões Q/E/R passavam do
+quadro (e até da moldura maior), botões e descrições grandes demais, e faltava dizer quem
+cada classe é no mundo do jogo. Nada de jogabilidade muda.
+- **Cabe tudo** (`scripts/ui/pagina_classes.gd`): a soma das larguras fixas (clipe 400 +
+  barra 150 + rótulos) passava dos 940 px da área do menu. Agora lista 216 + ficha 708,
+  clipe 320x180, a barra estica no que sobra da linha e a ficha fica numa rolagem
+  vertical, então nunca escapa das molduras.
+- **Menor**: botões da lista 34 px e letra 17 (com bolinha na cor da classe; a letra na cor
+  da classe sumia nas claras, como a Kitsune da Luz), cartões Q/E/R mais baixos com nome
+  18 e texto 15, nome da classe 28.
+- **Identidade**: cada classe ganhou epíteto e 2-3 frases de quem ela é (dois clãs, a
+  Máscara Oni, Chi, espíritos-raposa zenko/yako para as Kitsunes, ronin mascarado, kyudo
+  do Yumi...). Ficam no próprio `.tres`, campos novos `epiteto` e `descricao` em
+  `ClassStats` (padrão vazio: classe sem texto só não mostra). Classe nova = escrever os
+  dois campos; `tests/regras.gd` acusa classe jogável sem eles.
+- Texto do R: "mais área, mais força e mais tempo" (antes dizia "dano" até no Mutirão e na
+  Bênção) e números com vírgula.
+- `--tutorial=DIR` agora também tira `classe_<id>.jpg` de cada ficha.
+- Modo teste: o menu é o mesmo, vale igual.
+- **O que testar**: menu inicial (ou Esc na partida) > Classes, clicar em cada classe:
+  nada pode passar das duas molduras, barras e números dentro do quadro, e ler as
+  descrições (tom e fatos). Antes/depois em `interface/08-classes-antes-depois.jpg`.
 ## Ciclo 2.12 (2026-11-06), Jogabilidade: construções mais baratas
 Pedido do Julio: "muito demorado para começar a aparecerem coisas legais", às vezes a partida
 acaba sem tudo construído. Ajuste moderado, só na madeira.

@@ -7,6 +7,8 @@
 script = ExtResource("2_fhba0")
 id = &"kitsune_luz"
 display_name = "Kitsune da Luz"
+epiteto = "A mensageira do santuário"
+descricao = "A raposa que seguiu a luz dos santuários, como as zenko das lendas, raposas celestes. Calma e paciente, trata a briga como um ritual: fica atrás da linha e mantém todo mundo de pé. O fogo dela não queima, abençoa; um clã com ela por perto custa muito a cair."
 model = ExtResource("1_kmvrp")
 visible_meshes = PackedStringArray("Mage_ArmLeft", "Mage_ArmRight", "Mage_Body", "Mage_Head", "Mage_LegLeft", "Mage_LegRight")
 hat_color = Color(1, 0.92, 0.6, 1)

@@ -7,6 +7,8 @@
 script = ExtResource("2_b2vcn")
 id = &"arqueiro"
 display_name = "Ninja de Shuriken"
+epiteto = "A sombra nos telhados"
+descricao = "Shinobi criado nas vielas da vila, leve e debochado. Não acredita em duelo justo: acerta de longe, some antes do troco e volta pelo flanco. Cada shuriken leva um fio de Chi, e dizem que ele nunca erra duas vezes o mesmo alvo."
 model = ExtResource("1_8uvy1")
 visible_meshes = PackedStringArray("Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head_Hooded", "Rogue_LegLeft", "Rogue_LegRight")
 hat_color = Color(0.3, 0.95, 1, 1)

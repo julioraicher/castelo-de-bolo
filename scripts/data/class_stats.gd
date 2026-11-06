@@ -6,6 +6,10 @@ extends Resource
 
 @export var id: StringName = &"recruta"
 @export var display_name := "Recruta"
+## Ficha do menu (seção Classes): quem a classe é no mundo do jogo.
+## Epíteto = apelido curto; descrição = identidade em 2-4 frases (não é história).
+@export var epiteto := ""
+@export_multiline var descricao := ""
 
 @export_group("Visual")
 ## Modelo 3D animado (KayKit). O mesmo modelo traz várias armas e chapéus;

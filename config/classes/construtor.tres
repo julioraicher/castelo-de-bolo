@@ -7,6 +7,8 @@
 script = ExtResource("2_otkm4")
 id = &"construtor"
 display_name = "Construtor"
+epiteto = "As mãos do castelo"
+descricao = "Carpinteiro do clã, mais à vontade com machado e martelo do que com espada. Teimoso e prático, corta bambu, carrega madeira e ergue oficinas e torretas enquanto os outros brigam. Sem ele o castelo não cresce, e quem duvida tropeça nos estrepes que ele deixa pelo caminho."
 model = ExtResource("1_4of15")
 visible_meshes = PackedStringArray("Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight")
 hat_color = Color(1, 0.6, 0.2, 1)

@@ -7,6 +7,8 @@
 script = ExtResource("2_rjjrk")
 id = &"arqueiro_yumi"
 display_name = "Arqueiro Yumi"
+epiteto = "O olho do clã"
+descricao = "Mestre do arco longo, o yumi, treinado no kyudo, onde cada disparo é quase uma oração. Frio e preciso, prefere a distância e o alto das muralhas. Quando a briga se junta num lugar só, abre o céu sobre ela numa chuva de flechas."
 model = ExtResource("1_tbrrs")
 visible_meshes = PackedStringArray("Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head_Hooded", "Rogue_LegLeft", "Rogue_LegRight")
 hat_color = Color(0.6, 0.4, 0.2, 1)

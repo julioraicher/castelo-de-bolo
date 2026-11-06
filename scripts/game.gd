@@ -405,6 +405,13 @@ func _prints_tutorial(menus: Menus) -> void:
 			await get_tree().process_frame
 		get_viewport().get_texture().get_image().save_jpg("%s/menu_%d_%s.jpg" % [_tutorial_dir, n, secao], 0.85)
 		n += 1
+	# Uma ficha por classe (barras, textos e quadros de cada uma).
+	menus._mostrar("classes")
+	for s in PaginaClasses.lista():
+		menus._classes._mostrar(s)
+		for f in 20:
+			await get_tree().process_frame
+		get_viewport().get_texture().get_image().save_jpg("%s/classe_%s.jpg" % [_tutorial_dir, s.id], 0.85)
 	menus._mostrar("como_jogar")
 	var tabs: TabContainer = menus._tutorial._tabs
 	for i in tabs.get_tab_count():

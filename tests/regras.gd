@@ -361,6 +361,10 @@ func _dados() -> void:
 		_check(c.model != null, "classe %s sem modelo" % c.id)
 		_check(c.max_hp > 0.0, "classe %s com vida <= 0" % c.id)
 		_check(c.move_speed > 0.0, "classe %s com velocidade <= 0" % c.id)
+	# Ficha do menu (seção Classes): toda classe jogável tem epíteto e identidade.
+	for c in cfg.hat_classes() + cfg.oficina_classes + cfg.magos_opostos:
+		if c:
+			_check(c.epiteto != "" and c.descricao != "", "classe %s sem epíteto/descrição na ficha" % c.id)
 	_check(not cfg.themes.is_empty(), "nenhum tema em game_config.themes")
 	for t in cfg.themes:
 		_check(t != null, "tema nulo em game_config.themes")

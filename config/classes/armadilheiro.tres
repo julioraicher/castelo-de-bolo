@@ -7,6 +7,8 @@
 script = ExtResource("2_tufoi")
 id = &"armadilheiro"
 display_name = "Armadilheiro"
+epiteto = "O chão que morde"
+descricao = "Construtor que descobriu que um caminho bem preparado vale mais do que uma espada. Paciente e desconfiado, espalha minas e estrepes por onde o inimigo vai passar, e espera."
 model = ExtResource("1_dk4ki")
 visible_meshes = PackedStringArray("Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight")
 hat_color = Color(0.45, 1, 0.45, 1)

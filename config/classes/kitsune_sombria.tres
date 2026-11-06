@@ -7,6 +7,8 @@
 script = ExtResource("2_fhba0")
 id = &"kitsune_sombria"
 display_name = "Kitsune Sombria"
+epiteto = "A raposa do outro lado"
+descricao = "A mesma raposa, só que escolheu a noite, como as yako das lendas, raposas do campo. Astuta e rancorosa, aprendeu a prender o Chi dos outros num selo e a furar fileiras com orbes de sombra. Não cura ninguém: para ela, o melhor jeito de proteger o clã é o inimigo não conseguir atacar."
 model = ExtResource("1_kmvrp")
 visible_meshes = PackedStringArray("Mage_ArmLeft", "Mage_ArmRight", "Mage_Body", "Mage_Head", "Mage_LegLeft", "Mage_LegRight")
 hat_color = Color(0.55, 0.25, 0.95, 1)

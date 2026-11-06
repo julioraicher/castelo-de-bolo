@@ -7,6 +7,8 @@
 script = ExtResource("2_fhba0")
 id = &"kitsune"
 display_name = "Kitsune"
+epiteto = "A raposa de uma cauda"
+descricao = "Espírito-raposa jovem que se juntou ao clã em troca de abrigo no castelo. Ainda não escolheu um lado: cura os aliados por hábito e queima os inimigos por diversão. O caminho dos magos decide se ela cresce para a luz ou para a sombra."
 model = ExtResource("1_kmvrp")
 visible_meshes = PackedStringArray("Mage_ArmLeft", "Mage_ArmRight", "Mage_Body", "Mage_Head", "Mage_LegLeft", "Mage_LegRight")
 hat_color = Color(1, 0.45, 0.75, 1)

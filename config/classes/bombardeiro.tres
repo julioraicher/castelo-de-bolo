@@ -7,6 +7,8 @@
 script = ExtResource("2_d3iqb")
 id = &"bombardeiro"
 display_name = "Bombardeiro"
+epiteto = "O trovão de pólvora"
+descricao = "Construtor que trocou o martelo pela pólvora. Barulhento e feliz demais com explosões, arremessa bombas em arco por cima de qualquer muralha."
 model = ExtResource("1_k5iwi")
 visible_meshes = PackedStringArray("Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head", "Rogue_LegLeft", "Rogue_LegRight")
 hat_color = Color(1, 0.32, 0.12, 1)
