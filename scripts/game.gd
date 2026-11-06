@@ -76,7 +76,9 @@ var _time := 0.0
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
 ## Modo teste (sandbox): só o jogador no mapa, todas as oficinas prontas e,
-## nelas, [F] troca a classe (comuns) ou sobe o nível (magos). Liga com
+## nelas, [F] troca a classe (comuns) ou sobe o nível (magos); torretas de pé,
+## catapultas prontas e Q/E/R/catapulta recarregando rápido (grupo "Modo teste"
+## do game_config). REGRA: feature nova na main entra aqui disponível. Liga com
 ## --sandbox, com "?sandbox" no endereço da versão web ou pelo botão da tela
 ## inicial (sandbox_pedido sobrevive ao reload da cena).
 static var sandbox_pedido := false
@@ -432,7 +434,7 @@ func _montar_sandbox() -> void:
 
 func _on_started() -> void:
 	if sandbox:
-		hud.show_big("MODO TESTE\nPegue qualquer chapéu. Nas oficinas, F troca a classe ou sobe o nível.", Color(1, 0.9, 0.5), 4.0)
+		hud.show_big("MODO TESTE\nTudo pronto e recarregando rápido (Q, E, R, catapulta).\nNas oficinas, F troca a classe ou sobe o nível.", Color(1, 0.9, 0.5), 4.5)
 		Sfx.start_music()
 		return
 	hud.show_big("Roube a Máscara Oni vermelha!\nTraga-a para o seu castelo.", Color(1, 0.9, 0.5), 3.5)
@@ -499,6 +501,11 @@ func _physics_process(delta: float) -> void:
 			_poderes_t = 4.0
 			for u in units:
 				u.fill_power()
+	if sandbox:
+		# Modo teste: Chi e Super enchem rápido para testar E e R toda hora.
+		for u in units:
+			u.add_power(Config.cfg.power_regen * (Config.cfg.sandbox_chi_mult - 1.0) * delta)
+			u.add_super(Unit.POWER_MAX / maxf(Config.cfg.sandbox_super_s, 0.5) * delta)
 	_rules()
 	# O HUD não precisa de 60 atualizações por segundo: 20 Hz bastam ao olho
 	# e cada atualização mexe em vários textos e barras.

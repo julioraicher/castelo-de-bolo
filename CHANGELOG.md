@@ -5,6 +5,27 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
+## Ciclo 2.9b (2026-11-06), Jogabilidade + Visual: torreta mais identificável
+- **Em cima**: letreiro "TORRETA" a pincel (branco no terreno vazio, âmbar na obra, cor
+  do time pronta) e um **emblema da besta** (anel com arco, coronha e virote) na cor do
+  time, sem sombra, que gira e sobe/desce. Some quando a torreta tomba e volta com o selo.
+- **Ao redor**: o selo no chão ficou 60% maior (passa da base da torre e lê de cima) e
+  mais forte (pronta 0,12 → 0,30 de alfa; na obra pulsa 0,2-0,7).
+- Linha de estado embaixo do letreiro: "2 madeiras · Construtor", "45% · faltam 1" ou a
+  vida quando machucada. Teclas: o F na tela inicial agora cita a catapulta.
+- **Modo teste (sandbox) conferido** contra a ideia do Julio ("tudo disponível o tempo
+  inteiro, poder recarregando rápido"): já tinha oficinas prontas, maquininhas no nível 2,
+  chapéu em 1 s, F troca classe/sobe nível, torretas dos dois lados de pé (2.9). **Faltava
+  a recarga rápida**: agora o Chi enche 8× mais rápido (~4 s), o Super do zero em 6 s, o Q
+  recarrega em 1/4 do tempo e a catapulta em 1/5 (grupo "Modo teste" no `game_config.gd`).
+  Regra nova no CLAUDE.md: feature na main entra no sandbox na mesma entrega.
+- Mexe em `torreta.gd`, `config.gd`, `game.gd`, `unit.gd` (Q), `catapulta.gd`,
+  `game_config.gd`, CLAUDE.md. Testes 216/216.
+- **O que testar**: de longe, com a câmera do jogo, a torreta (vazia, em obra e pronta)
+  se destaca do cenário? O emblema girando incomoda ou ajuda? No modo teste, veja se o E,
+  o R e o Q voltam rápido o bastante para testar poder atrás de poder, e se a catapulta
+  (F na base) recarrega sem espera.
+
 ## Ciclo 2.9 (2026-11-06), Jogabilidade + Visual: torretas do Construtor, catapulta e o padrão de peça nova
 Quiz do Julio (respostas em `quiz/quiz-torretas.html` + chat): torre de vigia mais baixa com
 toque de santuário da raposa e besta encantada; virote; selo no chão; catapulta de bambu com a

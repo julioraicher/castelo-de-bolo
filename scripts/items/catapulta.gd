@@ -120,7 +120,7 @@ func lancar() -> void:
 		return
 	var u := passageiro
 	passageiro = null
-	_recarga_t = Config.cfg.catapulta_recarga
+	_recarga_t = Config.cfg.catapulta_recarga * (Config.cfg.sandbox_catapulta_mult if _game.sandbox else 1.0)
 	var p1 := ponto_queda(forca)
 	p1.y = _game.arena.ground_y(p1.x, p1.z)
 	var dist := global_position.distance_to(p1)

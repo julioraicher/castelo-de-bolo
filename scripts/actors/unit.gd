@@ -924,6 +924,8 @@ func tem_rapida() -> bool:
 
 func quick_cooldown() -> float:
 	var m := Config.cfg.rapida_cooldown_mult
+	if game and game.sandbox:
+		m *= Config.cfg.sandbox_q_mult  # modo teste: Q toda hora
 	match stats.skill:
 		"cura":
 			return stats.heal_cooldown * m
