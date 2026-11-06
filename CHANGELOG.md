@@ -4,6 +4,26 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.12c (2026-11-06), Jogabilidade: Passo da Sombra translúcido para o próprio time
+Julio: no R do Samurai o próprio time ainda via o corpo inteiro (só uma película roxa
+escura por cima); quer o corpo meio transparente para ele e o time, e sumido para o
+inimigo (já era). Dano, duração, velocidade e visão dos bots não mudam.
+- **Fantasma** (`assets/shaders/toon_fantasma.gdshader`): o toon dos personagens foi
+  para `toon_time.gdshaderinc`; o opaco e o fantasma incluem o mesmo corpo, e o fantasma
+  liga `FANTASMA`: alfa 1 - `sombra_alfa`, borda roxa por Fresnel pulsando, sem contorno
+  nem raio X, sem sombra no chão. `depth_prepass_alpha` grava a profundidade antes, então
+  só a camada da frente aparece (braço atrás do tronco não soma transparência).
+- `Unit._aplicar_sombra` troca o material de cada pedaço pela versão translúcida (cache
+  por material, compartilhado pelo time) e devolve no fim. Ninguém paga o passe de alfa
+  fora do super. `GeometryInstance3D.transparency` não pega no Compatibility/WebGL com o
+  toon (testado), por isso a troca de material.
+- Novo `sombra_alfa` (0,6) no `game_config` (grupo da sombra). Teste de regra: corpo
+  fica translúcido no super e volta ao material opaco no fim.
+- Modo teste: o R recarrega rápido como antes, é só pegar o Samurai e apertar R.
+- **O que testar**: Samurai, R: você e os aliados veem um vulto roxo meio transparente
+  (dá para ver o chão através); o inimigo não vê nada; ao bater ou acabar, volta ao
+  normal sem ficar pedaço transparente. Antes/depois em
+  `jogabilidade/18-passo-da-sombra-fantasma.jpg`.
 ## Ciclo 2.12b (2026-11-06), Interface: fichas das classes cabem na moldura e ganharam identidade
 Julio: na seção Classes as barras de vida/velocidade/dano e os cartões Q/E/R passavam do
 quadro (e até da moldura maior), botões e descrições grandes demais, e faltava dizer quem
