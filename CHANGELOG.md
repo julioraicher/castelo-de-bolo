@@ -55,6 +55,16 @@ piloto com silhueta própria, cor do time e animações; nunca primitivas como e
   meteoro e cai na metade inimiga. (2) No modo teste, chegue na torreta vermelha segurando o
   botão direito virado para ela: o virote volta. (3) De Construtor, depois da 1ª oficina,
   siga a seta até o selo da torreta e construa; depois veja a besta girar e atirar nos bots.
+## Ciclo 2.8s (2026-11-06), Sons: tudo pronto para trocar efeitos (nenhum som trocado)
+- **Biblioteca** `assets/audio/biblioteca/kenney/` (280 sons CC0: impacto, interface, RPG),
+  com `.gdignore` (não entra no jogo exportado). Créditos em `biblioteca/CREDITOS.md`.
+- `Sfx` aceita `.ogg` (ganha do `.wav`) e variações `<nome>_2.ogg`... sorteadas a cada toque.
+- Ferramentas em `tools/sons/`: `trocar_som.sh` (troca/desfaz em 1 comando, normaliza),
+  `catalogo.py` (página para ouvir e escolher), `gerar_ia.py` (Stable Audio / ElevenLabs).
+  Passo a passo na skill `.claude/skills/efeitos-sonoros/`.
+- Rede do ambiente liberada para kenney.nl, opengameart, freesound, Stable Audio e ElevenLabs.
+- **O que testar**: nada muda no som do jogo. Abra `sons/catalogo-sons.html` (pasta do
+  projeto), ouça e mande "nome do jogo = arquivo" quando quiser trocar.
 
 ## Ciclo 2.8 (2026-11-06), Jogabilidade: SUPER poder na tecla R (piloto, pitaco do Julio)
 - **Barra de ouro** embaixo do Chi. Não enche com o tempo: dano causado (×0,12), abate
