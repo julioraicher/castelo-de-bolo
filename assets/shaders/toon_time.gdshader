@@ -2,6 +2,9 @@ shader_type spatial;
 // Toon dos personagens: 2 faixas de luz + contraluz na cor do time.
 // A textura KayKit é uma paleta; cada cor vira um papel:
 // pele fica, cinza vira aço azul-noite, o resto (pano, couro) vira cor do time.
+// Grava 1 no stencil onde o boneco aparece: o passe raio_x.gdshader desenha a
+// silhueta só onde ficou 0 (atrás de parede).
+stencil_mode write, compare_always, 1;
 
 uniform sampler2D textura : source_color, filter_linear_mipmap;
 uniform vec4 cor_time : source_color = vec4(0.16, 0.45, 1.0, 1.0);

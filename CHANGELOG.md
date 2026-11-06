@@ -5,7 +5,7 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 
-## Ciclo 2.9s (2026-11-06), Sons: cada classe com som próprio (esperando o ok do Julio)
+## Ciclo 2.10s (2026-11-06), Sons: cada classe com som próprio
 - **O som segue o elemento, não o evento.** Antes todo poder E e todo super tocavam o
   mesmo `poder_boom` (taiko + estrondo), e por isso a magia soava como explosão. Agora
   `ClassStats` tem `som_poder`, `som_super` e `som_golpe_final`; vazio = som antigo.
@@ -20,10 +20,37 @@ Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
   usava o som de soco e agora usa madeira.
 - Torreta e catapulta (2.9) mantêm os sons da thread de jogabilidade; a troca por IA
   fica para quando houver `HF_TOKEN`.
-- Antes/depois para ouvir: `sons/antes-depois.html` (pasta do projeto).
+- Antes/depois para ouvir: `sons/antes-depois.mp4` (pasta do projeto). No modo teste
+  (sandbox) os sons já valem: Q/E/R recarregam rápido, dá para ouvir tudo em sequência.
 - **O que testar**: solte o E de Kitsune, Samurai e Ninja e veja se dá para saber quem
   foi de olhos fechados. Dê o 3º golpe de Samurai e bata numa torreta. O soco e o
   bloqueio novos cansam depois de 5 min?
+## Ciclo 2.10b (2026-11-06), Visual: a briga aparece debaixo dos telhados
+Item 5 da revisão geral (`revisao/revisao-geral-2026-11-06.md`): no meio da partida o boneco
+sumia atrás das casas grandes.
+- **Telhado pontilhado**: o cenário entre a câmera e o jogador (sempre) e as 3 brigas mais
+  perto dele (golpe dado/levado há < 2 s com inimigo a < 5 m) vira pontilhado num círculo de
+  ~2,6 m em volta do boneco. Geometria: cone com vértice na câmera e eixo até o peito; some
+  o que está na frente do boneco e acima dos pés (chão, ponte e degraus ficam). O
+  "transparente" é uma matriz de Bayer 4x4 no pixel (descarte), então não precisa de alfa
+  nem de ordenar objetos. O raio abre e fecha em 0,25 s para não piscar.
+  `assets/shaders/recorte.gdshaderinc` (incluído em `pintura` e no contorno do cenário);
+  focos em 4 `shader_globals` do `project.godot`, preenchidos pelo `CameraRig`.
+- **Raio X na cor do time**: a parte do boneco escondida atrás de parede, telhado ou árvore
+  aparece como silhueta (miolo 28%, aro forte). Stencil: o cenário grava 2, o boneco grava
+  1; o passe `raio_x.gdshader` desenha sem teste de profundidade só onde ficou 2. Braço na
+  frente do tronco, pé enterrado no chão e boneco atrás de boneco não acendem. Samurai
+  invisível (super) continua invisível para o inimigo. Funciona no navegador (Compatibility).
+- Custo: um descarte por pixel do cenário e os pixels escondidos de cada boneco; sem leitura
+  de profundidade nem passe extra no cenário. `--sem-recorte` desliga tudo (prancha de antes).
+- Modo teste: vale igual (foco = o jogador), sem configuração.
+- Mexe em `pintura`, `contorno`, `toon_time` (1 linha de stencil), `raio_x` (novo),
+  `ninja_visual.gd` (passe novo), `camera_rig.gd` (focos), `project.godot` (globais).
+- **O que testar**: ande por baixo dos beirais das casas do meio e atrás da casa grande perto
+  da torreta: o telhado em volta de você fica pontilhado e volta sozinho? Bots brigando atrás
+  de uma casa aparecem como silhueta azul/vermelha? O pontilhado incomoda (prefere mais
+  forte, mais fraco, círculo maior)? No modo teste, dá para conferir sozinho embaixo dos telhados.
+
 ## Ciclo 2.10 (2026-11-06), Jogabilidade: equilíbrio das classes e lote da revisão geral
 Pedido do Julio: "duvide de tudo" da sonda de bots, diferença notável entre as classes mas
 nunca roubada, o grandão lento de verdade. Proposta em `jogabilidade/proposta-equilibrio-classes.md`.

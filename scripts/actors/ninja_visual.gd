@@ -14,6 +14,7 @@ extends RefCounted
 
 const TOON := preload("res://assets/shaders/toon_time.gdshader")
 const OUTLINE := preload("res://assets/shaders/contorno.gdshader")
+const RAIO_X := preload("res://assets/shaders/raio_x.gdshader")
 
 const CIANO := Color(0.2, 0.95, 1.0)
 const MAGENTA := Color(1.0, 0.25, 0.85)
@@ -26,6 +27,7 @@ static var _pecas_cache := {}   # "estilo|r,g,b" -> ArrayMesh
 static var _corpo_cache := {}   # "textura|time|contorno" -> ShaderMaterial
 static var _neon_mat: StandardMaterial3D
 static var _outline_mat: ShaderMaterial
+static var _raio_x_cache := {}  # cor do time -> ShaderMaterial (silhueta atrás de parede)
 
 var _skin: Skin
 var _st_toon := SurfaceTool.new()
@@ -138,8 +140,7 @@ static func _material_corpo(tex: Texture2D, time: Color, contorno: bool) -> Shad
 		m.set_shader_parameter("textura", tex)
 		m.set_shader_parameter("cor_time", time)
 		m.set_shader_parameter("usar_marcas", true)
-		if contorno:
-			m.next_pass = _contorno()
+		m.next_pass = _raio_x(time, contorno)
 		_corpo_cache[key] = m
 	return m
 
@@ -149,6 +150,21 @@ static func _contorno() -> ShaderMaterial:
 		_outline_mat = ShaderMaterial.new()
 		_outline_mat.shader = OUTLINE
 	return _outline_mat
+
+
+## Passe de raio X (raio_x.gdshader), seguido do contorno de tinta se houver.
+static func _raio_x(time: Color, contorno: bool) -> ShaderMaterial:
+	var key := "%s|%s" % [time.to_html(false), contorno]
+	var m: ShaderMaterial = _raio_x_cache.get(key)
+	if m == null:
+		m = ShaderMaterial.new()
+		m.shader = RAIO_X
+		m.set_shader_parameter("cor_time", time)
+		m.render_priority = 1  # depois dos outros transparentes: fica por cima
+		if contorno:
+			m.next_pass = _contorno()
+		_raio_x_cache[key] = m
+	return m
 
 
 func _montar(estilo: String, time: Color, contorno: bool) -> ArrayMesh:
@@ -164,8 +180,7 @@ func _montar(estilo: String, time: Color, contorno: bool) -> ArrayMesh:
 		m.shader = TOON
 		m.set_shader_parameter("usar_cor_vertice", true)
 		m.set_shader_parameter("cor_time", time)
-		if contorno:
-			m.next_pass = _contorno()
+		m.next_pass = _raio_x(time, contorno)
 		mesh.surface_set_material(mesh.get_surface_count() - 1, m)
 	if _tem_neon:
 		_st_neon.commit(mesh)
@@ -175,6 +190,11 @@ func _montar(estilo: String, time: Color, contorno: bool) -> ArrayMesh:
 			_neon_mat.vertex_color_use_as_albedo = true
 			_neon_mat.vertex_color_is_srgb = true
 			_neon_mat.albedo_color = Color(2.0, 2.0, 2.0)
+			# Stencil 1 como o toon: o raio X não acende por cima do próprio boneco.
+			_neon_mat.stencil_mode = BaseMaterial3D.STENCIL_MODE_CUSTOM
+			_neon_mat.stencil_flags = BaseMaterial3D.STENCIL_FLAG_WRITE
+			_neon_mat.stencil_compare = BaseMaterial3D.STENCIL_COMPARE_ALWAYS
+			_neon_mat.stencil_reference = 1
 		mesh.surface_set_material(mesh.get_surface_count() - 1, _neon_mat)
 	return mesh
 
