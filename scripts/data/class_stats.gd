@@ -44,6 +44,13 @@ extends Resource
 ## Velocidade do empurrão no alvo (m/s). Distância empurrada = v²/80 (8 -> 0,8 m).
 @export var knockback := 6.0
 @export var projectile_speed := 30.0
+## Golpe corpo a corpo pelas costas ou pelo lado do alvo: dano × (1 + dano_costas).
+## O Samurai pune quem vira as costas (Ciclo 2.10). 0 = sem bônus.
+@export var dano_costas := 0.0
+## Dano do projétil cai com a distância percorrida: 100% até queda_dist_ini m e
+## queda_dano_min no alcance (attack_range). queda_dist_ini 0 = sem queda.
+@export var queda_dist_ini := 0.0
+@export var queda_dano_min := 1.0
 ## Visual e comportamento do projétil: bomba cai em parábola e explode em área.
 @export_enum("flecha", "magia", "shuriken", "bomba", "talisma", "fogo", "chi") var projetil := "flecha"
 ## Bomba: raio da explosão (m).

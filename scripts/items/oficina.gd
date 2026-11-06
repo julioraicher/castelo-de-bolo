@@ -82,6 +82,7 @@ func setup(game: Game, p_team: int, pos: Vector3, opcao: int, lista: Array[Class
 	_label.outline_modulate = Estilo.TINTA
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.position.y = _alt_label
+	_label.add_to_group("letreiro_perto")  # some de longe (Game._letreiros_perto)
 	add_child(_label)
 	_contador = ContadorMadeira.new()
 	add_child(_contador)
