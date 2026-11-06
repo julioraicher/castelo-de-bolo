@@ -24,6 +24,42 @@ acaba sem tudo construído. Ajuste moderado, só na madeira.
 - **O que testar**: numa partida normal, olhe quando a 1ª e a 2ª oficina ficam prontas e se
   aos ~5 min já há maquininha no nível 2 e torreta de pé. De Construtor, com a torreta
   esperando madeira e o depósito vazio, a seta deve mandar cortar em vez de ficar na torreta.
+## Ciclo 2.11c (2026-11-06), Jogabilidade: o tiro vai onde o jogador clica
+Bug do Julio: da ponte, clicando em cima do inimigo na margem, o tiro saía
+oblíquo para baixo e errava feio. Eram três problemas somados:
+- **Paredes invisíveis engoliam o tiro.** O parapeito da ponte é um colisor de
+  2,6 m desde o chão, e o rio tem travas invisíveis de 3 m (para ninguém
+  atravessar a nado): a flecha morria nelas a 2 m do arqueiro. Camada de física
+  nova `LAYER_PASSAGEM` (`MapProp.so_passagem`): parapeito da ponte, mureta da
+  muralha e travas do rio seguram quem ANDA, mas tiro, golpe e mira passam.
+  Agora dá para atirar da ponte para a margem e através do rio.
+- **Clicar no inimigo mirava no chão atrás dele.** O raio do mouse só via o
+  cenário; clicar no peito de alguém mirava o chão 1-2 m atrás (e num telhado,
+  20-30 graus de erro). Agora o raio vê os bonecos: clicou em cima de um
+  inimigo, o tiro mira NELE (`CameraRig.aim_na_tela`, `Unit.aim_unit`), em
+  qualquer altura. Aliados no caminho não roubam o clique.
+- **Todo projétil assumia que o alvo estava na mesma altura do atirador.**
+  Shuriken voava reto na altura do próprio peito (da ponte, passava por cima
+  de todo mundo); a bola do mago idem; o arco da Yumi caía no "chão" errado.
+  Agora os três miram a altura do ALVO (peito de quem foi clicado, ou o chão
+  sob o cursor), descendo e subindo ponte, muralha e telhado.
+- Assistência de mira: o limite de diferença de altura subiu de 2,5 m para
+  4 m (altura da muralha), já que o tiro agora alcança lá.
+- Teste de regra novo `_mira` (12 checagens: clique mira no inimigo na ponte,
+  rio, telhado e chão plano; o tiro acerta de verdade; travas continuam
+  contando como "chão alto" para bolo/enfeites).
+- Gerador do mapa: `torreta_spots` e `catapulta_spot` moravam só no .tres e
+  sumiam ao rodar `gerar_mapa_rio.gd`; agora estão no gerador também.
+- GIF antes/depois: `jogabilidade/17-mira-ponte-antes-depois.gif` (pasta do
+  projeto). Física do porquê: com a câmera a ~48° de inclinação, cada metro de
+  altura do alvo vira ~0,9 m de erro horizontal no ponto do raio no chão: por
+  isso clicar "em cima" errava mais em alvo alto.
+- **O que testar**: da ponte, clicar num inimigo na margem (Yumi, Ninja,
+  Kitsune): o tiro deve descer e acertar. Atirar através do rio fora da ponte.
+  De cima da muralha para baixo e do chão em alguém no telhado/muralha. No modo
+  teste (sandbox) vale igual: as pontes e o rio são os mesmos. Confira também
+  que ninguém atravessa o rio andando (as travas continuam segurando).
+
 ## Ciclo 2.11b (2026-11-06), Jogabilidade: chão da praça parou de piscar
 Julio, no modo teste: "o chão fica piscando, tremendo, parece uma sombra passando, pedaços
 somem e aparecem", em todas as qualidades, e para quando ele fica parado.
@@ -93,6 +129,7 @@ GIFs antigos gravados num canto ruim do mapa. Nada de jogabilidade nem de visual
   antes de pegar um chapéu? Jogue uma partida de Vermelho (Começo > Seu time): o placar,
   o minimapa e o "Roube a máscara" fazem sentido do outro lado? No Como jogar, algum clipe
   ficou confuso ou curto demais?
+
 
 
 ## Revisão 2.10r (2026-11-06), Jogabilidade: código revisado depois dos ciclos 2.9 a 2.10s

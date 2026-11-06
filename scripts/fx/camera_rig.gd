@@ -161,17 +161,45 @@ func _atualizar_recorte(delta: float) -> void:
 		RenderingServer.global_shader_parameter_set(RECORTE_GLOBAIS[i], v)
 
 
-## Ponto do chão (plano y = 0) sob o cursor do mouse.
+## Inimigo exatamente sob o cursor na última chamada de mouse_ground_point
+## (null = o cursor está sobre o cenário). Quem atira usa isso para acertar
+## quem foi clicado, em qualquer altura (ponte, muralha, telhado).
+var mira_unidade: Unit = null
+
+
+## Ponto do mundo sob o cursor do mouse.
 func mouse_ground_point() -> Vector3:
-	var mouse := get_viewport().get_mouse_position()
-	var origin := project_ray_origin(mouse)
-	var dir := project_ray_normal(mouse)
-	# Primeiro o que o mouse aponta de verdade (muralha, ponte, colina)...
-	var q := PhysicsRayQueryParameters3D.create(origin, origin + dir * 300.0, Config.LAYER_WORLD)
-	var hit := get_world_3d().direct_space_state.intersect_ray(q)
-	if not hit.is_empty():
+	return aim_na_tela(get_viewport().get_mouse_position())
+
+
+## Mesmo cálculo com um ponto de tela explícito (os testes usam direto).
+## O raio da câmera acha o que o mouse aponta DE VERDADE: um inimigo (clicar
+## nele mira nele, não no chão atrás), senão o cenário (muralha, ponte,
+## colina). Aliados e o próprio jogador não atrapalham o clique, e barreiras
+## só de passagem (parapeito, trava do rio) também não.
+func aim_na_tela(tela: Vector2) -> Vector3:
+	mira_unidade = null
+	var origin := project_ray_origin(tela)
+	var dir := project_ray_normal(tela)
+	var excluir: Array[RID] = []
+	if target is CollisionObject3D:
+		excluir.append((target as CollisionObject3D).get_rid())
+	for i in 6:  # pula aliados no caminho do raio
+		var q := PhysicsRayQueryParameters3D.create(origin, origin + dir * 300.0, Config.LAYER_WORLD | Config.LAYER_UNITS)
+		q.exclude = excluir
+		var hit := get_world_3d().direct_space_state.intersect_ray(q)
+		if hit.is_empty():
+			break
+		var col: Object = hit.collider
+		if col is Unit:
+			var u := col as Unit
+			if target is Unit and u.team == (target as Unit).team:
+				excluir.append(u.get_rid())
+				continue
+			mira_unidade = u
+			return u.global_position
 		return hit.position
-	# ...senão o plano do chão.
+	# Nada no caminho: o plano do chão.
 	if absf(dir.y) < 0.001:
 		return target.global_position if target else Vector3.ZERO
 	var t := -origin.y / dir.y

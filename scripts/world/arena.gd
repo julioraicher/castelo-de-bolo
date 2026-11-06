@@ -126,8 +126,11 @@ func random_cake_spot() -> Vector3:
 
 ## Altura do chão (ou do que estiver em cima dele) em (x, z), procurando de
 ## `from_y` para baixo. Mapas com muralhas, pontes e colinas não são planos.
-func ground_y(x: float, z: float, from_y := 30.0) -> float:
-	var q := PhysicsRayQueryParameters3D.create(Vector3(x, from_y, z), Vector3(x, -5.0, z), Config.LAYER_WORLD)
+## Por padrão as travas invisíveis (LAYER_PASSAGEM) contam como "chão alto"
+## (rio, mureta): bolo e enfeites continuam fora do rio. Para mirar/cair
+## tiro, passe Config.LAYER_WORLD e o raio acha o chão de verdade.
+func ground_y(x: float, z: float, from_y := 30.0, mask := Config.LAYER_WORLD | Config.LAYER_PASSAGEM) -> float:
+	var q := PhysicsRayQueryParameters3D.create(Vector3(x, from_y, z), Vector3(x, -5.0, z), mask)
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
 	return hit.position.y if not hit.is_empty() else 0.0
 
@@ -476,13 +479,14 @@ func _wall_walk(team: int, wa: Vector3, wb: Vector3, angle: float, length: float
 		for piece: Node3D in pieces:
 			piece.rotation.y += PI
 	var t := map.wall_thickness
+	# A mureta de cima só segura quem anda: tiro e mira passam por ela.
 	var blocos := [
-		[Vector3(length + t, map.wall_height, t), mid + Vector3(0, map.wall_height / 2.0, 0)],
-		[Vector3(length + t, map.wall_parapet, 0.4), mid + local_z * fora * (t / 2.0 - 0.2) + Vector3(0, map.wall_height + map.wall_parapet / 2.0, 0)],
+		[Vector3(length + t, map.wall_height, t), mid + Vector3(0, map.wall_height / 2.0, 0), Config.LAYER_WORLD],
+		[Vector3(length + t, map.wall_parapet, 0.4), mid + local_z * fora * (t / 2.0 - 0.2) + Vector3(0, map.wall_height + map.wall_parapet / 2.0, 0), Config.LAYER_PASSAGEM],
 	]
 	for bl in blocos:
 		var body := StaticBody3D.new()
-		body.collision_layer = Config.LAYER_WORLD
+		body.collision_layer = bl[2]
 		var shape := CollisionShape3D.new()
 		var box := BoxShape3D.new()
 		box.size = bl[0]
@@ -508,11 +512,11 @@ func _place_prop(prop: MapProp, pos: Vector3, face: float) -> void:
 	if prop.model != "":
 		_model_path(theme.model_path(prop.model), pos, prop.scale, rot)
 	if prop.collider == "cilindro":
-		_cylinder_collider(pos, prop.collider_radius, prop.collider_height)
+		_cylinder_collider(pos, prop.collider_radius, prop.collider_height, prop.so_passagem)
 	elif prop.collider == "caixa":
 		var b := Basis(Vector3.UP, rot)
 		var body := StaticBody3D.new()
-		body.collision_layer = Config.LAYER_WORLD
+		body.collision_layer = Config.LAYER_PASSAGEM if prop.so_passagem else Config.LAYER_WORLD
 		var shape := CollisionShape3D.new()
 		var box := BoxShape3D.new()
 		box.size = prop.collider_size
@@ -841,9 +845,9 @@ func _box_collider(center: Vector3, size: Vector3) -> void:
 	_nav.add_child(body)
 
 
-func _cylinder_collider(base: Vector3, radius: float, height: float) -> void:
+func _cylinder_collider(base: Vector3, radius: float, height: float, so_passagem := false) -> void:
 	var body := StaticBody3D.new()
-	body.collision_layer = Config.LAYER_WORLD
+	body.collision_layer = Config.LAYER_PASSAGEM if so_passagem else Config.LAYER_WORLD
 	var shape := CollisionShape3D.new()
 	var cyl := CylinderShape3D.new()
 	cyl.radius = radius
@@ -857,7 +861,7 @@ func _cylinder_collider(base: Vector3, radius: float, height: float) -> void:
 func _bake_navigation() -> void:
 	var nm := NavigationMesh.new()
 	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
-	nm.geometry_collision_mask = Config.LAYER_WORLD
+	nm.geometry_collision_mask = Config.LAYER_WORLD | Config.LAYER_PASSAGEM
 	nm.agent_radius = 1.0
 	nm.agent_height = 2.25
 	nm.agent_max_climb = 0.5

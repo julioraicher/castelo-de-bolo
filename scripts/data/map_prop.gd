@@ -19,6 +19,9 @@ extends Resource
 @export var collider_size := Vector3(2, 2, 2)
 @export var collider_rot := Vector3.ZERO
 @export var collider_offset := Vector3.ZERO
+## Colisor que só segura quem anda (parapeito, trava do rio): tiro e mira
+## do mouse passam por ele (camada LAYER_PASSAGEM em vez de LAYER_WORLD).
+@export var so_passagem := false
 ## Cria também a cópia espelhada em -x e/ou -z (mapas simétricos).
 @export var mirror_x := false
 @export var mirror_z := false
