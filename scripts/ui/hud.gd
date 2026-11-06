@@ -21,6 +21,10 @@ var _hp_text: Label
 var _power_bar: ProgressBar
 var _power_key: Control
 var _power_label: Label
+var _super_row: HBoxContainer
+var _super_bar: ProgressBar
+var _super_key: Control
+var _super_label: Label
 var _quick_row: HBoxContainer
 var _quick_bar: ProgressBar
 var _quick_label: Label
@@ -296,6 +300,17 @@ func _build_jogador(root: Control) -> void:
 	chi_row.add_child(_power_key)
 	_power_label = Estilo.rotulo("", Estilo.T_PEQUENO, Estilo.TEXTO, Estilo.NUMERO)
 	chi_row.add_child(_power_label)
+	# Super (R): barra dourada que só enche jogando bem.
+	_super_row = HBoxContainer.new()
+	_super_row.add_theme_constant_override("separation", 8)
+	v.add_child(_super_row)
+	_super_bar = Estilo.barra(Estilo.OURO, Vector2(170, 10))
+	_super_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_super_row.add_child(_super_bar)
+	_super_key = Estilo.tecla("R", Estilo.T_PEQUENO + 2)
+	_super_row.add_child(_super_key)
+	_super_label = Estilo.rotulo("", Estilo.T_PEQUENO, Estilo.TEXTO, Estilo.NUMERO)
+	_super_row.add_child(_super_label)
 	# Habilidade rápida (Q): barra de recarga + nome / segundos que faltam.
 	_quick_row = HBoxContainer.new()
 	_quick_row.add_theme_constant_override("separation", 8)
@@ -456,6 +471,18 @@ func update_state(game: Game) -> void:
 		_power_key.modulate = Color(1, 1, 1, 0.4)  # apagada: mostra qual tecla, sem chamar
 		_power_label.text = "Chi %d%%" % int(u.power) if tem_poder else ""
 		_cor_texto(_power_label, Estilo.TEXTO)
+	_super_row.visible = tem_poder
+	_super_bar.value = u.super_carga
+	if u.super_ready():
+		_super_bar.modulate = Color(1, 1, 1).lerp(Color(1.8, 1.6, 1.1), pulso)
+		_super_key.modulate = Color.WHITE
+		_super_label.text = u.super_nome() + "!"
+		_cor_texto(_super_label, Estilo.OURO)
+	else:
+		_super_bar.modulate = Color(1, 1, 1, 0.85)
+		_super_key.modulate = Color(1, 1, 1, 0.4)
+		_super_label.text = "Super %d%%" % int(u.super_carga)
+		_cor_texto(_super_label, Estilo.TEXTO)
 	_quick_row.visible = u.tem_rapida()
 	if _quick_row.visible:
 		_quick_bar.value = u.quick_ratio() * 100.0

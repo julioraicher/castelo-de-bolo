@@ -33,6 +33,8 @@ func tick(_delta: float) -> void:
 		unit.wants_quick = true
 	if Input.is_action_just_pressed("power"):
 		unit.wants_power = true
+	if Input.is_action_just_pressed("super"):
+		unit.wants_super = true
 	if Input.is_action_just_pressed("dodge"):
 		unit.wants_dodge = true
 	interact_pressed = Input.is_action_just_pressed("interact")

@@ -51,6 +51,27 @@ extends Resource
 ## Multiplica a recarga de toda habilidade rápida (Q). 1,0 = número do .tres.
 @export var rapida_cooldown_mult := 0.7
 
+@export_group("Super (R)")
+## Barra dourada, 0 a 100, que NÃO enche com o tempo: só jogando bem.
+## Fontes: dano causado × super_por_dano, abate, item pego, espírito
+## entregue na máscara e captura. Não perde nada ao morrer.
+@export var super_por_dano := 0.12
+@export var super_por_abate := 22.0
+@export var super_por_item := 12.0
+@export var super_por_espirito := 30.0
+@export var super_por_captura := 50.0
+## Super "maior": o poder E da classe em versão gigante.
+@export var super_mult_raio := 1.6
+@export var super_mult_valor := 2.0
+@export var super_mult_duracao := 1.6
+## Super "sombra" (Samurai): some por sombra_tempo s, anda sombra_vel × mais
+## rápido e o primeiro golpe dá sombra_golpe_mult × dano (e encerra a sombra).
+## Bots inimigos só enxergam quem está na sombra a até sombra_visto m.
+@export var sombra_tempo := 3.5
+@export var sombra_vel := 1.35
+@export var sombra_golpe_mult := 2.5
+@export var sombra_visto := 2.0
+
 @export_group("Combo (3º golpe)")
 ## Corpo a corpo: o golpe final é vertical e pega só esta fração do arco normal
 ## (mais dano, menos área). O dano vem de combo_finisher_mult da classe.

@@ -30,6 +30,7 @@ func _ready() -> void:
 	await _alma()
 	_ferradura()
 	_lote_2_7()
+	_super()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -70,6 +71,48 @@ func _lote_2_7() -> void:
 	var p = game._spot_perto_da_briga()
 	_check(p == null or p is Vector3, "item perto da briga: posição inválida")
 	_check(cfg.final_arco_mult > 0.0 and cfg.final_arco_mult < 1.0, "golpe final vertical deveria ser mais estreito")
+
+
+## Super (R): enche só jogando, cada classe solta o seu, a sombra esconde
+## dos bots e o "maior" volta aos números normais depois.
+func _super() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var u = _alvo()
+	if u == null:
+		_check(false, "super: faltou boneco")
+		return
+	var inimigo = null
+	for x in game.units:
+		if x.alive and x.team != u.team:
+			inimigo = x
+			break
+	var classes: Array = cfg.hat_classes() + cfg.oficina_classes + cfg.magos_opostos
+	for c in classes:
+		u.set_class(c)
+		u.super_carga = 0.0
+		u._tick_super(1.0)
+		_check(u.super_carga == 0.0, "super: não deveria encher com o tempo")
+		u.add_super(30.0)
+		_check(_perto(u.super_carga, 30.0, 0.01), "super: add_super deveria somar")
+		u.super_carga = 100.0
+		u._dodge_t = 0.0
+		u._equip_t = 0.0
+		u._spin_t = 0.0
+		u._use_super()
+		_check(u.super_carga == 0.0, "super %s: não saiu" % c.id)
+		if c.super_tipo == "sombra":
+			_check(u._sombra_t > 0.0, "super sombra: deveria ficar invisível")
+			if inimigo:
+				var p0: Vector3 = u.global_position
+				u.global_position = inimigo.global_position + Vector3(cfg.sombra_visto + 3.0, 0, 0)
+				_check(u.na_sombra_para(inimigo), "super sombra: bot inimigo a %.0f m não deveria ver" % (cfg.sombra_visto + 3.0))
+				u.global_position = p0
+			u._fim_sombra()
+		else:
+			_check(_perto(u.stats.power_radius, c.power_radius * cfg.super_mult_raio, 0.01), "super %s: raio deveria crescer" % c.id)
+			u._tick_super(999.0)
+			_check(u.stats == c, "super %s: stats deveria voltar ao normal" % c.id)
+		u.reset_physics_interpolation()
 
 
 func _check(ok: bool, nome: String) -> void:

@@ -112,6 +112,12 @@ extends Resource
 @export var power_duration := 2.0
 ## bencao: escudo que absorve dano, por aliado.
 @export var power_shield := 0.0
+@export_group("Super (R)")
+## maior = o poder E em versão gigante (raio, dano e duração maiores);
+## sombra = invisível por pouco tempo, mais rápido, golpe de surpresa.
+@export_enum("maior", "sombra") var super_tipo := "maior"
+## Nome no HUD. Vazio = "Super " + power_name.
+@export var super_nome := ""
 
 @export_group("Cura (clérigo)")
 @export var heal_amount := 0.0
