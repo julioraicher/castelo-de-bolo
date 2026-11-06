@@ -4,6 +4,26 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.12 (2026-11-06), Jogabilidade: construções mais baratas
+Pedido do Julio: "muito demorado para começar a aparecerem coisas legais", às vezes a partida
+acaba sem tudo construído. Ajuste moderado, só na madeira.
+- **Custos** (`config/game_config.tres`), ~28% a menos no total por time (58 → 42):
+  oficina 6 → 4, posto da raposa (torreta) 4 → 3, maquininha nível 2 8 → 6, níveis do
+  caminho dos magos 6/8/10 → 4/6/8. Tempo de obra, coleta e bônus não mudaram. Como jogar
+  e Classes leem os números do config, então já mostram os custos novos.
+- **Construtor parado na torreta** (`Game.torreta_para_construir`, bug achado medindo):
+  com a obra da torreta já no teto da madeira entregue e o estoque vazio, o bot ficava de
+  pé ao lado dela esperando (até 40 s seguidos); a seta-guia do jogador também apontava
+  para lá. Agora ele só vai se houver o que fazer (estoque ou obra atrás do teto); senão
+  volta a cortar. Teste de regra novo em `_torretas` (228/228).
+- **Medida** (10 min simulados, bots, 1 partida antes e 3 depois): 1ª oficina 48 s → ~35 s;
+  2ª oficina (caminho dos magos) 244-514 s → 133-189 s; 3ª oficina, que antes não saía em
+  10 min, em 236-288 s. Achado que ficou para o Julio decidir: os bots gastam a madeira
+  reerguendo a torreta derrubada antes de subir o mago (nenhum nível 3 em 10 min).
+- Modo teste: nada a ligar; lá tudo já nasce pronto e o F sobe o mago sem madeira.
+- **O que testar**: numa partida normal, olhe quando a 1ª e a 2ª oficina ficam prontas e se
+  aos ~5 min já há maquininha no nível 2 e torreta de pé. De Construtor, com a torreta
+  esperando madeira e o depósito vazio, a seta deve mandar cortar em vez de ficar na torreta.
 ## Ciclo 2.11b (2026-11-06), Jogabilidade: chão da praça parou de piscar
 Julio, no modo teste: "o chão fica piscando, tremendo, parece uma sombra passando, pedaços
 somem e aparecem", em todas as qualidades, e para quando ele fica parado.
