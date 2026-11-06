@@ -11,6 +11,9 @@ const LAYER_WORLD := 1
 const LAYER_UNITS := 2
 const LAYER_ITEMS := 4
 const LAYER_PROJECTILES := 8
+## Barreira que só segura quem ANDA (parapeito da ponte, mureta da muralha,
+## trava do rio): tiro, mira do mouse e golpes passam por cima dela.
+const LAYER_PASSAGEM := 16
 
 ## Lista de controles mostrada na tela "Como jogar" e no menu de pausa.
 ## Se mudar uma tecla em _setup_input(), atualize aqui também.

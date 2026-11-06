@@ -34,6 +34,7 @@ func _ready() -> void:
 	_torretas()
 	_catapulta()
 	_equilibrio_2_10()
+	await _mira()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -237,6 +238,88 @@ func _equilibrio_2_10() -> void:
 	var ninja = load("res://config/classes/arqueiro.tres")
 	_check(ronin.move_speed < sam.move_speed and ninja.move_speed > sam.move_speed, "velocidades: Ninja > Samurai > Ronin")
 	_check(ronin.max_hp > sam.max_hp and sam.max_hp > ninja.max_hp, "vidas: Ronin > Samurai > Ninja")
+
+
+## Mira 2.11: o tiro vai onde o jogador clica, em qualquer altura. Clicar
+## num inimigo mira NELE (não no chão atrás dele), e parapeito da ponte /
+## travas do rio seguram quem anda mas deixam tiro e mira passarem.
+func _mira() -> void:
+	var Cfg = get_node("/root/Config")
+	# A trava do rio continua "chão alto" para bolo/enfeites (máscara padrão),
+	# mas o raio do tiro (LAYER_WORLD) passa por ela e acha a água.
+	_check(game.arena.ground_y(0.0, 14.0) > 2.5, "trava do rio deveria contar como chão alto por padrão")
+	_check(game.arena.ground_y(0.0, 14.0, 30.0, Cfg.LAYER_WORLD) < 0.3, "o raio do tiro deveria atravessar a trava do rio")
+	var a = game.player
+	var e = null
+	for u in game.units:
+		if u.alive and u != a and u.team != a.team:
+			e = u
+			break
+	if a == null or e == null:
+		_check(false, "mira: faltou boneco")
+		return
+	var brains := [a.brain, e.brain]
+	a.brain = null
+	e.brain = null
+	for u in [a, e]:
+		u.move_intent = Vector3.ZERO
+		u.wants_attack = false
+	var cam = game.camera
+	cam.set_process(false)
+	var alvo_cam = cam.target
+	# [nome, atirador, inimigo, classe]: ponte (o bug do Julio), rio (trava
+	# invisível no caminho) e chão plano (controle).
+	var casos := [
+		["da ponte para a margem (arco)", Vector3(2, 0, 0), Vector3(6.5, 0, 8), "arqueiro_yumi"],
+		["da ponte para a margem (reto)", Vector3(2, 0, 0), Vector3(6.5, 0, 8), "arqueiro"],
+		["atravessando o rio", Vector3(8, 0, 22), Vector3(-8, 0, 22), "arqueiro_yumi"],
+		["chão plano", Vector3(14, 0, 0), Vector3(20, 0, 3), "arqueiro"],
+	]
+	for c in casos:
+		var p0: Vector3 = c[1]
+		var p1: Vector3 = c[2]
+		p0.y = game.arena.ground_y(p0.x, p0.z) + 0.1
+		p1.y = game.arena.ground_y(p1.x, p1.z) + 0.1
+		a.set_class(load("res://config/classes/%s.tres" % c[3]))
+		a.global_position = p0
+		a.reset_physics_interpolation()
+		e.global_position = p1
+		e.reset_physics_interpolation()
+		e.hp = e.max_hp()
+		e._shield = 0.0
+		e._blocking = false
+		e._dodge_t = 0.0
+		cam.target = a
+		for i in 3:
+			await get_tree().physics_frame
+		cam.snap()
+		# "Clique" no peito do inimigo.
+		var tela: Vector2 = cam.unproject_position(e.global_position + Vector3(0, 1.0, 0))
+		var aim: Vector3 = cam.aim_na_tela(tela)
+		_check(cam.mira_unidade == e, "%s: clicar no inimigo deveria mirar nele" % c[0])
+		_check(aim.distance_to(e.global_position) < 0.5, "%s: ponto de mira deveria ser onde o inimigo está" % c[0])
+		a.aim_unit = cam.mira_unidade
+		var to: Vector3 = aim - a.global_position
+		to.y = 0
+		a.aim_dir = to.normalized()
+		a.aim_point = aim
+		var hp0: float = e.hp
+		a._attack_cd = 0.0
+		var p = a._shoot_arrow(1.0, 1.0)
+		for i in 180:
+			# Os dois ficam parados enquanto o tiro voa.
+			a.global_position = p0
+			a.velocity = Vector3.ZERO
+			e.global_position = p1
+			e.velocity = Vector3.ZERO
+			if not is_instance_valid(p):
+				break
+			await get_tree().physics_frame
+		_check(e.hp < hp0, "%s: o tiro deveria acertar quem foi clicado" % c[0])
+	a.brain = brains[0]
+	e.brain = brains[1]
+	cam.target = alvo_cam
+	cam.set_process(true)
 
 
 func _check(ok: bool, nome: String) -> void:
