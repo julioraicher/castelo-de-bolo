@@ -1628,6 +1628,12 @@ func _gerar_mapa_rio() -> void:
 		m.pilha_spot = Vector2(3.0, 10.0)
 	if "bamboo_spots" in m:
 		m.bamboo_spots = PackedVector2Array([Vector2(6.8, -16.2), Vector2(8.4, -16.9), Vector2(7.2, 16.4), Vector2(-6.8, -16.2), Vector2(-8.4, -16.9), Vector2(-7.2, 16.4)])
+	# Torretas (2.9) e catapulta (2.10) ficavam só no .tres e o gerador os
+	# apagava ao rodar de novo: agora moram aqui também.
+	if "torreta_spots" in m:
+		m.torreta_spots = PackedVector2Array([Vector2(29, -8), Vector2(29, 8)])
+	if "catapulta_spot" in m:
+		m.catapulta_spot = Vector2(-9, -12)
 	m.wall_height = ALT_MURO
 	m.wall_thickness = ESP_MURO
 	m.wall_parapet = 1.0
@@ -1662,7 +1668,9 @@ func _gerar_mapa_rio() -> void:
 	for faixa in faixas:
 		var zc: float = (faixa[0] + faixa[1]) / 2.0
 		var comp: float = faixa[1] - faixa[0]
-		_props.append(_caixa_col(Vector3(0, 0, zc), 0.0, Vector3(RIO_MEIA * 2 + 1.0, faixa[2], comp), Vector3(0, faixa[2] / 2.0, 0)))
+		var trava := _caixa_col(Vector3(0, 0, zc), 0.0, Vector3(RIO_MEIA * 2 + 1.0, faixa[2], comp), Vector3(0, faixa[2] / 2.0, 0))
+		trava.so_passagem = true  # segura quem anda; flecha e mira passam
+		_props.append(trava)
 	# Pontes: rampas, tabuleiro e parapeitos.
 	for b in [[0.0, 8.0, "ponte_grande.scn"], [-zl, lat, "ponte_lateral.scn"], [zl, lat, "ponte_lateral.scn"]]:
 		var z: float = b[0]
@@ -1672,7 +1680,9 @@ func _gerar_mapa_rio() -> void:
 		_props.append(_rampa_col(Vector3(9, 0, z), 180.0, 9.0 - RIO_MEIA, ALT_PONTE, larg))
 		_props.append(_caixa_col(Vector3(0, 0, z), 0.0, Vector3(RIO_MEIA * 2 + 0.2, 0.5, larg), Vector3(0, ALT_PONTE - 0.25, 0)))
 		for s in [-1.0, 1.0]:
-			_props.append(_caixa_col(Vector3(0, 0, z), 0.0, Vector3(18.0, 2.6, 0.3), Vector3(0, 1.3, s * (larg / 2.0 - 0.12))))
+			var parapeito := _caixa_col(Vector3(0, 0, z), 0.0, Vector3(18.0, 2.6, 0.3), Vector3(0, 1.3, s * (larg / 2.0 - 0.12)))
+			parapeito.so_passagem = true  # ninguém cai da ponte, mas o tiro passa
+			_props.append(parapeito)
 	_props.append(_p("cachoeira.scn", Vector3(0, 0, -meia_z - 1.5)))
 	_props.append(_p("cachoeira.scn", Vector3(0, 0, meia_z + 1.5), 180.0))
 	for b in [[1.5, -12.0, 90.0], [-1.5, 13.0, -90.0], [1.4, -40.0, 90.0], [-1.4, 40.0, -90.0]]:

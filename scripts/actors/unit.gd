@@ -46,6 +46,9 @@ var carried_tora: Tora = null
 var move_intent := Vector3.ZERO
 var aim_dir := Vector3.FORWARD
 var aim_point := Vector3.ZERO
+## Inimigo exatamente sob o cursor (só o jogador): o tiro mira NELE,
+## inclusive na vertical (atirar da ponte/muralha para baixo, e vice-versa).
+var aim_unit: Unit = null
 var wants_attack := false
 var wants_block := false
 var wants_quick := false  # Q: habilidade rápida (recarga curta)
@@ -151,7 +154,7 @@ func setup(p_game: Game, p_team: int, p_is_player: bool, start_class: ClassStats
 	team = p_team
 	is_player = p_is_player
 	collision_layer = Config.LAYER_UNITS
-	collision_mask = Config.LAYER_WORLD
+	collision_mask = Config.LAYER_WORLD | Config.LAYER_PASSAGEM
 	var shape := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.6
@@ -792,10 +795,18 @@ func _attack_hit() -> void:
 				if finisher and p:
 					_poder_visual(p)
 		"healer":
-			var alvo := _aim_assist(dir)
+			var clicado := _mira_valida()
+			var alvo := clicado if clicado else _aim_assist(dir)
+			var to_a := Vector3.ZERO
 			if alvo:
-				dir = _assisted_dir(dir, alvo)
+				to_a = alvo.global_position - global_position
+				to_a.y = 0
+				dir = to_a.normalized() if (clicado and to_a.length() > 0.2) else _assisted_dir(dir, alvo)
 			var p := game.spawn_projectile(self, global_position + Vector3(0, 1.6, 0) + dir * 0.9, dir, stats.projetil)
+			# A bola reta também desce/sobe até o peito do alvo (ponte, muralha).
+			var alvo_y := (alvo.global_position.y if alvo else aim_point.y) + Projectile.TARGET_HEIGHT
+			var d_reta := to_a.length() if alvo else clampf(Vector2(aim_point.x - global_position.x, aim_point.z - global_position.z).length(), 6.0, stats.attack_range * 1.4)
+			p.velocity.y = (alvo_y - p.position.y) / maxf(d_reta / p.velocity.length(), 0.1)
 			if finisher:
 				# 3º tiro: bola maior que explode onde bater (dano em área).
 				p.damage *= mult
@@ -835,7 +846,8 @@ func _aim_assist(dir: Vector3) -> Unit:
 		if not other.alive or other.team == team:
 			continue
 		var to := other.global_position - global_position
-		if absf(to.y) > 2.5:
+		# Até a altura da muralha (3,2 m): agora o tiro desce/sobe até o alvo.
+		if absf(to.y) > 4.0:
 			continue
 		to.y = 0
 		if to.length() > stats.attack_range * 1.4 or to.length() < 0.5:
@@ -860,23 +872,41 @@ func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZE
 	var dir := aim_dir.normalized() if dir_override == Vector3.ZERO else dir_override
 	var to := aim_point - global_position
 	to.y = 0
-	var mirado := _aim_assist(dir) if dir_override == Vector3.ZERO else null
+	# Clicar em cima de um inimigo mira nele por inteiro (direção, distância e
+	# altura); senão, a assistência leve gira parte do caminho até o mais perto.
+	var clicado := _mira_valida() if dir_override == Vector3.ZERO else null
+	var mirado := clicado if clicado else (_aim_assist(dir) if dir_override == Vector3.ZERO else null)
 	if mirado:
-		dir = _assisted_dir(dir, mirado)
-		# O arco cai na distância do alvo (senão a flecha passa por cima).
 		to = mirado.global_position - global_position
 		to.y = 0
+		dir = to.normalized() if (clicado and to.length() > 0.2) else _assisted_dir(dir, mirado)
 	var p := game.spawn_projectile(self, global_position + Vector3(0, 1.4, 0) + dir * 0.9, dir, stats.projetil)
 	p.damage *= dmg_mult
 	_tiro_lento_t = Config.cfg.atirador_lento_t
 	p.velocity *= speed_mult
 	var dist := clampf(to.length(), 6.0 if stats.projetil != "bomba" else 3.0, stats.attack_range * 1.4 * speed_mult)
+	# Altura do ALVO (não a do atirador): da ponte/muralha o tiro desce junto.
+	var chao_alvo := mirado.global_position.y if mirado else aim_point.y
 	if stats.projetil == "shuriken":
-		p.velocity.y = (global_position.y + Projectile.TARGET_HEIGHT - p.position.y) / maxf(dist / p.velocity.length(), 0.1)  # reto, na altura do peito
+		# Reto, cruzando a altura do peito do alvo na distância mirada.
+		p.velocity.y = (chao_alvo + Projectile.TARGET_HEIGHT - p.position.y) / maxf(dist / p.velocity.length(), 0.1)
 	else:
-		var alvo := global_position + to.normalized() * dist
-		p.aim_ballistic(dist, game.arena.ground_y(alvo.x, alvo.z, maxf(global_position.y, aim_point.y) + 3.0))
+		if mirado == null:
+			# Sem alvo clicado: cai no chão de verdade sob o cursor (sem contar
+			# travas invisíveis de passagem).
+			var alvo := global_position + to.normalized() * dist
+			chao_alvo = game.arena.ground_y(alvo.x, alvo.z, maxf(global_position.y, aim_point.y) + 3.0, Config.LAYER_WORLD)
+		p.aim_ballistic(dist, chao_alvo)
 	return p
+
+
+## O inimigo clicado, se ainda vale como alvo (vivo e dentro do alcance longo).
+func _mira_valida() -> Unit:
+	if not is_player or aim_unit == null or not is_instance_valid(aim_unit) or not aim_unit.alive:
+		return null
+	var to := aim_unit.global_position - global_position
+	to.y = 0
+	return aim_unit if to.length() <= stats.attack_range * 1.4 else null
 
 
 ## Projétil de poder (Leque): rastro e impacto de nível 2, sem mudar o dano.
