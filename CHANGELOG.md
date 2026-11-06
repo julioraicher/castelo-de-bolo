@@ -4,6 +4,41 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.11 (2026-11-06), Interface: menu de jogo de verdade
+Pedido do Julio: menus, Como jogar e configurações estavam desatualizados, apertados e com
+GIFs antigos gravados num canto ruim do mapa. Nada de jogabilidade nem de visual da partida muda.
+- **Menu único com navegação lateral** (`scripts/ui/menus.gd`): uma placa só, botões à
+  esquerda e o conteúdo à direita. Tela inicial: JOGAR, Começo, Como jogar, Classes,
+  Controles, Configurações, Sair. Pausa (Esc): Continuar e Reiniciar no lugar de JOGAR, com
+  as mesmas seções. Esc volta ao Começo na tela inicial e continua a partida na pausa.
+- **Começo**: resumo do jogo, 3 dicas, e as escolhas de **Partida** (normal 8x8 ou modo
+  teste) e **Seu time** (Azul ou Vermelho). Valem ao apertar JOGAR; se mudarem, a cena
+  recarrega e já começa jogando. `--time=vermelho` e `?time=vermelho` na web fazem o mesmo
+  (`Game.time_jogador`; a dificuldade dos bots segue o time inimigo do jogador).
+- **Como jogar** (`tutorial.gd`): 6 abas (Objetivo, Madeira, Oficinas, Torreta, Catapulta,
+  Luz e Sombra), clipe grande (500 px) e no máximo 3 cartões curtos por aba. A antiga aba
+  Classes virou seção própria.
+- **Classes** (`pagina_classes.gd`, novo): lista por origem (pátio, oficina, caminho dos
+  magos) e ficha com clipe da classe (3 golpes, Q, E e R), papel, barras de vida, velocidade
+  e dano, e o que Q, E e R fazem (dicionário por `skill`/`power`: classe nova = ficha nova).
+- **Controles**: grade solta, uma tecla por linha, mais a tabela Q/E/R de cada classe.
+- **Configurações** em três grupos (Som, Vídeo, Partida) com a opção nova "Abrir Como jogar
+  ao iniciar".
+- **Clipes regravados** (`scripts/ui/clipe_cenas.gd` + `tools/clipes_tutorial.sh`): cenas
+  roteirizadas com câmera fixa perto do boneco, sem HUD e sem bots soltos (roubo da máscara,
+  combo/defesa/esquiva, corte da árvore, chapéu na maquininha, escudo contra a torreta, voo
+  da catapulta, Luz e Sombra) e uma vitrine por classe no mapa leve do modo teste. 15 clipes,
+  400x225, 7,5 quadros/s, ~12 MB. As flags antigas `--clipe-cena/--clipe-ini` saíram.
+- `--tutorial=DIR` agora fotografa todas as seções do menu. Print: `interface/07-menu-novo.jpg`.
+- Mexe fora da interface, de leve: `game.gd` (time do jogador, gravador de clipes),
+  `bot_brain.gd`/`unit.gd` (dificuldade por `game.time_jogador` em vez de `TEAM_BLUE`).
+- Modo teste: tudo igual, e agora dá para jogar de Vermelho por ele (Começo > Seu time).
+- **O que testar**: abra Esc no meio da partida: acha as teclas e as configurações mais
+  rápido que antes? Na seção Classes, os clipes e as fichas dizem o que você queria saber
+  antes de pegar um chapéu? Jogue uma partida de Vermelho (Começo > Seu time): o placar,
+  o minimapa e o "Roube a máscara" fazem sentido do outro lado? No Como jogar, algum clipe
+  ficou confuso ou curto demais?
+
 
 ## Revisão 2.10r (2026-11-06), Jogabilidade: código revisado depois dos ciclos 2.9 a 2.10s
 Só limpeza; **nada muda na jogabilidade nem no visual** (testes de regra e partida

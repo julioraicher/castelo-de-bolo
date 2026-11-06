@@ -1,6 +1,9 @@
 # Controles e regras
 
-Os mesmos controles aparecem no jogo: na tela inicial e em **Esc > Controles**.
+Os mesmos controles aparecem no jogo em **Controles** (tela inicial e Esc). O menu tem
+cinco seções: Começo (modo normal ou teste e o seu time, Azul ou Vermelho), Como jogar
+(clipes por tema), Classes (ficha de cada classe com clipe, números e Q/E/R), Controles
+e Configurações.
 
 ## Teclado e mouse
 
@@ -15,7 +18,7 @@ Os mesmos controles aparecem no jogo: na tela inicial e em **Esc > Controles**.
 | **R** | **SUPER**, quando a barra de ouro enche (só enche jogando: dano, abates, itens, espíritos e captura). Samurai: Passo da Sombra (some 3,5 s, mais rápido, golpe de surpresa x2,5). Outras classes: o poder do E em versão gigante |
 | **Espaço** ou **Shift** | esquivar: rolamento rápido, com recarga |
 | **F** | pegar um chapéu (perto do pedestal); pegar ou soltar a máscara; perto de um terreno vazio, trocar qual oficina construir; **perto da catapulta da base, subir** (F de novo lança: a barra de força vai e volta e o minimapa mostra onde cai) |
-| **Esc** ou **P** | pausar e abrir Controles / Configurações |
+| **Esc** ou **P** | pausar e abrir o menu (Como jogar, Classes, Controles, Configurações) |
 | **F5** | reiniciar a partida |
 | **F11** | tela cheia (liga/desliga) |
 | **Enter** | começar (na tela inicial) |
@@ -36,17 +39,21 @@ Os mesmos controles aparecem no jogo: na tela inicial e em **Esc > Controles**.
 
 ## Configurações (Esc > Configurações)
 
+Em três grupos: Som, Vídeo e Partida.
+
 | Opção | O que faz |
 |---|---|
-| Volume da música / dos efeitos | 0 a 100% (no zero, muta) |
+| Música / Efeitos | 0 a 100% (no zero, muta) |
 | Dificuldade dos inimigos | Fácil: bots vermelhos reagem ~2x mais devagar e batem 30% menos. Difícil: reagem ~30% mais rápido e batem 5% mais |
 | Qualidade gráfica | Alta: sombras completas e antisserrilhado. Média (padrão no navegador): sombras leves. Baixa: sem sombras, 3D em 75% da resolução. Mínima: 3D em 50% |
-| Qualidade automática | se o FPS ficar abaixo de 40 no começo, o jogo baixa a qualidade sozinho |
+| Baixar sozinho se travar | se o FPS ficar abaixo de 40 no começo, o jogo baixa a qualidade sozinho |
 | Tema do mapa | Festival ao Sol, Crepúsculo, Floresta Oni ou Templo ao Luar; a partida recomeça. O mapa é um só: Rio das Lanternas |
 | Mostrar FPS | mostra quadros por segundo no canto superior esquerdo (60 é o ideal) |
-| Tela cheia | também pela tecla F. No navegador, em tela cheia, segure Esc ou aperte F para sair |
+| Tela cheia | também pela tecla F11. No navegador, em tela cheia, segure Esc ou aperte F para sair |
 | Tremor da câmera | liga/desliga o "chacoalhar" nos impactos |
 | Números de dano | liga/desliga os números que sobem dos golpes |
+| Abrir Como jogar ao iniciar | mostra o Como jogar na próxima vez que o jogo abrir |
+| Seu time (Começo) | Azul ou Vermelho, na partida normal e no modo teste; `--time=vermelho` ou `?time=vermelho` na web |
 
 As escolhas ficam salvas (no navegador, no próprio navegador).
 

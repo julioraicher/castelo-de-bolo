@@ -40,12 +40,17 @@ func tocar(sim: bool) -> void:
 		for i in MAX_QUADROS:
 			if not ResourceLoader.exists(_quadro(i)):
 				break
-			_quadros.append(load(_quadro(i)))
+			var tex := load(_quadro(i)) as Texture2D
+			if tex:
+				_quadros.append(tex)
 		if not _quadros.is_empty():
 			texture = _quadros[0]
 	set_process(sim and _quadros.size() > 1)
 
 
 func _process(delta: float) -> void:
+	if _quadros.size() < 2:
+		set_process(false)
+		return
 	_t += delta
 	texture = _quadros[int(_t * fps) % _quadros.size()]

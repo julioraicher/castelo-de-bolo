@@ -59,7 +59,7 @@ func tick(delta: float) -> void:
 	_think_t -= delta
 	if _think_t <= 0.0:
 		_think_t = Config.cfg.bot_think_interval
-		if unit.team != Config.TEAM_BLUE:
+		if unit.team != game.time_jogador:
 			_think_t *= Settings.bot_reaction_mult()  # dificuldade só afeta os inimigos
 		_think()
 	_steer(delta)
@@ -78,7 +78,7 @@ func _tatica(delta: float) -> void:
 	_tatica_t -= delta
 	if _tatica_t > 0.0 or not unit.alive:
 		return
-	_tatica_t = TATICA_INTERVALO * (Settings.bot_reaction_mult() if unit.team != Config.TEAM_BLUE else 1.0)
+	_tatica_t = TATICA_INTERVALO * (Settings.bot_reaction_mult() if unit.team != game.time_jogador else 1.0)
 	var me := unit.global_position
 	var perto := _nearest_enemy(6.0)
 	# Bloqueio: inimigo de corpo a corpo golpeando de frente, a até 3 m.
@@ -125,7 +125,7 @@ func _tatica(delta: float) -> void:
 ## isso; sem isso a sonda superestima quem atira (revisão 2026-11-06).
 func _esquiva_projetil(me: Vector3) -> Vector3:
 	var chance := Config.cfg.bot_esquiva_projetil
-	if unit.team != Config.TEAM_BLUE:
+	if unit.team != game.time_jogador:
 		chance /= Settings.bot_reaction_mult()
 	if chance <= 0.0 or unit.carried_princess:
 		return Vector3.ZERO

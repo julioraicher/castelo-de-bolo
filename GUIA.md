@@ -87,7 +87,8 @@ online, no futuro, é trocar só o cérebro.
 | Bots mais fáceis | `config/game_config.tres` | aumente `bot_think_interval` (ou só use Esc > Configurações > Dificuldade) |
 | Câmera mais longe | `config/game_config.tres` | `camera_offset` |
 | Trocar teclas | `scripts/autoload/config.gd` | `_setup_input()` e o texto em `CONTROLS` (aparece no menu e no [CONTROLES.md](CONTROLES.md)) |
-| Nova opção de configuração | `scripts/autoload/settings.gd` + `scripts/ui/menus.gd` | variável + linha em `_settings_form()` |
+| Nova opção de configuração | `scripts/autoload/settings.gd` + `scripts/ui/menus.gd` | variável + `_linha(...)` em `_secao_config()` |
+| Clipe novo no Como jogar ou ficha de classe | `scripts/ui/clipe_cenas.gd` + `tools/clipes_tutorial.sh` | cena `_prep_X`/`_cena_X`; quadros em `assets/tutorial/X/` |
 | Mapa diferente | `config/mapas/rio_lanternas.tres` (gerado por `tools/gerar_mapa_rio.gd`) | tamanho, muralhas, torres e `middle_props` |
 | Classe nova (ex.: Espadachim) | copie `config/classes/guerreiro.tres`, mude nome, `visible_meshes` (ex.: `2H_Sword`), números e `hat_style`; adicione em `game_config.tres > hat_class_list` e um ponto em `mapas/rio_lanternas.tres > hat_spots` |
 | Clima novo (ex.: neve) | copie `config/temas/luar.tres`, mude cores/modelos e adicione em `game_config.tres > themes` |
