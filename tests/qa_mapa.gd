@@ -11,7 +11,9 @@ extends Node
 ##    raio câmera -> objeto. Bloqueado em mais de 40% = escondido. Só vê
 ##    colisores (telhado sem colisão não conta).
 ## 3. Bot preso: TEMPO_PRESOS s de partida; quem quer andar e sai menos de
-##    0,3 m em 3 s.
+##    0,3 m em 3 s (pulado com --qa-rapido).
+## 4. Faces sobrepostas (z-fighting, "chão piscando"): tests/qa_sobrepostos.gd.
+##    Com --sandbox confere o mapa leve do modo teste.
 ## Pontos vizinhos viram um problema só (células de CELULA m).
 ## QA_DBG=1 no ambiente imprime cada amostra de bot preso (nome, classe, objetivo).
 
@@ -36,7 +38,11 @@ func _ready() -> void:
 	_passagem()
 	_escondidos()
 	print("QA: passagem e escondidos em %d ms" % (Time.get_ticks_msec() - t0))
-	await _presos()
+	t0 = Time.get_ticks_msec()
+	_sobrepostos()
+	print("QA: faces sobrepostas em %d ms" % (Time.get_ticks_msec() - t0))
+	if not "--qa-rapido" in OS.get_cmdline_user_args():
+		await _presos()
 	await _salvar()
 	get_tree().quit(0)
 
@@ -137,6 +143,11 @@ func _escondidos() -> void:
 			_add("escondido: %s (%d/%d vistas bloqueadas)" % [a[0], bloq, n], a[1], 50)
 
 
+func _sobrepostos() -> void:
+	for p in load("res://tests/qa_sobrepostos.gd").achar(game):
+		_add("faces sobrepostas (pisca com a câmera andando): %.2f m², y=%.2f, %s" % [p[1], p[0].y, p[2]], p[0], 40)
+
+
 func _presos() -> void:
 	var antes := {}
 	var presos := []
@@ -167,6 +178,10 @@ func _salvar() -> void:
 		linhas.append("%d. %s  x=%.0f z=%.0f" % [i + 1, p[0], p[1].x, p[1].z])
 	var texto := "\n".join(linhas)
 	print(texto)
+	if OS.has_environment("QA_DBG"):
+		for i in range(MAX_LINHAS - 1, _problemas.size()):
+			var p = _problemas[i]
+			print("%d. %s  x=%.0f z=%.0f" % [i + 1, p[0], p[1].x, p[1].z])
 	DirAccess.make_dir_recursive_absolute(dir)
 	var f := FileAccess.open(dir.path_join("qa_mapa.txt"), FileAccess.WRITE)
 	if f:

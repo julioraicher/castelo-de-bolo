@@ -66,6 +66,13 @@ float sulco(float f, float w, float dens) {
 	return 1.0 - smoothstep(w - dens, w + dens, d);
 }
 
+// Tom por peça (tábua, telha, pedra) é um degrau na emenda; quando a emenda tem
+// menos de ~2 px, o degrau pisca com a câmera andando (2026-11-06). `borda` é
+// 0 em cima da emenda e 1 a `dens` células dela: o degrau vira rampa de ~2 px.
+float emenda(float d, float dens) {
+	return smoothstep(0.0, 2.0 * dens + 0.01, d);
+}
+
 // Distância às bordas de células de Voronoi (pedras com rejunte).
 vec3 voronoi(vec2 p) {
 	vec2 i = floor(p);
@@ -127,9 +134,11 @@ void fragment() {
 		float fila = floor(t);
 		float u = (deitado ? v_mundo.x : lado) / 1.6 + hash(vec2(fila, 3.1));
 		float dt = fwidth(t);
+		float du = fwidth(u);
 		m *= 1.0 - 0.45 * sulco(fract(t), 0.06, dt);
-		m *= 1.0 - 0.4 * sulco(fract(u), 0.015, fwidth(u));
-		m *= 0.88 + 0.24 * hash(vec2(fila, floor(u)));
+		m *= 1.0 - 0.4 * sulco(fract(u), 0.015, du);
+		float b1 = emenda(min(fract(t), 1.0 - fract(t)), dt) * emenda(min(fract(u), 1.0 - fract(u)), du);
+		m *= 1.0 + (0.24 * hash(vec2(fila, floor(u))) - 0.12) * b1;
 		m *= 0.92 + 0.16 * ruido(vec2(u * 6.0, fila));           // veio largo
 	} else if (id == 2) {
 		// Telhas: fileiras pela altura, meia-cana desencontrada, sombra em arco embaixo.
@@ -144,16 +153,26 @@ void fragment() {
 		float sombra = 1.0 - smoothstep(arco - dens, arco + dens, fr);
 		m *= 1.0 - some * (0.5 * sombra + 0.3 * sulco(fc, 0.04, fwidth(c)));
 		m *= 1.0 + some * 0.18 * smoothstep(0.6, 0.95, fr) * sin(3.14159 * fc);   // brilho no lombo
-		m *= 0.9 + 0.2 * hash(vec2(floor(c), fila));
+		float b2 = emenda(min(fc, 1.0 - fc), fwidth(c)) * emenda(min(fr, 1.0 - fr), fwidth(t));
+		m *= 1.0 + (0.2 * hash(vec2(floor(c), fila)) - 0.1) * b2;
 	} else if (id == 3) {
 		// Pedras: células de ~35 cm, rejunte escuro, tom e musgo por pedra.
+		// O rejunte tem ~2 cm; com a câmera do jogo (28 m, 720p) um pixel do chão
+		// mede ~3,5 cm, então a linha fica abaixo de Nyquist e cada quadro cai num
+		// ponto diferente dela: o chão "pisca" ao andar (2026-11-06). `dens` =
+		// células por pixel (soma dos dois eixos): a linha alarga por baixo e por
+		// cima até ~1,5 px e o desenho inteiro some antes de virar chuvisco (`some`,
+		// como nas telhas). Perto (paredes) dens é pequeno e nada muda.
 		vec3 v = voronoi(q / 0.35);
-		float dens = fwidth(q.x / 0.35) * 1.5;
-		m *= mix(0.45, 1.0, smoothstep(0.05, 0.12 + dens, v.x));
+		float dens = fwidth(q.x / 0.35) + fwidth(q.y / 0.35);
+		float some = clamp(1.4 - dens * 3.5, 0.0, 1.0);
+		float rejunte = 1.0 - smoothstep(0.05 - dens, 0.12 + dens, v.x);
+		m *= 1.0 - 0.55 * some * rejunte;
 		float h = hash(v.yz);
-		m *= 0.82 + 0.3 * h;
-		cor = mix(cor, cor * vec3(0.75, 1.05, 0.6), step(0.78, h) * 0.6);
-		m *= 0.9 + 0.2 * smoothstep(0.1, 0.4, v.x);               // pedra abaulada
+		float tom = mix(0.4, 1.0, some) * emenda(v.x, dens);        // tom por pedra: rampa na emenda, some longe
+		m *= 1.0 + (0.3 * h - 0.08) * tom;
+		cor = mix(cor, cor * vec3(0.75, 1.05, 0.6), step(0.78, h) * 0.6 * tom);
+		m *= 1.0 + 0.2 * some * (smoothstep(0.1, 0.4, v.x) - 0.5);  // pedra abaulada
 	} else if (id == 4) {
 		// Reboco: manchas de umidade, sujeira escorrendo de cima e rodapé encardido.
 		float mancha = ruido(q * vec2(1.2, 0.6) + 5.0);
@@ -175,7 +194,13 @@ void light() {
 	float ndl = dot(NORMAL, LIGHT);
 	float w = clamp((ndl + 0.3) / 1.3, 0.0, 1.0) * ATTENUATION;
 	float suave = smoothstep(0.0, 1.0, w);
-	float luz = mix(suave, floor(suave * 3.0 + 0.5) / 3.0, faixas);
+	// Faixas de luz com degrau de 20% de largura (não um corte seco): a sombra do
+	// sol (PSSM) é reencaixada na câmera a cada quadro e a penumbra oscila um
+	// pouco ao andar; com o corte seco a oscilação virava uma faixa inteira do
+	// chão trocando de tom (2026-11-06).
+	float b = suave * 3.0 + 0.5;
+	float faixa = (floor(b) + smoothstep(0.4, 0.6, fract(b)) - 0.5) / 3.0;
+	float luz = mix(suave, faixa, faixas);
 	DIFFUSE_LIGHT += LIGHT_COLOR * luz;
 	if (LIGHT_IS_DIRECTIONAL) {
 		DIFFUSE_LIGHT += cor_sombra * (1.0 - luz) * forca_sombra;

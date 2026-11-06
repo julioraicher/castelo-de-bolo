@@ -27,6 +27,9 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3
 # Regravar os clipes dos menus (xvfb): tools/clipes_tutorial.sh [cena|classe:id ...]
 # QA do mapa (passagem, escondidos da câmera, bots presos): qa_mapa.txt (+ .jpg com tela)
 godot --headless --path . --fixed-fps 60 -- --qa-mapa=DIR
+# Chão/objeto piscando ao andar (z-fighting, desenho fino): pisca.jpg com o que muda em vermelho
+xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
+  --rendering-method gl_compatibility --audio-driver Dummy -- --autoplay --sandbox --pisca=DIR
 # Sons: trocar/ouvir/gerar efeitos = skill .claude/skills/efeitos-sonoros (tools/sons/)
 # Equilíbrio por classe (8 partidas, mortes/abates por classe): tools/sonda_equilibrio.sh
 # Exportar só os dados, sem templates, e inspecionar como no jogo publicado:

@@ -1861,6 +1861,8 @@ func _praca_patio() -> void:
 		var ang := atan2(-(alvo - de).z, (alvo - de).x)
 		for k in n:
 			var p: Vector3 = de.lerp(alvo, (k + 2.6) / (n + 2.6))
+			if (p - c).length() < 7.0 + 1.6:  # ainda em cima da praça: a laje ficaria no
+				continue  # mesmo plano do disco e os dois brigariam na tela (chão piscando, 2026-11-06)
 			_caixa(Vector3(1.0, 0.06, 3.0), p + Vector3(0, 0.03, 0), Vector3(0, rad_to_deg(ang), 0), laje.darkened(0.04 * (k % 2)))
 	for a in range(-174, 175, 6):
 		if absi(a) < 36:
