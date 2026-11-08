@@ -154,6 +154,12 @@ func _draw() -> void:
 	for u in game.units:
 		if u.alive and u.team == me.team and u != me:
 			draw_circle(_p(u.global_position), 2.4, Config.team_color(u.team).lightened(0.35))
+		elif u.team == me.team and u != me and game.reanimar and game.reanimar.pode_reanimar(u):
+			# Aliado caído que ainda dá para reanimar: cruz na cor do time.
+			var cc := _p(u.global_position)
+			var ct := Config.team_color(u.team).lightened(0.35)
+			draw_line(cc + Vector2(-3.5, 0), cc + Vector2(3.5, 0), ct, 2.0)
+			draw_line(cc + Vector2(0, -3.5), cc + Vector2(0, 3.5), ct, 2.0)
 	if me.alive:
 		var c := _p(me.global_position)
 		var f := Vector2(me.aim_dir.x, me.aim_dir.z)

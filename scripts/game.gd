@@ -40,6 +40,8 @@ var guia: GuiaConstrutor
 var minimapa: Minimapa
 ## Placar estilo Battlefield (Tab): estatística e pontos de cada boneco.
 var placar: Placar
+## Reanimar aliados caídos (Ciclo 2.18): regra + chama de espírito.
+var reanimar: Reanimar
 var placar_tela: PlacarTela
 var placar_print := false
 ## Tempo de partida mostrado no placar (para no fim; `_time` segue para efeitos).
@@ -139,6 +141,7 @@ var _perf_censo := true
 ## --perf: microssegundos gastos por seção neste quadro (Unit soma aqui).
 var perf_secoes := {}
 var _testes := false  # --testes: roda tests/regras.gd e sai
+var _prancha_rean_dir := ""  # --prancha-reanimar=DIR: fotos da reanimação (prancha)
 var _qa_dir := ""
 var _shot_times: Array[float] = [4.0, 15.0, 30.0, 50.0, 75.0]
 
@@ -210,6 +213,12 @@ func _ready() -> void:
 			Settings.theme = int(arg.trim_prefix("--tema="))
 		elif arg == "--testes":
 			_testes = true
+		elif arg.begins_with("--prancha-reanimar="):
+			_prancha_rean_dir = arg.trim_prefix("--prancha-reanimar=")
+			sandbox_pedido = true
+			_autoplay = true
+			Settings.auto_quality = false
+			Settings.quality = 2
 		elif arg.begins_with("--qa-mapa="):
 			_qa_dir = arg.trim_prefix("--qa-mapa=")
 			_autoplay = true
@@ -285,6 +294,7 @@ func _ready() -> void:
 	if _variacoes:
 		start_classes = cfg.hat_classes() + cfg.oficina_classes + cfg.magos_opostos
 	placar = Placar.new(cfg)
+	reanimar = Reanimar.new(self)
 	for team in 2:
 		for i in cfg.units_per_team:
 			var is_player := team == time_jogador and i == 0
@@ -402,6 +412,8 @@ func _ready() -> void:
 		menus.show_start()
 	if _tutorial_dir != "":
 		_prints_tutorial.call_deferred(menus)
+	if _prancha_rean_dir != "":
+		_prancha_reanimar.call_deferred()
 	if _clipe_dir != "":
 		var cc := ClipeCenas.new()
 		cc.game = self
@@ -454,6 +466,23 @@ func _montar_sandbox() -> void:
 	for t in torretas:
 		t.concluir_ja()
 	_montando_sandbox = false
+	_aliado_de_treino()
+
+
+## Modo teste: um aliado sem cérebro, caído na frente do portão, para treinar
+## a reanimação (Reanimar.treino: não renasce sozinho e cai de novo 4 s
+## depois de levantar).
+func _aliado_de_treino() -> void:
+	var u := Unit.new()
+	u.name = "%s_treino" % Config.TEAM_NAMES[time_jogador]
+	add_child(u)
+	u.setup(self, time_jogador, false, load("res://config/classes/guerreiro.tres"))
+	u.global_position = arena.gate_spot[time_jogador] + arena.forward(time_jogador) * 13.0
+	u.reset_physics_interpolation()
+	u.died.connect(_on_unit_died)
+	placar.registrar(u, time_jogador, 1, false)
+	units.append(u)
+	reanimar.treino(u)
 
 
 func _on_started() -> void:
@@ -636,6 +665,7 @@ func _physics_process(delta: float) -> void:
 		perf_secoes["regras"] = perf_secoes.get("regras", 0) + Time.get_ticks_usec() - t0
 	else:
 		_rules()
+	reanimar.tick(delta)
 	# O HUD não precisa de 60 atualizações por segundo: 20 Hz bastam ao olho
 	# e cada atualização mexe em vários textos e barras.
 	_hud_t -= delta
@@ -643,6 +673,61 @@ func _physics_process(delta: float) -> void:
 		_hud_t = 0.05
 		hud.update_state(self)
 		minimapa.alvo_guia = guia.alvo
+
+
+## --prancha-reanimar=DIR (modo teste, xvfb): o jogador sem cérebro reanima o
+## aliado de treino num roteiro fixo e cada momento vira um JPG em DIR:
+## caído esperando, arrastando, Kitsune abençoando, levantando, câmera do jogo.
+func _prancha_reanimar() -> void:
+	DirAccess.make_dir_recursive_absolute(_prancha_rean_dir)
+	var c := reanimar.boneco_treino
+	var p := player
+	p.brain = null
+	p.move_intent = Vector3.ZERO
+	p.wants_attack = false
+	p.wants_block = false
+	var off0: Vector3 = Config.cfg.camera_offset
+	Config.cfg.camera_offset = off0 * 0.42
+	p.set_class(load("res://config/classes/guerreiro.tres"))
+	p.global_position = c.global_position + Vector3(-1.3, 0, 0.5)
+	p.reset_physics_interpolation()
+	p.aim_dir = Vector3(1, 0, 0)
+	camera.snap()
+	var foto := func(nome: String) -> void:
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_jpg("%s/%s.jpg" % [_prancha_rean_dir, nome], 0.88)
+	await get_tree().create_timer(2.2).timeout
+	await foto.call("1-caido-esperando")
+	p.wants_reanimar = true
+	await get_tree().create_timer(0.2).timeout
+	p.move_intent = Vector3(-1, 0, -0.3).normalized()
+	await get_tree().create_timer(1.2).timeout
+	await foto.call("2-arrastando")
+	await get_tree().create_timer(1.25).timeout
+	p.move_intent = Vector3.ZERO
+	var limite := 0
+	while not c.alive and limite < 400:
+		limite += 1
+		await get_tree().physics_frame
+	p.wants_reanimar = false
+	await get_tree().create_timer(0.3).timeout
+	await foto.call("4-levantando")
+	limite = 0
+	while c.alive and limite < 400:
+		limite += 1
+		await get_tree().physics_frame
+	p.set_class(load("res://config/classes/kitsune_luz.tres"))
+	p.global_position = c.global_position + Vector3(-1.2, 0, 0.6)
+	p.reset_physics_interpolation()
+	await get_tree().create_timer(1.2).timeout
+	p.wants_reanimar = true
+	await get_tree().create_timer(1.0).timeout
+	await foto.call("3-kitsune-abencoando")
+	Config.cfg.camera_offset = off0
+	camera.snap()
+	await get_tree().create_timer(0.25).timeout
+	await foto.call("5-camera-do-jogo")
+	get_tree().quit()
 
 
 func _log(msg: String) -> void:
@@ -851,7 +936,8 @@ func _rules() -> void:
 		if not u.alive or u.em_voo:
 			continue
 		var pos := u.global_position
-		var wants_interact := u.is_player and player_brain != null and player_brain.interact_pressed
+		var wants_interact := u.is_player and player_brain != null and player_brain.interact_pressed \
+				and not reanimar.segura_f(u)
 
 		# Catapulta do time: o jogador sobe com F; o bot que a reservou sobe e lança.
 		var cat := catapulta_do_time(u.team)
@@ -1023,6 +1109,11 @@ func _rules() -> void:
 			"CONSTRUA":
 				hint = "Tem madeira no depósito: siga a seta e construa (oficina ou torreta)"
 
+	if player.alive and player.reanimando == null and not player.carried_princess and player.carried_tora == null:
+		var caido := reanimar.corpo_perto(player, Config.cfg.reanimar_raio)
+		if caido:
+			hint = "[F] segure para reanimar %s%s" % [caido.stats.display_name,
+					"" if player.eh_mago() else "  ·  ande para arrastar"]
 	if player.alive and player.carried_princess:
 		hint = "Leve-a até o SEU castelo!  ([F] soltar)"
 	elif player.has_cake:
@@ -1635,6 +1726,7 @@ func _on_player_class_changed(u: Unit) -> void:
 func _on_unit_died(u: Unit, killer: Unit) -> void:
 	if _equilibrio:
 		print("ABATE %s %s" % [u.stats.id, killer.stats.id if killer else "nada"])
+	reanimar.ao_cair(u)
 	if killer and killer.team != u.team:
 		_alma_de_abate(u, killer.team)
 	var assist := placar.abate(u, killer if killer and killer.team != u.team else null, _time)
@@ -1645,7 +1737,7 @@ func _on_unit_died(u: Unit, killer: Unit) -> void:
 	elif killer == player and u.team != player.team:
 		abates_jogador += 1
 	if u == player:
-		hud.show_big("Você caiu! Voltando como recruta...", Color(1, 0.6, 0.6), 1.8)
+		hud.show_big("Você caiu!" if reanimar.pode_reanimar(u) else "Você caiu! Voltando como recruta...", Color(1, 0.6, 0.6), 1.8)
 	elif killer == player:
 		# Abate do jogador: o espírito sobe, a tela dá um tranco e o tempo engasga.
 		Fx.burst(self, u.global_position + Vector3(0, 1, 0), Color(1, 0.9, 0.3), 16, 7.0)

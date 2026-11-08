@@ -308,6 +308,34 @@ extends Resource
 @export var bot_esquiva_projetil := 0.35
 
 
+@export_group("Reanimar (Ciclo 2.18)")
+## Aliado caído fica no chão enquanto conta a espera de renascer (estilo
+## Battlefield 6): um aliado vivo colado nele segura [F] por reanimar_tempo s
+## e ele levanta ali, com a classe que tinha. Regra em scripts/reanimar.gd.
+@export var reanimar_ligado := true
+@export var reanimar_tempo := 3.0
+## Distância (m) do corpo para começar a reanimar.
+@export var reanimar_raio := 1.6
+## Quem reanima (fora as Kitsunes) arrasta o corpo: anda a esta fração da
+## velocidade, puxando-o numa "corda" de reanimar_corda m.
+@export var reanimar_arrasto_vel := 0.45
+@export var reanimar_corda := 1.1
+## Kitsunes reanimam reanimar_mago_mult × mais rápido (paradas, abençoando),
+## subindo até reanimar_mago_mult_max no nível máximo do caminho dos magos.
+@export var reanimar_mago_mult := 1.5
+@export var reanimar_mago_mult_max := 2.0
+## Levanta com esta fração da vida e fica intocável por reanimar_intocavel s.
+@export_range(0.05, 1.0) var reanimar_vida := 0.5
+@export var reanimar_intocavel := 2.0
+## Relógio de quem está caído esperando ajuda (< 1 = janela maior). Segurar
+## [F] caído desiste e volta ao ritmo normal (renasce no castelo, recruta).
+@export var reanimar_ritmo_espera := 0.65
+## Bot caído espera (ritmo acima) só com aliado vivo a até este raio (m).
+@export var reanimar_bot_espera_raio := 20.0
+## Bots vão reanimar quem caiu a até este raio (m); Kitsunes, o dobro.
+@export var reanimar_bot_raio := 10.0
+
+
 @export_group("Placar (Tab)")
 ## Pontos do placar estilo Battlefield (Tab, e no fim da partida): cada
 ## estatística do boneco vezes o peso daqui. O nome é sempre "pts_" + o campo
@@ -332,6 +360,8 @@ extends Resource
 @export var pts_roubos := 100.0
 ## Devolver a própria máscara caída (quem estava ao lado quando ela voltou).
 @export var pts_resgates := 75.0
+## Aliado caído reanimado (Ciclo 2.18).
+@export var pts_reanimar := 60.0
 
 
 func hat_classes() -> Array[ClassStats]:

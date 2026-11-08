@@ -15,6 +15,8 @@ extends Node
 ##     pegar; senão cortar a adulta mais perto que nenhum aliado está
 ##     cortando, preferindo o bosque seguro. Inimigo a 5 m: larga a tarefa.
 ##  6. Item no chão bem perto e ninguém colado -> desviar para pegar.
+##     Aliado caído por perto (Reanimar) -> ir até ele e segurar [F]; a classe
+##     comum arrasta o corpo para longe do inimigo, a Kitsune abençoa parada.
 ##  7. Aliado carregando a princesa inimiga (até 45 m) -> escoltar: só briga
 ##     com quem chega a 8 m dele.
 ##  8. Inimigo perto -> lutar.
@@ -51,6 +53,7 @@ var _parado_n := 0
 var _planta: Planta = null
 var _tatica_t := randf() * 0.2
 var _bloqueio_t := 0.0  # segurando o bloqueio por mais estes segundos
+var _reanimar_alvo: Unit = null  # aliado caído que este bot foi reanimar
 
 const TATICA_INTERVALO := 0.2
 
@@ -64,6 +67,7 @@ func tick(delta: float) -> void:
 		_think()
 	_steer(delta)
 	_combat()
+	_reanimar()
 	_tatica(delta)
 	_check_stuck(delta)
 
@@ -76,7 +80,7 @@ func _tatica(delta: float) -> void:
 		unit.wants_block = true
 		unit.wants_attack = false
 	_tatica_t -= delta
-	if _tatica_t > 0.0 or not unit.alive:
+	if _tatica_t > 0.0 or not unit.alive or unit.reanimando:
 		return
 	_tatica_t = TATICA_INTERVALO * (Settings.bot_reaction_mult() if unit.team != game.time_jogador else 1.0)
 	var me := unit.global_position
@@ -174,6 +178,7 @@ func _check_stuck(delta: float) -> void:
 func _think() -> void:
 	_target = null
 	_torreta = null
+	_reanimar_alvo = null
 	if _unstuck_t > 0.0:
 		_goal = _unstuck_goal
 		return
@@ -225,6 +230,15 @@ func _think() -> void:
 	if item and _nearest_enemy(5.0) == null and (item.kind != "pocao" or unit.hp_ratio() < 0.8):
 		_goal = item.global_position
 		return
+
+	# Aliado caído por perto: reanimar vale mais que a briga do lado (sem
+	# inimigo colado em quem vai; o canal não para com dano, então é aposta).
+	if game.reanimar and _nearest_enemy(3.5) == null:
+		var caido: Unit = game.reanimar.corpo_para_bot(unit)
+		if caido:
+			_reanimar_alvo = caido
+			_goal = caido.global_position
+			return
 
 	# Torreta inimiga de pé por perto e ninguém colado: derrubar é o jeito de
 	# passar (quiz 2026-11-06). Com pouca vida, não insiste.
@@ -306,7 +320,30 @@ func _think() -> void:
 
 ## Kitsunes (e as variações): ficam atrás dos guerreiros.
 func eh_mago() -> bool:
-	return unit.stats.id == &"kitsune" or unit.stats.classe_base == &"kitsune"
+	return unit.eh_mago()
+
+
+## Reanimando: colado no corpo segura [F]; quem não é mago puxa o corpo para
+## longe do inimigo mais perto (ou de volta para o portão de casa).
+func _reanimar() -> void:
+	unit.wants_reanimar = false
+	if _reanimar_alvo == null or not is_instance_valid(_reanimar_alvo) or not game.reanimar.pode_reanimar(_reanimar_alvo):
+		_reanimar_alvo = null
+		return
+	var me := unit.global_position
+	var c := _reanimar_alvo
+	if unit.reanimando != c and me.distance_to(c.global_position) > Config.cfg.reanimar_raio - 0.2:
+		return  # ainda chegando (o _steer leva até o _goal)
+	unit.wants_reanimar = true
+	unit.wants_attack = false
+	unit.wants_block = false
+	if eh_mago() or unit.reanimando != c:
+		unit.move_intent = Vector3.ZERO
+		return
+	var inimigo := _nearest_enemy(12.0)
+	var fuga := (me - inimigo.global_position) if inimigo else (game.arena.gate_spot[unit.team] - me)
+	fuga.y = 0.0
+	unit.move_intent = fuga.normalized() if fuga.length() > 1.0 else Vector3.ZERO
 
 
 ## Aliado vivo, não mago nem lenhador, mais adiantado rumo ao inimigo.

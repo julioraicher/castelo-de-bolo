@@ -9,7 +9,7 @@ extends RefCounted
 
 ## Ordem das colunas e das contas. Campo novo = entrada aqui + `pts_<campo>`
 ## no GameConfig + chamada de somar() onde a coisa acontece.
-const CAMPOS := ["abates", "assist", "mortes", "dano", "cura", "almas", "madeira", "obra_s", "capturas", "roubos", "resgates"]
+const CAMPOS := ["abates", "assist", "mortes", "dano", "cura", "almas", "madeira", "obra_s", "capturas", "roubos", "resgates", "reanimar"]
 
 ## Nomes dos bots (o jogador é "Você"). Curtos para caber na coluna.
 const NOMES := ["Hayato", "Kenji", "Sora", "Rin", "Daichi", "Yuki", "Haru", "Kaito",
