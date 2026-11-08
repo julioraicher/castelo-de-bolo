@@ -562,6 +562,30 @@ func _reanimar() -> void:
 	_check(b.hp == hp0, "reanimar: recém-reanimado deveria estar intocável")
 	b._intocavel_t = 0.0
 	a.wants_reanimar = false
+	# Desistir no meio da reanimação (bug do Julio 2026-11-08: levantava mesmo
+	# assim): ninguém mais reanima e renasce rápido, mas não na hora.
+	b.take_damage(b.hp + 50.0, inimigo, Vector3.RIGHT)
+	var espera: float = b._respawn_t
+	a.global_position = b.global_position + Vector3(1.0, 0, 0)
+	a.wants_reanimar = true
+	r.tick(0.05)
+	_check(a.reanimando == b, "reanimar: deveria começar de novo")
+	_check(r.ritmo(b) == 0.0, "reanimar: sendo reanimado, o relógio do caído deveria parar")
+	r.desistir(b)
+	_check(b.desistiu and not r.pode_reanimar(b), "desistir: deveria travar a reanimação")
+	_check(a.reanimando == null and b.reanimador == null, "desistir: deveria soltar quem estava reanimando")
+	var rapido: float = maxf(espera * cfg.reanimar_desistir_frac, cfg.reanimar_desistir_min)
+	_check(b._respawn_t <= rapido + 0.01, "desistir: deveria renascer em reanimar_desistir_frac da espera (%.1f > %.1f)" % [b._respawn_t, rapido])
+	_check(b._respawn_t >= minf(espera, cfg.reanimar_desistir_min) - 0.01, "desistir: não pode ser instantâneo (mínimo reanimar_desistir_min)")
+	for i in 40:
+		a.wants_reanimar = true
+		r.tick(0.1)
+	_check(not b.alive, "desistir: aliado não deveria conseguir levantar quem desistiu")
+	r.levantar(b, a)
+	_check(not b.alive, "desistir: levantar() direto também não deveria valer")
+	a.wants_reanimar = false
+	b._respawn()
+	_check(b.alive and not b.desistiu, "desistir: renascer deveria limpar o estado")
 	# Kitsune: começa em reanimar_mago_mult (nível baixo).
 	a.set_class(load("res://config/classes/kitsune.tres"))
 	_check(a.eh_mago(), "reanimar: kitsune deveria contar como mago")

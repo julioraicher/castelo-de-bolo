@@ -21,7 +21,9 @@ extends RefCounted
 const CHAMA := preload("res://assets/shaders/chama_espirito.gdshader")
 const ANEL := preload("res://assets/shaders/anel_reanimar.gdshader")
 ## Segurar [F] caído por este tempo = desistir e ir para o castelo.
-const DESISTIR_T := 0.8
+const DESISTIR_T := 0.5
+## Bot caído sem aliado por perto desiste depois deste tempo no chão.
+const BOT_DESISTE_T := 1.5
 
 var game: Game
 var cfg: GameConfig
@@ -88,14 +90,21 @@ func ritmo(corpo: Unit) -> float:
 	if not pode_reanimar(corpo):
 		return 1.0
 	if corpo.reanimador != null:
-		return cfg.reanimar_ritmo_espera  # sendo reanimado: não acaba no meio
-	if corpo.brain is BotBrain:
-		# Bot espera só se tem aliado por perto que possa vir.
-		for u in game.units:
-			if u.alive and u.team == corpo.team and u.global_position.distance_to(corpo.global_position) < cfg.reanimar_bot_espera_raio:
-				return cfg.reanimar_ritmo_espera
-		return 1.0
+		return 0.0  # sendo reanimado: o relógio para (não renasce no meio do resgate)
 	return cfg.reanimar_ritmo_espera
+
+
+## Bot caído sem aliado vivo por perto (ninguém vai vir) desiste, como o
+## jogador faria segurando [F].
+func _bot_desiste(corpo: Unit) -> bool:
+	if not (corpo.brain is BotBrain) or corpo == boneco_treino or corpo.reanimador:
+		return false
+	if _espera_total.get(corpo, 0.0) - corpo._respawn_t < BOT_DESISTE_T * cfg.reanimar_ritmo_espera:
+		return false
+	for u in game.units:
+		if u.alive and u.team == corpo.team and u.global_position.distance_to(corpo.global_position) < cfg.reanimar_bot_espera_raio:
+			return false
+	return true
 
 
 ## Multiplicador de velocidade de quem reanima (Kitsunes mais rápidas).
@@ -142,6 +151,8 @@ func tick(delta: float) -> void:
 		_efeito_t = 0.15
 	for u in game.units:
 		if not u.alive:
+			if pode_reanimar(u) and _bot_desiste(u):
+				desistir(u)
 			continue
 		if u.reanimando:
 			var c := u.reanimando
@@ -199,6 +210,8 @@ func _arrastar(u: Unit, c: Unit) -> void:
 
 func levantar(c: Unit, quem: Unit) -> void:
 	parar(quem)
+	if not pode_reanimar(c):
+		return  # desistiu ou renasceu no mesmo quadro: não levanta dois
 	c.levantar_reanimado()
 	if c == boneco_treino:
 		_treino_t = 4.0
@@ -231,6 +244,7 @@ func _tick_jogador_caido(delta: float) -> void:
 	if p == null or game.hud == null:
 		return
 	if p.alive:
+		_desistir_t = 0.0
 		if p.reanimando:
 			game.hud.reanimar_barra(p.reanimando.reanimar_prog, "REANIMANDO  ·  solte [F] para parar", Color(1.0, 0.8, 0.35))
 		else:
@@ -239,27 +253,39 @@ func _tick_jogador_caido(delta: float) -> void:
 	if p.brain is BotBrain:
 		game.hud.reanimar_barra(-1.0, "", Color.WHITE)
 		return
-	if pode_reanimar(p) and Input.is_action_pressed("interact"):
+	# Segurar [F] caído desiste, mesmo no meio de uma reanimação (a escolha é sua).
+	if not p.desistiu and Input.is_action_pressed("interact"):
 		_desistir_t += delta
 		if _desistir_t >= DESISTIR_T:
+			_desistir_t = 0.0
 			desistir(p)
+			game.hud.show_big("Desistiu: renascendo no castelo", Color(0.85, 0.82, 0.8), 1.0)
 	else:
 		_desistir_t = 0.0
 	var total: float = _espera_total.get(p, 1.0)
-	if p.reanimador:
-		game.hud.reanimar_barra(p.reanimar_prog, "%s TE REANIMANDO" % _nome(p.reanimador).to_upper(), Color(1.0, 0.8, 0.35))
-	elif pode_reanimar(p):
-		var txt := "CAÍDO  ·  espere um aliado  ·  segure [F] para renascer no castelo"
-		if _desistir_t > 0.0:
-			txt = "DESISTINDO... %d%%" % int(100.0 * _desistir_t / DESISTIR_T)
-		game.hud.reanimar_barra(clampf(p._respawn_t / total, 0.0, 1.0), txt, Config.team_color(p.team).lightened(0.3))
+	if _desistir_t > 0.0:
+		# O progresso do desistir aparece por cima de tudo (antes sumia atrás do "te reanimando").
+		game.hud.reanimar_barra(_desistir_t / DESISTIR_T, "DESISTINDO... continue segurando [F]", Color(0.9, 0.45, 0.4))
+	elif p.desistiu or not pode_reanimar(p):
+		game.hud.reanimar_barra(clampf(p._respawn_t / total, 0.0, 1.0),
+				"RENASCENDO NO CASTELO EM %d s" % ceili(p._respawn_t), Color(0.75, 0.72, 0.7))
+	elif p.reanimador:
+		game.hud.reanimar_barra(p.reanimar_prog, "%s TE REANIMANDO  ·  segure [F] para desistir" % _nome(p.reanimador).to_upper(), Color(1.0, 0.8, 0.35))
 	else:
-		game.hud.reanimar_barra(clampf(p._respawn_t / total, 0.0, 1.0), "RENASCENDO NO CASTELO", Color(0.75, 0.72, 0.7))
+		game.hud.reanimar_barra(clampf(p._respawn_t / total, 0.0, 1.0),
+				"CAÍDO  ·  espere um aliado  ·  segure [F] para renascer rápido no castelo", Config.team_color(p.team).lightened(0.3))
 
 
 ## Desiste da ajuda: a chama apaga e o relógio volta ao normal.
 func desistir(c: Unit) -> void:
+	if c.alive or c.desistiu:
+		return
 	c.desistiu = true
+	# Renasce bem mais rápido, mas ainda fora da briga (vantagem do inimigo):
+	# reanimar_desistir_frac da espera da morte, nunca menos que reanimar_desistir_min.
+	var total: float = _espera_total.get(c, c._respawn_t)
+	c._respawn_t = minf(c._respawn_t, maxf(total * cfg.reanimar_desistir_frac, cfg.reanimar_desistir_min))
+	_espera_total[c] = maxf(c._respawn_t, 0.01)
 	if c.reanimador:
 		parar(c.reanimador)
 	if _visuais.has(c):
