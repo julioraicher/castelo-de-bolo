@@ -46,7 +46,7 @@ static func cor_neon(time: Color) -> Color:
 
 ## Aplica o visual no modelo já instanciado (filho de Unit/_visual).
 ## `corpo` são as malhas visíveis do corpo (já juntadas por Unit).
-static func aplicar(model: Node3D, corpo: Array[MeshInstance3D], estilo: String, time: Color, cabeca: float, contorno: bool, extremidades := 1.0, nivel := 1) -> MeshInstance3D:
+static func aplicar(model: Node3D, corpo: Array[MeshInstance3D], estilo: String, time: Color, cabeca: float, contorno: bool, extremidades := 1.0, nivel := 1, raio_x_pecas := true) -> MeshInstance3D:
 	var sk: Skeleton3D = model.find_child("Skeleton3D", true, false)
 	if sk == null:
 		return null
@@ -77,21 +77,24 @@ static func aplicar(model: Node3D, corpo: Array[MeshInstance3D], estilo: String,
 			for osso in ["foot.l", "foot.r"]:
 				mod.escalas[osso] = extremidades
 		sk.add_child(mod)
-	return pecas(sk, skin, estilo, time, contorno, nivel)
+	return pecas(sk, skin, estilo, time, contorno, nivel, raio_x_pecas)
 
 
 ## Só a malha de peças (sem mexer no corpo): serve para trocar o nível visual
 ## (caudas da Kitsune) sem refazer o boneco. `time` já saturado por aplicar.
-static func pecas(sk: Skeleton3D, skin: Skin, estilo: String, time: Color, contorno: bool, nivel := 1) -> MeshInstance3D:
+## `raio_x`: as peças também acendem atrás de parede (passe raio_x.gdshader por
+## superfície). O corpo sempre acende; nas peças é só na qualidade Alta (2.17):
+## tira 1 chamada por boneco e a silhueta continua legível só pelo corpo.
+static func pecas(sk: Skeleton3D, skin: Skin, estilo: String, time: Color, contorno: bool, nivel := 1, raio_x := true) -> MeshInstance3D:
 	if estilo == "" or skin == null:
 		return null
-	var key := "%s|%s|%s|%d" % [estilo, time.to_html(false), contorno, nivel]
+	var key := "%s|%s|%s|%d|%s" % [estilo, time.to_html(false), contorno, nivel, raio_x]
 	var mesh: ArrayMesh = _pecas_cache.get(key)
 	if mesh == null:
 		var nv := NinjaVisual.new()
 		nv._skin = skin
 		nv._nivel = nivel
-		mesh = nv._montar(estilo, time, contorno)
+		mesh = nv._montar(estilo, time, contorno, raio_x)
 		_pecas_cache[key] = mesh
 	if mesh.get_surface_count() == 0:
 		return null
@@ -183,7 +186,7 @@ static func _raio_x(time: Color, contorno: bool) -> ShaderMaterial:
 	return m
 
 
-func _montar(estilo: String, time: Color, contorno: bool) -> ArrayMesh:
+func _montar(estilo: String, time: Color, contorno: bool, raio_x := true) -> ArrayMesh:
 	for st in [_st_toon, _st_neon]:
 		st.set_skin_weight_count(SurfaceTool.SKIN_4_WEIGHTS)
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -197,7 +200,7 @@ func _montar(estilo: String, time: Color, contorno: bool) -> ArrayMesh:
 		m.shader = TOON
 		m.set_shader_parameter("usar_cor_vertice", true)
 		m.set_shader_parameter("cor_time", time)
-		m.next_pass = _raio_x(time, contorno)
+		m.next_pass = _raio_x(time, contorno) if raio_x else (_contorno() if contorno else null)
 		mesh.surface_set_material(mesh.get_surface_count() - 1, m)
 	if _tem_neon:
 		_st_neon.commit(mesh)

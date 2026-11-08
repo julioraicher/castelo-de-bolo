@@ -70,6 +70,7 @@ func _make_mask(col: Color) -> Node3D:
 		_part(root, _cone(0.16, 0.8), Vector3(0.45 * s, 0.85, 0.0), Vector3(-10, 0, -28 * s), bone)
 		_part(root, _sphere(0.11, 0.08), Vector3(0.26 * s, 0.2, 0.42), Vector3.ZERO, gold)
 		_part(root, _cone(0.07, 0.22), Vector3(0.22 * s, -0.42, 0.38), Vector3(180, 0, 0), bone)
+	MalhaUnica.juntar(root)
 	return root
 
 

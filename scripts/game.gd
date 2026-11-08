@@ -42,6 +42,8 @@ var minimapa: Minimapa
 var placar: Placar
 var placar_tela: PlacarTela
 var placar_print := false
+## Tempo de partida mostrado no placar (para no fim; `_time` segue para efeitos).
+var tempo_partida := 0.0
 ## Cursor de mira do jogador (ponta de hardware + enfeites + marcas no chão).
 var mira: Mira
 var game_over := false
@@ -133,6 +135,9 @@ var _perf_acc := {}
 var _perf_n := 0
 var _perf_t := 0.0
 var _perf_t0 := 0
+var _perf_censo := true
+## --perf: microssegundos gastos por seção neste quadro (Unit soma aqui).
+var perf_secoes := {}
 var _testes := false  # --testes: roda tests/regras.gd e sai
 var _qa_dir := ""
 var _shot_times: Array[float] = [4.0, 15.0, 30.0, 50.0, 75.0]
@@ -481,6 +486,9 @@ func _measure(delta: float) -> void:
 	_perf_n += 1
 	_perf_t += delta
 	if _perf_t >= 5.0:
+		if _perf_censo:
+			_perf_censo = false
+			_censo()
 		# FPS pelo relógio real (com --fixed-fps o delta é sempre 1/60).
 		var real := (Time.get_ticks_usec() - _perf_t0) / 1e6
 		_perf_t0 = Time.get_ticks_usec()
@@ -493,6 +501,82 @@ func _measure(delta: float) -> void:
 		_perf_t = 0.0
 
 
+## --perf: uma vez, conta o que a cena desenha, agrupado pelo dono (classe do
+## script do ancestral mais próximo com script): instâncias, superfícies,
+## passes (next_pass) e quem projeta sombra. Serve para achar quem come as
+## chamadas de desenho.
+func _censo() -> void:
+	var grupos := {}
+	var fila: Array[Node] = [get_tree().root]
+	while not fila.is_empty():
+		var n: Node = fila.pop_back()
+		fila.append_array(n.get_children())
+		var gi := n as GeometryInstance3D
+		if gi == null or not gi.is_visible_in_tree():
+			continue
+		var dono := n
+		while dono and dono.get_script() == null:
+			dono = dono.get_parent()
+		var nome := "?"
+		if dono:
+			var scr: Script = dono.get_script()
+			nome = scr.get_global_name() if scr.get_global_name() != "" else scr.resource_path.get_file()
+		nome += "/" + n.get_class()
+		var surfs := 1
+		var passes := 0
+		var mats: Array[Material] = []
+		if n is MeshInstance3D and (n as MeshInstance3D).mesh:
+			var mi := n as MeshInstance3D
+			surfs = mi.mesh.get_surface_count()
+			for si in surfs:
+				mats.append(mi.get_active_material(si))
+		elif n is MultiMeshInstance3D and (n as MultiMeshInstance3D).multimesh and (n as MultiMeshInstance3D).multimesh.mesh:
+			var mm := (n as MultiMeshInstance3D).multimesh
+			surfs = mm.mesh.get_surface_count()
+			for si in surfs:
+				mats.append(gi.material_override if gi.material_override else mm.mesh.surface_get_material(si))
+		else:
+			mats.append(gi.material_override)
+		for m in mats:
+			var mm: Material = gi.material_override if gi.material_override else m
+			var k := 1
+			while mm and mm.next_pass:
+				k += 1
+				mm = mm.next_pass
+			passes += k
+		var tris := 0
+		if n is MeshInstance3D and (n as MeshInstance3D).mesh:
+			tris = _tris_da_malha((n as MeshInstance3D).mesh)
+		elif n is MultiMeshInstance3D and (n as MultiMeshInstance3D).multimesh and (n as MultiMeshInstance3D).multimesh.mesh:
+			var mmx := (n as MultiMeshInstance3D).multimesh
+			tris = _tris_da_malha(mmx.mesh) * (mmx.visible_instance_count if mmx.visible_instance_count >= 0 else mmx.instance_count)
+		if OS.get_environment("CENSO_DETALHE") == nome.get_slice("/", 0):
+			print("CENSO.  %-50s surf=%d passes=%d tris=%d sombra=%s" % [String(n.get_path()).right(60), surfs, passes, tris,
+					gi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF])
+		var g: Dictionary = grupos.get(nome, {"inst": 0, "surf": 0, "passes": 0, "sombra": 0, "tris": 0})
+		g.inst += 1
+		g.surf += surfs
+		g.passes += passes
+		g.tris += tris * maxi(passes / maxi(surfs, 1), 1)
+		g.sombra += surfs if gi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF else 0
+		grupos[nome] = g
+	var chaves := grupos.keys()
+	chaves.sort_custom(func(a, b): return grupos[a].passes > grupos[b].passes)
+	print("CENSO (visíveis): dono/tipo  instâncias  superfícies  passes(=chamadas)  superfícies com sombra  mil tris×passes")
+	for k in chaves:
+		var g: Dictionary = grupos[k]
+		print("CENSO %-44s %5d %5d %5d %5d %7.1f" % [k, g.inst, g.surf, g.passes, g.sombra, g.tris / 1000.0])
+
+
+func _tris_da_malha(me: Mesh) -> int:
+	var tris := 0
+	for si in me.get_surface_count():
+		var arr := me.surface_get_arrays(si)
+		var idx = arr[Mesh.ARRAY_INDEX]
+		tris += (idx.size() if idx != null else (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()) / 3
+	return tris
+
+
 ## Começo calmo (inicio_calmo s): bots ficam na própria metade.
 func inicio_calmo() -> bool:
 	return _time < Config.cfg.inicio_calmo
@@ -500,6 +584,12 @@ func inicio_calmo() -> bool:
 
 func _physics_process(delta: float) -> void:
 	_time += delta
+	if _perf:
+		for k in perf_secoes:
+			_perf_acc["us_" + k] = _perf_acc.get("us_" + k, 0.0) + perf_secoes[k]
+			perf_secoes[k] = 0
+	if not game_over:
+		tempo_partida += delta  # relógio do placar: para no fim da partida
 	if _shots_dir != "" and not _shot_times.is_empty() and _time >= _shot_times[0]:
 		_take_shot()
 	if _filme_dir != "" and _time >= 3.0:
@@ -540,7 +630,12 @@ func _physics_process(delta: float) -> void:
 		for u in units:
 			u.add_power(Config.cfg.power_regen * (Config.cfg.sandbox_chi_mult - 1.0) * delta)
 			u.add_super(Unit.POWER_MAX / maxf(Config.cfg.sandbox_super_s, 0.5) * delta)
-	_rules()
+	if _perf:
+		var t0 := Time.get_ticks_usec()
+		_rules()
+		perf_secoes["regras"] = perf_secoes.get("regras", 0) + Time.get_ticks_usec() - t0
+	else:
+		_rules()
 	# O HUD não precisa de 60 atualizações por segundo: 20 Hz bastam ao olho
 	# e cada atualização mexe em vários textos e barras.
 	_hud_t -= delta

@@ -188,7 +188,7 @@ func _preencher() -> void:
 	else:
 		_titulo.text = "PLACAR"
 		_titulo.label_settings.font_color = Estilo.OURO
-	var seg := int(game._time)
+	var seg := int(game.tempo_partida)
 	_sub.text = "AZUL  %d  ×  %d  VERMELHO      %d:%02d de partida" % [game.score[0], game.score[1], seg / 60, seg % 60]
 	for t in 2:
 		var linhas := placar.time(t)
