@@ -253,7 +253,9 @@ func _linha(ln: Dictionary, l: Dictionary, i: int, t: int) -> void:
 
 
 func _n(x: float) -> String:
-	return str(int(x)) if is_equal_approx(x, roundf(x)) else ("%.1f" % x).replace(".", ",")
+	if is_equal_approx(x, roundf(x)):
+		return str(int(x))
+	return ("%.2f" % x).rstrip("0").replace(".", ",")  # 0,25 / 0,4
 
 
 func _milhar(x: int) -> String:
