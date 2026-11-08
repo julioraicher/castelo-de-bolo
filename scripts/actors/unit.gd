@@ -15,6 +15,8 @@ signal died(unit: Unit, killer: Unit)
 signal class_changed(unit: Unit)
 
 const TOON_FANTASMA := preload("res://assets/shaders/toon_fantasma.gdshader")
+const BARRA_VIDA := preload("res://assets/shaders/barra_vida.gdshader")
+static var _barra_cache := {}  # time -> material da barra de vida
 const ACCEL := 70.0
 const DODGE_SPEED := 17.0
 const DODGE_TIME := 0.24
@@ -223,7 +225,7 @@ func set_class(new_stats: ClassStats) -> void:
 	_pecas = null
 	_nivel_pecas = _nivel_visual()
 	if stats.estilo_ninja != "" or stats.escala_cabeca != 1.0:
-		_pecas = NinjaVisual.aplicar(_model, _meshes, stats.estilo_ninja, Config.team_color(team), stats.escala_cabeca, Settings.quality >= 2, stats.escala_extremidades, _nivel_pecas)
+		_pecas = NinjaVisual.aplicar(_model, _meshes, stats.estilo_ninja, Config.team_color(team), stats.escala_cabeca, Settings.quality >= 2, stats.escala_extremidades, _nivel_pecas, Settings.quality >= 3)
 		if _pecas:
 			_meshes.append(_pecas)
 	_pose_dash = null
@@ -262,7 +264,7 @@ func atualizar_nivel_visual() -> void:
 	if _model == null or _pecas == null or n == _nivel_pecas:
 		return
 	var sk := _pecas.get_parent() as Skeleton3D
-	var novo := NinjaVisual.pecas(sk, _pecas.skin, stats.estilo_ninja, NinjaVisual.cor_neon(Config.team_color(team)), Settings.quality >= 2, n)
+	var novo := NinjaVisual.pecas(sk, _pecas.skin, stats.estilo_ninja, NinjaVisual.cor_neon(Config.team_color(team)), Settings.quality >= 2, n, Settings.quality >= 3)
 	if novo == null:
 		return
 	_meshes.erase(_pecas)
@@ -584,7 +586,10 @@ func _physics_process(delta: float) -> void:
 		return
 
 	if brain and brain.has_method("tick"):
+		var t0 := Time.get_ticks_usec() if game._perf else 0
 		brain.tick(delta)
+		if game._perf:
+			game.perf_secoes["cerebro"] = game.perf_secoes.get("cerebro", 0) + Time.get_ticks_usec() - t0
 
 	_attack_cd = maxf(_attack_cd - delta, 0.0)
 	_heal_cd = maxf(_heal_cd - delta, 0.0)
@@ -646,7 +651,10 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = 0.0 if is_on_floor() else velocity.y - 30.0 * delta
 	_vy_antes = velocity.y
+	var t1 := Time.get_ticks_usec() if game._perf else 0
 	move_and_slide()
+	if game._perf:
+		game.perf_secoes["fisica_corpo"] = game.perf_secoes.get("fisica_corpo", 0) + Time.get_ticks_usec() - t1
 	# Pouso: amassa proporcional à velocidade de queda (o "impulso" do chão).
 	var no_chao := is_on_floor()
 	if no_chao and not _no_chao and _vy_antes < -2.0:
@@ -677,9 +685,12 @@ func _physics_process(delta: float) -> void:
 				_attack_hit()
 	elif wants_attack and _attack_cd <= 0.0 and free_hands and not _blocking and _charge_t <= 0.0:
 		_attack()
+	var t2 := Time.get_ticks_usec() if game._perf else 0
 	_animate(horizontal)
 	_tick_corpo(delta, horizontal)
 	_tick_aura()
+	if game._perf:
+		game.perf_secoes["animacao"] = game.perf_secoes.get("animacao", 0) + Time.get_ticks_usec() - t2
 	_update_flash(delta)
 	_cake_visual.visible = has_cake
 	if has_cake:
@@ -2288,29 +2299,21 @@ func _build_hp_bar() -> void:
 	_hp_root = Node3D.new()
 	_hp_root.position = Vector3(-0.6, 2.75, 0)
 	add_child(_hp_root)
-	var bg := MeshInstance3D.new()
+	# Fundo e preenchimento num quad só (barra_vida.gdshader, Ciclo 2.17):
+	# uma chamada de desenho por boneco em vez de duas.
+	_hp_fill = MeshInstance3D.new()
 	var q := QuadMesh.new()
 	q.size = Vector2(1.2, 0.16)
 	q.center_offset = Vector3(0.6, 0, 0)
-	bg.mesh = q
-	var bg_mat := Fx.unshaded(Color(0, 0, 0, 0.6), true)
-	bg_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-	bg_mat.no_depth_test = true
-	bg.material_override = bg_mat
-	bg.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_hp_root.add_child(bg)
-	_hp_fill = MeshInstance3D.new()
-	var q2 := QuadMesh.new()
-	q2.size = Vector2(1.2, 0.12)
-	q2.center_offset = Vector3(0.6, 0, 0.01)
-	_hp_fill.mesh = q2
-	var fill_mat := Fx.unshaded(Config.team_color(team).lightened(0.2))
-	fill_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-	fill_mat.no_depth_test = true
-	fill_mat.render_priority = 1
-	# Sem isso o billboard troca a matriz inteira pela da câmera e descarta a
-	# escala: _hp_fill.scale.x mudava, mas a barra continuava cheia na tela.
-	fill_mat.billboard_keep_scale = true
+	_hp_fill.mesh = q
+	var key := "barra|%d" % team
+	var fill_mat: ShaderMaterial = _barra_cache.get(key)
+	if fill_mat == null:
+		fill_mat = ShaderMaterial.new()
+		fill_mat.shader = BARRA_VIDA
+		fill_mat.set_shader_parameter("cor_cheia", Config.team_color(team).lightened(0.2))
+		fill_mat.render_priority = 1
+		_barra_cache[key] = fill_mat
 	_hp_fill.material_override = fill_mat
 	_hp_fill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_hp_root.add_child(_hp_fill)
@@ -2320,7 +2323,7 @@ func _update_hp_bar() -> void:
 	if _hp_fill == null:
 		return
 	var r := clampf(hp / max_hp(), 0.0, 1.0)
-	_hp_fill.scale.x = maxf(r, 0.001)
+	_hp_fill.set_instance_shader_parameter("fracao", r)
 	_hp_root.visible = alive and (r < 0.999 or is_player)
 
 

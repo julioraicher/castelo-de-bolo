@@ -417,6 +417,7 @@ func _montar_torre() -> Node3D:
 	_arma = casa.get_node_or_null("Arma")
 	if Settings.quality < 3:
 		Fx.tirar_contorno(casa)
+	MalhaUnica.juntar(casa, [_arma] if _arma else [])
 	return raiz
 
 

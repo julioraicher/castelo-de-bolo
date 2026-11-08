@@ -45,11 +45,17 @@ common/physics_interpolation=true
 
 [rendering]
 
-renderer/rendering_method="forward_plus"
+; Compatibility (OpenGL) em todas as plataformas (Ciclo 2.17): é o renderizador
+; mais leve para placa integrada (Intel UHD) e o mesmo do navegador, então o
+; .exe e a web ficam iguais ao que as pranchas e o CI mostram. Forward+ gastava
+; passes extras (profundidade, SSAO, agrupamento de luzes) que o jogo não usa.
+renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 renderer/rendering_method.web="gl_compatibility"
 anti_aliasing/quality/msaa_3d=2
-lights_and_shadows/directional_shadow/size=4096
+; Mapa de sombra 2048 (era 4096 no PC): a 25 m de câmera 2048 já dá ~2 px de
+; sombra por pixel de tela; 4096 quadruplicava a memória escrita por quadro.
+lights_and_shadows/directional_shadow/size=2048
 lights_and_shadows/directional_shadow/size.web=2048
 
 [editor]

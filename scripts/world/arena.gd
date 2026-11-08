@@ -227,14 +227,20 @@ func _apply_quality() -> void:
 			_sun.shadow_enabled = false
 			_env.glow_enabled = false
 		2:  # Média
+			# Uma divisão só (Ciclo 2.17): cada divisão redesenha todo o cenário
+			# que faz sombra. Com 45 m de alcance e mapa de 2048, a sombra fica
+			# ~45 px/m, suficiente para o traço toon; metade das chamadas.
+			_sun.shadow_enabled = true
+			_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+			_sun.directional_shadow_max_distance = 45.0
+			_env.glow_enabled = false  # brilho custa vários passes de desfoque em tela cheia
+		_:  # Alta
+			# 2 divisões também na Alta (Ciclo 2.17): a câmera vê ~45 m, então a
+			# 3ª e a 4ª divisão só redesenhavam o mapa inteiro para sombras que
+			# ninguém via. Mesma nitidez perto; metade das chamadas de sombra.
 			_sun.shadow_enabled = true
 			_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 			_sun.directional_shadow_max_distance = 55.0
-			_env.glow_enabled = false  # brilho custa vários passes de desfoque em tela cheia
-		_:  # Alta
-			_sun.shadow_enabled = true
-			_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-			_sun.directional_shadow_max_distance = 80.0
 			_env.glow_enabled = theme.glow_intensity > 0.0
 
 

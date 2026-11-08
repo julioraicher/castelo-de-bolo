@@ -4,6 +4,51 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.17 (2026-11-08), Jogabilidade + Visual: otimização geral (mesma imagem, menos trabalho) e relógio do placar
+Pedido do Julio depois da 2.16: o relógio do placar seguia contando depois do fim da partida; e
+otimizar o jogo ao máximo mantendo o visual, porque o PC dele (placa integrada) não roda bem.
+Medido no mesmo início de partida, em Alta (xvfb, software: serve para comparar, não para
+medir FPS real): **chamadas de desenho 820 → 460 (−44%)** e **triângulos por quadro 1,56 M →
+0,94 M (−40%)**; na Média, ~450-500 chamadas e ~0,7 M triângulos. O custo que sobrou é
+principalmente o cenário (24 pedaços de 34 m × 3 materiais, cada um com sombra) e os 16 bonecos
+(corpo + peças + raio X + contorno + sombra), que são o visual em si.
+- **Relógio do placar** (`Game.tempo_partida`): só anda enquanto a partida está em andamento;
+  no placar final mostra o tempo em que acabou.
+- **Malha única** (`scripts/world/malha_unica.gd`, `MalhaUnica.juntar`): peças paradas debaixo de
+  um nó viram UMA malha, com a posição gravada nos vértices e a cor base no vértice
+  (`vertex_color_use_as_albedo`), agrupadas por material. Usada nos chapéus (17 peças → 1-2
+  superfícies), no corpo das maquininhas (fora o que a animação move, molde e prateleiras),
+  nos lotes e casas das oficinas, na bandeira, na torreta (fora a arma) e na máscara da princesa.
+  Canais ausentes (cor, UV, UV2, tangente) ganham o valor padrão da GPU, ShaderMaterial iguais
+  (mesmo shader e parâmetros, sem `instance uniform`) juntam, e rugosidade/metálico arredondam a
+  0,5 na chave. Uma MeshInstance3D é pelo menos uma chamada por passe (cor + cada divisão de
+  sombra + contorno): oito maquininhas custavam ~136 chamadas e sombras; agora ~24.
+- **Barra de vida em 1 quad** (`assets/shaders/barra_vida.gdshader`): eram dois quads (fundo +
+  preenchimento escalado) por boneco com material próprio; agora um quad com um material por
+  time e a fração em `instance uniform`. 16 chamadas a menos e 32 materiais a menos.
+- **Raio X das peças só na Alta** (`NinjaVisual.pecas(..., raio_x)`): o corpo continua acendendo
+  atrás de parede em toda qualidade; o passe extra das peças (chapéu, armadura) só na Alta.
+  A silhueta se lê igual pelo corpo; 16 chamadas a menos na Média.
+- **Sombras**: a câmera vê ~45 m, então as 4 divisões PSSM da Alta só redesenhavam o mapa para
+  sombras que ninguém via: **Alta com 2 divisões (55 m)**, **Média com 1 (ortogonal, 45 m)**;
+  mapa de sombra 2048 (era 4096: 4× a memória escrita por quadro, para nada a 25 m de câmera).
+- **Renderizador Compatibility (OpenGL) em todas as plataformas** (`project.godot`): o .exe
+  usava Forward+ (Vulkan), que gasta passes extras (profundidade, agrupamento de luzes) que o
+  jogo não usa e pesa mais na placa integrada; agora PC = navegador = CI. Os shaders já eram
+  escritos para ele (stencil do raio X incluído).
+- **Diagnóstico** (`--perf=<qualidade>`, com xvfb): além de FPS/chamadas/triângulos, imprime o
+  **CENSO** (instâncias, superfícies, passes e sombras por dono: Arena, Unit, HatPad...) e o
+  tempo de CPU por seção (`us_regras`, `us_cerebro`, `us_fisica_corpo`, `us_animacao`). Com
+  `CENSO_DETALHE=Arena` lista cada instância do dono; `MU_DEBUG=1` mostra os grupos da malha
+  única. Medido: os scripts (regras + cérebro dos bots + física + animação) somam ~1,5 ms por
+  quadro; o gargalo é o desenho, não a lógica.
+- Modo teste: tudo vale igual (as mesmas peças são juntadas). Testes de regra 291/291; 5 min
+  simulados sem erro; prints em Alta e Média conferidos lado a lado com a 2.16.
+- **O que testar**: jogar uma partida inteira e ver se está mais leve (FPS no canto, se ligado em
+  Configurações). Procurar algo que tenha sumido ou mudado de cor: chapéus na prateleira e na
+  cabeça, maquininhas, casas das oficinas, torretas, máscara da princesa, barra de vida (azul
+  no seu time, vermelha no inimigo, some quando cheia). Se o .exe abrir estranho (tela preta ou
+  erro de OpenGL), avise: é o renderizador novo.
 ## Ciclo 2.16 (2026-11-08), Visual + Jogabilidade: armadura do Samurai refeita e placar estilo Battlefield (Tab)
 Pedido do Julio depois de jogar a 2.15: a armadura do Samurai tampava o rosto; ver detalhes menores
 nas outras classes; e um placar com a pontuação de cada um (bot ou jogador), no Tab a qualquer

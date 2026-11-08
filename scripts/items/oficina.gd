@@ -125,6 +125,7 @@ func _montar_placa() -> void:
 	faixa.position = Vector3(0, 3.3, 0.42)
 	faixa.material_override = Fx.unshaded(cor.lightened(0.45))
 	_bandeira.add_child(faixa)
+	MalhaUnica.juntar(_bandeira, [pano])  # o pano fica fora: muda de cor ao tombar
 	_titulo = Label3D.new()
 	_titulo.font = Estilo.TITULO
 	_titulo.font_size = 64
@@ -450,6 +451,9 @@ func _texto_caminho(cls: ClassStats) -> String:
 
 ## Estacas nos cantos + chão de terra batida.
 func _build_lot() -> void:
+	var lote := Node3D.new()
+	lote.name = "Lote"
+	add_child(lote)
 	var dirt := MeshInstance3D.new()
 	var c := CylinderMesh.new()
 	c.top_radius = 2.4
@@ -459,7 +463,7 @@ func _build_lot() -> void:
 	dirt.mesh = c
 	dirt.position.y = 0.03
 	dirt.material_override = Fx.lit(Color(0.42, 0.33, 0.24))
-	add_child(dirt)
+	lote.add_child(dirt)
 	var stake := CylinderMesh.new()
 	stake.top_radius = 0.07
 	stake.bottom_radius = 0.09
@@ -472,7 +476,8 @@ func _build_lot() -> void:
 		s.mesh = stake
 		s.material_override = wood
 		s.position = Vector3(cos(a) * 2.3, 0.45, sin(a) * 2.3)
-		add_child(s)
+		lote.add_child(s)
+	MalhaUnica.juntar(lote)
 
 
 func _process(delta: float) -> void:
@@ -563,6 +568,8 @@ func _build_house() -> Node3D:
 	lamp.position = Vector3(1.45, 1.6, 1.45)
 	lamp.material_override = Fx.unshaded(col.lightened(0.3) * 1.6)
 	_roof.add_child(lamp)
+	MalhaUnica.juntar(_walls)
+	MalhaUnica.juntar(_roof)
 	return root
 
 

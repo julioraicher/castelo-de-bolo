@@ -20,6 +20,10 @@ godot --headless --import --path .
 godot --headless --path . --fixed-fps 60 -- --autoplay --testes
 # Partida simulada sem janela (bots jogam pelo jogador; eventos no stdout):
 godot --headless --path . --fixed-fps 60 --quit-after 18000 -- --autoplay
+# Desempenho (xvfb): PERF (fps, chamadas, tris, CPU por seção) + CENSO (passes por dono).
+#   CENSO_DETALHE=Arena lista cada instância; MU_DEBUG=1 mostra os grupos da malha única.
+xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
+  --rendering-method gl_compatibility --audio-driver Dummy --quit-after 600 -- --autoplay --perf=3
 # Prints (precisa de xvfb; renderizador do navegador):
 xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
   --rendering-method gl_compatibility --audio-driver Dummy -- --autoplay --shots=DIR
@@ -84,7 +88,11 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
 - Animação só do tronco: `Unit._play_upper(anim)` (cópia filtrada, criada sob demanda).
 - Desempenho: o PC/navegador do Julio rendeu 9-12 FPS (provável WebGL sem GPU).
   Existe `AutoQuality` (baixa qualidade sozinho). xvfb aqui também é software:
-  bom para comparar, não para medir FPS real.
+  bom para comparar, não para medir FPS real. O gargalo é chamada de desenho
+  (1 MeshInstance3D = 1 chamada por passe: cor, cada divisão de sombra, contorno),
+  não script (~1,5 ms/quadro). Peça parada composta de várias malhas: terminar com
+  `MalhaUnica.juntar(raiz, [o que se mexe])` (Ciclo 2.17). Renderizador é
+  Compatibility em todas as plataformas; não voltar para Forward+.
 
 ## Economia de tokens (detalhes: docs/economia-de-tokens.md)
 

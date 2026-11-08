@@ -111,6 +111,12 @@ func _montar_maquina(th: ThemeConfig, cena: PackedScene) -> void:
 		enfeite.add_child((load(emblema) as PackedScene).instantiate())
 	for i in estoque:
 		_chapeus.append(_novo_chapeu(_slot(i), 0.62))
+	# Corpo da maquininha numa malha só; ficam de fora o que a animação move,
+	# o molde, as prateleiras (os chapéus saem dali) e as peças do nível 2.
+	var fora := MalhaUnica.animados(_maquina) + _slots + _n2
+	if _molde:
+		fora.append(_molde)
+	MalhaUnica.juntar(_maquina, fora)
 
 
 func _slot(i: int) -> Node3D:
@@ -407,6 +413,7 @@ static func make_hat(style: String, color: Color) -> Node3D:
 			band.material_override = Fx.lit(Color(1.0, 0.8, 0.25), 0.3)
 			band.position.y = 0.1
 			root.add_child(band)
+	MalhaUnica.juntar(root)  # 10-17 peças -> 1 malha (poucas superfícies)
 	return root
 
 
