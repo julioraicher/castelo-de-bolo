@@ -4,6 +4,35 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.14 (2026-11-08), Visual: Personagens 2.0, parte 1 (Kitsunes e dash com personalidade)
+Ideia guardada do Julio (cardápio da próxima grande atualização, opção recomendada). **Em branch,
+esperando o pitaco na prancha** `personagens/08-kitsunes-e-dash.jpg` (`tools/prancha_kitsunes.gd`).
+- **Kitsune aprendiz** (nível 1): uma cauda laranja de ponta branca, máscara de raposa branca e
+  lisa (fendas pretas nos olhos, miolo vermelho nas orelhas), sem fogo em volta.
+- **Luz e Sombria usam o mesmo modelo evoluído**, com **uma cauda por nível do mago (2 → 5)**:
+  Luz com caudas brancas de ponta dourada, anel dourado liso atrás da cabeça (cresce com o nível)
+  e fogo-raposa que boia calmo; Sombria com caudas roxo-escuras, coroa de raios em ziguezague
+  (mais alta a cada nível), olhos acesos e fogo tremido. Subir o mago refaz só as peças
+  (`Unit.atualizar_nivel_visual`, chamado por `Game.on_mago_nivel`).
+- **Animação nas peças sem osso novo** (`assets/shaders/balanco.gdshaderinc`): NinjaVisual grava
+  em CUSTOM1 (peso, fase, tipo); a cauda é uma viga em balanço (deslocamento ∝ peso², peso 0 na
+  raiz e 1 na ponta), o fogo calmo é um seno lento e o tremido soma 3 senos de frequências quase
+  incomensuráveis. `agito` por boneco: 0 parado, 1 no ataque/poder/super (caudas abrem e varrem
+  rápido), -1 na morte (caudas param moles, fogo apaga). Toon, neon, raio X e contorno usam a
+  mesma conta, então a silhueta acompanha. O neon virou `neon_pecas.gdshader` (mesmo visual).
+- **Dash com personalidade** (`ClassStats.dash_estilo`; **distância, tempo e recarga iguais**):
+  Samurai e Ninja de Shuriken correm inclinados com os braços para trás (`PoseDash`, modificador
+  de esqueleto); Ronin Oni rola pesado (amassa mais, pó e tremor curto no pouso); as Kitsunes
+  somem num lampejo de fogo-raposa e reaparecem no fim, com rastro. As outras classes seguem com
+  a cambalhota de antes.
+- Custo: cada cauda ~190 triângulos (Sombria/Luz nível 5 ≈ +1.000 com contorno); nenhuma chamada
+  de desenho a mais (caudas no toon das peças, fogo no neon).
+- Testes de regra: 271/271 (novos: caudas no nível 2 e 5 ao subir o mago; estilos de dash válidos).
+- `--filme` agora filma a classe de `--classe=` (antes era sempre o Samurai).
+- Modo teste: subir o mago custa **1 tora por nível** lá, para ver as caudas 2 → 5 rápido.
+- **O que testar**: no modo teste, pegue a Kitsune da Luz ou a Sombria e leve madeira ao terreno
+  dela: a cada nível nasce mais uma cauda e o anel/coroa cresce. Ataque e veja as caudas abrirem;
+  dê dash com Samurai, Ninja, Ronin e Kitsune (o alcance do dash não mudou).
 ## Ciclo 2.13 (2026-11-06), Jogabilidade: morte pesa mais e fim da guarda eterna da máscara
 Pedidos do Julio: penalizar mais a morte (fim de jogo travado, impossível roubar a máscara)
 e tirar o bot que fica sempre plantado embaixo da máscara dando o golpe final.

@@ -27,6 +27,7 @@ func _ready() -> void:
 	await _obra()
 	_nivel2()
 	_caminho_magos()
+	_dash_estilos()
 	await _alma()
 	_ferradura()
 	_lote_2_7()
@@ -423,6 +424,13 @@ func _respawn_cresce() -> void:
 			"respawn: no modo teste não deveria crescer")
 	game.sandbox = sb
 	game._time = t0
+
+
+## Dash por personalidade: só valores conhecidos (o resto cairia no padrão calado).
+func _dash_estilos() -> void:
+	var cfg = get_node("/root/Config").cfg
+	for c in cfg.hat_classes() + cfg.oficina_classes + cfg.magos_opostos:
+		_check(c.dash_estilo in ["", "rolar", "ninja", "chama"], "dash: estilo desconhecido em %s: '%s'" % [c.id, c.dash_estilo])
 
 
 func _check(ok: bool, nome: String) -> void:
@@ -982,6 +990,17 @@ func _caminho_magos() -> void:
 		var id: StringName = a.opcao().id
 		_check(game.bonus_mago(t, id) == 0, "caminho: nível 2 ainda sem bônus")
 		var max0: int = a.pad.estoque_max
+		# Personagens 2.0: a Kitsune Luz/Sombria do time ganha uma cauda por nível.
+		var vis = null
+		var vis_antes = null
+		for u in game.units:
+			if u.team == t and u.alive and u != game.player:
+				vis = u
+				vis_antes = u.stats
+				break
+		if vis:
+			vis.set_class(a.opcao())
+			_check(vis._nivel_pecas == 2, "caudas: mago recém-pronto deveria estar no nível visual 2 (está %d)" % vis._nivel_pecas)
 		var gasto := 0
 		for c in cfg.mago_nivel_custo:
 			gasto += c
@@ -992,6 +1011,10 @@ func _caminho_magos() -> void:
 		_check(a.nivel == cfg.mago_nivel_max and n == gasto and game.madeira[t] == 3,
 			"caminho: deveria subir ao nível %d com %d madeiras (nível %d, puxou %d)" % [cfg.mago_nivel_max, gasto, a.nivel, n])
 		_check(not a.pode_subir() and game.bonus_mago(t, id) == cfg.mago_nivel_max - 2, "caminho: nível máximo com bônus de %d níveis" % (cfg.mago_nivel_max - 2))
+		if vis:
+			_check(vis._nivel_pecas == cfg.mago_nivel_max and vis._pecas != null and vis._meshes.has(vis._pecas),
+				"caudas: subir o mago deveria refazer as peças no nível %d (está %d)" % [cfg.mago_nivel_max, vis._nivel_pecas])
+			vis.set_class(vis_antes)
 		_check(a.pad.estoque_max == max0 + cfg.mago_nivel_max - 2, "caminho: maquininha deveria ganhar estoque por nível")
 		_check(game.bonus_mago(t, b.opcao().id) == 0 and game.bonus_mago(1 - t, id) == 0, "caminho: bônus só para a classe e o time do caminho")
 		for u in game.units:

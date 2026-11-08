@@ -8,6 +8,7 @@ uniform float relogio = -1.0;
 uniform bool girar = false;   // só o cenário (os bonecos podem ter UV2 próprio); também liga o recorte dos telhados
 
 #include "res://assets/shaders/recorte.gdshaderinc"
+#include "res://assets/shaders/balanco.gdshaderinc"
 
 varying vec3 v_mundo;
 
@@ -19,6 +20,9 @@ void vertex() {
 		mat2 r = mat2(vec2(cos(ang), sin(ang)), vec2(-sin(ang), cos(ang)));
 		VERTEX.xy = r * VERTEX.xy;
 		NORMAL.xy = r * NORMAL.xy;
+	}
+	if (!girar) {
+		VERTEX += balanco(CUSTOM1, TIME);  // peças dos bonecos (caudas, fogo)
 	}
 	VERTEX += NORMAL * espessura;
 	v_mundo = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;

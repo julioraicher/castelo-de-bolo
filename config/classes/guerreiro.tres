@@ -14,6 +14,7 @@ model = ExtResource("1_oq6hn")
 visible_meshes = PackedStringArray("Knight_ArmLeft", "Knight_ArmRight", "Knight_Body", "Knight_Head", "Knight_LegLeft", "Knight_LegRight")
 hat_color = Color(1, 0.78, 0.3, 1)
 hat_style = "kabuto"
+dash_estilo = "ninja"
 estilo_ninja = "_samurai"
 escala_cabeca = 0.58
 escala_extremidades = 1.3

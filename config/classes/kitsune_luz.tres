@@ -13,6 +13,7 @@ model = ExtResource("1_kmvrp")
 visible_meshes = PackedStringArray("Mage_ArmLeft", "Mage_ArmRight", "Mage_Body", "Mage_Head", "Mage_LegLeft", "Mage_LegRight")
 hat_color = Color(1, 0.92, 0.6, 1)
 hat_style = "orelhas"
+dash_estilo = "chama"
 estilo_ninja = "_kitsune_luz"
 escala_cabeca = 0.58
 escala_extremidades = 1.3

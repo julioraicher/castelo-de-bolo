@@ -17,6 +17,9 @@ uniform float aro = 0.7;
 // Medidor do poder [Q] deste boneco (Unit._tick_aura), 0..1. Por instância:
 // o material é dividido por todos do time. O contraluz acende com a carga,
 // puxa para a cor do poder e pulsa quando está pronto.
+// agito (balanco) vem antes: os índices dos instance uniforms precisam bater
+// entre os passes do mesmo boneco (toon, neon, raio X, contorno).
+#include "res://assets/shaders/balanco.gdshaderinc"
 instance uniform float poder_carga = 0.0;
 instance uniform vec4 cor_poder : source_color = vec4(1.0, 0.75, 0.3, 1.0);
 // Marcas de poder (Ciclo 2.2): selos desenhados na pose de repouso (CUSTOM0,
@@ -33,6 +36,9 @@ varying float v_tem_repouso;
 void vertex() {
 	v_repouso = CUSTOM0.xyz;
 	v_tem_repouso = CUSTOM0.w;
+	if (usar_cor_vertice) {
+		VERTEX += balanco(CUSTOM1, TIME);
+	}
 }
 
 float marcas(vec3 p) {
