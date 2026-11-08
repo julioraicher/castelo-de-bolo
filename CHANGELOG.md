@@ -26,6 +26,9 @@ Regra em `scripts/reanimar.gd` (`Reanimar`, em `Game.reanimar`); números no `ga
   branca/dourada enquanto reanimam; anel tracejado no chão (alcance) com arco dourado de
   progresso; ao levantar, coluna de luz + anel + faíscas. **Só o seu time vê** as chamas.
   HUD: barra "CAÍDO · espere um aliado · segure [F]..." / "X TE REANIMANDO" / "REANIMANDO".
+  Pedido do Julio depois da prancha: deixar mais claro que está caído. Letreiro **"CAÍDO"**
+  sobre o corpo (vira **"REANIMANDO 40%"** dourado no canal) e **cruz no minimapa** em cada
+  aliado caído que ainda dá para reanimar.
 - **Sons**: `reanimar_arrasto` (pano no chão, Kenney CC0 cloth1-4) e `reanimado` (Kenney
   maximize_006/008) junto com o `renascer`.
 - **Placar (Tab)**: coluna **Reanim.** e `pts_reanimar` = 60 (Nome e Classe ficaram um pouco

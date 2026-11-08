@@ -330,11 +330,26 @@ func _criar_visual(u: Unit) -> void:
 	var cor := Config.team_color(u.team)
 	chama.set_instance_shader_parameter("cor", cor)
 	anel.set_instance_shader_parameter("cor", cor)
+	# Letreiro: deixa claro que está CAÍDO (vira "REANIMANDO 40%" no canal).
+	var placa := Label3D.new()
+	placa.text = "CAÍDO"
+	placa.font = Estilo.LETREIRO
+	placa.font_size = 44
+	placa.outline_size = 14
+	placa.pixel_size = 0.006
+	placa.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	placa.no_depth_test = true
+	placa.fixed_size = false
+	placa.modulate = cor.lightened(0.45)
+	placa.outline_modulate = Color(0.05, 0.04, 0.08, 0.9)
+	placa.position = Vector3(0, 2.05, 0)
+	placa.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	raiz.add_child(placa)
 	# Entrada: a chama sai do corpo com um "puf" e cresce.
 	chama.scale = Vector3.ONE * 0.2
 	var tw := chama.create_tween()
 	tw.tween_property(chama, "scale", Vector3.ONE, 0.5).set_delay(0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_visuais[u] = {"raiz": raiz, "chama": chama, "anel": anel}
+	_visuais[u] = {"raiz": raiz, "chama": chama, "anel": anel, "placa": placa}
 
 
 func _remover_visual(u: Unit) -> void:
@@ -366,6 +381,11 @@ func _tick_visuais() -> void:
 		chama.set_instance_shader_parameter("brilho", clampf(u.reanimar_prog, 0.0, 1.0) if u.reanimador else u.reanimar_prog * 0.3)
 		anel.set_instance_shader_parameter("vida", vida)
 		anel.set_instance_shader_parameter("progresso", clampf(u.reanimar_prog, 0.0, 1.0))
+		var placa: Label3D = v.placa
+		var txt := "REANIMANDO %d%%" % int(clampf(u.reanimar_prog, 0.0, 1.0) * 100.0) if u.reanimador else "CAÍDO"
+		if placa.text != txt:
+			placa.text = txt
+			placa.modulate = Color(1.0, 0.85, 0.45) if u.reanimador else Config.team_color(u.team).lightened(0.45)
 
 
 ## Faíscas do canal: a Kitsune solta um feixe de benção; os outros levantam
