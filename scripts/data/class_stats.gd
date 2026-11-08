@@ -31,6 +31,11 @@ extends Resource
 @export var escala_extremidades := 1.0
 ## Escala do boneco inteiro (Ronin maior, Kitsune mais miúda).
 @export var escala_modelo := 1.0
+## Jeito do dash (só o visual; distância, tempo e recarga são os mesmos para
+## todos): "" cambalhota padrão, "rolar" cambalhota pesada (pó e tremor no
+## pouso), "ninja" corrida inclinada com os braços para trás, "chama" o corpo
+## some num lampejo de fogo-raposa e reaparece no fim.
+@export var dash_estilo := ""
 ## Multiplicador da animação exagerada desta classe (GameConfig.exagero_animacao).
 ## Pesados (Ronin) amassam menos; leves (Kitsune) mais.
 @export var exagero := 1.0

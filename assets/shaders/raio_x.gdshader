@@ -19,6 +19,12 @@ uniform float borda = 0.95;      // aro forte: a silhueta se lê a qualquer dist
 // O Samurai invisível não acende: Unit._aplicar_sombra esconde o _visual inteiro.
 global uniform float raio_x_forca;  // 0 desliga tudo (--sem-recorte, prancha de antes)
 
+#include "res://assets/shaders/balanco.gdshaderinc"
+
+void vertex() {
+	VERTEX += balanco(CUSTOM1, TIME);
+}
+
 void fragment() {
 	float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 2.0);
 	ALBEDO = mix(cor_time.rgb, vec3(1.0), 0.25 * fres);

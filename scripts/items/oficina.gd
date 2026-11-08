@@ -252,6 +252,8 @@ func pode_subir() -> bool:
 
 
 func custo_nivel() -> int:
+	if _game and _game.sandbox:
+		return 1  # modo teste: 1 tora por nível, para ver as caudas 2→5 rápido
 	var c := Config.cfg.mago_nivel_custo
 	var i := nivel - 2
 	return c[clampi(i, 0, c.size() - 1)] if not c.is_empty() else 0

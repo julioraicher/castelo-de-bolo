@@ -15,6 +15,7 @@ extends RefCounted
 const TOON := preload("res://assets/shaders/toon_time.gdshader")
 const OUTLINE := preload("res://assets/shaders/contorno.gdshader")
 const RAIO_X := preload("res://assets/shaders/raio_x.gdshader")
+const NEON := preload("res://assets/shaders/neon_pecas.gdshader")
 
 const CIANO := Color(0.2, 0.95, 1.0)
 const MAGENTA := Color(1.0, 0.25, 0.85)
@@ -25,7 +26,7 @@ const KITSUNEBI := Color(1.0, 0.45, 0.75)  # fogo de raposa (rosa: ciano = Shuri
 
 static var _pecas_cache := {}   # "estilo|r,g,b" -> ArrayMesh
 static var _corpo_cache := {}   # "textura|time|contorno" -> ShaderMaterial
-static var _neon_mat: StandardMaterial3D
+static var _neon_mat: ShaderMaterial
 static var _outline_mat: ShaderMaterial
 static var _raio_x_cache := {}  # cor do time -> ShaderMaterial (silhueta atrás de parede)
 
@@ -34,16 +35,22 @@ var _st_toon := SurfaceTool.new()
 var _st_neon := SurfaceTool.new()
 var _tem_toon := false
 var _tem_neon := false
+## Nível visual do estilo (Kitsune Luz/Sombria: 2-5 = número de caudas).
+var _nivel := 1
+
+
+## Neon pede cor de time saturada (o tema pode trazer tons pastel).
+static func cor_neon(time: Color) -> Color:
+	return Color.from_hsv(time.h, maxf(time.s, 0.82), maxf(time.v, 0.95))
 
 
 ## Aplica o visual no modelo já instanciado (filho de Unit/_visual).
 ## `corpo` são as malhas visíveis do corpo (já juntadas por Unit).
-static func aplicar(model: Node3D, corpo: Array[MeshInstance3D], estilo: String, time: Color, cabeca: float, contorno: bool, extremidades := 1.0) -> MeshInstance3D:
+static func aplicar(model: Node3D, corpo: Array[MeshInstance3D], estilo: String, time: Color, cabeca: float, contorno: bool, extremidades := 1.0, nivel := 1) -> MeshInstance3D:
 	var sk: Skeleton3D = model.find_child("Skeleton3D", true, false)
 	if sk == null:
 		return null
-	# Neon pede cor de time saturada (o tema pode trazer tons pastel).
-	time = Color.from_hsv(time.h, maxf(time.s, 0.82), maxf(time.v, 0.95))
+	time = cor_neon(time)
 	var skin: Skin = null
 	for mi in corpo:
 		var tex := _textura(mi)
@@ -70,24 +77,33 @@ static func aplicar(model: Node3D, corpo: Array[MeshInstance3D], estilo: String,
 			for osso in ["foot.l", "foot.r"]:
 				mod.escalas[osso] = extremidades
 		sk.add_child(mod)
+	return pecas(sk, skin, estilo, time, contorno, nivel)
+
+
+## Só a malha de peças (sem mexer no corpo): serve para trocar o nível visual
+## (caudas da Kitsune) sem refazer o boneco. `time` já saturado por aplicar.
+static func pecas(sk: Skeleton3D, skin: Skin, estilo: String, time: Color, contorno: bool, nivel := 1) -> MeshInstance3D:
 	if estilo == "" or skin == null:
 		return null
-	var key := "%s|%s|%s" % [estilo, time.to_html(false), contorno]
+	var key := "%s|%s|%s|%d" % [estilo, time.to_html(false), contorno, nivel]
 	var mesh: ArrayMesh = _pecas_cache.get(key)
 	if mesh == null:
 		var nv := NinjaVisual.new()
 		nv._skin = skin
+		nv._nivel = nivel
 		mesh = nv._montar(estilo, time, contorno)
 		_pecas_cache[key] = mesh
 	if mesh.get_surface_count() == 0:
 		return null
-	var pecas := MeshInstance3D.new()
-	pecas.name = "PecasNinja"
-	pecas.mesh = mesh
-	pecas.skin = skin
-	sk.add_child(pecas)
-	pecas.skeleton = pecas.get_path_to(sk)
-	return pecas
+	var mi := MeshInstance3D.new()
+	mi.name = "PecasNinja"
+	mi.mesh = mesh
+	mi.skin = skin
+	sk.add_child(mi)
+	mi.skeleton = mi.get_path_to(sk)
+	# Caudas e fogo mexem no vertex shader: a caixa de corte precisa de folga.
+	mi.extra_cull_margin = 0.5
+	return mi
 
 
 static var _repouso_cache := {}   # Mesh -> Mesh com CUSTOM0
@@ -171,6 +187,7 @@ func _montar(estilo: String, time: Color, contorno: bool) -> ArrayMesh:
 	for st in [_st_toon, _st_neon]:
 		st.set_skin_weight_count(SurfaceTool.SKIN_4_WEIGHTS)
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		st.set_custom_format(1, SurfaceTool.CUSTOM_RGBA_FLOAT)
 	if has_method(estilo):
 		call(estilo, time)
 	var mesh := ArrayMesh.new()
@@ -185,16 +202,8 @@ func _montar(estilo: String, time: Color, contorno: bool) -> ArrayMesh:
 	if _tem_neon:
 		_st_neon.commit(mesh)
 		if _neon_mat == null:
-			_neon_mat = StandardMaterial3D.new()
-			_neon_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-			_neon_mat.vertex_color_use_as_albedo = true
-			_neon_mat.vertex_color_is_srgb = true
-			_neon_mat.albedo_color = Color(2.0, 2.0, 2.0)
-			# Stencil 1 como o toon: o raio X não acende por cima do próprio boneco.
-			_neon_mat.stencil_mode = BaseMaterial3D.STENCIL_MODE_CUSTOM
-			_neon_mat.stencil_flags = BaseMaterial3D.STENCIL_FLAG_WRITE
-			_neon_mat.stencil_compare = BaseMaterial3D.STENCIL_COMPARE_ALWAYS
-			_neon_mat.stencil_reference = 1
+			_neon_mat = ShaderMaterial.new()
+			_neon_mat.shader = NEON
 		mesh.surface_set_material(mesh.get_surface_count() - 1, _neon_mat)
 	return mesh
 
@@ -222,6 +231,9 @@ func _peca(osso: String, mesh: Mesh, pos: Vector3, rot: Vector3, esc: Vector3, m
 	else:
 		_tem_toon = true
 	var cor: Color = mat.cor
+	# Balanço (balanco.gdshaderinc): Vector3(peso, fase, tipo). Nas malhas com
+	# UV (caudas), o peso vezes UV.x: zero na base, cheio na ponta.
+	var bal: Vector3 = mat.get("balanco", Vector3.ZERO)
 	var ossos := PackedInt32Array([b, 0, 0, 0])
 	var pesos := PackedFloat32Array([1.0, 0.0, 0.0, 0.0])
 	for s in mesh.get_surface_count():
@@ -229,9 +241,13 @@ func _peca(osso: String, mesh: Mesh, pos: Vector3, rot: Vector3, esc: Vector3, m
 		var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
 		var norms = arr[Mesh.ARRAY_NORMAL]
 		var idx = arr[Mesh.ARRAY_INDEX]
+		var cores = arr[Mesh.ARRAY_COLOR] if mat.get("cor_vertice", false) else null
+		var uvs = arr[Mesh.ARRAY_TEX_UV] if mat.get("peso_uv", false) else null
 		var ordem: PackedInt32Array = idx if idx != null else PackedInt32Array(range(verts.size()))
 		for i in ordem:
-			st.set_color(cor)
+			st.set_color(cor * (cores as PackedColorArray)[i] if cores != null else cor)
+			var peso := bal.x * ((uvs as PackedVector2Array)[i].x if uvs != null else 1.0)
+			st.set_custom(1, Color(peso, bal.y, bal.z, 0.0))
 			if norms != null and (norms as PackedVector3Array).size() > i:
 				st.set_normal((nb * (norms as PackedVector3Array)[i]).normalized())
 			st.set_bones(ossos)
@@ -365,36 +381,93 @@ func _polvora(time: Color) -> void:
 	_peca(mao, _esfera(0.06, 0.06), Vector3(0, 0.5, 0.15), Vector3.ZERO, Vector3.ONE, _neon(FOGO, 3.0))
 
 
+## Kitsunes (Personagens 2.0, 2026-11-08). A aprendiz (nível 1) é simples:
+## uma cauda, máscara de raposa branca e lisa, sem fogo em volta. A Luz e a
+## Sombria usam o MESMO modelo evoluído, com uma cauda por nível do mago (2-5);
+## muda a paleta, o que flutua na cabeça e o jeito do fogo:
+##   Luz: anel dourado liso atrás da cabeça, fogo que boia calmo (serena).
+##   Sombria: coroa roxa de raios em ziguezague, olhos acesos, fogo tremido
+##   (predadora).
 func _kitsune(time: Color) -> void:
-	_raposa(Color(0.95, 0.94, 0.9), Color(1.0, 0.15, 0.2), KITSUNEBI, 4)
+	var branco := Color(0.96, 0.95, 0.91)
+	_mascara(branco, Color(0.85, 0.3, 0.3), Color(0.08, 0.06, 0.08), false)
+	_caudas(1, Color(0.95, 0.5, 0.18), branco, time)
 
 
-## Opostos do Ciclo 2.4 (Jogabilidade; o Visual pode refinar): mesma raposa,
-## máscara e fogo trocados. Luz = máscara branca, marcas e chamas douradas
-## (6 chamas); Sombria = máscara negra, marcas e chamas roxas.
 func _kitsune_luz(time: Color) -> void:
-	_raposa(Color(1.0, 0.98, 0.92), Color(1.0, 0.75, 0.2), Color(1.0, 0.85, 0.35), 6)
+	var n := clampi(_nivel, 2, 5)
+	var ouro := Color(1.0, 0.8, 0.32)
+	_mascara(Color(1.0, 0.98, 0.93), ouro, ouro, true)
+	_caudas(n, Color(0.97, 0.95, 0.9), Color(1.0, 0.78, 0.3), time)
+	# Halo (kōhai): anel liso atrás da cabeça, cresce com o nível.
+	var r := 0.62 + 0.06 * (n - 2)
+	_peca("head", _anel(r, 0.05, 32), Vector3(0, 0.72, -0.42), Vector3(90, 0, 0), Vector3.ONE, _neon_bal(ouro, Vector3(0.4, 0.0, 1.0)))
+	_peca("head", _anel(r * 0.84, 0.018, 32), Vector3(0, 0.72, -0.44), Vector3(90, 0, 0), Vector3.ONE, _neon_bal(Color(1, 0.97, 0.85), Vector3(0.4, 0.0, 1.0)))
+	_fogo_raposa(n, Color(1.0, 0.85, 0.4), 1.0)
 
 
 func _kitsune_sombria(time: Color) -> void:
-	_raposa(Color(0.12, 0.1, 0.16), Color(0.75, 0.3, 1.0), Color(0.6, 0.25, 1.0), 4)
-
-
-func _raposa(mascara: Color, marca: Color, fogo: Color, chamas: int) -> void:
-	var cab := "head"
-	# Máscara de raposa com marcas e orelhas
-	_peca(cab, _esfera(0.45, 0.38), Vector3(0, 0.55, 0.3), Vector3.ZERO, Vector3(1, 1, 0.75), _plano(mascara))
-	_peca(cab, _cone(0.16, 0.35), Vector3(0, 0.45, 0.65), Vector3(90, 0, 0), Vector3.ONE, _plano(mascara))
+	var n := clampi(_nivel, 2, 5)
+	var roxo := Color(0.68, 0.28, 1.0)
+	_mascara(Color(0.1, 0.08, 0.13), roxo, roxo, true)
+	# Olhos acesos: fendas puxadas para cima, na cor da sombra.
 	for s in [-1, 1]:
-		_peca(cab, _cone(0.15, 0.4), Vector3(0.3 * s, 1.05, 0.15), Vector3(0, 0, -15 * s), Vector3.ONE, _plano(mascara))
-		_peca(cab, _caixa(Vector3(0.18, 0.04, 0.02)), Vector3(0.17 * s, 0.68, 0.64), Vector3(0, 0, -20 * s), Vector3.ONE, _neon(marca, 1.6))
-	# Fogo de raposa (kitsunebi): chamas orbitando
+		_peca("head", _caixa(Vector3(0.16, 0.045, 0.03)), Vector3(0.15 * s, 0.64, 0.66), Vector3(0, 0, 22 * s), Vector3.ONE, _neon(Color(0.85, 0.5, 1.0)))
+	_caudas(n, Color(0.2, 0.13, 0.28), roxo, time)
+	# Coroa de raios: tira em ziguezague sobre a cabeça, mais alta a cada nível.
+	var h := 0.22 + 0.05 * (n - 2)
+	_peca("head", _coroa(0.4, h, 7 + n), Vector3(0, 0.98, 0.0), Vector3(-8, 0, 0), Vector3.ONE, _neon_bal(roxo, Vector3(0.6, 1.3, 2.0)))
+	_peca("head", _anel(0.42, 0.05, 20), Vector3(0, 0.98, 0.0), Vector3(-8, 0, 0), Vector3.ONE, _plano(Color(0.06, 0.04, 0.08)))
+	_fogo_raposa(n, Color(0.62, 0.25, 1.0), 2.0)
+
+
+## Máscara de raposa: rosto, focinho, orelhas com miolo colorido e fendas dos
+## olhos. `marcas` = traços acesos nas bochechas (só as evoluídas).
+func _mascara(cor: Color, miolo: Color, olho: Color, marcas: bool) -> void:
+	var cab := "head"
+	_peca(cab, _esfera(0.45, 0.38), Vector3(0, 0.55, 0.3), Vector3.ZERO, Vector3(1, 1, 0.75), _plano(cor))
+	_peca(cab, _cone(0.16, 0.35), Vector3(0, 0.45, 0.65), Vector3(90, 0, 0), Vector3.ONE, _plano(cor))
+	_peca(cab, _esfera(0.05, 0.04), Vector3(0, 0.45, 0.83), Vector3.ZERO, Vector3.ONE, _plano(Color(0.08, 0.06, 0.08)))
+	for s in [-1, 1]:
+		_peca(cab, _cone(0.16, 0.42), Vector3(0.3 * s, 1.05, 0.15), Vector3(0, 0, -15 * s), Vector3(1, 1, 0.55), _plano(cor))
+		_peca(cab, _cone(0.09, 0.26), Vector3(0.29 * s, 1.0, 0.21), Vector3(0, 0, -15 * s), Vector3(1, 1, 0.3), _plano(miolo))
+		if not marcas:
+			_peca(cab, _caixa(Vector3(0.14, 0.035, 0.03)), Vector3(0.15 * s, 0.64, 0.64), Vector3(0, 0, 18 * s), Vector3.ONE, _plano(olho))
+		else:
+			_peca(cab, _caixa(Vector3(0.18, 0.04, 0.02)), Vector3(0.2 * s, 0.5, 0.6), Vector3(0, 0, -20 * s), Vector3.ONE, _neon(miolo, 1.6))
+
+
+## Leque de `n` caudas presas no quadril, com a faixa do time na raiz.
+func _caudas(n: int, base: Color, ponta: Color, time: Color) -> void:
+	var quad := "hips"
+	var raiz := Vector3(0, 0.2, -0.28)
+	var malha := _cauda_malha(1.3 if n == 1 else 1.38, 0.25 if n == 1 else 0.21, base, ponta)
+	var abre := 0.0 if n == 1 else minf(24.0 * (n - 1), 100.0)
+	for i in n:
+		var ang := 0.0 if n == 1 else lerpf(-abre * 0.5, abre * 0.5, float(i) / (n - 1))
+		# As de fora deitam mais (leque); fases diferentes: não balançam juntas.
+		var tomb := -absf(ang) * 0.12
+		_peca(quad, malha, raiz, Vector3(tomb, ang * 0.25, ang), Vector3.ONE,
+				{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true,
+				"balanco": Vector3(1.0, i * 2.1, 0.0)})
+	_peca(quad, _anel(0.14, 0.05, 12), raiz + Vector3(0, 0.02, -0.02), Vector3(70, 0, 0), Vector3.ONE, _plano(time))
+
+
+## Fogo de raposa (kitsunebi) orbitando o peito: `n` chamas; tipo 1 calmo, 2 tremido.
+func _fogo_raposa(n: int, cor: Color, tipo: float) -> void:
 	var peito := "chest"
-	for i in chamas:
-		var a := TAU * i / chamas + 0.4
-		var p := Vector3(cos(a) * 0.8, 0.7 + 0.2 * (i % 2), sin(a) * 0.8)
-		_peca(peito, _esfera(0.12, 0.14), p, Vector3.ZERO, Vector3.ONE, _neon(fogo, 2.4))
-		_peca(peito, _cone(0.1, 0.3), p + Vector3(0, 0.2, 0), Vector3.ZERO, Vector3.ONE, _neon(fogo, 1.6))
+	var chama := _chama(0.13, 0.42)
+	var miolo := _chama(0.06, 0.24)
+	for i in n:
+		var a := TAU * i / n + 0.4
+		var p := Vector3(cos(a) * 0.82, 0.7 + 0.18 * (i % 2), sin(a) * 0.82)
+		var bal := Vector3(1.0, i * 1.7, tipo)
+		_peca(peito, chama, p, Vector3.ZERO, Vector3.ONE, _neon_bal(cor, bal))
+		_peca(peito, miolo, p + Vector3(0, 0.02, 0), Vector3.ZERO, Vector3.ONE, _neon_bal(cor.lerp(Color.WHITE, 0.65), bal))
+
+
+func _neon_bal(c: Color, bal: Vector3) -> Dictionary:
+	return {"cor": c, "neon": true, "balanco": bal}
 
 
 ## Construtor (Ciclo 2.4): operário simples. Hachimaki, armação de carregar
@@ -444,6 +517,110 @@ func _cilindro(r_topo: float, r_base: float, h: float) -> Mesh:
 
 func _cone(r: float, h: float) -> Mesh:
 	return _cilindro(0.0, r, h)
+
+## Cauda de raposa: tubo ao longo de uma curva que sai para trás e sobe
+## enrolando; raio incha no meio e afina na ponta, com "mechas" (lóbulos) para
+## parecer pelo pintado. Cor do vértice: base -> ponta. UV.x = 0 na raiz e 1 na
+## ponta (peso do balanço). ~190 triângulos.
+func _cauda_malha(comp: float, raio: float, base: Color, ponta: Color) -> Mesh:
+	var aneis := 12
+	var lados := 8
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var pts: Array[Vector3] = []
+	var tans: Array[Vector3] = []
+	var p := Vector3.ZERO
+	for k in aneis + 1:
+		var u := float(k) / aneis
+		var th := deg_to_rad(lerpf(15.0, 135.0, pow(u, 1.1)))
+		var t := Vector3(0, sin(th), -cos(th))
+		pts.append(p)
+		tans.append(t)
+		p += t * comp / aneis
+	var lado := Vector3.RIGHT
+	for k in aneis + 1:
+		var u := float(k) / aneis
+		var t := tans[k]
+		var nrm := t.cross(lado).normalized()
+		var r := raio * pow(sin(PI * (0.15 + 0.85 * u)), 0.7)
+		var cor := base.lerp(ponta, smoothstep(0.6, 0.86, u)) * lerpf(0.72, 1.0, smoothstep(0.0, 0.25, u))
+		cor.a = 1.0
+		for j in lados + 1:
+			var phi := TAU * j / lados
+			var mecha := 1.0 + 0.13 * sin(5.0 * phi + 9.0 * u)
+			var d := lado * cos(phi) + nrm * sin(phi)
+			st.set_color(cor)
+			st.set_normal(d)
+			st.set_uv(Vector2(u, 0))
+			st.add_vertex(pts[k] + d * r * mecha)
+	for k in aneis:
+		for j in lados:
+			var a := k * (lados + 1) + j
+			var b := a + lados + 1
+			for v in [a, b, a + 1, a + 1, b, b + 1]:
+				st.add_index(v)
+	return st.commit()
+
+
+## Chama em gota (torno): base redonda, ponta fina levemente torta.
+func _chama(r: float, h: float) -> Mesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var aneis := 7
+	var lados := 8
+	for k in aneis + 1:
+		var u := float(k) / aneis
+		var rr := r * (sin(u / 0.35 * PI * 0.5) if u < 0.35 else pow(1.0 - (u - 0.35) / 0.65, 1.3))
+		var y := -0.25 * h + u * h
+		var torto := Vector3(0.04 * sin(u * 4.0) * u, 0, 0)
+		for j in lados + 1:
+			var phi := TAU * j / lados
+			var d := Vector3(cos(phi), 0, sin(phi))
+			st.set_normal(d)
+			st.add_vertex(d * rr + Vector3(0, y, 0) + torto)
+	for k in aneis:
+		for j in lados:
+			var a := k * (lados + 1) + j
+			var b := a + lados + 1
+			for v in [a, a + 1, b, a + 1, b + 1, b]:
+				st.add_index(v)
+	return st.commit()
+
+
+## Anel (toro) deitado no plano XZ.
+func _anel(r: float, grossura: float, lados: int) -> Mesh:
+	var t := TorusMesh.new()
+	t.inner_radius = r - grossura
+	t.outer_radius = r + grossura
+	t.rings = lados
+	t.ring_segments = 6
+	return t
+
+
+## Coroa de raios: tira fechada cujo topo sobe e desce em ziguezague, com as
+## duas faces (dá para ver por dentro de cima da câmera).
+func _coroa(r: float, h: float, pontas: int) -> Mesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var n := pontas * 2
+	for i in n:
+		var a0 := TAU * i / n
+		var a1 := TAU * (i + 1) / n
+		var h0 := h if i % 2 == 0 else h * 0.3
+		var h1 := h if (i + 1) % 2 == 0 else h * 0.3
+		var p0 := Vector3(cos(a0), 0, sin(a0)) * r
+		var p1 := Vector3(cos(a1), 0, sin(a1)) * r
+		# abre um pouco para fora em cima, como coroa
+		var q0 := p0 * 1.18 + Vector3(0, h0, 0)
+		var q1 := p1 * 1.18 + Vector3(0, h1, 0)
+		var nrm := (p0 + p1).normalized()
+		for face in [[p0, q0, p1, q0, q1, p1], [p0, p1, q0, q0, p1, q1]]:
+			var sinal := 1.0 if face[1] == q0 and face[2] == p1 else -1.0
+			for v in face:
+				st.set_normal(nrm * sinal)
+				st.add_vertex(v)
+	return st.commit()
+
 
 func _caixa(t: Vector3) -> Mesh:
 	var b := BoxMesh.new()

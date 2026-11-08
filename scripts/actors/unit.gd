@@ -139,6 +139,12 @@ var _golpe_mult := 1.0
 var _golpe_final := false
 var _golpe_machado := false  # este clique é machadada (lenhador de longe perto da planta)
 var _carga_vista := -1.0  # último poder_carga mandado ao material
+var _pecas: MeshInstance3D       # peças do NinjaVisual (refeitas quando o nível visual muda)
+var _nivel_pecas := 1            # caudas da Kitsune Luz/Sombria = nível do mago
+var _agito := 0.0                # balanço das peças: 1 no ataque/poder, -1 morto
+var _agito_visto := 0.0
+var _pose_dash: PoseDash         # braços para trás no dash "ninja"
+var _fogo_dash_t := 0.0          # rastro de fogo-raposa enquanto a Kitsune está sumida
 var _morte_t := -1.0  # s desde a morte (pulinho cômico); < 0 = vivo
 ## Construindo uma oficina (marcado pela Oficina a cada quadro).
 var building_t := 0.0
@@ -212,10 +218,18 @@ func set_class(new_stats: ClassStats) -> void:
 				mat.albedo_color = Config.team_color(team).lightened(0.15)
 				mi.material_override = mat
 	_merge_body_parts()
+	_pecas = null
+	_nivel_pecas = _nivel_visual()
 	if stats.estilo_ninja != "" or stats.escala_cabeca != 1.0:
-		var pecas := NinjaVisual.aplicar(_model, _meshes, stats.estilo_ninja, Config.team_color(team), stats.escala_cabeca, Settings.quality >= 2, stats.escala_extremidades)
-		if pecas:
-			_meshes.append(pecas)
+		_pecas = NinjaVisual.aplicar(_model, _meshes, stats.estilo_ninja, Config.team_color(team), stats.escala_cabeca, Settings.quality >= 2, stats.escala_extremidades, _nivel_pecas)
+		if _pecas:
+			_meshes.append(_pecas)
+	_pose_dash = null
+	if stats.dash_estilo == "ninja":
+		var sk := _model.find_child("Skeleton3D", true, false) as Skeleton3D
+		if sk:
+			_pose_dash = PoseDash.new()
+			sk.add_child(_pose_dash)
 	_model.scale = Vector3.ONE * stats.escala_modelo
 	_anim = _model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if _anim:
@@ -229,7 +243,34 @@ func set_class(new_stats: ClassStats) -> void:
 	for mi in _meshes:
 		mi.set_instance_shader_parameter("cor_poder", stats.hat_color)
 	_carga_vista = -1.0
+	_agito_visto = 99.0
 	class_changed.emit(self)
+
+
+## Nível visual das peças (caudas da Kitsune Luz/Sombria = nível do mago dela).
+func _nivel_visual() -> int:
+	return game.nivel_visual_mago(team, stats.id) if game and stats else 1
+
+
+## O mago do time subiu de nível: refaz só a malha de peças (mais caudas, halo
+## e coroa maiores), sem trocar de classe nem curar.
+func atualizar_nivel_visual() -> void:
+	var n := _nivel_visual()
+	if _model == null or _pecas == null or n == _nivel_pecas:
+		return
+	var sk := _pecas.get_parent() as Skeleton3D
+	var novo := NinjaVisual.pecas(sk, _pecas.skin, stats.estilo_ninja, NinjaVisual.cor_neon(Config.team_color(team)), Settings.quality >= 2, n)
+	if novo == null:
+		return
+	_meshes.erase(_pecas)
+	_pecas.queue_free()
+	_pecas = novo
+	_meshes.append(novo)
+	_nivel_pecas = n
+	novo.set_instance_shader_parameter("cor_poder", stats.hat_color)
+	_carga_vista = -1.0
+	_agito_visto = 99.0
+	_tick_aura()
 
 
 # --- Chapéu: pegar e pôr na cabeça --------------------------------------------
@@ -556,11 +597,19 @@ func _physics_process(delta: float) -> void:
 		_start_dodge()
 	wants_dodge = false
 
+	if _pose_dash:
+		_pose_dash.peso = move_toward(_pose_dash.peso, 1.0 if _dodge_t > 0.0 else 0.0, delta * 9.0)
+	if _fogo_dash_t > 0.0:
+		_fogo_dash_t -= delta
+		if Engine.get_physics_frames() % 3 == 0:
+			var cor := Color(1.0, 0.85, 0.4) if stats.estilo_ninja == "_kitsune_luz" else (Color(0.65, 0.3, 1.0) if stats.estilo_ninja == "_kitsune_sombria" else stats.hat_color)
+			Fx.burst(game, global_position + Vector3(0, 0.9, 0), cor, 3, 1.2)
 	if _dodge_t > 0.0:
 		_dodge_t -= delta
 		_move_vel = _dodge_dir * DODGE_SPEED
 		if _dodge_t <= 0.0:
 			_mola(-5.0, -4.0)  # "pouso" do dash: amassa e devolve o esticão
+			_fim_dash()
 	else:
 		var speed := current_speed()
 		if _spin_t > 0.0:
@@ -666,14 +715,55 @@ func _start_dodge() -> void:
 	_cancel_skill()
 	if _upper:
 		_upper.stop()
-	_play_once("Dodge_Forward", DODGE_TIME + 0.1)
 	Sfx.play("dodge", global_position)
 	_windup_t = 0.0  # o dash cancela um golpe que ainda não saiu
-	_mola(-1.5, 8.0)  # esticão na direção do dash
+	# Personalidade do dash (ClassStats.dash_estilo): só o visual muda.
+	match stats.dash_estilo:
+		"ninja":
+			_play_once("Running_B", DODGE_TIME + 0.1, 1.8)
+			_mola(-1.0, 10.0)
+		"chama":
+			_play_once("Dodge_Forward", DODGE_TIME + 0.1)
+			_fogo_dash(true)
+		"rolar":
+			_play_once("Dodge_Forward", DODGE_TIME + 0.1, 0.85)
+			_mola(-3.0, 5.0)
+		_:
+			_play_once("Dodge_Forward", DODGE_TIME + 0.1)
+			_mola(-1.5, 8.0)  # esticão na direção do dash
+
+
+## Pouso do dash por personalidade.
+func _fim_dash() -> void:
+	match stats.dash_estilo:
+		"chama":
+			_fogo_dash(false)
+		"rolar":
+			# Tanque caindo do rolamento: amassa mais, levanta pó e treme o chão.
+			_mola(-6.0, 0.0)
+			Fx.burst(game, global_position + Vector3(0, 0.2, 0), Color(0.62, 0.55, 0.45), 12, 3.5)
+			if game and game.camera and self == game.player:
+				game.camera.shake_at(global_position, 0.18)
+
+
+## Kitsune no dash: o corpo vira um lampejo de fogo-raposa e reaparece no fim.
+## Só esconde o modelo (o _visual continua com o Passo da Sombra e o chapéu).
+func _fogo_dash(sumir: bool) -> void:
+	if _model == null:
+		return
+	var cor := stats.hat_color.lightened(0.2)
+	if stats.estilo_ninja == "_kitsune_luz":
+		cor = Color(1.0, 0.85, 0.4)
+	elif stats.estilo_ninja == "_kitsune_sombria":
+		cor = Color(0.65, 0.3, 1.0)
+	Fx.burst(game, global_position + Vector3(0, 1.0, 0), cor, 16 if sumir else 10, 4.5 if sumir else 3.0)
+	_model.visible = not sumir
+	_fogo_dash_t = DODGE_TIME if sumir else 0.0
 
 
 func _attack() -> void:
 	_attack_cd = stats.attack_cooldown
+	_agito = 1.0
 	var anim := stats.anim_attack
 	var mult := 1.0
 	var finisher := false
@@ -1407,6 +1497,9 @@ func _die(killer: Unit) -> void:
 	alive = false
 	hp = 0.0
 	_windup_t = 0.0
+	if _model and (_fogo_dash_t > 0.0 or not _model.visible):
+		_fogo_dash_t = 0.0
+		_model.visible = true  # morreu no meio do dash da Kitsune
 	_morte_t = 0.0 if _exagero() > 0.0 else -1.0
 	_mola(7.0, 0.0)  # "boing": estica antes do pulinho
 	_cancel_equip()
@@ -1510,6 +1603,7 @@ func _use_super() -> void:
 		return
 	var cfg := Config.cfg
 	super_carga = 0.0
+	_agito = 1.0
 	# Abertura do super: mais forte que a do E (tela dourada, tempo quase para).
 	if is_player:
 		game.camera.add_trauma(0.5)
@@ -1644,6 +1738,7 @@ func _use_power() -> void:
 	if carried_princess:
 		return
 	power = 0.0
+	_agito = 1.0
 	_cancel_skill()
 	var som_proprio := Sfx.has(stats.som_poder)
 	if not som_proprio:
@@ -1942,7 +2037,7 @@ func _animate(horizontal: Vector3) -> void:
 	# (como quem corre de verdade: o torque do atrito no pé pede o tronco à frente).
 	var lean_target := clampf(horizontal.length() / 9.0, 0.0, 1.0) * 0.16
 	if _dodge_t > 0.0:
-		lean_target = 0.35
+		lean_target = 0.6 if stats.dash_estilo == "ninja" else 0.35
 	_lean = lerpf(_lean, lean_target, 1.0 - exp(-10.0 * get_physics_process_delta_time()))
 	if _model:
 		_model.rotation.x = _lean
@@ -1988,11 +2083,11 @@ func aterrissagem() -> void:
 	_tremor_t = 0.25
 
 
-func _play_once(anim_name: String, lock: float) -> void:
+func _play_once(anim_name: String, lock: float, velocidade := 1.0) -> void:
 	if _anim == null or not _anim.has_animation(anim_name):
 		return
 	_current_anim = anim_name
-	_anim.speed_scale = 1.0
+	_anim.speed_scale = velocidade
 	_anim.play(anim_name, 0.05)
 	_anim.seek(0.0, true)
 	_anim_lock = lock
@@ -2021,12 +2116,30 @@ const MORTE_G := 30.0
 ## Liga o medidor do poder ao material (uniform poder_carga do toon). Só
 ## manda quando muda ~2%, para não mexer no material todo quadro.
 func _tick_aura() -> void:
+	_tick_agito()
 	var c := clampf(power / POWER_MAX, 0.0, 1.0) if alive else 0.0
 	if absf(c - _carga_vista) < 0.02 and not (c >= 1.0 and _carga_vista < 1.0):
 		return
 	_carga_vista = c
 	for mi in _meshes:
 		mi.set_instance_shader_parameter("poder_carga", c)
+
+
+## Balanço das peças (balanco.gdshaderinc): caudas e fogo agitam no ataque e
+## no poder, voltam ao repouso em ~0,5 s e caem/apagam na morte.
+func _tick_agito() -> void:
+	if _pecas == null:
+		return
+	if not alive:
+		_agito = -1.0
+	elif _agito > 0.0:
+		_agito = maxf(_agito - get_physics_process_delta_time() * 2.0, 0.0)
+	else:
+		_agito = 0.0
+	if absf(_agito - _agito_visto) < 0.04 and not (_agito == 0.0 and _agito_visto != 0.0):
+		return
+	_agito_visto = _agito
+	_pecas.set_instance_shader_parameter("agito", _agito)
 
 
 func _exagero() -> float:

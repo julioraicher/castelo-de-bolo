@@ -64,6 +64,7 @@ var _time := 0.0
 #   --classe=<nome>     o jogador começa nessa classe (config/classes/<nome>.tres), para prints
 #   --filme=<pasta>     roteiro fixo com o jogador (golpe, dash, pulo, pancada,
 #                       morte) salvando um quadro a cada 2: prancha de animação
+#                       (com --classe=<nome>, filma essa classe; senão o Samurai)
 #   --pisca=<pasta>     câmera do jogo sobre a praça do pátio azul andando 1 cm por
 #                       quadro (PISCA_PASSO=m no ambiente muda): salva pisca.jpg com os
 #                       pixels que mudaram de um quadro para o outro em vermelho e
@@ -608,7 +609,7 @@ func _filme() -> void:
 		p.brain = null
 		p.move_intent = Vector3.ZERO
 		p.aim_dir = lado
-		p.set_class(load("res://config/classes/guerreiro.tres"))
+		p.set_class(load("res://config/classes/%s.tres" % (_classe_jogador if _classe_jogador != "" else "guerreiro")))
 		p.fill_power()
 		# Câmera parada, baixa e de lado, perto do boneco.
 		hud.visible = false
@@ -1390,12 +1391,24 @@ func on_obra_comecou(of: Oficina) -> void:
 
 func on_mago_nivel(of: Oficina) -> void:
 	caminho_nivel[of.team] = of.nivel
+	for u in units:
+		if u.team == of.team and u.stats and u.stats.id == of.opcao().id:
+			u.atualizar_nivel_visual()
 	_log("mago %s nível %d: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.nivel, of.opcao().display_name, _time])
 	if hud and player:
 		if of.team == player.team:
 			hud.show_big("%s: nível %d/%d!" % [of.opcao().display_name, of.nivel, Config.cfg.mago_nivel_max], of.opcao().hat_color.lightened(0.3), 2.2)
 		else:
 			hud.show_big("O inimigo subiu %s para o nível %d" % [of.opcao().display_name, of.nivel], Color(1, 0.6, 0.55), 1.6)
+
+
+## Nível visual de um soldado dessa classe: o nível da oficina do mago (2-5)
+## para a Kitsune Luz/Sombria (caudas, halo, coroa); 1 para as outras classes.
+func nivel_visual_mago(team: int, id: StringName) -> int:
+	for of in oficinas:
+		if of.team == team and of.caminho >= 0 and of.opcao().id == id:
+			return maxi(of.nivel, 2)
+	return 1
 
 
 ## Níveis acima do 2 do mago do caminho, para um soldado dessa classe (0 = sem bônus).
