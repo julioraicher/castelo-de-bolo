@@ -38,6 +38,7 @@ func _ready() -> void:
 	_respawn_cresce()
 	_bolo_mascara_cheia()
 	await _mira()
+	_placar()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -431,6 +432,52 @@ func _dash_estilos() -> void:
 	var cfg = get_node("/root/Config").cfg
 	for c in cfg.hat_classes() + cfg.oficina_classes + cfg.magos_opostos:
 		_check(c.dash_estilo in ["", "rolar", "rolamento", "ninja", "chama", "polvora", "tropeco"], "dash: estilo desconhecido em %s: '%s'" % [c.id, c.dash_estilo])
+
+
+## Placar (Tab, Ciclo 2.16): todo boneco tem linha, todo campo tem peso
+## no game_config, a conta é Σ campo × peso e o abate dá abate/assistência/morte.
+func _placar() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var pl = game.placar
+	_check(pl != null, "placar: game.placar não existe")
+	if pl == null:
+		return
+	_check(pl.time(0).size() + pl.time(1).size() == game.units.size(), "placar: nem todo boneco tem linha")
+	for c in pl.CAMPOS:
+		_check(cfg.get("pts_" + c) != null, "placar: falta pts_%s no GameConfig" % c)
+	var l := {"abates": 2.0, "assist": 1.0, "madeira": 3.0, "obra_s": 2.5}
+	var esperado: int = int(round(2 * cfg.pts_abates + cfg.pts_assist + 3 * cfg.pts_madeira + 2.5 * cfg.pts_obra_s))
+	_check(pl.pontos_de(l, cfg) == esperado, "placar: conta deu %d, esperado %d" % [pl.pontos_de(l, cfg), esperado])
+	# Abate de verdade: c bate, a mata -> a abate, c assistência, b morte.
+	var b = null
+	var a = null
+	var c = null
+	for u in game.units:
+		if not u.alive or u.is_player:
+			continue
+		if b == null:
+			b = u
+		elif u.team != b.team and a == null:
+			a = u
+		elif a != null and u.team == a.team and c == null:
+			c = u
+	if b == null or a == null or c == null:
+		return
+	var la: Dictionary = pl.linha(a).duplicate()
+	var lb: Dictionary = pl.linha(b).duplicate()
+	var lc: Dictionary = pl.linha(c).duplicate()
+	b._dodge_t = 0.0
+	b._blocking = false
+	b._shield = 0.0
+	b.hp = b.max_hp()
+	b.take_damage(5.0, c, Vector3.RIGHT)
+	b.take_damage(b.hp + 10.0, a, Vector3.RIGHT)
+	_check(not b.alive, "placar: o alvo do teste não morreu")
+	_check(pl.linha(a).abates == la.abates + 1, "placar: quem matou não ganhou o abate")
+	_check(pl.linha(c).assist == lc.assist + 1, "placar: quem ajudou não ganhou a assistência")
+	_check(pl.linha(a).assist == la.assist, "placar: quem matou não ganha assistência junto")
+	_check(pl.linha(b).mortes == lb.mortes + 1, "placar: quem caiu não ganhou a morte")
+	_check(pl.linha(c).dano >= lc.dano + 5.0 - 0.01, "placar: dano de quem ajudou não contou")
 
 
 func _check(ok: bool, nome: String) -> void:

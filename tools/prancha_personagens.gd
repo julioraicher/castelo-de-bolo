@@ -7,6 +7,7 @@ extends SceneTree
 ##   xvfb-run -a -s "-screen 0 1600x900x24" godot --path . --rendering-driver opengl3 \
 ##     --rendering-method gl_compatibility --audio-driver Dummy -s tools/prancha_personagens.gd -- DIR
 ## Fileiras próprias: -- DIR guerreiro,arqueiro,kitsune,construtor ronin_oni,...
+## Câmera de perto (rosto e armadura): acrescente "perto" depois do DIR.
 
 const AZUL := Color(0.16, 0.45, 1.0)
 const VERMELHO := Color(1.0, 0.16, 0.1)
@@ -21,12 +22,16 @@ var fileiras := [
 var dir := "user://prancha"
 var cena: Node3D
 var cam: Camera3D
+var perto := false
 
 
 func _init() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 0:
 		dir = args[0]
+	if args.size() > 1 and args[1] == "perto":
+		perto = true
+		args.remove_at(1)
 	if args.size() > 1:
 		fileiras = []
 		for f in args.slice(1):
@@ -47,7 +52,7 @@ func _montar() -> void:
 			var cls: Resource = load("res://config/classes/%s.tres" % classes[c])
 			for v in 3:
 				var b := _boneco(cls, AZUL)
-				b.position = Vector3(w * 100 + (c - 1.5) * 4.1 + (v - 1) * 1.3, 0, 0)
+				b.position = Vector3(w * 100 + (c - (classes.size() - 1) / 2.0) * 4.1 + (v - 1) * 1.3, 0, 0)
 				b.rotation.y = angulos[v]
 			for t in 2:
 				var b := _boneco(cls, AZUL if t == 0 else VERMELHO)
@@ -58,7 +63,7 @@ func _montar() -> void:
 	await _quadros(8)
 	for w in fileiras.size():
 		cam.fov = 30
-		cam.position = Vector3(w * 100, 2.2, 20.5)
+		cam.position = Vector3(w * 100, 2.2, 4.5 + 5.0 * fileiras[w].size() if perto else 20.5)
 		cam.look_at(Vector3(w * 100, 1.1, 0))
 		await _salvar("close_%d.png" % w)
 		cam.fov = 42
@@ -125,7 +130,7 @@ func _boneco(cls: Resource, time: Color) -> Node3D:
 		mi.visible = mi.name in cls.visible_meshes
 		if mi.visible:
 			corpo.append(mi)
-	NinjaVisual.aplicar(n, corpo, cls.estilo_ninja, time, cls.escala_cabeca, true)
+	NinjaVisual.aplicar(n, corpo, cls.estilo_ninja, time, cls.escala_cabeca, true, cls.escala_extremidades)
 	n.scale = Vector3.ONE * cls.escala_modelo
 	var ap: AnimationPlayer = n.find_children("*", "AnimationPlayer", true, false)[0]
 	ap.play(cls.anim_attack if cls.attack_kind != "melee" else cls.anim_idle)

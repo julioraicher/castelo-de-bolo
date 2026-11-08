@@ -27,6 +27,7 @@ const CONTROLS := [
 	["R", "SUPER, quando a barra dourada enche (abates, dano, itens e espíritos)"],
 	["Espaço ou Shift", "esquiva (rolamento rápido)"],
 	["F", "pegar chapéu ou máscara · escolher a oficina do terreno · subir e lançar na catapulta"],
+	["Tab (segure)", "placar: pontos, abates, assistências, almas e madeira de todos"],
 	["Esc ou P", "pausa, controles e configurações"],
 	["F11", "tela cheia"],
 	["F5", "reiniciar a partida"],
@@ -70,6 +71,7 @@ func _setup_input() -> void:
 	_bind_keys("power", [KEY_E])
 	_bind_keys("pause", [KEY_ESCAPE, KEY_P])
 	_bind_keys("fullscreen", [KEY_F11])
+	_bind_keys("placar", [KEY_TAB])
 	_bind_mouse("attack", MOUSE_BUTTON_LEFT)
 	_bind_mouse("block", MOUSE_BUTTON_RIGHT)
 

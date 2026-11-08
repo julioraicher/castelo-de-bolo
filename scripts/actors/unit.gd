@@ -1289,6 +1289,8 @@ func heal(amount: float, quem: Unit = null) -> float:
 	hp = minf(hp + amount, max_hp())
 	if quem and game and game._equilibrio:
 		game.eq_somar(quem.stats.id, "cura", hp - before)
+	if quem and quem != self and game and game.placar:
+		game.placar.somar(quem, "cura", hp - before)
 	if is_player or (quem and quem.is_player):  # só a cura que você deu ou levou
 		Fx.damage_number(game, global_position, "+%d" % int(hp - before), Color(0.5, 1, 0.55))
 	_update_hp_bar()
@@ -1325,6 +1327,8 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 	hp -= amount
 	if attacker and game and game._equilibrio and attacker.team != team:
 		game.eq_somar(attacker.stats.id, "dano", minf(amount, hp + amount))
+	if attacker and game and game.placar and attacker.team != team:
+		game.placar.dano(self, attacker, minf(amount, hp + amount), game._time)
 	_calm_t = 0.0
 	if carried_tora and amount > 0.0:
 		drop_tora()  # apanhou: a tora cai (qualquer Construtor pega, até o inimigo)
@@ -2016,6 +2020,8 @@ func _tick_buffs(delta: float) -> void:
 		_dmg_boost_t -= delta
 		if fmod(_dmg_boost_t, 0.25) < delta:
 			Fx.burst(game, global_position + Vector3(0, 1.6, 0), Color(1.0, 0.35, 0.3), 2, 2.0)
+	if building_t > 0.0 and game and game.placar:
+		game.placar.somar(self, "obra_s", delta)
 	building_t = maxf(building_t - delta, 0.0)
 	# Regeneração fora de combate: dH/dt = r·Hmax depois de regen_delay s calmo.
 	_calm_t += delta
