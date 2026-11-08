@@ -448,7 +448,7 @@ func update_state(game: Game) -> void:
 		disco.bg_color = u.stats.hat_color.darkened(0.55)
 		disco.border_color = Estilo.OURO
 	_icone_papel.mudar(Icone.do_papel(u.stats), u.stats.hat_color.lightened(0.35))
-	_class_label.text = u.stats.display_name if u.alive else "Renascendo..."
+	_class_label.text = u.stats.display_name if u.alive else ("Caído" if game.reanimar and game.reanimar.pode_reanimar(u) else "Renascendo...")
 	var ratio := u.hp_ratio()
 	_hp_bar.value = ratio * 100.0
 	_hp_text.text = "%d / %d" % [ceili(u.hp), int(u.max_hp())] if u.alive else ""

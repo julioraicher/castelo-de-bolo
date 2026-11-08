@@ -330,7 +330,12 @@ extends Resource
 ## Relógio de quem está caído esperando ajuda (< 1 = janela maior). Segurar
 ## [F] caído desiste e volta ao ritmo normal (renasce no castelo, recruta).
 @export var reanimar_ritmo_espera := 0.65
-## Bot caído espera (ritmo acima) só com aliado vivo a até este raio (m).
+## Desistir (segurar [F] caído; bot sem aliado perto desiste sozinho): renasce
+## em reanimar_desistir_frac da espera da morte, nunca menos que
+## reanimar_desistir_min s. Bem mais rápido, mas ainda fora da briga.
+@export_range(0.1, 1.0) var reanimar_desistir_frac := 0.5
+@export var reanimar_desistir_min := 4.0
+## Bot caído espera ajuda só com aliado vivo a até este raio (m); senão desiste.
 @export var reanimar_bot_espera_raio := 20.0
 ## Bots vão reanimar quem caiu a até este raio (m); Kitsunes, o dobro.
 @export var reanimar_bot_raio := 10.0

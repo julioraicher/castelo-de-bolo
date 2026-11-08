@@ -4,6 +4,31 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.18b (2026-11-08), Jogabilidade: desistir rápido e bug do "dois de mim"
+Feedback do Julio jogando a 2.18: apertou para desistir caído, um aliado o reanimou
+mesmo assim e "apareceram dois dele"; e quer que desistir renasça bem mais rápido.
+- **Causa**: enquanto alguém te reanimava, a barra mostrava só "X TE REANIMANDO" (dourada,
+  enchendo) e escondia o progresso do desistir. Soltando o F antes da hora, parecia que tinha
+  desistido, e a reanimação terminava. Quem reanimou (às vezes da mesma classe) ficou colado em
+  você: os "dois de mim". Nas partidas simuladas com checagem a cada quadro não apareceu cópia
+  de boneco nem estado sujo.
+- **Desistir**: segurar F por **0,5 s** (era 0,8). Agora vale **mesmo no meio de uma
+  reanimação** (solta quem estava reanimando) e a barra do desistir (vermelha, "continue
+  segurando [F]") fica por cima de tudo. Ao desistir aparece "Desistiu: renascendo no castelo"
+  e a barra mostra os segundos.
+- **Renasce bem mais rápido**: metade da espera da morte, nunca menos de 4 s
+  (`reanimar_desistir_frac` 0,5 e `reanimar_desistir_min` 4). No começo da partida, 7 s viram
+  4 s; no fim, 13 s viram 6,5 s. Continua perdendo o chapéu e ficando fora da briga.
+- **Bots** sem aliado vivo a 20 m desistem sozinhos depois de 1,5 s no chão (mesma regra).
+- **Sendo reanimado, o relógio para**: ninguém renasce no castelo no meio do resgate.
+- Travas extras: `levantar()` não levanta quem desistiu ou já renasceu; o painel da classe
+  mostra "Caído" (dá para reanimar) ou "Renascendo...".
+- Testes de regra: desistir no meio da reanimação, relógio parado, tempo rápido com mínimo;
+  322/322. 3 partidas de 5 min com checagem a cada quadro, sem erro.
+- **O que testar**: caia perto de um aliado, deixe ele começar a reanimar e segure F: a barra
+  vermelha enche, você renasce no castelo em ~4 s e ninguém te levanta. Sem segurar F, ele te
+  reanima normalmente.
+
 ## Ciclo 2.18 (2026-11-08), Jogabilidade + Visual: reanimar aliados caídos (estilo Battlefield 6)
 Pedido do Julio (quiz "Reanimar aliados caídos", todas as recomendadas + comentários estilo BF6).
 Regra em `scripts/reanimar.gd` (`Reanimar`, em `Game.reanimar`); números no `game_config`, grupo
