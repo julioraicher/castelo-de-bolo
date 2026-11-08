@@ -4,6 +4,35 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.15 (2026-11-08), Visual: Personagens 2.0, parte 2 (detalhe nos corpos e rolamento de verdade)
+Feedback do Julio na parte 1: queria peças 3D construídas ao redor do corpo (armadura, camadas de
+roupa) e um rolamento animado no dash, principalmente nas classes que atiram. Prancha
+`personagens/09-detalhe-e-rolamento.jpg`.
+- **Peças novas por classe** (tudo na malha única de peças: nenhuma chamada de desenho a mais):
+  Samurai com peitoral lamelar de três faixas debruadas em ouro, saiote de placas (kusazuri),
+  braçadeiras, caneleiras, bainha na cintura e **bandeira do time nas costas (sashimono)** que
+  balança na corrida; Ninja de Shuriken com cachecol de ponta solta esvoaçante, bandoleira de
+  shurikens, faixas de pano nos braços e canelas e bolsa no cinto; Ronin Oni com gola de pelo,
+  ombreira gigante de placas com espigões de osso e corda shimenawa com dois shide de papel;
+  Arqueira Yumi com ombreira assimétrica de arqueira, luva na corda, abas de hakama e jingasa de
+  palha pendurada nas costas; Construtor com cinto de ferramentas, toalha no ombro e joelheiras;
+  Armadilheiro com avental de couro e minas de reserva no cinto; Bombardeiro com bandoleira de
+  bombinhas e pavio na cintura. Panos e papéis usam o mesmo balanço por vértice das caudas
+  (`_fita` em `NinjaVisual`). Peças por classe: 0,6k-2,3k triângulos (medido).
+- **Rolamento de verdade** (`dash_estilo` "rolamento"): o corpo gira 360° para a frente em volta
+  do próprio centro durante o dash (pivô compensado para não cavar o chão; o pouso dá um pulinho
+  e um tufo de poeira). Agora rolam: **Ninja de Shuriken, Arqueira Yumi, Armadilheiro** e o
+  **Ronin Oni** (o "rolar" pesado dele usa o mesmo giro, com tremor de tela no pouso). Morrer no
+  meio da cambalhota endireita o corpo.
+- **Dashes criativos novos**: Bombardeiro sai de **foguete de pólvora** (estouro atrás, faíscas no
+  rastro, inclinado para trás); Construtor **tropeça** para a frente quase caindo, com poeira.
+  O Samurai segue na corrida inclinada e as Kitsunes seguem virando chama.
+  Distância, tempo e recarga do dash continuam iguais para todos.
+- Testes de regra: 271/271 (a lista de estilos de dash válidos cobre os novos).
+- Modo teste: nada muda (visual puro); os dashes aparecem lá do mesmo jeito.
+- **O que testar**: dê dash com cada classe (dois cliques na direção): a cambalhota do Ninja/Yumi/
+  Armadilheiro, o foguete do Bombardeiro e o tropeço do Construtor. De perto, repare na bandeira
+  do Samurai balançando e no cachecol do Ninja. Diga se alguma peça atrapalha a leitura do time.
 ## Ciclo 2.14 (2026-11-08), Visual: Personagens 2.0, parte 1 (Kitsunes e dash com personalidade)
 Ideia guardada do Julio (cardápio da próxima grande atualização, opção recomendada). Julio pediu
 para subir para a main e testar no jogo (2026-11-08); prancha `personagens/08-kitsunes-e-dash.jpg`

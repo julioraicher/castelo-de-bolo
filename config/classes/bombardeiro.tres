@@ -13,6 +13,7 @@ model = ExtResource("1_k5iwi")
 visible_meshes = PackedStringArray("Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head", "Rogue_LegLeft", "Rogue_LegRight")
 hat_color = Color(1, 0.32, 0.12, 1)
 hat_style = "barril"
+dash_estilo = "polvora"
 estilo_ninja = "_polvora"
 escala_cabeca = 0.58
 escala_extremidades = 1.3

@@ -13,6 +13,7 @@ model = ExtResource("1_dk4ki")
 visible_meshes = PackedStringArray("Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight")
 hat_color = Color(0.45, 1, 0.45, 1)
 hat_style = "kasa"
+dash_estilo = "rolamento"
 estilo_ninja = "_armadilheiro"
 escala_cabeca = 0.58
 escala_extremidades = 1.3
