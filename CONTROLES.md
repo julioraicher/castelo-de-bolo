@@ -18,6 +18,7 @@ e Configurações.
 | **R** | **SUPER**, quando a barra de ouro enche (só enche jogando: dano, abates, itens, espíritos e captura). Samurai: Passo da Sombra (some 3,5 s, mais rápido, golpe de surpresa x2,5). Outras classes: o poder do E em versão gigante |
 | **Espaço** ou **Shift** | esquivar: rolamento rápido, com recarga |
 | **F** | pegar um chapéu (perto do pedestal); pegar ou soltar a máscara; perto de um terreno vazio, trocar qual oficina construir; **perto da catapulta da base, subir** (F de novo lança: a barra de força vai e volta e o minimapa mostra onde cai) |
+| **Tab** (segure) | **placar** estilo Battlefield: pontos, abates, assistências, mortes, dano, almas, toras e obra de cada um (bots e você), com o jogo borrado ao fundo. Abre sozinho no fim da partida |
 | **Esc** ou **P** | pausar e abrir o menu (Como jogar, Classes, Controles, Configurações) |
 | **F5** | reiniciar a partida |
 | **F11** | tela cheia (liga/desliga) |

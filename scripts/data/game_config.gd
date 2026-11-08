@@ -308,5 +308,31 @@ extends Resource
 @export var bot_esquiva_projetil := 0.35
 
 
+@export_group("Placar (Tab)")
+## Pontos do placar estilo Battlefield (Tab, e no fim da partida): cada
+## estatística do boneco vezes o peso daqui. O nome é sempre "pts_" + o campo
+## de Placar.CAMPOS; mudar um número muda a conta e a legenda do placar.
+@export var pts_abates := 100.0
+## Assistência: deu dano no abatido nos últimos assistencia_janela s e não
+## foi quem matou.
+@export var pts_assist := 50.0
+@export var assistencia_janela := 8.0
+@export var pts_mortes := 0.0
+## Por ponto de vida tirado de inimigo / curado em aliado.
+@export var pts_dano := 0.25
+@export var pts_cura := 0.4
+## Espírito levado até a própria máscara (deixa ela mais pesada).
+@export var pts_almas := 40.0
+## Tora entregue no depósito ou direto numa torreta.
+@export var pts_madeira := 25.0
+## Por segundo martelando obra (oficina, torreta, maquininha).
+@export var pts_obra_s := 4.0
+@export var pts_capturas := 500.0
+## Pegar a máscara inimiga do pedestal ou do chão.
+@export var pts_roubos := 100.0
+## Devolver a própria máscara caída (quem estava ao lado quando ela voltou).
+@export var pts_resgates := 75.0
+
+
 func hat_classes() -> Array[ClassStats]:
 	return hat_class_list

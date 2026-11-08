@@ -38,6 +38,10 @@ var player_brain: PlayerBrain
 ## Guia do ciclo da madeira (seta/marcador) e minimapa do canto.
 var guia: GuiaConstrutor
 var minimapa: Minimapa
+## Placar estilo Battlefield (Tab): estatística e pontos de cada boneco.
+var placar: Placar
+var placar_tela: PlacarTela
+var placar_print := false
 ## Cursor de mira do jogador (ponta de hardware + enfeites + marcas no chão).
 var mira: Mira
 var game_over := false
@@ -187,6 +191,8 @@ func _ready() -> void:
 			_clipe_max = int(arg.trim_prefix("--clipe-n="))
 		elif arg.begins_with("--tutorial="):
 			_tutorial_dir = arg.trim_prefix("--tutorial=")
+		elif arg == "--placar":
+			placar_print = true  # prints: placar (Tab) sempre aberto
 		elif arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
 		elif arg.begins_with("--menu="):
@@ -273,6 +279,7 @@ func _ready() -> void:
 	var start_classes: Array[ClassStats] = cfg.bot_start_classes if not cfg.bot_start_classes.is_empty() else [cfg.villager]
 	if _variacoes:
 		start_classes = cfg.hat_classes() + cfg.oficina_classes + cfg.magos_opostos
+	placar = Placar.new(cfg)
 	for team in 2:
 		for i in cfg.units_per_team:
 			var is_player := team == time_jogador and i == 0
@@ -288,6 +295,7 @@ func _ready() -> void:
 			u.global_position = arena.random_spawn(team, units)
 			u.reset_physics_interpolation()
 			u.died.connect(_on_unit_died)
+			placar.registrar(u, team, i, is_player)
 			if is_player:
 				u.class_changed.connect(_on_player_class_changed)
 			if is_player:
@@ -352,6 +360,9 @@ func _ready() -> void:
 
 	hud = Hud.new()
 	add_child(hud)
+	placar_tela = PlacarTela.new()
+	add_child(placar_tela)
+	placar_tela.setup(self)
 	# Minimapa no canto inferior direito, acima da linha de ajuda.
 	minimapa = Minimapa.new()
 	hud.add_child(minimapa)
@@ -779,6 +790,7 @@ func _rules() -> void:
 				hint = "[F] pegar a máscara!"
 			if not u.is_player or wants_interact:
 				u.pick_up_princess(enemy_p)
+				placar.somar(u, "roubos")
 				u.has_cake = false
 				continue
 
@@ -787,11 +799,14 @@ func _rules() -> void:
 		if own_p.state == Princess.State.DROPPED and pos.distance_to(own_p.global_position) < 2.5 \
 				and not _contested(own_p):
 			own_p.rescue(get_physics_process_delta_time())
+			if own_p.state == Princess.State.HOME:
+				placar.somar(u, "resgates")
 
 		# Alimentar a própria princesa.
 		if u.has_cake and own_p.state == Princess.State.HOME and pos.distance_to(own_p.global_position) < 4.0:
 			if own_p.feed():
 				u.has_cake = false
+				placar.somar(u, "almas")
 				u.add_power(Config.cfg.power_per_cake)
 				u.add_super(Config.cfg.super_por_espirito)
 				if u.is_player:
@@ -967,6 +982,7 @@ func _score_point(u: Unit) -> void:
 	_log("PONTO %s (t=%.0fs)" % [Config.TEAM_NAMES[u.team], _time])
 	var p := u.carried_princess
 	u.carried_princess = null
+	placar.somar(u, "capturas")
 	u.add_power(Config.cfg.power_per_capture)
 	u.add_super(Config.cfg.super_por_captura)
 	u.play_cheer(1.2)
@@ -984,7 +1000,7 @@ func _score_point(u: Unit) -> void:
 		_slowmo_id += 1
 		Engine.time_scale = 1.0
 		hud.update_state(self)
-		hud.show_end(mine)
+		placar_tela.fim(mine)  # placar de todos com Vitória/Derrota em cima
 		Sfx.play_ui("win" if mine else "lose")
 		for other in units:
 			if other.alive and other.team == u.team:
@@ -1160,6 +1176,7 @@ func entregar_tora(u: Unit) -> void:
 		t.rotation.z = k * TAU, 0.0, 1.0, 0.35)
 	tw.tween_callback(t.queue_free)
 	madeira[u.team] += 1
+	placar.somar(u, "madeira")
 	pilhas[u.team].atualizar(madeira[u.team])
 	_log("madeira %s = %d (t=%.0fs)" % [Config.TEAM_NAMES[u.team], madeira[u.team], _time])
 	Sfx.play("pickup", u.global_position, 0.05)
@@ -1203,6 +1220,7 @@ func _regras_madeira(u: Unit) -> String:
 		for tor in torretas:
 			if tor.team == u.team and tor.faltam() > 0 and pos.distance_to(tor.global_position) < Torreta.RAIO_OBRA:
 				tor.receber_tora(u)
+				placar.somar(u, "madeira")
 				return ""
 		return "Siga a seta: entregue a tora no DEPÓSITO do seu castelo (ícone de tora)"
 	var t := nearest_tora_solta(pos, 1.6)
@@ -1524,6 +1542,9 @@ func _on_unit_died(u: Unit, killer: Unit) -> void:
 		print("ABATE %s %s" % [u.stats.id, killer.stats.id if killer else "nada"])
 	if killer and killer.team != u.team:
 		_alma_de_abate(u, killer.team)
+	var assist := placar.abate(u, killer if killer and killer.team != u.team else null, _time)
+	if player in assist:
+		Fx.damage_number(self, player.global_position + Vector3(0, 0.6, 0), "ASSISTÊNCIA +%d" % int(Config.cfg.pts_assist), Color(0.6, 0.9, 1.0))
 	if u == player:
 		quedas_jogador += 1
 	elif killer == player and u.team != player.team:

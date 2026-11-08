@@ -4,6 +4,47 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.16 (2026-11-08), Visual + Jogabilidade: armadura do Samurai refeita e placar estilo Battlefield (Tab)
+Pedido do Julio depois de jogar a 2.15: a armadura do Samurai tampava o rosto; ver detalhes menores
+nas outras classes; e um placar com a pontuação de cada um (bot ou jogador), no Tab a qualquer
+momento e no fim da partida, com o jogo borrado ao fundo.
+- **Samurai refeito** (`NinjaVisual._samurai`): o peitoral (dō) descia do rosto até a barriga
+  porque as faixas estavam 0,3 m acima de onde a cabeça começa. Agora as três faixas lamelares
+  ficam abaixo do pescoço, justas no tronco, com cordão dourado e o **brasão (mon) do time** no
+  peito. O elmo ganhou **shikoro** (protetor de nuca em três lâminas, só atrás e dos lados),
+  **fukigaeshi** (abas viradas ao lado do rosto) e o mon na testa; as ombreiras viraram duas
+  lâminas com filete dourado. O rosto fica livre de frente e de 3/4.
+- **Detalhes menores**: a corda shimenawa do Ronin era um aro largo flutuando; agora são duas voltas
+  justas na barriga. Ninja de Shuriken com **kunai no coldre da coxa**. Construtor com
+  **lanterna de papel na cor do time** pendurada no cesto (a "luz própria" da ideia B da revisão
+  2.9b, balançando como fogo calmo) e **martelo no cinto**.
+- **Correção de desempenho/erro (vinha da 2.14)**: o contorno de tinta do cenário tinha herdado o
+  `instance uniform agito` do balanço das caudas; cada peça do mapa ocupava um lugar no buffer
+  global de 4.096 e o jogo enchia o log de "Too many instances using shader instance variables"
+  (os bonecos podiam perder o agito/brilho do poder). Bonecos agora usam
+  `contorno_boneco.gdshader`; o `contorno.gdshader` do cenário voltou a não ter instance uniform.
+- **Placar (Tab)** (`scripts/placar.gd` + `scripts/ui/placar_tela.gd`): segure **Tab** e aparecem
+  os dois times lado a lado, do mais pontuado para o menos: nome (bots com nome próprio, você
+  destacado em ouro), classe atual, **pontos, abates, assistências, mortes, dano, almas, toras,
+  obra (segundos martelando) e máscara** (capturas + roubos + resgates); quem está caído tem †.
+  O jogo continua rodando atrás, borrado, sem cor e escuro (`placar_fundo.gdshader`, 25 amostras,
+  funciona no navegador). **No fim da partida** o placar abre sozinho com Vitória/Derrota em cima
+  (substitui o painel antigo, que dizia "R jogar de novo"; o certo é F5).
+- **Pontuação fácil de ajustar**: `game_config.tres`, grupo **"Placar (Tab)"**: pontos =
+  Σ estatística × peso, com o peso de cada campo em `pts_<campo>`. Padrão: abate 100,
+  assistência 50 (deu dano no abatido nos últimos 8 s), alma (espírito levado à máscara) 40,
+  tora entregue 25, obra 4/s, dano 0,25 por ponto de vida, cura em aliado 0,4/pv, roubo da
+  máscara 100, resgate da própria máscara 75, captura 500, morte 0. A legenda no pé do placar
+  lê esses números, então muda junto. Assistência do jogador mostra "ASSISTÊNCIA +50" na tela.
+- Tecla nova em `Config` (ação "placar") e em CONTROLES.md. `--placar` deixa o placar aberto
+  (para prints). Modo teste: o placar funciona igual (só você na lista).
+- Testes de regra: 291/291 (novos: todo boneco tem linha, todo campo tem peso, a conta, e um abate
+  real dá abate a quem matou, assistência a quem ajudou e morte a quem caiu). 5 min simulados
+  sem erro.
+- **O que testar**: segure Tab no meio da briga e solte; veja se dá para acompanhar o jogo borrado
+  atrás. Ganhe ou perca uma partida para ver o placar final. De perto, o rosto do Samurai e a
+  lanterna do Construtor. Se algum peso parecer errado (ex.: dano valendo muito), é só dizer o
+  número novo.
 ## Ciclo 2.15 (2026-11-08), Visual: Personagens 2.0, parte 2 (detalhe nos corpos e rolamento de verdade)
 Feedback do Julio na parte 1: queria peças 3D construídas ao redor do corpo (armadura, camadas de
 roupa) e um rolamento animado no dash, principalmente nas classes que atiram. Prancha
