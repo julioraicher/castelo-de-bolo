@@ -5,8 +5,9 @@ conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
 ## Ciclo 2.14 (2026-11-08), Visual: Personagens 2.0, parte 1 (Kitsunes e dash com personalidade)
-Ideia guardada do Julio (cardápio da próxima grande atualização, opção recomendada). **Em branch,
-esperando o pitaco na prancha** `personagens/08-kitsunes-e-dash.jpg` (`tools/prancha_kitsunes.gd`).
+Ideia guardada do Julio (cardápio da próxima grande atualização, opção recomendada). Julio pediu
+para subir para a main e testar no jogo (2026-11-08); prancha `personagens/08-kitsunes-e-dash.jpg`
+(`tools/prancha_kitsunes.gd`).
 - **Kitsune aprendiz** (nível 1): uma cauda laranja de ponta branca, máscara de raposa branca e
   lisa (fendas pretas nos olhos, miolo vermelho nas orelhas), sem fogo em volta.
 - **Luz e Sombria usam o mesmo modelo evoluído**, com **uma cauda por nível do mago (2 → 5)**:
