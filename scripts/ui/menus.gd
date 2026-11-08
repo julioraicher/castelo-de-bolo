@@ -290,7 +290,7 @@ func _secao_jogar() -> Control:
 	for tip in [
 		["katana", Estilo.OURO, "Chapéus", "No pátio, aperte F perto de um chapéu: %s. Oficinas liberam classes novas." % lista],
 		["espirito", Estilo.FANTASMA, "Espíritos", "Leve as chamas verdes até a SUA máscara: pesada, o ladrão anda devagar com ela."],
-		["mascara", Estilo.AZUL, "Resgate", "Quem cai volta como recruta. Vence quem fizer %d resgates primeiro." % Config.cfg.score_to_win],
+		["mascara", Estilo.AZUL, "Resgate", "Quem cai pode ser reanimado por um aliado (segure F); senão volta como recruta. Vence quem fizer %d resgates primeiro." % Config.cfg.score_to_win],
 	]:
 		dicas.add_child(_dica(tip[0], tip[1], tip[2], tip[3]))
 	v.add_child(dicas)

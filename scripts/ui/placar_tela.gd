@@ -10,8 +10,8 @@ const FUNDO := preload("res://assets/shaders/placar_fundo.gdshader")
 ## Colunas: [título, largura, campo]. Campo "pontos" vem da conta; "_masc"
 ## soma capturas + roubos + resgates (o que se fez com as máscaras).
 const COLUNAS := [
-	["#", 28, "_pos"], ["Nome", 92, "nome"], ["Classe", 152, "_classe"], ["Pontos", 64, "pontos"],
-	["Abates", 58, "abates"], ["Assist.", 58, "assist"], ["Mortes", 58, "mortes"], ["Dano", 50, "dano"],
+	["#", 28, "_pos"], ["Nome", 84, "nome"], ["Classe", 130, "_classe"], ["Pontos", 64, "pontos"],
+	["Abates", 58, "abates"], ["Assist.", 58, "assist"], ["Reanim.", 56, "reanimar"], ["Mortes", 58, "mortes"], ["Dano", 50, "dano"],
 	["Almas", 50, "almas"], ["Toras", 46, "madeira"], ["Obra", 46, "obra_s"], ["Másc.", 46, "_masc"],
 ]
 const ALTURA_LINHA := 32
@@ -203,9 +203,9 @@ func _preencher() -> void:
 			total += int(l.pontos)
 			_linha(ln, l, i, t)
 		_total_time[t].text = "%s pts" % _milhar(total)
-	_rodape.text = ("Pontos:  abate %s · assistência %s · alma %s · tora %s · obra %s/s · dano %s/pv · cura %s/pv · roubo %s · resgate %s · captura %s" % [
+	_rodape.text = ("Pontos:  abate %s · assistência %s · alma %s · tora %s · obra %s/s · dano %s/pv · cura %s/pv · roubo %s · resgate %s · reanimar %s · captura %s" % [
 		_n(cfg.pts_abates), _n(cfg.pts_assist), _n(cfg.pts_almas), _n(cfg.pts_madeira), _n(cfg.pts_obra_s),
-		_n(cfg.pts_dano), _n(cfg.pts_cura), _n(cfg.pts_roubos), _n(cfg.pts_resgates), _n(cfg.pts_capturas)]) \
+		_n(cfg.pts_dano), _n(cfg.pts_cura), _n(cfg.pts_roubos), _n(cfg.pts_resgates), _n(cfg.pts_reanimar), _n(cfg.pts_capturas)]) \
 		+ ("      ·      F5 jogar de novo" if _fim else "      ·      solte o Tab para voltar")
 
 

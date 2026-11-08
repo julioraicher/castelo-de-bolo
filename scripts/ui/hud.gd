@@ -38,6 +38,10 @@ var _hint_b: Label
 var _big: Label
 var _cat_box: VBoxContainer
 var _cat_bar: ProgressBar
+var _rean_box: VBoxContainer
+var _rean_txt: Label
+var _rean_bar: ProgressBar
+var _rean_cor := Color(0, 0, 0, 0)
 var _fps: Label
 var _abates: Label
 var _quedas: Label
@@ -567,6 +571,36 @@ func catapulta_forca(frac: float) -> void:
 	if frac >= 0.0:
 		_cat_bar.value = frac * 100.0
 		Estilo.cor_barra(_cat_bar, Estilo.OURO.lerp(Color(1, 0.35, 0.2), frac))
+
+
+## Barra da reanimação (Ciclo 2.18), acima do aviso: caído (espera/sendo
+## reanimado) ou reanimando alguém. frac < 0 esconde.
+func reanimar_barra(frac: float, texto: String, cor: Color) -> void:
+	if _rean_box == null:
+		if frac < 0.0:
+			return
+		_rean_box = VBoxContainer.new()
+		_rean_box.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+		_rean_box.position = Vector2(-200, -205)
+		_rean_box.custom_minimum_size = Vector2(400, 0)
+		_rean_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_rean_box.alignment = BoxContainer.ALIGNMENT_CENTER
+		add_child(_rean_box)
+		_rean_txt = Estilo.rotulo("", Estilo.T_PEQUENO + 2, Estilo.OURO, Estilo.LETREIRO)
+		_rean_txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_rean_box.add_child(_rean_txt)
+		_rean_bar = Estilo.barra(Estilo.OURO, Vector2(400, 14))
+		_rean_box.add_child(_rean_bar)
+	_rean_box.visible = frac >= 0.0
+	if frac < 0.0:
+		return
+	if _rean_txt.text != texto:
+		_rean_txt.text = texto
+	_rean_bar.value = clampf(frac, 0.0, 1.0) * 100.0
+	if _rean_cor != cor:
+		_rean_cor = cor
+		Estilo.cor_barra(_rean_bar, cor)
+		_cor_texto(_rean_txt, cor)
 
 
 func show_big(text: String, color := Color.WHITE, duration := 2.2) -> void:

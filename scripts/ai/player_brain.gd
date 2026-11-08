@@ -40,3 +40,4 @@ func tick(_delta: float) -> void:
 	if Input.is_action_just_pressed("dodge"):
 		unit.wants_dodge = true
 	interact_pressed = Input.is_action_just_pressed("interact")
+	unit.wants_reanimar = Input.is_action_pressed("interact")

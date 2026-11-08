@@ -30,7 +30,7 @@ const BLOCK_COS := 0.5  # cos(60°): bloqueio cobre golpes até 60° da frente
 ## Ossos do tronco: a animação de pôr o chapéu toca só neles, então as pernas
 ## continuam correndo com a animação normal.
 const UPPER_BONES := ["spine", "chest", "upperarm.l", "lowerarm.l", "wrist.l", "hand.l", "handslot.l", "upperarm.r", "lowerarm.r", "wrist.r", "hand.r", "handslot.r", "head"]
-const LOOPING_ANIMS := ["Idle", "Running_A", "Running_B", "Walking_A", "Walking_B", "Sit_Floor_Idle", "Cheer", "2H_Melee_Idle", "Spellcasting", "1H_Ranged_Aiming", "2H_Melee_Attack_Spinning"]
+const LOOPING_ANIMS := ["Idle", "Running_A", "Running_B", "Walking_A", "Walking_B", "Sit_Floor_Idle", "Cheer", "2H_Melee_Idle", "Spellcasting", "1H_Ranged_Aiming", "2H_Melee_Attack_Spinning", "Walking_Backwards"]
 
 var game: Game
 var team := 0
@@ -58,6 +58,15 @@ var wants_quick := false  # Q: habilidade rápida (recarga curta)
 var wants_power := false  # E: poder de Chi (medidor cheio)
 var wants_super := false  # R: super (barra dourada cheia)
 var wants_dodge := false
+## [F] segurado: reanimar o aliado caído colado (Reanimar, Ciclo 2.18).
+var wants_reanimar := false
+
+# Reanimar (estado; a regra mora em Reanimar).
+var reanimar_prog := 0.0     # caído: 0..1 do anel de reanimação (fica guardado)
+var reanimador: Unit = null  # caído: quem está me reanimando agora
+var reanimando: Unit = null  # vivo: o corpo que estou reanimando/arrastando
+var desistiu := false        # caído: segurou [F] e vai renascer no castelo
+var _intocavel_t := 0.0      # acabou de ser reanimado: não leva dano
 
 ## Medidor de Glacê (0 a POWER_MAX). Cheio = poder do Q liberado.
 var power := 0.0
@@ -436,6 +445,25 @@ func is_villager() -> bool:
 	return stats == Config.cfg.villager
 
 
+## Kitsunes (aprendiz e os caminhos Luz/Sombria): reanimam mais rápido.
+func eh_mago() -> bool:
+	return stats != null and (stats.id == &"kitsune" or stats.classe_base == &"kitsune")
+
+
+## Começou a reanimar (Reanimar.comecar): larga golpe/carga pela metade.
+func comecar_reanimar() -> void:
+	_windup_t = 0.0
+	_cancel_skill()
+	_blocking = false
+	_anim_lock = 0.0
+
+
+## Parou de reanimar: solta a pose de puxar.
+func parar_reanimar() -> void:
+	_stop_upper("Use_Item")
+	_current_anim = ""
+
+
 ## Pode atacar/usar habilidade agora (sem máscara nem tora nos braços, fora
 ## do dash, do chapéu, do Redemoinho e do Selo).
 func maos_livres() -> bool:
@@ -568,7 +596,7 @@ func _physics_process(delta: float) -> void:
 			move_and_slide()
 		_tick_corpo(delta, Vector3.ZERO)
 		_tick_aura()
-		_respawn_t -= delta
+		_respawn_t -= delta * (game.reanimar.ritmo(self) if game.reanimar else 1.0)
 		if _respawn_t <= 0.0:
 			_respawn()
 		return
@@ -598,6 +626,10 @@ func _physics_process(delta: float) -> void:
 	_attack_t = maxf(_attack_t - delta, 0.0)
 	_combo_t = maxf(_combo_t - delta, 0.0)
 	_power_active_t = maxf(_power_active_t - delta, 0.0)
+	if _intocavel_t > 0.0:
+		_intocavel_t -= delta
+		if Engine.get_physics_frames() % 6 == 0:
+			Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(1.0, 0.85, 0.45), 2, 1.2)
 	_tick_power(delta)
 	_tick_buffs(delta)
 
@@ -624,7 +656,10 @@ func _physics_process(delta: float) -> void:
 			_fim_dash()
 	else:
 		var speed := current_speed()
-		if _spin_t > 0.0:
+		if reanimando:
+			# Kitsune abençoa parada; o resto arrasta o corpo devagar.
+			speed *= 0.0 if eh_mago() else Config.cfg.reanimar_arrasto_vel
+		elif _spin_t > 0.0:
 			speed *= 0.75
 		elif _anim_lock > 0.0:
 			speed *= 0.55  # levando golpe
@@ -683,7 +718,7 @@ func _physics_process(delta: float) -> void:
 		if _windup_t <= 0.0:
 			if free_hands:
 				_attack_hit()
-	elif wants_attack and _attack_cd <= 0.0 and free_hands and not _blocking and _charge_t <= 0.0:
+	elif wants_attack and _attack_cd <= 0.0 and free_hands and not _blocking and _charge_t <= 0.0 and reanimando == null:
 		_attack()
 	var t2 := Time.get_ticks_usec() if game._perf else 0
 	_animate(horizontal)
@@ -701,6 +736,9 @@ func _face(delta: float) -> void:
 	var look := Vector3.ZERO
 	if _dodge_t > 0.0:
 		look = _dodge_dir
+	elif reanimando and is_instance_valid(reanimando):
+		look = reanimando.global_position - global_position
+		look.y = 0.0
 	elif is_player or _anim_lock > 0.0 or _attack_t > 0.0 or _blocking or _charge_t > 0.0 or wants_attack:
 		look = aim_dir
 	elif move_intent.length() > 0.1:
@@ -1099,7 +1137,7 @@ func _set_anim_speed(s: float) -> void:
 func _update_skill(delta: float, free_hands: bool) -> void:
 	_block_t += delta
 	_quick_cd = maxf(_quick_cd - delta, 0.0)
-	var held := wants_block and free_hands
+	var held := wants_block and free_hands and reanimando == null
 	if held != _blocking:
 		_blocking = held
 		if held:
@@ -1314,6 +1352,8 @@ func heal(amount: float, quem: Unit = null) -> float:
 func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0, melee := false, elemento := "", nivel := 1) -> void:
 	if not alive or em_voo:
 		return
+	if _intocavel_t > 0.0 and amount > 0.0:
+		return  # acabou de ser reanimado
 	if _dodge_t > 0.0:
 		if attacker and amount > 0.0:
 			_esquiva_perfeita(attacker)
@@ -1578,10 +1618,32 @@ func _die(killer: Unit) -> void:
 
 
 func _respawn() -> void:
-	alive = true
-	collision_layer = Config.LAYER_UNITS
+	_voltar_a_vida()
 	global_position = game.arena.random_spawn(team, game.units)
 	reset_physics_interpolation()  # teleporte: sem rastro interpolado até o castelo
+	set_class(Config.cfg.villager)  # quem morre perde o chapéu
+	Fx.ring(game, global_position, Config.team_color(team), 2.0)
+	Sfx.play("renascer", global_position, 0.04)
+	_play_once("Lie_StandUp", 0.7)
+
+
+## Reanimado por um aliado (Reanimar, Ciclo 2.18): levanta onde está, com a
+## classe e o chapéu que tinha, reanimar_vida da vida e intocável um instante.
+func levantar_reanimado() -> void:
+	_voltar_a_vida()
+	hp = max_hp() * Config.cfg.reanimar_vida
+	_intocavel_t = Config.cfg.reanimar_intocavel
+	_play_once("Lie_StandUp", 0.7, 1.3)
+	_mola(5.0, 0.0)  # sai do chão num esticão
+
+
+## O que renascer e ser reanimado têm em comum.
+func _voltar_a_vida() -> void:
+	alive = true
+	collision_layer = Config.LAYER_UNITS
+	reanimar_prog = 0.0
+	reanimador = null
+	desistiu = false
 	velocity = Vector3.ZERO
 	_knock = Vector3.ZERO
 	_move_vel = Vector3.ZERO
@@ -1594,10 +1656,6 @@ func _respawn() -> void:
 	_visual.position = Vector3.ZERO
 	_visual.scale = Vector3.ONE
 	_gigante = 1.0
-	set_class(Config.cfg.villager)  # quem morre perde o chapéu
-	Fx.ring(game, global_position, Config.team_color(team), 2.0)
-	Sfx.play("renascer", global_position, 0.04)
-	_play_once("Lie_StandUp", 0.7)
 
 
 # --- Poder do Q (medidor de Glacê) --------------------------------------------
@@ -2110,6 +2168,16 @@ func _animate(horizontal: Vector3) -> void:
 	if _anim_lock > 0.0:
 		return
 	var moving := horizontal.length() > 0.8
+	if reanimando:
+		# Reanimando: a Kitsune canaliza a benção; o resto puxa de costas.
+		if eh_mago():
+			_play("Spellcasting")
+		else:
+			_play_upper("Use_Item", 1.0, true)
+			_play(("Walking_Backwards" if _anim.has_animation("Walking_Backwards") else "Walking_B") if moving else "Idle")
+		if _anim:
+			_anim.speed_scale = 1.0
+		return
 	# Construindo: martela em loop (só o tronco, as pernas seguem livres).
 	if building_t > 0.0 and not moving and _attack_t <= 0.0:
 		_play_upper("1H_Melee_Attack_Chop", 0.9, true)

@@ -11,7 +11,9 @@ const SOUNDS := ["swing", "hit", "shoot", "magic", "heal", "pickup", "hat", "eat
 	# Assinatura por classe (ClassStats.som_*) e eventos que estavam mudos.
 	"samurai_poder", "samurai_final", "sombra_entra", "sombra_sai", "ninja_poder", "ninja_final",
 	"kitsune_poder", "kitsune_super", "luz_poder", "sombra_poder", "mutirao", "super_maior",
-	"madeira_golpe", "renascer", "corte_critico"]
+	"madeira_golpe", "renascer", "corte_critico",
+	# Reanimar (Ciclo 2.18): pano arrastando no chão e o "voltou" com sino.
+	"reanimar_arrasto", "reanimado"]
 const POOL_SIZE := 32
 
 const MAX_VARIACOES := 8

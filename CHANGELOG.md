@@ -4,6 +4,45 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.18 (2026-11-08), Jogabilidade + Visual: reanimar aliados caídos (estilo Battlefield 6)
+Pedido do Julio (quiz "Reanimar aliados caídos", todas as recomendadas + comentários estilo BF6).
+Regra em `scripts/reanimar.gd` (`Reanimar`, em `Game.reanimar`); números no `game_config`, grupo
+"Reanimar (Ciclo 2.18)". Prancha: `castelo-de-bolo/jogabilidade/19-reanimar-prancha.jpg`
+(gerada com `--prancha-reanimar=DIR`, xvfb).
+- **Caído**: quem morre fica no chão durante a espera de renascer. Esperando ajuda, o relógio
+  corre a `reanimar_ritmo_espera` (0,65: janela maior); **caído, segurar F desiste** e renasce no
+  castelo como recruta (relógio normal). Bot caído só espera se tem aliado a até 20 m.
+- **Reanimar = segurar F colado no corpo** (`reanimar_raio` 1,6 m) por `reanimar_tempo` 3 s. Quem
+  reanima **continua apanhando e o canal não para com dano** (risco proposital); para ao soltar F,
+  dar dash, morrer ou se afastar. O progresso fica guardado no corpo (outro pode continuar).
+- **Arrasto**: classe comum puxa o corpo andando de costas (`Walking_Backwards` + braços de
+  `Use_Item`), a 45% da velocidade, numa corda de 1,1 m: dá para tirar o aliado da briga.
+- **Kitsunes** (aprendiz, Luz e Sombria) reanimam **paradas**, com `Spellcasting` e feixe de benção
+  (dourado na Luz, roxo na Sombria), **1,5× mais rápido**, chegando a **2× no nível 5** do caminho.
+- **Levanta com a classe e o chapéu que tinha**, 50% da vida e **2 s intocável** (faíscas douradas).
+- **Time inteiro caído = ninguém reanima** (todos vão para o castelo no relógio normal).
+- **Visual** (princípio 13): chama de espírito (fogo-raposa na cor do time, 1 quad, sem sombra,
+  por cima de tudo como o marcador do Battlefield) que encolhe conforme a espera acaba e fica
+  branca/dourada enquanto reanimam; anel tracejado no chão (alcance) com arco dourado de
+  progresso; ao levantar, coluna de luz + anel + faíscas. **Só o seu time vê** as chamas.
+  HUD: barra "CAÍDO · espere um aliado · segure [F]..." / "X TE REANIMANDO" / "REANIMANDO".
+- **Sons**: `reanimar_arrasto` (pano no chão, Kenney CC0 cloth1-4) e `reanimado` (Kenney
+  maximize_006/008) junto com o `renascer`.
+- **Placar (Tab)**: coluna **Reanim.** e `pts_reanimar` = 60 (Nome e Classe ficaram um pouco
+  mais estreitas para caber). "+60 REANIMOU" aparece para o jogador.
+- **Bots**: vão reanimar quem caiu a até 10 m (Kitsunes 20 m), um bot por corpo, sem inimigo a
+  3,5 m; arrastam para longe do inimigo mais perto. Em 5 min simulados: 15 reanimações.
+- **Modo teste**: um **aliado de treino** (Samurai) fica caído na frente do portão para sempre;
+  depois de reanimado cai de novo em 4 s. Dá para testar com qualquer classe (troque nas
+  oficinas e veja a Kitsune mais rápida).
+- Textos: CONTROLES.md (F segurado) e o card "Resgate" do Como jogar.
+- Testes de regra: `_reanimar` (classe mantida, vida, intocável, dano não para, corda, mago,
+  time todo caído, placar); 313/313 ok. 5 min simulados sem erro.
+- **O que testar**: no **modo teste**, ande até o Samurai caído na frente do portão, segure F
+  (como Samurai: ande para arrastar; como Kitsune: fica parada e mais rápida). Numa partida:
+  morra perto de aliados e veja se eles vêm te buscar; segure F caído para desistir. Olhar se a
+  chama azul se lê bem no meio da briga e se 3 s parece justo.
+
 ## Ciclo 2.17 (2026-11-08), Jogabilidade + Visual: otimização geral (mesma imagem, menos trabalho) e relógio do placar
 Pedido do Julio depois da 2.16: o relógio do placar seguia contando depois do fim da partida; e
 otimizar o jogo ao máximo mantendo o visual, porque o PC dele (placa integrada) não roda bem.

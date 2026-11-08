@@ -39,6 +39,7 @@ func _ready() -> void:
 	_bolo_mascara_cheia()
 	await _mira()
 	_placar()
+	_reanimar()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -478,6 +479,94 @@ func _placar() -> void:
 	_check(pl.linha(a).assist == la.assist, "placar: quem matou não ganha assistência junto")
 	_check(pl.linha(b).mortes == lb.mortes + 1, "placar: quem caiu não ganhou a morte")
 	_check(pl.linha(c).dano >= lc.dano + 5.0 - 0.01, "placar: dano de quem ajudou não contou")
+
+
+## Reanimar (Ciclo 2.18): o caído levanta com a classe que tinha, metade da
+## vida e intocável; o canal não para com dano; Kitsune mais rápida; time
+## todo caído não reanima; quem puxa arrasta o corpo na corda.
+func _reanimar() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var r = game.reanimar
+	_check(r != null, "reanimar: game.reanimar não existe")
+	if r == null:
+		return
+	_check(cfg.reanimar_tempo > 0.0 and cfg.reanimar_vida > 0.0 and cfg.reanimar_vida <= 1.0, "reanimar: tempo/vida fora do lugar")
+	_check(cfg.reanimar_mago_mult >= 1.0 and cfg.reanimar_mago_mult <= cfg.reanimar_mago_mult_max, "reanimar: mago deveria ser 1× < começo <= máximo")
+	_check(cfg.reanimar_ritmo_espera > 0.0 and cfg.reanimar_ritmo_espera < 1.0, "reanimar: esperar deveria alongar a janela")
+	var a = null
+	var b = null
+	var inimigo = null
+	for u in game.units:
+		if not u.alive or u.is_player or u.carried_princess or u.carried_tora or u == r.boneco_treino:
+			continue
+		if a == null:
+			a = u
+		elif u.team == a.team and b == null:
+			b = u
+		elif u.team != a.team and inimigo == null:
+			inimigo = u
+	if a == null or b == null or inimigo == null:
+		_check(false, "reanimar: faltou boneco")
+		return
+	var guerreiro = load("res://config/classes/guerreiro.tres")
+	a.set_class(guerreiro)
+	b.set_class(load("res://config/classes/arqueiro.tres"))
+	var classe_b = b.stats
+	for u in [a, b]:
+		u._dodge_t = 0.0
+		u._equip_t = 0.0
+		u._blocking = false
+		u._shield = 0.0
+		u._intocavel_t = 0.0
+		u.hp = u.max_hp()
+	var antes: float = game.placar.linha(a).get("reanimar", 0.0)
+	b.take_damage(b.hp + 50.0, inimigo, Vector3.RIGHT)
+	_check(not b.alive, "reanimar: o alvo do teste não caiu")
+	_check(r.pode_reanimar(b), "reanimar: recém-caído deveria ser reanimável")
+	a.global_position = b.global_position + Vector3(1.0, 0, 0)
+	_check(_perto(r.ritmo(b), cfg.reanimar_ritmo_espera, 1e-4), "reanimar: caído com aliado perto deveria esperar mais devagar")
+	_check(r.velocidade(a) == 1.0, "reanimar: classe comum deveria ter velocidade 1")
+	# Time inteiro caído: ninguém reanima.
+	var vivos := []
+	for u in game.units:
+		if u.team == b.team and u.alive:
+			vivos.append(u)
+			u.alive = false
+	_check(not r.pode_reanimar(b), "reanimar: com o time todo caído não deveria dar")
+	_check(r.ritmo(b) == 1.0, "reanimar: time todo caído deveria ter relógio normal")
+	for u in vivos:
+		u.alive = true
+	# Canal: segura F; o dano não para.
+	a.wants_reanimar = true
+	r.tick(0.05)
+	_check(a.reanimando == b and b.reanimador == a, "reanimar: segurar F colado deveria começar")
+	a.take_damage(1.0, inimigo, Vector3.RIGHT)
+	r.tick(0.05)
+	_check(a.reanimando == b, "reanimar: tomar dano não deveria parar o canal")
+	# Arrasto: quem puxa se afasta e o corpo vem na corda.
+	a.global_position = b.global_position + Vector3(1.5, 0, 0)
+	r.tick(0.05)
+	_check(a.global_position.distance_to(b.global_position) <= cfg.reanimar_corda + 0.05, "reanimar: o corpo deveria vir atrás na corda")
+	for i in int(ceil(cfg.reanimar_tempo / 0.1)) + 2:
+		if b.alive:
+			break
+		a.wants_reanimar = true
+		r.tick(0.1)
+	_check(b.alive, "reanimar: deveria levantar em reanimar_tempo s")
+	_check(b.stats == classe_b, "reanimar: deveria levantar com a classe que tinha")
+	_check(_perto(b.hp, b.max_hp() * cfg.reanimar_vida, 0.5), "reanimar: vida ao levantar deveria ser reanimar_vida")
+	_check(a.reanimando == null and b.reanimador == null, "reanimar: canal deveria acabar ao levantar")
+	_check(game.placar.linha(a).get("reanimar", 0.0) == antes + 1.0, "reanimar: placar não contou")
+	var hp0: float = b.hp
+	b.take_damage(10.0, inimigo, Vector3.RIGHT)
+	_check(b.hp == hp0, "reanimar: recém-reanimado deveria estar intocável")
+	b._intocavel_t = 0.0
+	a.wants_reanimar = false
+	# Kitsune: começa em reanimar_mago_mult (nível baixo).
+	a.set_class(load("res://config/classes/kitsune.tres"))
+	_check(a.eh_mago(), "reanimar: kitsune deveria contar como mago")
+	_check(r.velocidade(a) >= cfg.reanimar_mago_mult - 1e-4 and r.velocidade(a) <= cfg.reanimar_mago_mult_max + 1e-4, "reanimar: mago fora da faixa")
+	a.set_class(guerreiro)
 
 
 func _check(ok: bool, nome: String) -> void:
