@@ -279,11 +279,36 @@ func _samurai(time: Color) -> void:
 	# Ombreiras quadradas (sode)
 	for lado in ["upperarm.l", "upperarm.r"]:
 		_peca(lado, _caixa(Vector3(0.42, 0.12, 0.5)), Vector3(0, 0.12, 0), Vector3(0, 0, 0), Vector3.ONE, _plano(time.darkened(0.2)))
+	# Dō: peitoral de três faixas lamelares com a de cima debruada em ouro
+	var peito := "chest"
+	var laca := Color(0.08, 0.08, 0.14)
+	for i in 3:
+		var y := 0.46 - i * 0.2
+		_peca(peito, _cilindro(0.5 + i * 0.03, 0.53 + i * 0.03, 0.14), Vector3(0, y, -0.02), Vector3.ZERO, Vector3(1, 1, 0.78), _plano(laca if i > 0 else laca.lightened(0.12)))
+		_peca(peito, _cilindro(0.51 + i * 0.03, 0.51 + i * 0.03, 0.025), Vector3(0, y + 0.08, -0.02), Vector3.ZERO, Vector3(1, 1, 0.78), _plano(OURO.darkened(0.25)))
+	# Kusazuri: saiote de placas penduradas no quadril
+	var quad := "hips"
+	for i in 5:
+		var a := -PI * 0.42 + PI * 0.84 * i / 4.0
+		_peca(quad, _caixa(Vector3(0.26, 0.34, 0.045)), Vector3(sin(a) * 0.42, -0.12, cos(a) * 0.34 - 0.03), Vector3(10, rad_to_deg(a), 0), Vector3.ONE, _plano(laca))
+		_peca(quad, _caixa(Vector3(0.27, 0.05, 0.05)), Vector3(sin(a) * 0.42, -0.28, cos(a) * 0.34 - 0.03), Vector3(10, rad_to_deg(a), 0), Vector3.ONE, _plano(OURO.darkened(0.3)))
+	# Braçadeiras e caneleiras
+	for lado in ["lowerarm.l", "lowerarm.r"]:
+		_peca(lado, _cilindro(0.15, 0.17, 0.3), Vector3(0.16 * (1 if lado.ends_with(".l") else -1), 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(laca.lightened(0.08)))
+	for lado in ["lowerleg.l", "lowerleg.r"]:
+		_peca(lado, _caixa(Vector3(0.2, 0.3, 0.1)), Vector3(0, -0.05, 0.1), Vector3.ZERO, Vector3.ONE, _plano(laca))
+	# Sashimono: bandeira do time nas costas, balançando com o vento/corrida
+	_peca(peito, _cilindro(0.025, 0.025, 1.5), Vector3(0, 0.6, -0.42), Vector3(6, 0, 0), Vector3.ONE, _plano(Color(0.3, 0.2, 0.1)))
+	_peca(peito, _fita(0.95, 0.5, time, time.lightened(0.25)), Vector3(0, 0.45, -0.47), Vector3(4, 0, 0), Vector3.ONE,
+			{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true, "balanco": Vector3(0.5, 0.7, 0.0)})
+	_peca(peito, _caixa(Vector3(0.5, 0.045, 0.045)), Vector3(0, 1.42, -0.47), Vector3(4, 0, 0), Vector3.ONE, _plano(Color(0.3, 0.2, 0.1)))
 	# Katana: lâmina com fio de neon, guarda e cabo
 	var mao := "handslot.r"
 	_peca(mao, _caixa(Vector3(0.05, 1.5, 0.12)), Vector3(0, 0.95, 0), Vector3.ZERO, Vector3.ONE, _neon(CIANO, 2.2))
 	_peca(mao, _cilindro(0.13, 0.13, 0.04), Vector3(0, 0.2, 0), Vector3.ZERO, Vector3.ONE, _plano(OURO.darkened(0.3)))
 	_peca(mao, _cilindro(0.05, 0.05, 0.35), Vector3(0, 0.0, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.1, 0.1, 0.12)))
+	# Saya (bainha) na cintura, do lado oposto
+	_peca(quad, _cilindro(0.05, 0.06, 1.0), Vector3(-0.3, 0.1, -0.12), Vector3(75, 0, -60), Vector3.ONE, _plano(laca.lightened(0.05)))
 
 
 func _ninja(time: Color) -> void:
@@ -293,10 +318,27 @@ func _ninja(time: Color) -> void:
 	_peca(cab, _cilindro(0.56, 0.56, 0.09), Vector3(0, 0.78, 0.0), Vector3(-6, 0, 0), Vector3.ONE, _neon(time.lightened(0.25), 1.6))
 	for s in [-1, 1]:
 		_peca(cab, _caixa(Vector3(0.08, 0.5, 0.03)), Vector3(0.12 * s, 0.55, -0.6), Vector3(55, 0, 15 * s), Vector3.ONE, _neon(time.lightened(0.25), 1.6))
+	var peito := "chest"
+	# Cachecol: rolo no pescoço e ponta solta esvoaçando atrás
+	var pano := time.darkened(0.35)
+	_peca(peito, _cilindro(0.3, 0.34, 0.22), Vector3(0, 0.62, 0.02), Vector3(8, 0, 0), Vector3(1, 1, 0.85), _plano(pano))
+	_peca(peito, _fita(0.85, 0.24, pano, time.lightened(0.1)), Vector3(0.1, 0.62, -0.3), Vector3(-35, 180, 12), Vector3.ONE,
+			{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true, "balanco": Vector3(1.0, 0.3, 0.0)})
+	# Bandoleira com shurikens de reserva atravessada no peito
+	_peca(peito, _caixa(Vector3(0.16, 1.05, 0.06)), Vector3(0, 0.2, 0.22), Vector3(14, 0, 40), Vector3.ONE, _plano(Color(0.1, 0.1, 0.14)))
+	for i in 3:
+		var y := 0.42 - i * 0.3
+		_peca(peito, _shuriken(), Vector3(-y * 0.75, y + 0.2, 0.3), Vector3(14, 0, 0), Vector3.ONE * 0.8, _neon(CIANO, 1.5))
+	# Faixas de pano nos antebraços e canelas (menos quadrado de perto)
+	for lado in [".l", ".r"]:
+		_peca("lowerarm" + lado, _cilindro(0.14, 0.16, 0.26), Vector3(0.16 * (1 if lado == ".l" else -1), 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(pano.lightened(0.15)))
+		_peca("lowerleg" + lado, _cilindro(0.17, 0.19, 0.26), Vector3(0, -0.02, 0.02), Vector3.ZERO, Vector3.ONE, _plano(pano.lightened(0.15)))
+	# Cinto com bolsa de ferramentas de ninja
+	_peca("hips", _cilindro(0.47, 0.47, 0.1), Vector3(0, 0.08, 0), Vector3.ZERO, Vector3(1, 1, 0.8), _plano(Color(0.1, 0.1, 0.14)))
+	_peca("hips", _caixa(Vector3(0.22, 0.2, 0.12)), Vector3(0.3, -0.04, -0.3), Vector3(0, 25, 0), Vector3.ONE, _plano(pano.darkened(0.2)))
 	# Shuriken na mão e duas nas costas
 	var mao := "handslot.r"
 	_peca(mao, _shuriken(), Vector3(0, 0.15, 0.1), Vector3(90, 0, 0), Vector3.ONE * 1.3, _neon(CIANO, 2.0))
-	var peito := "chest"
 	_peca(peito, _shuriken(), Vector3(0.22, 0.45, -0.45), Vector3(0, 0, 20), Vector3.ONE, _neon(CIANO, 1.5))
 	_peca(peito, _shuriken(), Vector3(-0.22, 0.25, -0.45), Vector3(0, 0, -20), Vector3.ONE, _neon(CIANO, 1.5))
 
@@ -318,6 +360,13 @@ func _armadilheiro(time: Color) -> void:
 	_peca(peito, _cilindro(0.015, 0.015, 0.25), Vector3(0.45, 0.6, -0.5), Vector3.ZERO, Vector3.ONE, _plano(Color(0.1, 0.1, 0.12)))
 	_peca(peito, _caixa(Vector3(0.18, 0.24, 0.18)), Vector3(0.45, 0.38, -0.5), Vector3.ZERO, Vector3.ONE, _plano(Color(0.1, 0.1, 0.12)))
 	_peca(peito, _esfera(0.09, 0.1), Vector3(0.45, 0.38, -0.5), Vector3.ZERO, Vector3.ONE, _neon(FANTASMA, 3.0))
+	# Avental de couro e cinto com minas de reserva
+	var quad := "hips"
+	_peca(quad, _caixa(Vector3(0.5, 0.42, 0.06)), Vector3(0, -0.1, 0.33), Vector3(8, 0, 0), Vector3.ONE, _plano(Color(0.4, 0.28, 0.16)))
+	_peca(quad, _cilindro(0.47, 0.47, 0.09), Vector3(0, 0.1, 0), Vector3.ZERO, Vector3(1, 1, 0.8), _plano(Color(0.14, 0.14, 0.18)))
+	for sx in [-1, 1]:
+		_peca(quad, _cilindro(0.11, 0.12, 0.07), Vector3(0.38 * sx, 0.02, 0.22), Vector3(75, 0, 0), Vector3.ONE, _plano(Color(0.12, 0.13, 0.18)))
+		_peca(quad, _esfera(0.04, 0.04), Vector3(0.38 * sx, 0.02, 0.27), Vector3.ZERO, Vector3.ONE, _neon(FANTASMA, 2.0))
 	# Mina na mão: disco escuro com luz verde no centro
 	var mao := "handslot.r"
 	_peca(mao, _cilindro(0.3, 0.33, 0.12), Vector3(0, 0.1, 0.15), Vector3(90, 0, 0), Vector3.ONE, _plano(Color(0.12, 0.13, 0.18)))
@@ -340,6 +389,25 @@ func _ronin_oni(time: Color) -> void:
 	for i in 6:
 		var a := PI * (0.15 + 0.7 * i / 5.0)
 		_peca(cab, _cone(0.14, 0.5), Vector3(cos(a) * 0.5, 0.75 + sin(a) * 0.15, -0.3), Vector3(-60, 0, -cos(a) * 70), Vector3.ONE, _plano(Color(0.06, 0.05, 0.08)))
+	var peito := "chest"
+	# Gola de pelo selvagem nos ombros (continua a juba)
+	for i in 5:
+		var a := PI * (0.1 + 0.8 * i / 4.0)
+		_peca(peito, _cone(0.12, 0.38), Vector3(cos(a) * 0.5, 0.55, -0.22), Vector3(-50, 0, -cos(a) * 60), Vector3.ONE, _plano(Color(0.06, 0.05, 0.08)))
+	# Ombreira gigante de placas com espigões só no braço da clava
+	var ob := "upperarm.r"
+	_peca(ob, _caixa(Vector3(0.5, 0.16, 0.56)), Vector3(-0.1, 0.16, 0), Vector3(0, 0, 12), Vector3.ONE, _plano(Color(0.14, 0.12, 0.12)))
+	_peca(ob, _caixa(Vector3(0.42, 0.14, 0.48)), Vector3(-0.26, 0.3, 0), Vector3(0, 0, 24), Vector3.ONE, _plano(Color(0.2, 0.17, 0.16)))
+	for i in 3:
+		_peca(ob, _cone(0.05, 0.22), Vector3(-0.18 + i * 0.12, 0.34 - i * 0.05, 0.14 - i * 0.14), Vector3(0, 0, 15), Vector3.ONE, _plano(Color(0.92, 0.88, 0.75)))
+	# Shimenawa: corda grossa de palha na cintura com dois shide (papéis em zigue-zague)
+	var quad := "hips"
+	_peca(quad, _anel(0.5, 0.075, 14), Vector3(0, 0.1, 0), Vector3(4, 0, 0), Vector3(1, 1, 0.85), _plano(Color(0.78, 0.65, 0.4)))
+	for sx in [-0.28, 0.3]:
+		_peca(quad, _fita(0.42, 0.14, Color(0.95, 0.94, 0.9), Color(0.85, 0.84, 0.8), 4), Vector3(sx, 0.02, 0.44), Vector3(170, 0, 8 * signf(sx)), Vector3.ONE,
+				{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true, "balanco": Vector3(0.7, 1.9 + sx, 0.0)})
+	# Braçadeira cravejada no braço livre
+	_peca("lowerarm.l", _cilindro(0.17, 0.19, 0.32), Vector3(0.16, 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.14, 0.12, 0.12)))
 	# Kanabo: clava grossa com cravos
 	var mao := "handslot.r"
 	_peca(mao, _cilindro(0.17, 0.07, 1.4), Vector3(0, 0.75, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.12, 0.1, 0.1)))
@@ -356,8 +424,21 @@ func _arqueiro_yumi(time: Color) -> void:
 	_peca(mao, _caixa(Vector3(0.06, 1.3, 0.06)), Vector3(0, 0.55, 0.1), Vector3(0, 0, -12), Vector3.ONE, _plano(Color(0.15, 0.1, 0.08)))
 	_peca(mao, _caixa(Vector3(0.06, 0.8, 0.06)), Vector3(0, -0.45, 0.1), Vector3(0, 0, 14), Vector3.ONE, _plano(Color(0.15, 0.1, 0.08)))
 	_peca(mao, _caixa(Vector3(0.015, 2.1, 0.015)), Vector3(0.2, 0.15, 0.1), Vector3.ZERO, Vector3.ONE, _neon(CIANO, 2.0))
+	# Ombreira alta de arqueira só no braço do arco (assimetria) e luva no braço da corda
+	var ob := "upperarm.l"
+	_peca(ob, _caixa(Vector3(0.38, 0.12, 0.46)), Vector3(0.06, 0.14, 0), Vector3(0, 0, -10), Vector3.ONE, _plano(time.darkened(0.25)))
+	_peca(ob, _caixa(Vector3(0.32, 0.1, 0.4)), Vector3(0.2, 0.26, 0), Vector3(0, 0, -22), Vector3.ONE, _plano(time.darkened(0.1)))
+	_peca("lowerarm.r", _cilindro(0.14, 0.16, 0.34), Vector3(-0.16, 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.15, 0.1, 0.08)))
+	# Hakama: abas largas dos lados do quadril (silhueta de arqueira)
+	var quad := "hips"
+	for sx in [-1, 1]:
+		_peca(quad, _caixa(Vector3(0.1, 0.42, 0.42)), Vector3(0.42 * sx, -0.16, 0), Vector3(0, 0, 9 * sx), Vector3.ONE, _plano(time.darkened(0.35)))
+	_peca(quad, _cilindro(0.47, 0.47, 0.12), Vector3(0, 0.1, 0), Vector3.ZERO, Vector3(1, 1, 0.8), _plano(Color(0.9, 0.86, 0.75)))
+	# Jingasa de palha pendurada nas costas
+	_peca("chest", _cone(0.45, 0.22), Vector3(-0.2, 0.35, -0.42), Vector3(75, 0, -15), Vector3.ONE, _plano(Color(0.72, 0.58, 0.32)))
 	# Aljava nas costas com penas na cor do time
 	var peito := "chest"
+	_peca(peito, _caixa(Vector3(0.14, 0.9, 0.07)), Vector3(0, 0.25, 0.24), Vector3(12, 0, -38), Vector3.ONE, _plano(Color(0.15, 0.1, 0.08)))
 	_peca(peito, _cilindro(0.16, 0.13, 0.85), Vector3(0.15, 0.45, -0.45), Vector3(0, 0, -25), Vector3.ONE, _plano(Color(0.15, 0.1, 0.08)))
 	for i in 3:
 		_peca(peito, _cone(0.06, 0.2), Vector3(0.32 + i * 0.06, 0.92 - i * 0.03, -0.45), Vector3(0, 0, -25), Vector3.ONE, _neon(time.lightened(0.3), 1.4))
@@ -375,6 +456,15 @@ func _polvora(time: Color) -> void:
 		_peca(peito, _cilindro(0.4, 0.4, 0.06), Vector3(0, y, -0.55), Vector3.ZERO, Vector3.ONE, _plano(Color(0.15, 0.15, 0.18)))
 	_peca(peito, _cilindro(0.02, 0.02, 0.3), Vector3(0, 0.98, -0.55), Vector3(0, 0, 20), Vector3.ONE, _plano(Color(0.2, 0.2, 0.2)))
 	_peca(peito, _esfera(0.07, 0.07), Vector3(0.05, 1.12, -0.55), Vector3.ZERO, Vector3.ONE, _neon(FOGO, 3.0))
+	# Bandoleira de bombinhas no peito e pavio de reserva na cintura
+	_peca(peito, _caixa(Vector3(0.16, 1.05, 0.06)), Vector3(0, 0.2, 0.22), Vector3(14, 0, -40), Vector3.ONE, _plano(Color(0.2, 0.14, 0.1)))
+	for i in 3:
+		var y := 0.42 - i * 0.3
+		_peca(peito, _esfera(0.1, 0.1), Vector3(y * 0.75, y + 0.2, 0.3), Vector3.ZERO, Vector3.ONE, _plano(Color(0.06, 0.06, 0.09)))
+		_peca(peito, _esfera(0.03, 0.03), Vector3(y * 0.75, y + 0.32, 0.3), Vector3.ZERO, Vector3.ONE, _neon(FOGO, 2.0))
+	_peca("hips", _cilindro(0.47, 0.47, 0.09), Vector3(0, 0.08, 0), Vector3.ZERO, Vector3(1, 1, 0.8), _plano(Color(0.2, 0.14, 0.1)))
+	_peca("hips", _fita(0.3, 0.06, Color(0.2, 0.2, 0.2), FOGO, 3), Vector3(0.35, 0.04, 0.3), Vector3(170, 0, 10), Vector3.ONE,
+			{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true, "balanco": Vector3(0.8, 2.6, 2.0)})
 	# Bomba redonda na mão
 	var mao := "handslot.r"
 	_peca(mao, _esfera(0.25, 0.25), Vector3(0, 0.2, 0.15), Vector3.ZERO, Vector3.ONE, _plano(Color(0.06, 0.06, 0.09)))
@@ -489,6 +579,16 @@ func _construtor(time: Color) -> void:
 		for s in [-1, 1]:
 			_peca(peito, _cilindro(0.11, 0.11, 0.02), Vector3(0.43 * s, y, -0.62), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.86, 0.7, 0.45)))
 	_peca(peito, _caixa(Vector3(0.7, 0.05, 0.05)), Vector3(0, 0.3, -0.48), Vector3.ZERO, Vector3.ONE, _plano(Color(0.85, 0.75, 0.5)))
+	# Cinto de ferramentas com bolsas e toalha no ombro (tenugui)
+	var quad := "hips"
+	_peca(quad, _cilindro(0.47, 0.47, 0.1), Vector3(0, 0.06, 0), Vector3.ZERO, Vector3(1, 1, 0.8), _plano(Color(0.3, 0.2, 0.1)))
+	for sx in [-1, 1]:
+		_peca(quad, _caixa(Vector3(0.2, 0.22, 0.13)), Vector3(0.33 * sx, -0.08, 0.25), Vector3(0, -20 * sx, 0), Vector3.ONE, _plano(Color(0.5, 0.36, 0.2)))
+	_peca(peito, _fita(0.5, 0.2, Color(0.35, 0.55, 0.75), Color(0.45, 0.65, 0.85), 4), Vector3(0.32, 0.55, 0.12), Vector3(160, 0, -20), Vector3.ONE,
+			{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true, "balanco": Vector3(0.6, 0.9, 0.0)})
+	# Joelheiras de quem vive ajoelhado em obra
+	for lado in ["upperleg.l", "upperleg.r"]:
+		_peca(lado, _esfera(0.16, 0.12), Vector3(0, -0.26, 0.12), Vector3.ZERO, Vector3.ONE, _plano(Color(0.5, 0.36, 0.2)))
 	var mao := "handslot.r"
 	_peca(mao, _cilindro(0.045, 0.045, 0.95), Vector3(0, 0.4, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.45, 0.3, 0.15)))
 	_peca(mao, _cilindro(0.2, 0.2, 0.5), Vector3(0, 0.92, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.7, 0.52, 0.3)))
@@ -583,6 +683,29 @@ func _chama(r: float, h: float) -> Mesh:
 			var a := k * (lados + 1) + j
 			var b := a + lados + 1
 			for v in [a, a + 1, b, a + 1, b + 1, b]:
+				st.add_index(v)
+	return st.commit()
+
+
+## Fita/pano: tira plana que sobe em +Y a partir da origem, com dupla face,
+## UV.x = 0 na base e 1 na ponta (peso do balanço) e cor base -> ponta.
+## Serve para bandeira (sashimono), cachecol, shide e panos pendurados.
+func _fita(comp: float, larg: float, base: Color, ponta: Color, segs := 6) -> Mesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for k in segs + 1:
+		var u := float(k) / segs
+		var cor := base.lerp(ponta, u)
+		cor.a = 1.0
+		for sx in [-0.5, 0.5]:
+			st.set_color(cor)
+			st.set_normal(Vector3(0, 0, 1))
+			st.set_uv(Vector2(u, 0))
+			st.add_vertex(Vector3(sx * larg, u * comp, 0))
+	for k in segs:
+		var a := k * 2
+		for f in [[a, a + 1, a + 2], [a + 1, a + 3, a + 2], [a, a + 2, a + 1], [a + 1, a + 2, a + 3]]:
+			for v in f:
 				st.add_index(v)
 	return st.commit()
 

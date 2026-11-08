@@ -145,6 +145,8 @@ var _agito := 0.0                # balanço das peças: 1 no ataque/poder, -1 mo
 var _agito_visto := 0.0
 var _pose_dash: PoseDash         # braços para trás no dash "ninja"
 var _fogo_dash_t := 0.0          # rastro de fogo-raposa enquanto a Kitsune está sumida
+var _rolo := 0.0                 # ângulo da cambalhota (dash "rolar"/"rolamento"), 0 = sem rolo
+var _rastro_dash_t := 0.0        # faíscas atrás do Bombardeiro no dash de pólvora
 var _morte_t := -1.0  # s desde a morte (pulinho cômico); < 0 = vivo
 ## Construindo uma oficina (marcado pela Oficina a cada quadro).
 var building_t := 0.0
@@ -225,6 +227,7 @@ func set_class(new_stats: ClassStats) -> void:
 		if _pecas:
 			_meshes.append(_pecas)
 	_pose_dash = null
+	_rolo = 0.0
 	if stats.dash_estilo == "ninja":
 		var sk := _model.find_child("Skeleton3D", true, false) as Skeleton3D
 		if sk:
@@ -604,6 +607,10 @@ func _physics_process(delta: float) -> void:
 		if Engine.get_physics_frames() % 3 == 0:
 			var cor := Color(1.0, 0.85, 0.4) if stats.estilo_ninja == "_kitsune_luz" else (Color(0.65, 0.3, 1.0) if stats.estilo_ninja == "_kitsune_sombria" else stats.hat_color)
 			Fx.burst(game, global_position + Vector3(0, 0.9, 0), cor, 3, 1.2)
+	if _rastro_dash_t > 0.0:
+		_rastro_dash_t -= delta
+		if Engine.get_physics_frames() % 2 == 0:
+			Fx.burst(game, global_position + Vector3(0, 0.5, 0) - _dodge_dir * 0.4, Color(1.0, 0.6, 0.2), 2, 1.8)
 	if _dodge_t > 0.0:
 		_dodge_t -= delta
 		_move_vel = _dodge_dir * DODGE_SPEED
@@ -725,9 +732,22 @@ func _start_dodge() -> void:
 		"chama":
 			_play_once("Dodge_Forward", DODGE_TIME + 0.1)
 			_fogo_dash(true)
-		"rolar":
-			_play_once("Dodge_Forward", DODGE_TIME + 0.1, 0.85)
-			_mola(-3.0, 5.0)
+		"rolar", "rolamento":
+			# Cambalhota de verdade: o corpo gira 360° em _animate (_rolo).
+			_play_once("Jump_Idle", DODGE_TIME + 0.1)
+			_rolo = 0.001
+			_mola(-2.5 if stats.dash_estilo == "rolar" else -1.2, 4.0)
+		"polvora":
+			# Bombardeiro: estouro de pólvora atrás, vai de foguete inclinado para trás.
+			_play_once("Jump_Idle", DODGE_TIME + 0.1)
+			_mola(-1.0, -6.0)
+			Fx.burst(game, global_position + Vector3(0, 0.6, 0) - _dodge_dir * 0.5, Color(1.0, 0.55, 0.15), 14, 5.0)
+			Fx.burst(game, global_position + Vector3(0, 0.6, 0) - _dodge_dir * 0.5, Color(0.35, 0.33, 0.3), 8, 2.5)
+			_rastro_dash_t = DODGE_TIME
+		"tropeco":
+			# Construtor carrega tralha demais: dispara quase caindo para a frente.
+			_play_once("Running_B", DODGE_TIME + 0.1, 2.2)
+			_mola(-2.0, 14.0)
 		_:
 			_play_once("Dodge_Forward", DODGE_TIME + 0.1)
 			_mola(-1.5, 8.0)  # esticão na direção do dash
@@ -735,6 +755,7 @@ func _start_dodge() -> void:
 
 ## Pouso do dash por personalidade.
 func _fim_dash() -> void:
+	_rastro_dash_t = 0.0
 	match stats.dash_estilo:
 		"chama":
 			_fogo_dash(false)
@@ -744,6 +765,14 @@ func _fim_dash() -> void:
 			Fx.burst(game, global_position + Vector3(0, 0.2, 0), Color(0.62, 0.55, 0.45), 12, 3.5)
 			if game and game.camera and self == game.player:
 				game.camera.shake_at(global_position, 0.18)
+		"rolamento":
+			# Levanta da cambalhota com um pulinho curto e um tufo de poeira.
+			_mola(-3.5, -3.0)
+			Fx.burst(game, global_position + Vector3(0, 0.2, 0), Color(0.62, 0.55, 0.45), 6, 2.2)
+		"tropeco":
+			# Quase cai: amassa forte e solta um "uf" de poeira para a frente.
+			_mola(-5.0, 6.0)
+			Fx.burst(game, global_position + Vector3(0, 0.25, 0) + _dodge_dir * 0.4, Color(0.62, 0.55, 0.45), 8, 2.5)
 
 
 ## Kitsune no dash: o corpo vira um lampejo de fogo-raposa e reaparece no fim.
@@ -1500,6 +1529,10 @@ func _die(killer: Unit) -> void:
 	if _model and (_fogo_dash_t > 0.0 or not _model.visible):
 		_fogo_dash_t = 0.0
 		_model.visible = true  # morreu no meio do dash da Kitsune
+	if _rolo > 0.0 and _model:  # morreu no meio da cambalhota
+		_rolo = 0.0
+		_model.rotation.x = 0.0
+		_model.position = Vector3.ZERO
 	_morte_t = 0.0 if _exagero() > 0.0 else -1.0
 	_mola(7.0, 0.0)  # "boing": estica antes do pulinho
 	_cancel_equip()
@@ -2038,6 +2071,22 @@ func _animate(horizontal: Vector3) -> void:
 	var lean_target := clampf(horizontal.length() / 9.0, 0.0, 1.0) * 0.16
 	if _dodge_t > 0.0:
 		lean_target = 0.6 if stats.dash_estilo == "ninja" else 0.35
+		if stats.dash_estilo == "tropeco":
+			lean_target = 0.85  # quase de cara no chão
+	# Cambalhota: o modelo gira 360° para a frente em volta do centro do corpo
+	# (origem do nó fica nos pés: compensa a posição para o giro não "cavar" o chão).
+	if _rolo > 0.0:
+		if _dodge_t > 0.0:
+			_rolo = TAU * (1.0 - _dodge_t / DODGE_TIME)
+		else:
+			_rolo = 0.0
+			if _model:
+				_model.position = Vector3.ZERO
+	if _model and _rolo > 0.0:
+		var h := 0.85 * stats.escala_modelo
+		_model.rotation.x = _rolo
+		_model.position = Vector3(0, h * (1.0 - cos(_rolo)), -h * sin(_rolo))
+		return
 	_lean = lerpf(_lean, lean_target, 1.0 - exp(-10.0 * get_physics_process_delta_time()))
 	if _model:
 		_model.rotation.x = _lean

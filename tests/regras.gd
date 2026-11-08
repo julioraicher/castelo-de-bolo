@@ -430,7 +430,7 @@ func _respawn_cresce() -> void:
 func _dash_estilos() -> void:
 	var cfg = get_node("/root/Config").cfg
 	for c in cfg.hat_classes() + cfg.oficina_classes + cfg.magos_opostos:
-		_check(c.dash_estilo in ["", "rolar", "ninja", "chama"], "dash: estilo desconhecido em %s: '%s'" % [c.id, c.dash_estilo])
+		_check(c.dash_estilo in ["", "rolar", "rolamento", "ninja", "chama", "polvora", "tropeco"], "dash: estilo desconhecido em %s: '%s'" % [c.id, c.dash_estilo])
 
 
 func _check(ok: bool, nome: String) -> void:
