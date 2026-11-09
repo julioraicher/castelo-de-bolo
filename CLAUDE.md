@@ -91,8 +91,12 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
   bom para comparar, não para medir FPS real. O gargalo é chamada de desenho
   (1 MeshInstance3D = 1 chamada por passe: cor, cada divisão de sombra, contorno),
   não script (~1,5 ms/quadro). Peça parada composta de várias malhas: terminar com
-  `MalhaUnica.juntar(raiz, [o que se mexe])` (Ciclo 2.17). Renderizador é
-  Compatibility em todas as plataformas; não voltar para Forward+.
+  `MalhaUnica.juntar(raiz, [o que se mexe])` (Ciclo 2.17); peças que dividem UM
+  material (selo, emblema) = `Fx.montar_pecas` (já junta). Renderizador é
+  Compatibility em todas as plataformas; não voltar para Forward+. Alta = FXAA +
+  escala 0,9 + casca de contorno (`CascaContorno`) + Alta dinâmica
+  (`AutoQuality.degrau`, mira 30 FPS); não reintroduzir MSAA. O llvmpipe do xvfb
+  IGNORA MSAA e custo por pixel: nele compare chamadas/tris (CENSO), nunca FPS.
 
 ## Economia de tokens (detalhes: docs/economia-de-tokens.md)
 

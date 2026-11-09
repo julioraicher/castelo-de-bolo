@@ -40,6 +40,7 @@ func _ready() -> void:
 	await _mira()
 	_placar()
 	_reanimar()
+	_alta_dinamica()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -591,6 +592,37 @@ func _reanimar() -> void:
 	_check(a.eh_mago(), "reanimar: kitsune deveria contar como mago")
 	_check(r.velocidade(a) >= cfg.reanimar_mago_mult - 1e-4 and r.velocidade(a) <= cfg.reanimar_mago_mult_max + 1e-4, "reanimar: mago fora da faixa")
 	a.set_class(guerreiro)
+
+
+## Alta dinâmica (Ciclo 2.19): a escada de degraus desliga primeiro os ajustes
+## da Alta (resolução 80% -> sem glow -> sem contorno), depois cai de nível, e
+## para na Mínima. Também confere a casca de contorno do cenário e o FXAA.
+func _alta_dinamica() -> void:
+	var aq = load("res://scripts/fx/auto_quality.gd")
+	_check(aq.degrau(3, 0) == Vector2i(3, 1), "alta dinâmica: 1º degrau é resolução 80%")
+	_check(aq.degrau(3, 1) == Vector2i(3, 2), "alta dinâmica: 2º degrau é sem glow")
+	_check(aq.degrau(3, 2) == Vector2i(3, 3), "alta dinâmica: 3º degrau é sem contorno")
+	_check(aq.degrau(3, 3) == Vector2i(2, 0), "alta dinâmica: depois cai para a Média")
+	_check(aq.degrau(2, 0) == Vector2i(1, 0), "alta dinâmica: Média cai para a Baixa")
+	_check(aq.degrau(0, 0) == Vector2i(0, 0), "alta dinâmica: para na Mínima")
+	var settings = get_node("/root/Settings")
+	_check(settings.ALTA_AJUSTES.size() == 4, "alta dinâmica: 4 estados de ajuste")
+	var arena = game.arena
+	_check(arena.get_node_or_null("CascaContorno") != null, "casca de contorno existe no cenário")
+	var casca = arena.get_node_or_null("CascaContorno")
+	if casca:
+		_check(casca.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "casca não projeta sombra")
+		_check(casca.visible == (settings.quality >= 3), "casca aparece só na Alta")
+	# Nos pedaços do cenário, nenhum material de cor pode manter o next_pass:
+	# o contorno deles agora é a casca (senão pagaria as 2 chamadas de novo).
+	var dupla := false
+	for mi in arena.get_children():
+		if mi is MeshInstance3D and String(mi.name).begins_with("Cenario_"):
+			for s in mi.mesh.get_surface_count():
+				var m = mi.mesh.surface_get_material(s)
+				if m and m.next_pass:
+					dupla = true
+	_check(not dupla, "pedaços do cenário sem next_pass (contorno só na casca)")
 
 
 func _check(ok: bool, nome: String) -> void:

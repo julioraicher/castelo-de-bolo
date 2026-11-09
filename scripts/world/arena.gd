@@ -215,10 +215,15 @@ func _build_environment() -> void:
 func _apply_quality() -> void:
 	if _particles:
 		_particles.visible = Settings.quality >= 2
-	# Contorno de tinta do cenário só na Alta: ele redesenha cada construção
-	# (dobra triângulos e chamadas de desenho). Enfeite: 100% / 60% / 35%.
+	# Contorno de tinta do cenário só na Alta (e enquanto a Alta dinâmica não o
+	# desligou): a casca cobre os pedaços juntados numa chamada; o next_pass fica
+	# para as peças que giram e os modelos montados durante a partida.
+	# Enfeite: 100% / 60% / 35%.
+	var contorno := Settings.quality >= 3 and Settings.alta_ajuste < 3
+	if _casca:
+		_casca.visible = contorno
 	for mat: ShaderMaterial in _contornos:
-		mat.next_pass = _contornos[mat] if Settings.quality >= 3 else null
+		mat.next_pass = _contornos[mat] if contorno else null
 	var fracao := 1.0 if Settings.quality >= 3 else (0.6 if Settings.quality == 2 else 0.35)
 	for mm in _enfeites:
 		mm.visible_instance_count = int(mm.instance_count * fracao)
@@ -241,7 +246,9 @@ func _apply_quality() -> void:
 			_sun.shadow_enabled = true
 			_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 			_sun.directional_shadow_max_distance = 55.0
-			_env.glow_enabled = theme.glow_intensity > 0.0
+			# Glow custa vários passes de desfoque em tela cheia: a Alta dinâmica
+			# o desliga no 2º degrau (Settings.ALTA_AJUSTES).
+			_env.glow_enabled = theme.glow_intensity > 0.0 and Settings.alta_ajuste < 2
 
 
 func _build_ground() -> void:
@@ -586,6 +593,27 @@ func _mesclavel(mat: Material) -> bool:
 ## Cada .scn salva a própria cópia do material: junta as cópias iguais numa só
 ## (uma superfície por tipo de material em cada pedaço, não uma por modelo).
 var _unicos := {}
+## Contorno do cenário numa casca só (Ciclo 2.19): em vez de cada superfície dos
+## pedaços pagar uma 2ª chamada de desenho (next_pass), a geometria com contorno
+## é copiada numa malha única por material de contorno. O contorno.gdshader é o
+## mesmo (infla pela normal e mostra só as costas), então a tinta na tela não
+## muda; o que muda é o preço: ~40 chamadas viram 1-2. A cópia só tem as
+## superfícies pintadas (pintura.gdshader) e não projeta sombra.
+var _casca: MeshInstance3D
+var _sem_contorno := {}  # material com next_pass -> cópia sem (para a cor dos pedaços)
+
+
+## Cópia do material sem o contorno no next_pass (a casca já faz esse papel nos
+## pedaços juntados). O original fica intacto: as peças que giram e os modelos
+## montados durante a partida (oficina, torreta) continuam usando o next_pass.
+func _tirar_next_pass(mat: Material) -> Material:
+	if mat.next_pass == null:
+		return mat
+	if not _sem_contorno.has(mat):
+		var m: Material = mat.duplicate()
+		m.next_pass = null
+		_sem_contorno[mat] = m
+	return _sem_contorno[mat]
 
 
 func _material_unico(mat: Material) -> Material:
@@ -601,6 +629,7 @@ func _material_unico(mat: Material) -> Material:
 
 func _merge_vertex_color_models() -> void:
 	var chunks := {}  # Vector2i -> {Material: SurfaceTool}
+	var casca_st := {}  # material de contorno -> SurfaceTool (ver _casca)
 	var giram: Array[MeshInstance3D] = []  # engrenagens, rodas d'água (ver pintura.gdshader)
 	for root in _static_models:
 		var mis := root.find_children("*", "MeshInstance3D", true, false)
@@ -635,16 +664,36 @@ func _merge_vertex_color_models() -> void:
 					st.begin(Mesh.PRIMITIVE_TRIANGLES)
 					chunks[key][mat] = st
 				chunks[key][mat].append_from(mi.mesh, s, mi.global_transform)
+				# A mesma geometria vai para a casca de contorno (uma por
+				# material de contorno, para a arena inteira).
+				var sm := mat as ShaderMaterial
+				if sm and sm.next_pass:
+					if not casca_st.has(sm.next_pass):
+						var st2 := SurfaceTool.new()
+						st2.begin(Mesh.PRIMITIVE_TRIANGLES)
+						casca_st[sm.next_pass] = st2
+					casca_st[sm.next_pass].append_from(mi.mesh, s, mi.global_transform)
 		root.queue_free()
 	for key in chunks:
 		var mesh := ArrayMesh.new()
 		for mat: Material in chunks[key]:
 			chunks[key][mat].commit(mesh)
-			mesh.surface_set_material(mesh.get_surface_count() - 1, mat)
+			# A cor do pedaço perde o next_pass: o contorno agora é a casca.
+			mesh.surface_set_material(mesh.get_surface_count() - 1, _tirar_next_pass(mat))
 		var mi := MeshInstance3D.new()
 		mi.name = "Cenario_%d_%d" % [key.x, key.y]
 		mi.mesh = mesh
 		add_child(mi)
+	if not casca_st.is_empty():
+		var malha := ArrayMesh.new()
+		for cont: Material in casca_st:
+			casca_st[cont].commit(malha)
+			malha.surface_set_material(malha.get_surface_count() - 1, cont)
+		_casca = MeshInstance3D.new()
+		_casca.name = "CascaContorno"
+		_casca.mesh = malha
+		_casca.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(_casca)
 	# Peças iguais que giram: um MultiMesh por malha (uma chamada de desenho).
 	var por_malha := {}
 	for mi in giram:

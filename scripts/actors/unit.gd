@@ -151,6 +151,7 @@ var _golpe_final := false
 var _golpe_machado := false  # este clique é machadada (lenhador de longe perto da planta)
 var _carga_vista := -1.0  # último poder_carga mandado ao material
 var _pecas: MeshInstance3D       # peças do NinjaVisual (refeitas quando o nível visual muda)
+var pecas_longe := false         # LOD (Game._lod_bonecos): longe as peças somem
 var _nivel_pecas := 1            # caudas da Kitsune Luz/Sombria = nível do mago
 var _agito := 0.0                # balanço das peças: 1 no ataque/poder, -1 morto
 var _agito_visto := 0.0
@@ -237,6 +238,7 @@ func set_class(new_stats: ClassStats) -> void:
 		_pecas = NinjaVisual.aplicar(_model, _meshes, stats.estilo_ninja, Config.team_color(team), stats.escala_cabeca, Settings.quality >= 2, stats.escala_extremidades, _nivel_pecas, Settings.quality >= 3)
 		if _pecas:
 			_meshes.append(_pecas)
+			_pecas.visible = not pecas_longe
 	_pose_dash = null
 	_rolo = 0.0
 	if stats.dash_estilo == "ninja":
@@ -261,6 +263,18 @@ func set_class(new_stats: ClassStats) -> void:
 	class_changed.emit(self)
 
 
+## LOD (Ciclo 2.19): longe do jogador, as peças pequenas (armadura, cachecol,
+## caudas) e o raio-X delas somem; corpo, chapéu e cor do time ficam. A essa
+## distância um boneco tem poucos pixels e as peças custavam 2-4 chamadas de
+## desenho cada (cor + raio-X + sombra).
+func set_pecas_longe(longe: bool) -> void:
+	if longe == pecas_longe:
+		return
+	pecas_longe = longe
+	if _pecas:
+		_pecas.visible = not longe
+
+
 ## Nível visual das peças (caudas da Kitsune Luz/Sombria = nível do mago dela).
 func _nivel_visual() -> int:
 	return game.nivel_visual_mago(team, stats.id) if game and stats else 1
@@ -280,6 +294,7 @@ func atualizar_nivel_visual() -> void:
 	_pecas.queue_free()
 	_pecas = novo
 	_meshes.append(novo)
+	novo.visible = not pecas_longe
 	_nivel_pecas = n
 	novo.set_instance_shader_parameter("cor_poder", stats.hat_color)
 	_carga_vista = -1.0

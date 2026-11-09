@@ -413,7 +413,15 @@ static func make_hat(style: String, color: Color) -> Node3D:
 			band.material_override = Fx.lit(Color(1.0, 0.8, 0.25), 0.3)
 			band.position.y = 0.1
 			root.add_child(band)
-	MalhaUnica.juntar(root)  # 10-17 peças -> 1 malha (poucas superfícies)
+	var junto := MalhaUnica.juntar(root)  # 10-17 peças -> 1 malha (poucas superfícies)
+	# Chapéu não projeta sombra (Ciclo 2.19): na prateleira e na cabeça a sombra
+	# dele é um calombo invisível, mas cada superfície pagava 2 redesenhos no
+	# mapa de sombra da Alta (~70 chamadas somando pads e soldados).
+	if junto:
+		junto.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	else:
+		for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return root
 
 

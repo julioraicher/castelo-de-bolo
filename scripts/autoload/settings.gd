@@ -8,7 +8,11 @@ signal changed
 const PATH := "user://configuracoes.cfg"
 const DIFFICULTIES := ["Fácil", "Normal", "Difícil"]
 const QUALITIES := ["Mínima", "Baixa", "Média", "Alta"]
-const KEYS := ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty", "quality", "show_fps", "theme", "auto_quality", "mapa", "tutorial_visto"]
+const KEYS := ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty", "quality", "show_fps", "theme", "auto_quality", "mapa", "tutorial_visto", "alta_ajuste"]
+## Alta dinâmica (Ciclo 2.19): o que o AutoQuality já desligou DENTRO da Alta
+## para segurar 30 FPS, nesta ordem (do menos visível ao mais visível):
+## 0 nada · 1 resolução 3D 80% · 2 + sem brilho (glow) · 3 + sem contorno no cenário.
+const ALTA_AJUSTES := ["nada desligado", "resolução 80%", "resolução 80% + sem brilho", "resolução 80% + sem brilho e sem contorno no cenário"]
 
 var music_volume := 0.8      # 0..1
 var sfx_volume := 0.9        # 0..1
@@ -24,6 +28,7 @@ var show_fps := false
 var theme := 0               # índice em GameConfig.themes
 var mapa := 0                # índice em GameConfig.maps
 var tutorial_visto := false  # "Como jogar" abre sozinho só na 1ª partida
+var alta_ajuste := 0         # índice em ALTA_AJUSTES (zera ao escolher qualidade no menu)
 
 
 func _ready() -> void:
@@ -119,7 +124,15 @@ func _apply_quality_viewport() -> void:
 	if not is_inside_tree():
 		return
 	var vp := get_viewport()
-	vp.msaa_3d = Viewport.MSAA_2X if quality == 3 else Viewport.MSAA_DISABLED
+	# Alta (Ciclo 2.19): FXAA no lugar do MSAA 2X. O MSAA guarda 2 amostras de
+	# cobertura por pixel (≈ dobro da banda de escrita, o que mais pesa na placa
+	# integrada); o FXAA é uma única passada sobre a imagem pronta e, no toon com
+	# contorno de tinta, a diferença quase não aparece.
+	vp.msaa_3d = Viewport.MSAA_DISABLED
+	vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if quality == 3 \
+			else Viewport.SCREEN_SPACE_AA_DISABLED
 	# Renderiza o 3D numa resolução menor e amplia. Pixels pintados ∝ escala²:
-	# 0,75 -> 56% dos pixels; 0,5 -> 25%. Ajuda muito quando a GPU é o gargalo.
-	vp.scaling_3d_scale = [0.5, 0.75, 1.0, 1.0][quality]
+	# 0,9 -> 81%; 0,75 -> 56%; 0,5 -> 25%. Ajuda muito quando a GPU é o gargalo.
+	# A Alta usa 0,9 (invisível no estilo pintado); a Alta dinâmica baixa a 0,8.
+	var escala_alta := 0.8 if alta_ajuste >= 1 else 0.9
+	vp.scaling_3d_scale = [0.5, 0.75, 1.0, escala_alta][quality]
