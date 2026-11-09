@@ -431,9 +431,20 @@ func _secao_config() -> Control:
 	qual.selected = Settings.quality
 	qual.item_selected.connect(func(i: int):
 		Settings.quality = i
+		Settings.alta_ajuste = 0  # escolha manual zera a Alta dinâmica (ela mede de novo)
 		Settings.apply())
-	Settings.changed.connect(func(): qual.selected = Settings.quality)  # AutoQuality pode mudar
 	_linha(video, "Qualidade gráfica", qual)
+	# O que a Alta dinâmica já desligou para segurar 30 FPS (só aparece na Alta).
+	var ajuste := Label.new()
+	ajuste.add_theme_font_size_override("font_size", 13)
+	ajuste.modulate = Color(1, 1, 1, 0.6)
+	video.add_child(ajuste)
+	var mostra_ajuste := func():
+		qual.selected = Settings.quality  # AutoQuality pode mudar
+		ajuste.visible = Settings.quality == 3
+		ajuste.text = "Alta dinâmica: " + Settings.ALTA_AJUSTES[Settings.alta_ajuste]
+	Settings.changed.connect(mostra_ajuste)
+	mostra_ajuste.call()
 	_linha(video, "Baixar sozinho se travar", _check(Settings.auto_quality, func(on: bool):
 		Settings.auto_quality = on
 		Settings.apply()))

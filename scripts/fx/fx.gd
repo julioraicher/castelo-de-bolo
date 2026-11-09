@@ -259,13 +259,19 @@ static func unshaded(color: Color, transparent := false) -> StandardMaterial3D:
 ## Marcação de interface no mundo (selo, emblema, mira): cada peça [Mesh,
 ## Transform3D] vira um MeshInstance3D sem sombra com o mesmo material.
 static func montar_pecas(pai: Node3D, pecas: Array, mat: Material) -> void:
+	# Numa malha só (Ciclo 2.19): as peças não se mexem entre si e dividem o
+	# material, então o selo/emblema custa 1 chamada de desenho em vez de uma
+	# por peça (medido: 48 só das torretas). O material segue compartilhado:
+	# o dono pode animar a transparência dele que a malha acompanha.
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for p in pecas:
-		var mi := MeshInstance3D.new()
-		mi.mesh = p[0]
-		mi.transform = p[1]
-		mi.material_override = mat
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		pai.add_child(mi)
+		st.append_from(p[0], 0, p[1])
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	pai.add_child(mi)
 
 
 ## Modelo gerado (pintura.gdshader + contorno de tinta no next_pass): abaixo da

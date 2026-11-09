@@ -648,6 +648,7 @@ func _physics_process(delta: float) -> void:
 	if _letreiros_t <= 0.0:
 		_letreiros_t = 0.15
 		_letreiros_perto()
+		_lod_bonecos()
 	if _poderes:
 		_poderes_t -= delta
 		if _poderes_t <= 0.0:
@@ -1693,6 +1694,17 @@ func eq_somar(id: StringName, campo: String, v: float) -> void:
 ## Letreiros de estado (grupo "letreiro_perto": oficinas, maquininhas, depósito,
 ## torreta) somem de longe: opacos até 11 m do jogador, transparentes a 15 m.
 ## Os títulos grandes (TORRETA, caminho dos magos) ficam sempre: orientam.
+## LOD dos soldados (Ciclo 2.19): longe do jogador as peças 3D pequenas somem
+## (Unit.set_pecas_longe). Histerese de 4 m para a fronteira não piscar.
+func _lod_bonecos() -> void:
+	if player == null:
+		return
+	var foco := player.global_position
+	for u in units:
+		var d := Vector2(u.global_position.x - foco.x, u.global_position.z - foco.z).length()
+		u.set_pecas_longe(d > (16.0 if u.pecas_longe else 20.0))
+
+
 func _letreiros_perto() -> void:
 	if player == null:
 		return

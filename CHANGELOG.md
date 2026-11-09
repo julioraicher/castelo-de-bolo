@@ -4,6 +4,44 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.19 (2026-11-09), Jogabilidade: Alta a 30 FPS (detetive de desempenho)
+Pedido do Julio (quiz "Detetive do FPS", todas as recomendadas): a Alta ficava
+abaixo de 20 FPS no Intel UHD; meta de 30. Culpados medidos: MSAA 2X + resolução
+100% (só a Alta tinha), glow, contorno do cenário em 2ª chamada por superfície
+(+~40), selos das torretas (48 chamadas), sombras dos chapéus e peças dos 16
+bonecos. Scripts inocentes (~7 ms/quadro). Relatório da investigação em
+project-files/castelo-de-bolo/desempenho/.
+- **Alta: FXAA no lugar do MSAA 2X** (o MSAA guarda 2 amostras por pixel, ~2× a
+  banda de escrita; o FXAA é 1 passada sobre a imagem pronta) e **resolução 3D
+  90%** (pixels ∝ escala²: 81% do trabalho; HUD segue nítido). `settings.gd`.
+- **Contorno do cenário numa casca só** (`CascaContorno`, arena.gd): a geometria
+  pintada dos pedaços é copiada numa malha única com o mesmo `contorno.gdshader`;
+  mesma tinta, ~40 chamadas viram 1-2. Os pedaços perdem o `next_pass` (cópia de
+  material sem ele); peças que giram e modelos montados na partida seguem como antes.
+- **Selo/emblema/marca numa malha só** (`Fx.montar_pecas` com SurfaceTool):
+  torretas 48 → 8 chamadas no censo; o material continua compartilhado, então o
+  pulso de transparência segue funcionando.
+- **Chapéus sem sombra** (pads e soldados): a sombra deles era invisível e cada
+  superfície pagava 2 redesenhos no mapa de sombra da Alta (61 → 30 superfícies).
+- **LOD dos soldados** (`Game._lod_bonecos` + `Unit.set_pecas_longe`): a mais de
+  20 m do jogador as peças pequenas (armadura, cachecol, caudas) e o raio-X delas
+  somem (histerese 16/20 m). Unit: 126 → 82 passes no censo.
+- **Alta dinâmica** (`AutoQuality.degrau` + `Settings.alta_ajuste`): na Alta a
+  meta é 30 FPS (mede 32 com folga); antes de cair para a Média, desliga por
+  degraus o menos visível primeiro: resolução 80% → sem glow → sem contorno do
+  cenário, avisando na tela. As Configurações mostram o que está desligado e
+  escolher qualidade no menu zera os ajustes (mede de novo).
+- Vale igual no modo teste (sandbox): as mudanças são do renderizador/cenário.
+- Testes de regra: escada de degraus, casca existe/sem sombra/só na Alta,
+  pedaços sem next_pass; 333/333.
+- **O que testar**: Esc › Configurações › **Alta**. (1) Deve segurar ~30 FPS
+  ("Mostrar FPS" para conferir); se não segurar, aparece "Alta dinâmica: ..."
+  dizendo o que desligou, e as Configurações mostram o estado. (2) O visual da
+  Alta continua com contorno de tinta e glow (lanternas), serrilhado parecido.
+  (3) De perto os soldados têm todas as peças; a ~20 m as pecinhas somem (não
+  deve dar para notar: me avise se notar o pisca). (4) Selos das torretas e
+  chapéus nas prateleiras iguais aos de antes.
+
 ## Ciclo 2.18b (2026-11-08), Jogabilidade: desistir rápido e bug do "dois de mim"
 Feedback do Julio jogando a 2.18: apertou para desistir caído, um aliado o reanimou
 mesmo assim e "apareceram dois dele"; e quer que desistir renasça bem mais rápido.
