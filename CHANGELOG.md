@@ -4,6 +4,23 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.19b (2026-11-09), Jogabilidade: desistir desconta a espera já passada
+Pedido do Julio: caído há um tempo, apertar [F] para desistir recomeçava uma
+contagem própria (metade da espera, mínimo 4 s) e às vezes demorava mais do que
+só esperar. Agora o pedaço da barra que já correu caído sai dessa contagem.
+- `Reanimar.espera_ao_desistir(total, restante)`: contagem rápida
+  (`reanimar_desistir_frac` × espera da morte, mín. `reanimar_desistir_min`)
+  menos o que a barra já andou; nunca passa do que faltava e pode zerar
+  (renasce na hora). Vale para o jogador e para os bots que desistem sozinhos.
+- Ex.: espera de 12 s, contagem rápida 6 s. Desistiu logo = 6 s; com a barra
+  já 4 s andada = 2 s; com 6 s ou mais andados = renasce na hora.
+- Modo teste: mesma regra (não há caminho separado); o aliado de treino segue
+  esperando para sempre.
+- Testes de regra: 5 checks novos em `espera_ao_desistir`; 342/342.
+- **O que testar**: morra, espere a barra andar um pouco e segure [F]. O
+  "RENASCENDO NO CASTELO EM N s" deve mostrar menos tempo quanto mais você
+  esperou antes, e esperando bastante deve renascer quase na hora.
+
 ## Ciclo 2.19 (2026-11-09), Jogabilidade: Alta a 30 FPS (detetive de desempenho)
 Pedido do Julio (quiz "Detetive do FPS", todas as recomendadas): a Alta ficava
 abaixo de 20 FPS no Intel UHD; meta de 30. Culpados medidos: MSAA 2X + resolução

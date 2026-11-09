@@ -332,7 +332,8 @@ extends Resource
 @export var reanimar_ritmo_espera := 0.65
 ## Desistir (segurar [F] caído; bot sem aliado perto desiste sozinho): renasce
 ## em reanimar_desistir_frac da espera da morte, nunca menos que
-## reanimar_desistir_min s. Bem mais rápido, mas ainda fora da briga.
+## reanimar_desistir_min s, menos o que a barra já correu caído (nunca mais
+## que a espera normal; pode zerar). Bem mais rápido, mas ainda fora da briga.
 @export_range(0.1, 1.0) var reanimar_desistir_frac := 0.5
 @export var reanimar_desistir_min := 4.0
 ## Bot caído espera ajuda só com aliado vivo a até este raio (m); senão desiste.
