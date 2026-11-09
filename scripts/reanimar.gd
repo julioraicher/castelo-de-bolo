@@ -276,15 +276,21 @@ func _tick_jogador_caido(delta: float) -> void:
 				"CAÍDO  ·  espere um aliado  ·  segure [F] para renascer rápido no castelo", Config.team_color(p.team).lightened(0.3))
 
 
+## Espera depois de desistir: a contagem rápida (reanimar_desistir_frac da espera
+## da morte, mínimo reanimar_desistir_min) menos o pedaço da barra que já correu
+## caído. Nunca passa do que faltava esperando, e pode zerar (renasce na hora).
+func espera_ao_desistir(total: float, restante: float) -> float:
+	var rapido := maxf(total * cfg.reanimar_desistir_frac, cfg.reanimar_desistir_min)
+	var ja_esperou := maxf(total - restante, 0.0)
+	return clampf(rapido - ja_esperou, 0.0, maxf(restante, 0.0))
+
+
 ## Desiste da ajuda: a chama apaga e o relógio volta ao normal.
 func desistir(c: Unit) -> void:
 	if c.alive or c.desistiu:
 		return
 	c.desistiu = true
-	# Renasce bem mais rápido, mas ainda fora da briga (vantagem do inimigo):
-	# reanimar_desistir_frac da espera da morte, nunca menos que reanimar_desistir_min.
-	var total: float = _espera_total.get(c, c._respawn_t)
-	c._respawn_t = minf(c._respawn_t, maxf(total * cfg.reanimar_desistir_frac, cfg.reanimar_desistir_min))
+	c._respawn_t = espera_ao_desistir(_espera_total.get(c, c._respawn_t), c._respawn_t)
 	_espera_total[c] = maxf(c._respawn_t, 0.01)
 	if c.reanimador:
 		parar(c.reanimador)

@@ -577,7 +577,7 @@ func _reanimar() -> void:
 	_check(a.reanimando == null and b.reanimador == null, "desistir: deveria soltar quem estava reanimando")
 	var rapido: float = maxf(espera * cfg.reanimar_desistir_frac, cfg.reanimar_desistir_min)
 	_check(b._respawn_t <= rapido + 0.01, "desistir: deveria renascer em reanimar_desistir_frac da espera (%.1f > %.1f)" % [b._respawn_t, rapido])
-	_check(b._respawn_t >= minf(espera, cfg.reanimar_desistir_min) - 0.01, "desistir: não pode ser instantâneo (mínimo reanimar_desistir_min)")
+	_check(b._respawn_t >= minf(espera, cfg.reanimar_desistir_min) - 0.01, "desistir logo ao cair: deveria esperar a contagem rápida inteira")
 	for i in 40:
 		a.wants_reanimar = true
 		r.tick(0.1)
@@ -587,6 +587,16 @@ func _reanimar() -> void:
 	a.wants_reanimar = false
 	b._respawn()
 	_check(b.alive and not b.desistiu, "desistir: renascer deveria limpar o estado")
+	# O pedaço da barra que já correu caído sai da contagem do desistir (Julio
+	# 2026-11-09: desistir tarde não pode recomeçar a contagem do zero).
+	var t_total := 12.0
+	var t_rapido := maxf(t_total * cfg.reanimar_desistir_frac, cfg.reanimar_desistir_min)
+	_check(_perto(r.espera_ao_desistir(t_total, t_total), t_rapido, 0.01), "desistir: sem espera passada, contagem rápida inteira")
+	_check(_perto(r.espera_ao_desistir(t_total, t_total - 2.0), t_rapido - 2.0, 0.01), "desistir: 2 s já esperados deveriam sair da contagem")
+	_check(r.espera_ao_desistir(t_total, t_total - t_rapido - 1.0) == 0.0, "desistir: já esperou mais que a contagem rápida = renasce na hora")
+	for rest in [t_total, 9.0, 5.0, 1.0, 0.2]:
+		_check(r.espera_ao_desistir(t_total, rest) <= rest + 1e-4, "desistir: nunca pode demorar mais que a espera normal (%.1f)" % rest)
+	_check(r.espera_ao_desistir(2.0, 2.0) <= 2.0 + 1e-4, "desistir: espera curta (menor que o mínimo) não pode crescer")
 	# Kitsune: começa em reanimar_mago_mult (nível baixo).
 	a.set_class(load("res://config/classes/kitsune.tres"))
 	_check(a.eh_mago(), "reanimar: kitsune deveria contar como mago")
