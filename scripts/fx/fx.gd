@@ -23,6 +23,7 @@ static func cached(key: String, maker: Callable) -> Resource:
 static func prewarm(parent: Node, pos: Vector3) -> void:
 	var p := pos + Vector3(0, -6.0, 0)
 	FxProjetil.prewarm(parent, p)
+	Magia.prewarm(parent, p)
 	burst(parent, p, Color(1, 0.85, 0.5), 2, 1.0)
 	ring(parent, p, Color(1, 1, 1, 0.5), 1.0)
 	slash(parent, p, Vector3.FORWARD, 2.0, 120.0, Color.WHITE)
@@ -65,59 +66,17 @@ static func damage_number(parent: Node, pos: Vector3, text: String, color: Color
 	tw.chain().tween_callback(label.queue_free)
 
 
+## Estouro de faíscas: lascas esticadas pela velocidade (antes eram bolinhas).
 static func burst(parent: Node, pos: Vector3, color: Color, amount := 14, speed := 6.0) -> void:
-	var p := CPUParticles3D.new()
-	p.one_shot = true
-	p.emitting = false
-	p.amount = amount
-	p.lifetime = 0.45
-	p.explosiveness = 1.0
-	p.direction = Vector3.UP
-	p.spread = 70.0
-	p.initial_velocity_min = speed * 0.5
-	p.initial_velocity_max = speed
-	p.gravity = Vector3(0, -14, 0)
-	p.scale_amount_min = 0.6
-	p.scale_amount_max = 1.2
-	p.mesh = cached("burst" + color.to_html(), func() -> Mesh:
-		var mesh := SphereMesh.new()
-		mesh.radius = 0.09
-		mesh.height = 0.18
-		mesh.radial_segments = 6
-		mesh.rings = 3
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = color
-		mat.emission_enabled = true
-		mat.emission = color
-		mat.emission_energy_multiplier = 1.5
-		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mesh.material = mat
-		return mesh)
-	parent.add_child(p)
-	p.global_position = pos
-	p.emitting = true
-	p.finished.connect(p.queue_free)
+	FxProjetil.ps(parent, pos, FxProjetil.lasca(0.24, 0.05), Color(color, 1.0), amount, 0.45, {
+		"dir": Vector3.UP, "spread": 70.0, "v0": speed * 0.5, "v1": speed, "g": Vector3(0, -14, 0),
+		"alinha": true, "s0": 0.6, "s1": 1.2, "rampa": "quente" if color.v > 0.5 else "some",
+	})
 
 
+## Onda no chão: faixa de energia que abre até `radius` e se rasga (Magia).
 static func ring(parent: Node, pos: Vector3, color: Color, radius: float) -> void:
-	var mi := MeshInstance3D.new()
-	var torus := TorusMesh.new()
-	torus.inner_radius = 0.85
-	torus.outer_radius = 1.0
-	mi.mesh = torus
-	mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.albedo_color = color
-	mi.material_override = mat
-	parent.add_child(mi)
-	mi.global_position = pos + Vector3(0, 0.3, 0)
-	mi.scale = Vector3.ONE * 0.3
-	var tw := mi.create_tween().set_parallel()
-	tw.tween_property(mi, "scale", Vector3.ONE * radius, 0.4).set_ease(Tween.EASE_OUT)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.45)
-	tw.chain().tween_callback(mi.queue_free)
+	Magia.onda(parent, pos, Magia.paleta_de(color), radius, 0.42, {"y": 0.14})
 
 
 ## Rastro de um golpe: um setor de anel na direção dir, que some em 0,16 s.
@@ -127,37 +86,26 @@ static func slash(parent: Node, pos: Vector3, dir: Vector3, radius: float, arc_d
 	mi.mesh = _sector(radius, arc_deg)
 	mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.vertex_color_use_as_albedo = true
-	mat.no_depth_test = true  # o rastro fica por cima dos bonecos
+	# Corte de energia: fio claro perto da borda de fora, vento correndo ao
+	# longo do arco e a cauda se rasgando (uma malha só; antes eram duas).
+	var pal: Array = Magia.paleta("aco") if color.s < 0.15 else Magia.paleta_de(color)
+	var mat := Magia.mat(pal, {
+		"escala": Vector2(2.0, 0.7), "rola": Vector2(-3.0, 0.0), "forca": 0.7 if strong else 0.55,
+		"base": 1.15, "topo": 1.15, "banda": 0.27 if strong else 0.2, "centro": 0.86, "tinta": 0.04,
+	})
 	mat.render_priority = 2
-	mat.albedo_color = Color(color, 0.95 if strong else 0.8)
 	mi.material_override = mat
 	parent.add_child(mi)
 	mi.global_position = pos
 	mi.rotation = Vector3(0, atan2(dir.x, dir.z), deg_to_rad(tilt))
-	if tilt < 0.0:
-		mi.scale.x = -1.0  # espelha: o rastro vem do outro lado
+	var sx := -1.0 if tilt < 0.0 else 1.0  # espelha: o rastro vem do outro lado
 	var s0 := 0.8 if strong else 0.85
 	var s1 := 1.12 if strong else 1.02
-	mi.scale = Vector3(signf(mi.scale.x) * s0, 1, s0)
-	# Fio do corte: faixa fina e clara na borda de fora (lê como lâmina, não
-	# como leque), e some um pouco depois do rastro.
-	var fio := MeshInstance3D.new()
-	fio.mesh = _sector(radius * 1.02, arc_deg, 0.9)
-	fio.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var mat_fio := mat.duplicate() as StandardMaterial3D
-	mat_fio.albedo_color = Color(color.lerp(Color.WHITE, 0.7), 1.0)
-	mat_fio.render_priority = 3
-	fio.material_override = mat_fio
-	mi.add_child(fio)
+	mi.scale = Vector3(sx * s0, 1, s0)
+	var vida := 0.3 if strong else 0.24
 	var tw := mi.create_tween().set_parallel()
-	tw.tween_property(mi, "scale", Vector3(signf(mi.scale.x) * s1, 1, s1), 0.16).set_ease(Tween.EASE_OUT)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.2 if strong else 0.16).set_ease(Tween.EASE_IN)
-	tw.tween_property(mat_fio, "albedo_color:a", 0.0, 0.24 if strong else 0.2).set_ease(Tween.EASE_IN)
+	tw.tween_property(mi, "scale", Vector3(sx * s1, 1, s1), 0.16).set_ease(Tween.EASE_OUT)
+	Magia._anim(tw, mat, "corroi", 0.0, 1.0, vida * 0.65).set_delay(vida * 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.chain().tween_callback(mi.queue_free)
 
 
@@ -168,6 +116,7 @@ static func _sector(radius: float, arc_deg: float, dentro := 0.35) -> ArrayMesh:
 	var segs := 20 if arc_deg < 200.0 else 32
 	var verts := PackedVector3Array()
 	var cols := PackedColorArray()
+	var uvs := PackedVector2Array()
 	var idx := PackedInt32Array()
 	var half := deg_to_rad(arc_deg) * 0.5
 	for i in segs + 1:
@@ -177,9 +126,11 @@ static func _sector(radius: float, arc_deg: float, dentro := 0.35) -> ArrayMesh:
 		# Mais forte na ponta da frente do corte e na borda de fora.
 		var lead := 0.25 + 0.75 * u * u if arc_deg < 359.0 else 0.8
 		verts.append(d * radius * dentro)
-		cols.append(Color(1, 1, 1, 0.0 if dentro < 0.8 else lead))
+		cols.append(Color(1, 1, 1, lead))
+		uvs.append(Vector2(u, 0.0))
 		verts.append(d * radius)
 		cols.append(Color(1, 1, 1, lead))
+		uvs.append(Vector2(u, 1.0))
 		if i < segs:
 			var k := i * 2
 			idx.append_array([k, k + 1, k + 2, k + 1, k + 3, k + 2])
@@ -187,6 +138,7 @@ static func _sector(radius: float, arc_deg: float, dentro := 0.35) -> ArrayMesh:
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = verts
 	arrays[Mesh.ARRAY_COLOR] = cols
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	arrays[Mesh.ARRAY_INDEX] = idx
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
@@ -196,32 +148,14 @@ static func _sector(radius: float, arc_deg: float, dentro := 0.35) -> ArrayMesh:
 
 ## Coluna de luz que sobe e some (Bênção do Monge), com anel no chão.
 static func pillar(parent: Node, pos: Vector3, color: Color, radius: float) -> void:
-	ring(parent, pos, Color(color, 0.9), radius)
-	var mi := MeshInstance3D.new()
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = 1.2
-	cyl.bottom_radius = 1.6
-	cyl.height = 9.0
-	cyl.cap_top = false
-	cyl.cap_bottom = false
-	mi.mesh = cyl
-	mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var mat := unshaded(Color(color, 0.55), true)
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mi.material_override = mat
-	parent.add_child(mi)
-	mi.global_position = pos + Vector3(0, 4.5, 0)
-	mi.scale = Vector3(0.2, 1, 0.2)
-	var tw := mi.create_tween().set_parallel()
-	tw.tween_property(mi, "scale", Vector3(1.4, 1, 1.4), 0.5).set_ease(Tween.EASE_OUT)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.7).set_delay(0.15)
-	tw.chain().tween_callback(mi.queue_free)
+	var ouro := color.r > 0.9 and color.g > 0.7 and color.b < 0.6
+	var pal: Array = Magia.paleta("luz") if ouro else Magia.paleta_de(color)
+	ring(parent, pos, color, radius)
+	Magia.chama(parent, pos, pal, 1.15, 7.5, 0.8, {"r_topo": 0.7, "barriga": 0.0, "forca": 1.2, "base": 0.72, "topo": 0.05, "rola": Vector2(0.2, -2.2)})
+	Magia.clarao(parent, pos, color, radius * 2.0 + 3.0)
 	burst(parent, pos + Vector3(0, 1.5, 0), color, 24, 9.0)
 
 
-## Bolha de escudo: brilha na borda e é quase invisível no meio (efeito
 ## Fresnel: quanto mais rasante o olhar, 1 − N·V maior).
 static var _bubble_shader: Shader
 
@@ -296,25 +230,7 @@ static func lit(color: Color, roughness := 0.6) -> StandardMaterial3D:
 
 ## Raio reto entre dois pontos (Corte Relâmpago, Selo): caixa fina que some.
 static func beam(parent: Node, from: Vector3, to: Vector3, color: Color, width := 0.25, life := 0.35) -> void:
-	var d := to - from
-	if d.length() < 0.05:
-		return
-	var mi := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(width, width * 0.6, d.length())
-	mi.mesh = box
-	mi.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var mat := unshaded(Color(color * 2.0, 0.95), true)
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mi.material_override = mat
-	parent.add_child(mi)
-	mi.global_position = from + d * 0.5
-	mi.look_at(to, Vector3.UP if absf(d.normalized().y) < 0.99 else Vector3.RIGHT)
-	var tw := mi.create_tween().set_parallel()
-	tw.tween_property(mi, "scale", Vector3(0.1, 0.1, 1.0), life).set_ease(Tween.EASE_IN)
-	tw.tween_property(mat, "albedo_color:a", 0.0, life)
-	tw.chain().tween_callback(mi.queue_free)
+	Magia.lanca(parent, from, to, Magia.paleta_de(color), width * 2.2, life)
 
 
 ## Choque elétrico: zigue-zague de raios curtos entre dois pontos.
@@ -330,11 +246,6 @@ static func zap(parent: Node, from: Vector3, to: Vector3, color: Color, segments
 
 ## Rachaduras brilhando no chão, saindo do centro (Fúria do Ronin).
 static func cracks(parent: Node, pos: Vector3, color: Color, radius: float, count := 9) -> void:
-	for i in count:
-		var a := TAU * i / count + randf_range(-0.2, 0.2)
-		var r := radius * randf_range(0.6, 1.0)
-		var mid := pos + Vector3(cos(a), 0, sin(a)) * r * 0.5 + Vector3(randf_range(-0.4, 0.4), 0, randf_range(-0.4, 0.4))
-		var end := pos + Vector3(cos(a), 0, sin(a)) * r
-		for seg in [[pos, mid], [mid, end]]:
-			beam(parent, seg[0] + Vector3(0, 0.06, 0), seg[1] + Vector3(0, 0.06, 0), color, 0.22, 1.1)
+	var pal: Array = Magia.paleta("brasa") if color.r > 0.8 and color.b < 0.4 else Magia.paleta_de(color)
+	Magia.rachaduras(parent, pos, pal, radius, count)
 	ring(parent, pos, Color(color, 0.9), radius)

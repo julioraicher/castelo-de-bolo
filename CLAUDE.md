@@ -144,6 +144,10 @@ repo: `.claude/skills/`.
 - Cenário: `tools/gerar_cenario_ninja.gd` (+ `gerar_mapa_rio.gd`) gera tudo com o
   material `pintura.gdshader`: COLOR.a = oclusão, UV.x = vento, UV.y = desenho
   (0 liso, 1 tábuas, 2 telhas, 3 pedras, 4 reboco). Rode os dois depois de mudar.
+- Efeitos de poder: kit `Magia` (`scripts/fx/magia.gd`, shader `magia_energia`):
+  energia com ruído que se rasga (`corroi`) + filete de tinta; nunca primitiva de
+  cor chapada. Receita e orçamento em docs/direcao-efeitos.md §8; conferir com
+  `tools/bancada_magia.gd` e `tools/vitrine.sh SAIDA [classes]`.
 - Visual: peças por código no esqueleto KayKit (`NinjaVisual`) + shader toon;
   pitaco por prancha (`tools/prancha_personagens.gd`). Ver docs/arte-personagens.md.
 

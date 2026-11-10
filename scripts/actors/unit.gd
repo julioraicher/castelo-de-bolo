@@ -940,6 +940,7 @@ func _attack_hit() -> void:
 				FxProjetil.marca_chao(game, global_position + dir * (stats.attack_range * 0.8), Color(0.15, 0.1, 0.05, 0.45), 1.0, 1.2)
 			else:
 				Fx.slash(game, global_position + Vector3(0, 1.0, 0), dir, reach, stats.attack_arc_deg + (30.0 if finisher else 0.0), col, tilt, finisher)
+			FxPoder.fita_lamina(self, finisher)
 			var hit_any := false
 			for other in game.units:
 				if not other.alive or other.team == team:
@@ -1194,6 +1195,24 @@ func quick_ratio() -> float:
 	return 1.0 - clampf(_quick_cd / maxf(quick_cooldown(), 0.01), 0.0, 1.0)
 
 
+## Nó que segue a mão da arma (osso handslot.r), criado na primeira vez: a
+## fita da lâmina se prende nele. Some junto com o modelo ao trocar de classe.
+var _mao_no: BoneAttachment3D
+
+func mao_da_arma() -> Node3D:
+	if _mao_no == null or not is_instance_valid(_mao_no):
+		_mao_no = null
+		if _model == null:
+			return null
+		var sk := _model.find_child("Skeleton3D", true, false) as Skeleton3D
+		if sk == null or sk.find_bone("handslot.r") < 0:
+			return null
+		_mao_no = BoneAttachment3D.new()
+		_mao_no.bone_name = "handslot.r"
+		sk.add_child(_mao_no)
+	return _mao_no
+
+
 func quick_restante() -> float:
 	return _quick_cd
 
@@ -1214,6 +1233,7 @@ func _usar_rapida() -> bool:
 		"corrida":
 			_play_upper("Cheer", 1.6)
 			Fx.ring(game, global_position, Color(1, 0.8, 0.3, 0.9), stats.skill_radius)
+			Magia.selo(game, global_position, "vento", minf(stats.skill_radius, 5.0), 0.8, {"pontas": 0, "escrita": 0.15, "giro": 0.6})
 			for other in game.units:
 				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.skill_radius:
 					other.give_boost(stats.skill_value, stats.skill_duration)
@@ -1231,8 +1251,10 @@ func _pisao() -> void:
 	Fx.cracks(game, global_position, Color(1.0, 0.35, 0.15), stats.skill_radius)
 	Fx.ring(game, global_position, Color(1.0, 0.4, 0.2, 0.9), stats.skill_radius)
 	Fx.burst(game, global_position + Vector3(0, 0.4, 0), Color(0.75, 0.6, 0.45), 16, 6.0)
+	FxPoder.q_pisao(self)
 	Sfx.play("hit", global_position, 0.1)
-	game.camera.shake_at(global_position, 0.35)
+	Sfx.play("magia_estouro", global_position, 0.06, 1.1, -3.0)
+	game.camera.shake_at(global_position, 0.4)
 	var acertou := false
 	for other in game.units:
 		if not other.alive or other.team == team:
@@ -1297,6 +1319,7 @@ func _place_trap() -> void:
 	trap.setup(game, self, global_position - _facing() * 0.8)
 	_play_upper("Interact", 1.6)
 	Sfx.play("pickup", global_position, 0.1)
+	FxPoder.q_armadilha(self, trap.global_position)
 
 
 func apply_slow(mult: float, duration: float) -> void:
@@ -1317,6 +1340,7 @@ func _fire_charged(c := -1.0) -> void:
 		p.carregar()  # atravessa inimigos / bomba maior
 	if c >= 1.0:
 		Fx.burst(game, global_position + Vector3(0, 1.4, 0) + aim_dir * 1.2, Color(1, 0.85, 0.4), 10, 6.0)
+		FxPoder.q_tiro(self, aim_dir.normalized())
 		if is_player:
 			game.camera.add_trauma(0.15)
 
@@ -1338,10 +1362,14 @@ func _heal() -> void:
 	_play_upper("Spellcast_Raise", 1.3)
 	Sfx.play("heal", global_position)
 	Fx.ring(game, global_position, Color(0.5, 1.0, 0.6, 0.7), stats.heal_radius)
+	FxPoder.q_cura(self)
 	var healed := 0.0
 	for other in game.units:
 		if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.heal_radius:
-			healed += other.heal(stats.heal_amount * Config.cfg.vida_mult, self)
+			var ganho := other.heal(stats.heal_amount * Config.cfg.vida_mult, self)
+			healed += ganho
+			if ganho > 0.0 and other != self:
+				FxPoder.fio_cura(self, other)
 	add_power(healed * Config.cfg.power_per_damage)
 
 
@@ -1727,15 +1755,17 @@ func _use_super() -> void:
 	_agito = 1.0
 	# Abertura do super: mais forte que a do E (tela dourada, tempo quase para).
 	if is_player:
-		game.camera.add_trauma(0.5)
-		game.camera.punch_fov(6.0)
+		game.camera.add_trauma(0.6)
+		game.camera.punch_fov(7.0)
 		game.hud.flash(Color(1.0, 0.8, 0.3, 0.35), 0.45)
-		game.slowmo(0.2, 0.25)
+		game.slowmo(0.18, 0.3)
 		game.hud.show_big(super_nome() + "!", Color(1.0, 0.82, 0.3), 1.2)
 	else:
 		game.camera.shake_at(global_position, 0.35)
 	Fx.pillar(game, global_position, Color(1.0, 0.8, 0.3), 2.2)
 	Fx.ring(game, global_position, Color(1.0, 0.8, 0.3, 0.9), 4.5)
+	FxPoder.abrir_super(self)
+	Sfx.play("magia_estouro", global_position, 0.03, 0.85)
 	if Sfx.has(stats.som_super):
 		Sfx.play(stats.som_super, global_position, 0.02, 1.0, 2.0)
 	else:
@@ -1745,6 +1775,7 @@ func _use_super() -> void:
 			_sombra_t = cfg.sombra_tempo
 			_aplicar_sombra(true)
 			Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(0.15, 0.1, 0.25), 30, 6.0)
+			Magia.bola(game, global_position + Vector3(0, 1.0, 0), "sombra", 1.8, 0.5)
 			_play_once("Dodge_Forward", 0.3)
 		_:
 			# O poder E da classe em versão gigante: o stats vira uma cópia
@@ -1866,14 +1897,15 @@ func _use_power() -> void:
 		Sfx.play("power", global_position, 0.03)
 	if is_player:
 		# "Super flash": clarão na cor do papel, zoom e o tempo quase para.
-		game.camera.add_trauma(0.35)
-		game.camera.punch_fov(4.0)
+		game.camera.add_trauma(0.42)
+		game.camera.punch_fov(4.5)
 		game.hud.flash(Color(stats.hat_color.lightened(0.4), 0.22), 0.3)
-		game.slowmo(0.3, 0.14)
+		game.slowmo(0.3, 0.16)
 		game.on_player_power()
 	else:
-		game.camera.shake_at(global_position, 0.2)
+		game.camera.shake_at(global_position, 0.25)
 	FxPoder.lancar(self)
+	Sfx.play(FxPoder.som_elemento(self), global_position, 0.05, 1.0, -2.0)
 	# Nível 3 (E): marca no chão que fica e o som cheio (taiko + estrondo).
 	FxProjetil.marca_chao(game, global_position, Color(stats.hat_color.darkened(0.7), 0.4), 1.8, 2.5)
 	if som_proprio:
@@ -1906,7 +1938,7 @@ func _use_power() -> void:
 			FxPoder.bencao(self)
 			for other in game.units:
 				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
-					FxPoder.em_aliado(other, Color(1, 0.9, 0.5))
+					FxPoder.em_aliado(other, Color(1, 0.9, 0.5), self)
 					other.heal(other.max_hp() * stats.power_value, self)
 					other.give_shield(stats.power_shield, stats.power_duration)
 		"furia":
@@ -2014,9 +2046,8 @@ func _corte_relampago(dist := -1.0, dano := -1.0, poder := true) -> void:
 			other.take_damage(dano, self, dir, 1.2, true)
 	global_position = to
 	reset_physics_interpolation()
-	Fx.beam(game, from + Vector3(0, 1.0, 0), to + Vector3(0, 1.0, 0), Color(0.3, 0.95, 1.0), 0.5, 0.5)
-	Fx.zap(game, from + Vector3(0, 1.4, 0), to + Vector3(0, 1.4, 0), Color(0.6, 1.0, 1.0), 6)
-	Fx.burst(game, from + Vector3(0, 1, 0), Color(0.4, 1.0, 1.0), 14, 6.0)
+	FxPoder.q_investida(self, from, to)
+	Fx.burst(game, from + Vector3(0, 1, 0), Color(0.4, 1.0, 1.0), 10, 6.0)
 	Fx.burst(game, to + Vector3(0, 1, 0), Color(0.4, 1.0, 1.0), 14, 6.0)
 	if poder:
 		FxPoder.corte_relampago(self, from, to, atingidos)

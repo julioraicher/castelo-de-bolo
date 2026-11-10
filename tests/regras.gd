@@ -41,6 +41,7 @@ func _ready() -> void:
 	_placar()
 	_reanimar()
 	_alta_dinamica()
+	await _magia()
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -1278,3 +1279,46 @@ func _ferradura() -> void:
 		ar.torre_alarme(team, true)
 		_check(ap != null and ap.current_animation == "alarme", "torre %d entra em alarme" % team)
 		ar.torre_alarme(team, false)
+
+
+## Ciclo 2.20: toda peça do kit de magia nasce, anima e se libera sozinha
+## (efeito que não some vaza nó e chamada de desenho a cada poder).
+func _magia() -> void:
+	var caixa := Node3D.new()
+	game.add_child(caixa)
+	var o := Vector3(0, -30, 0)
+	caixa.global_position = o
+	var pecas := {
+		"chama": func() -> void: Magia.chama(caixa, o, "raposa", 1.0, 3.0, 0.5),
+		"onda": func() -> void: Magia.onda(caixa, o, "brasa", 2.0, 0.4),
+		"estouro": func() -> void: Magia.estouro(caixa, o, "luz", 2.0, 0.4),
+		"selo": func() -> void: Magia.selo(caixa, o, "sombra", 3.0, 0.6),
+		"lanca": func() -> void: Magia.lanca(caixa, o, o + Vector3(3, 1, 0), "aco", 0.4, 0.3),
+		"rachaduras": func() -> void: Magia.rachaduras(caixa, o, "brasa", 3.0, 6, 0.6),
+		"bola": func() -> void: Magia.bola(caixa, o, "brasa", 1.5, 0.5),
+		"anel_sobe": func() -> void: Magia.anel_sobe(caixa, o, "luz", 1.0, 2.0, 0.5),
+		"vortice": func() -> void: Magia.vortice(caixa, "vento", 2.0, 3.0, 0.6),
+		"clarao": func() -> void: Magia.clarao(caixa, o, Color.WHITE, 4.0, 0.2),
+		"corte": func() -> void: Fx.slash(caixa, o, Vector3.FORWARD, 2.0, 120.0, Color.WHITE),
+	}
+	for nome: String in pecas:
+		pecas[nome].call()
+	_check(caixa.get_child_count() >= pecas.size() - 1, "magia: as peças do kit deveriam nascer (%d nós)" % caixa.get_child_count())
+	var alvo := Node3D.new()
+	caixa.add_child(alvo)
+	var fita := Magia.fita(alvo, Vector3.ZERO, Vector3.UP, "aco", 0.2)
+	_check(fita != null and fita.material_override is ShaderMaterial, "magia: a fita usa o material de energia")
+	await get_tree().create_timer(1.6).timeout
+	alvo.queue_free()
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var sobras: Array[String] = []
+	for c in caixa.get_children():
+		if not c.is_queued_for_deletion():
+			sobras.append(c.get_class())
+	_check(sobras.is_empty(), "magia: peças que não se liberaram: %s" % ", ".join(sobras))
+	_check(FxPoder.ELEMENTO.has("redemoinho") and Magia.PALETAS.has("brasa"), "magia: tabela de elementos e paletas")
+	for poder: String in FxPoder.ELEMENTO:
+		var pal: String = FxPoder.ELEMENTO[poder][0]
+		_check(pal == "" or Magia.PALETAS.has(pal), "magia: paleta '%s' do poder %s existe" % [pal, poder])
+	caixa.queue_free()

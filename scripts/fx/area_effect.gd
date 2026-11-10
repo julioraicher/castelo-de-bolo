@@ -56,17 +56,11 @@ func setup(game: Game, owner_unit: Unit, center: Vector3, kind: String, radius: 
 			Sfx.play("sombra", center)
 			_apply_seal()
 		"coluna_fogo":
-			_mat = Fx.unshaded(Color(col.r * 1.6, col.g * 1.6, col.b * 1.6, 0.75), true)  # cor do chapéu de quem lança
-			_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-			var cyl := CylinderMesh.new()
-			cyl.top_radius = 0.2
-			cyl.bottom_radius = 0.9
-			cyl.height = 4.5
-			cyl.radial_segments = 8
-			cyl.cap_top = false
+			# Três labaredas de energia (Magia) que queimam enquanto o poder dura.
+			var pal := Magia.paleta_de(col)  # cor do chapéu de quem lança
 			for i in 3:
 				var a := TAU * i / 3.0
-				_part(cyl, Vector3(cos(a), 0, sin(a)) * radius * 0.5 + Vector3(0, 2.2, 0), _mat)
+				Magia.chama(self, center + Vector3(cos(a), 0, sin(a)) * radius * 0.5, pal, 0.6, 3.0, duration + 0.3, {"segura": 0.8, "giro": duration * 0.5, "r_topo": 0.12, "forca": 1.3, "base": 0.7})
 			Sfx.play("fogo", center, 0.05, 0.8)
 	scale = Vector3(0.2, 1, 0.2)
 	create_tween().tween_property(self, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

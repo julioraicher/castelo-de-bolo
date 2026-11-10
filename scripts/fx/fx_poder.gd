@@ -1,18 +1,50 @@
 class_name FxPoder
 extends RefCounted
-## Assinatura visual de cada poder [Q]: nome do golpe no ar, selo no chão e um
-## efeito próprio por poder. Só visual (dano, raio e tempo ficam em Unit).
-## Barato para GPU integrada: poucas malhas grandes, cor aditiva sem luz,
-## sem sombra, tudo some sozinho em menos de 2 s (ou ao fim do poder).
+## Assinatura visual de cada poder: nome do golpe no ar, selo que se escreve no
+## chão e um efeito próprio por poder, montado com o kit `Magia` (Ciclo 2.20).
+## Só visual (dano, raio e tempo ficam em Unit). Regra de tela (quiz 2B): pico
+## forte por ~0,3 s (estouro, onda, clarão) e depois só um resto discreto
+## (brasas, marca no chão). Cada peça é 1 chamada de desenho e some sozinha.
 
 
 # --- Comum a todos ---------------------------------------------------------------
 
-## Chamado no começo de qualquer poder.
+## Elemento de cada poder: paleta do kit e desenho do selo (pontas da estrela
+## ou pétalas). Poder sem linha aqui usa a cor do chapéu.
+const ELEMENTO := {
+	"redemoinho": ["vento", 4, 0],
+	"furia": ["brasa", 3, 0],
+	"leque": ["aco", 6, 0],
+	"corte_relampago": ["aco", 6, 0],
+	"chuva_de_flechas": ["", 4, 0],
+	"bencao": ["luz", 0, 8],
+	"selo": ["sombra", 5, 0],
+	"coluna_fogo": ["", 5, 0],
+	"campo_minado": ["veneno", 6, 0],
+	"mutirao": ["luz", 8, 0],
+	"bombardeio": ["brasa", 3, 0],
+}
+
+
+static func pal_de(u: Unit) -> Array:
+	var e: Array = ELEMENTO.get(u.stats.power, ["", 5, 0])
+	if e[0] == "":
+		return Magia.paleta_de(Config.team_color(u.team) if u.stats.power == "chuva_de_flechas" else u.stats.hat_color)
+	return Magia.paleta(e[0])
+
+
+## Chamado no começo de qualquer poder: ato 1 (tudo é sugado para o corpo), o
+## nome do golpe e o selo do elemento se escrevendo sob os pés.
 static func lancar(u: Unit) -> void:
 	var cor := u.stats.hat_color.lightened(0.35)
 	_nome(u, cor)
-	_sigilo(u.game, u.global_position, Color(u.stats.hat_color, 1.0), maxf(u.stats.power_radius, 2.5) if u.stats.power != "leque" else 3.0)
+	var pal := pal_de(u)
+	var e: Array = ELEMENTO.get(u.stats.power, ["", 5, 0])
+	var raio := maxf(u.stats.power_radius, 2.5) if u.stats.power != "leque" else 3.0
+	if u.stats.power != "selo":  # o Selo Sombrio escreve o próprio, no alvo
+		Magia.selo(u.game, u.global_position, pal, minf(raio, 7.0), 1.1, {"pontas": e[1], "petalas": e[2], "escrita": 0.16, "giro": 0.12})
+	Magia.carga(u.game, u.global_position + Vector3(0, 1.1, 0), pal[1], 2.2, 0.18, 12)
+	Magia.clarao(u.game, u.global_position, pal[1], raio * 1.5 + 3.0, 0.3, 2.2)
 
 
 ## Nome do golpe na fonte de pincel, sobe e some (estilo anime).
@@ -43,99 +75,43 @@ static func _nome(u: Unit, cor: Color) -> void:
 	tw.chain().tween_callback(l.queue_free)
 
 
-## Selo no chão: dois anéis e raios que giram e abrem.
-static func _sigilo(game: Node, pos: Vector3, cor: Color, raio: float) -> void:
-	var n := _no(game, pos + Vector3(0, 0.08, 0))
-	var mat := _mat(Color(cor * 1.3, 0.85))
-	for r in [raio, raio * 0.62]:
-		var t := TorusMesh.new()
-		t.inner_radius = r - 0.12
-		t.outer_radius = r
-		t.rings = 32
-		t.ring_segments = 4
-		var mi := _malha(n, t, mat)
-		mi.scale = Vector3(1, 0.04, 1)
-	for k in 8:
-		var a := TAU * k / 8.0
-		var b := BoxMesh.new()
-		b.size = Vector3(0.1, 0.02, raio * 0.38)
-		var mi := _malha(n, b, mat)
-		mi.position = Vector3(sin(a), 0, cos(a)) * raio * 0.81
-		mi.rotation.y = a
-	n.scale = Vector3.ONE * 0.3
-	var tw := n.create_tween().set_parallel()
-	tw.tween_property(n, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(n, "rotation:y", PI * 0.5, 1.0)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.5).set_delay(0.5)
-	tw.chain().tween_callback(n.queue_free)
-
 
 # --- Um por poder ------------------------------------------------------------------
 
-## Samurai: tornado dourado de anéis inclinados e rajadas que giram com ele.
+## Samurai (Redemoinho): tufão de pinceladas de vento em funil, um miolo de aço
+## girando ao contrário, folhas sugadas para dentro e a rajada final.
 static func redemoinho(u: Unit) -> void:
 	var dur := u.stats.power_duration
 	var r := u.stats.power_radius
-	var n := Node3D.new()
-	n.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	u.add_child(n)
-	var mat := _mat(Color(1.6, 1.2, 0.4, 0.55))
-	for k in 3:
-		var t := TorusMesh.new()
-		t.inner_radius = r * (0.55 + 0.15 * k) - 0.15
-		t.outer_radius = r * (0.55 + 0.15 * k)
-		t.rings = 28
-		t.ring_segments = 4
-		var mi := _malha(n, t, mat)
-		mi.position.y = 0.4 + k * 0.7
-		mi.rotation = Vector3(deg_to_rad(10 - k * 8), 0, deg_to_rad(6 * (k - 1)))
-		mi.scale = Vector3(1, 0.12, 1)
-	for k in 6:
-		var a := TAU * k / 6.0
-		var b := BoxMesh.new()
-		b.size = Vector3(0.07, 0.07, 1.8)
-		var mi := _malha(n, b, _mat(Color(2.0, 1.8, 1.2, 0.8)))
-		mi.position = Vector3(cos(a), 0, -sin(a)) * r * 0.8 + Vector3(0, 0.6 + (k % 3) * 0.6, 0)
-		mi.rotation.y = a
-	var tw := n.create_tween().set_parallel()
-	tw.tween_property(n, "rotation:y", -TAU * dur * 2.5, dur)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.3).set_delay(maxf(dur - 0.3, 0.0))
-	tw.chain().tween_callback(n.queue_free)
-	_poeira(u.game, u.global_position, Color(0.85, 0.75, 0.55), 18)
-	_succao(u, r * Config.cfg.redemoinho_puxa_raio, dur)
-
-
-## Vórtice do Redemoinho: anel de vento na borda da puxada que se fecha
-## no Samurai (2 vezes), para ler "puxa" e não só "gira".
-static func _succao(u: Unit, r_puxa: float, dur: float) -> void:
-	var n := Node3D.new()
-	n.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	u.add_child(n)
-	var mat := _mat(Color(1.3, 1.15, 0.8, 0.0))
-	var t := TorusMesh.new()
-	t.inner_radius = r_puxa - 0.12
-	t.outer_radius = r_puxa
-	t.rings = 32
-	t.ring_segments = 3
-	var mi := _malha(n, t, mat)
-	mi.position.y = 0.3
-	mi.scale = Vector3(1, 0.1, 1)
-	var meia := maxf(dur, 0.6) / 2.0
-	var tw := n.create_tween()
-	for k in 2:
-		tw.tween_callback(func() -> void: n.scale = Vector3.ONE)
-		tw.tween_property(mat, "albedo_color:a", 0.5, 0.08)
-		tw.parallel().tween_property(n, "scale", Vector3(0.35, 1, 0.35), meia).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-		tw.parallel().tween_property(n, "rotation:y", -TAU, meia)
-		tw.tween_property(mat, "albedo_color:a", 0.0, 0.05)
-	tw.tween_callback(n.queue_free)
-
-
-## Armadilheiro (Campo Minado): cada mina sai voando da mão em arco até o
-## seu lugar no anel e acende ao cair (luz verde + faíscas).
-static func campo_minado(u: Unit, pontos: Array) -> void:
-	var cor := u.stats.hat_color
 	var g := u.game
+	Magia.vortice(u, "vento", r * 0.5, 3.4, dur, {"r_topo": 1.9, "gira": 1.9})
+	Magia.vortice(u, "aco", r * 0.3, 2.3, dur, {"r_topo": 1.5, "gira": -2.6, "forca": 1.6, "base": 0.15, "topo": 0.02, "y": 0.2})
+	Magia.orbita(u, Color(0.95, 0.9, 0.7), r * 0.85, dur, 14)
+	Magia.onda(g, u.global_position, "vento", r * 1.25, 0.4, {"gira": 1.5, "banda": 0.13})
+	_succao(u, r * Config.cfg.redemoinho_puxa_raio, dur)
+	var fim := u.create_tween()
+	fim.tween_interval(maxf(dur - 0.05, 0.1))
+	fim.tween_callback(func() -> void:
+		Magia.onda(g, u.global_position, "vento", r * 1.5, 0.45, {"gira": -1.2})
+		Magia.brasas(g, u.global_position, Color(1.0, 0.95, 0.75), 8, r * 0.6, 0.9))
+
+
+## Vórtice do Redemoinho: onda de vento na borda da puxada que se FECHA no
+## Samurai (2 vezes), para ler "puxa" e não só "gira".
+static func _succao(u: Unit, r_puxa: float, dur: float) -> void:
+	var meia := maxf(dur, 0.6) / 2.0
+	var tw := u.create_tween()
+	for k in 2:
+		tw.tween_callback(func() -> void:
+			Magia.onda(u, u.global_position, "vento", r_puxa * 0.35, meia, {"r0": 1.0 / 0.35, "gira": 2.0, "banda": 0.07, "forca": 0.9}))
+		tw.tween_interval(meia)
+
+
+## Armadilheiro (Campo Minado): cada mina sai da mão em arco com uma fita de
+## pólvora verde atrás e acende ao cair (onda, faíscas e brilho).
+static func campo_minado(u: Unit, pontos: Array) -> void:
+	var g := u.game
+	var pal: Array = Magia.paleta("veneno")
 	var origem := u.global_position + Vector3(0, 1.3, 0)
 	for k in pontos.size():
 		var alvo: Vector3 = pontos[k]
@@ -145,63 +121,47 @@ static func campo_minado(u: Unit, pontos: Array) -> void:
 		s.height = 0.32
 		s.radial_segments = 6
 		s.rings = 3
-		_malha(n, s, _mat(Color(cor * 1.8, 1.0)))
+		_malha(n, s, Fx.unshaded(Color(0.12, 0.14, 0.1)))
+		Magia.fita(n, Vector3(0, -0.14, 0), Vector3(0, 0.14, 0), pal, 0.0, {"pontos": 8})
 		var atraso := 0.04 * k
 		var tw := n.create_tween()
 		tw.tween_interval(atraso)
 		tw.tween_method(func(f: float) -> void:
 			n.global_position = origem.lerp(alvo, f) + Vector3(0, sin(f * PI) * 1.6, 0), 0.0, 1.0, 0.32)
 		tw.tween_callback(func() -> void:
-			_motas(g, alvo, cor, 6)
+			Magia.onda(g, alvo, pal, 1.1, 0.35)
+			FxProjetil.faiscas(g, alvo + Vector3(0, 0.2, 0), pal[1], 5, 4.0)
+			FxProjetil.brilho(g, alvo + Vector3(0, 0.3, 0), pal[0], 0.9)
 			n.queue_free())
 
 
-## Ronin Oni: cúpula de choque vermelha, labareda e pedras voando; aura de fogo
-## enquanto a fúria dura.
+## Ronin Oni (Fúria): o chão estoura em brasa (cúpula que se rasga, labareda,
+## pedras), dois chifres de fogo sobem das costas e a aura de brasa fica
+## queimando no corpo enquanto a fúria dura.
 static func furia(u: Unit) -> void:
 	var g := u.game
 	var p := u.global_position
 	var r := u.stats.power_radius
-	var cupula := _no(g, p)
-	var s := SphereMesh.new()
-	s.radius = 1.0
-	s.height = 1.0
-	s.radial_segments = 16
-	s.rings = 6
-	var mat := _mat(Color(1.8, 0.25, 0.1, 0.6))
-	_malha(cupula, s, mat)
-	cupula.scale = Vector3.ONE * 0.4
-	var tw := cupula.create_tween().set_parallel()
-	tw.tween_property(cupula, "scale", Vector3(r, r * 0.6, r), 0.3).set_ease(Tween.EASE_OUT)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.35)
-	tw.chain().tween_callback(cupula.queue_free)
-	_labareda(g, p, Color(1.8, 0.35, 0.1, 0.7), 1.4, 6.0, 0.6)
-	_detritos(g, p, Color(0.35, 0.3, 0.32), 16)
-	# Aura: cone de fogo preso no Ronin, tremulando.
-	var aura := Node3D.new()
-	aura.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	u.add_child(aura)
-	var c := CylinderMesh.new()
-	c.top_radius = 0.0
-	c.bottom_radius = 0.75
-	c.height = 2.8
-	c.radial_segments = 8
-	c.cap_bottom = false
-	var amat := _mat(Color(1.6, 0.2, 0.08, 0.35))
-	var mi := _malha(aura, c, amat)
-	mi.position.y = 1.3
 	var dur := u.stats.power_duration
-	var pulso := aura.create_tween().set_loops(int(dur / 0.24) + 1)
-	pulso.tween_property(mi, "scale", Vector3(1.15, 1.2, 1.15), 0.12)
-	pulso.tween_property(mi, "scale", Vector3(0.9, 0.95, 0.9), 0.12)
-	var fim := aura.create_tween()
-	fim.tween_interval(dur)
-	fim.tween_property(amat, "albedo_color:a", 0.0, 0.3)
-	fim.tween_callback(aura.queue_free)
+	Magia.estouro(g, p, "brasa", minf(r * 0.8, 5.0), 0.42)
+	Magia.chama(g, p, "brasa", 1.7, 6.0, 0.7, {"forca": 1.15})
+	Magia.onda(g, p, "brasa", r * 1.2, 0.5, {"voltas": 5.0})
+	Magia.clarao(g, p, Color(1.0, 0.35, 0.1), r * 2.5, 0.35, 4.0)
+	Magia.brasas(g, p, Color(1.0, 0.5, 0.15), 18, r * 0.7, 1.6)
+	FxProjetil.marca_chao(g, p, Color(0.06, 0.03, 0.03, 0.6), r * 0.55, 3.5)
+	_detritos(g, p, Color(0.35, 0.3, 0.32), 16)
+	# Chifres do Oni: duas línguas de fogo inclinadas, saindo das costas.
+	for lado: float in [-1.0, 1.0]:
+		var ch := Magia.chama(u, p + Vector3(0, 1.2, 0), "brasa", 0.5, 3.6, 0.9, {"r_topo": 0.05, "forca": 0.9, "giro": 0.0, "rola": Vector2(0.0, -2.4)})
+		ch.global_rotation = Vector3(deg_to_rad(-14), 0.0, deg_to_rad(-34.0 * lado))  # câmera fixa: abre para os lados da tela
+	# Aura: labareda presa no Ronin + brasas subindo.
+	var aura := Magia.chama(u, p, "brasa", 1.15, 3.1, dur + 0.3, {"segura": dur / (dur + 0.3), "r_topo": 0.3, "forca": 1.2, "base": 0.7, "topo": -0.1, "giro": 0.0, "rola": Vector2(0.25, -1.9), "atras": true})
+	aura.position.y = 0.15
+	Magia.aura_brasas(u, Color(1.0, 0.45, 0.12), dur, 9, 0.55)
 
 
-## Lâmina Dupla: sombras do ninja pelo caminho, X de corte no fim e, um
-## instante depois, o "corte atrasado" em quem foi atravessado.
+## Lâmina Dupla: sombras do ninja pelo caminho (fumaça que se desfaz), X de
+## corte no fim e, um instante depois, o "corte atrasado" em quem foi atravessado.
 static func corte_relampago(u: Unit, de: Vector3, ate: Vector3, atingidos: Array) -> void:
 	var g := u.game
 	var cap := CapsuleMesh.new()
@@ -212,347 +172,364 @@ static func corte_relampago(u: Unit, de: Vector3, ate: Vector3, atingidos: Array
 	for k in 5:
 		var t := (k + 0.5) / 5.0
 		var n := _no(g, de.lerp(ate, t) + Vector3(0, 0.9, 0))
-		var mat := _mat(Color(0.4, 1.6, 2.0, 0.5))
+		var mat := Magia.mat("aco", {"base": 0.5, "topo": 0.5, "forca": 0.9, "rola": Vector2(0.0, 1.5)})
 		_malha(n, cap, mat)
 		var tw := n.create_tween()
 		tw.tween_interval(0.05 * k)
-		tw.tween_property(mat, "albedo_color:a", 0.0, 0.35)
+		Magia._anim(tw, mat, "corroi", 0.0, 1.0, 0.35)
 		tw.tween_callback(n.queue_free)
 	var dir := (ate - de).normalized()
 	Fx.slash(g, ate + Vector3(0, 1.0, 0), dir, 2.6, 160.0, Color(0.5, 1.0, 1.0), 55.0, true)
 	Fx.slash(g, ate + Vector3(0, 1.0, 0), dir, 2.6, 160.0, Color(0.5, 1.0, 1.0), -55.0, true)
-	var timer := g.get_tree().create_timer(0.28, false)
-	timer.timeout.connect(func():
-		Fx.beam(g, de + Vector3(0, 1.0, 0), ate + Vector3(0, 1.0, 0), Color(1.0, 1.0, 1.0), 0.12, 0.25)
+	var n2 := _no(g, ate)
+	var t2 := n2.create_tween()
+	t2.tween_interval(0.28)
+	t2.tween_callback(func() -> void:
+		Magia.lanca(g, de + Vector3(0, 1.0, 0), ate + Vector3(0, 1.0, 0), "aco", 0.3, 0.25)
 		for alvo in atingidos:
 			if is_instance_valid(alvo):
 				var q: Vector3 = alvo.global_position + Vector3(0, 1.0, 0)
-				Fx.beam(g, q - dir * 1.4 + Vector3(0, 0.6, 0), q + dir * 1.4 - Vector3(0, 0.6, 0), Color(0.7, 1.0, 1.0), 0.18, 0.3)
-				Fx.burst(g, q, Color(0.6, 1.0, 1.0), 10, 7.0))
+				Magia.lanca(g, q - dir * 1.4 + Vector3(0, 0.6, 0), q + dir * 1.4 - Vector3(0, 0.6, 0), "aco", 0.4, 0.3)
+				Fx.burst(g, q, Color(0.6, 1.0, 1.0), 10, 7.0)
+		n2.queue_free())
 
 
-## Ninja de Shuriken: leque de luz na frente e uma shuriken gigante girando.
+## Ninja de Shuriken (Leque): arcos de luz abrindo na frente, uma shuriken
+## gigante de aço girando num disco de vento e a pós-imagem do ninja em fumaça.
 static func leque(u: Unit, dir: Vector3) -> void:
 	var g := u.game
-	Fx.slash(g, u.global_position + Vector3(0, 1.1, 0), dir, 7.0, maxf(u.stats.power_radius, 40.0), Color(0.4, 1.0, 1.0), 0.0, true)
-	var n := _no(g, u.global_position + Vector3(0, 2.6, 0) + dir * 0.6)
-	var mat := _mat(Color(0.5, 1.8, 2.0, 0.9))
-	for k in 2:
-		var b := BoxMesh.new()
-		b.size = Vector3(1.6, 0.05, 0.35)
-		var mi := _malha(n, b, mat)
-		mi.rotation.y = k * PI / 2
-	for k in 4:
-		var b := BoxMesh.new()
-		b.size = Vector3(0.55, 0.05, 0.55)
-		var mi := _malha(n, b, mat)
-		mi.rotation.y = PI / 4
-		mi.position = Vector3(cos(k * PI / 2), 0, sin(k * PI / 2)) * 0.45
-		mi.scale = Vector3(0.6, 1, 0.6)
-	n.rotation.x = deg_to_rad(-60)
+	var p := u.global_position
+	var arco := maxf(u.stats.power_radius, 40.0)
+	Fx.slash(g, p + Vector3(0, 1.1, 0), dir, 7.0, arco, Color(0.4, 1.0, 1.0), 0.0, true)
+	Fx.slash(g, p + Vector3(0, 0.7, 0), dir, 4.5, arco * 0.8, Color(0.8, 1.0, 1.0), 12.0, false)
+	var n := _no(g, p + Vector3(0, 2.6, 0) + dir * 0.6)
+	var giro := Node3D.new()
+	n.add_child(giro)
+	var estrela := _malha(giro, FxProjetil.malha_shuriken(), FxProjetil.mat_solido())
+	estrela.scale = Vector3.ONE * 5.0
+	var mat := Magia.mat("aco", {"escala": Vector2(3.0, 0.8), "rola": Vector2(2.5, 0.0), "forca": 0.9, "base": 0.4, "topo": 0.8, "banda": 0.45, "centro": 0.62})
+	_malha(giro, Magia.disco(), mat).scale = Vector3(1.5, 1, 1.5)
+	n.rotation = Vector3(deg_to_rad(-60), atan2(dir.x, dir.z), 0)
+	n.scale = Vector3.ONE * 0.4
 	var tw := n.create_tween().set_parallel()
-	tw.tween_property(n, "rotation:y", TAU * 3.0, 0.6)
-	tw.tween_property(n, "scale", Vector3.ONE * 1.6, 0.6)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.3).set_delay(0.3)
+	tw.tween_property(giro, "rotation:y", TAU * 3.0, 0.6)
+	tw.tween_property(n, "scale", Vector3.ONE * 1.6, 0.6).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tw.tween_property(estrela, "scale", Vector3.ONE * 0.2, 0.2).set_delay(0.4)
+	Magia._anim(tw, mat, "corroi", 0.0, 1.0, 0.3).set_delay(0.3)
 	tw.chain().tween_callback(n.queue_free)
+	# Pós-imagem: o ninja "fica" um instante em fumaça escura que se desfaz.
+	var cap := CapsuleMesh.new()
+	cap.radius = 0.38
+	cap.height = 1.7
+	cap.radial_segments = 8
+	cap.rings = 2
+	var sombra := _no(g, p + Vector3(0, 0.9, 0) - dir * 0.5)
+	var smat := Magia.mat("fumaca", {"base": 0.5, "topo": 0.5, "forca": 1.0, "rola": Vector2(0.0, 1.2)})
+	_malha(sombra, cap, smat)
+	var ts := sombra.create_tween()
+	Magia._anim(ts, smat, "corroi", 0.1, 1.0, 0.5)
+	ts.tween_callback(sombra.queue_free)
 
 
-## Arqueiro Yumi: rajada de luz para o céu e a mira desenhada no alvo.
+## Arqueiro Yumi (Chuva de Flechas): lanças de luz sobem para o céu e a mira
+## se escreve no alvo como um selo que gira e aperta até a salva cair.
 static func chuva(u: Unit, alvo: Vector3, r: float) -> void:
 	var g := u.game
+	var pal := Magia.paleta_de(Config.team_color(u.team).lightened(0.15))
 	var p := u.global_position + Vector3(0, 1.6, 0)
 	for k in 5:
 		var off := Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6))
-		Fx.beam(g, p + off * 0.3, p + off + Vector3(0, 14.0, 0), Color(1.0, 0.9, 0.5), 0.09, 0.45)
-	var cor := Config.team_color(u.team).lightened(0.3)
-	var n := _no(g, alvo + Vector3(0, 0.1, 0))
-	var mat := _mat(Color(cor * 1.6, 0.9))
-	for k in 4:
-		var b := BoxMesh.new()
-		b.size = Vector3(0.12, 0.02, r * 0.7)
-		var mi := _malha(n, b, mat)
-		mi.rotation.y = k * PI / 2
-		mi.position = Vector3(sin(k * PI / 2), 0, cos(k * PI / 2)) * r * 0.75
-	var t := TorusMesh.new()
-	t.inner_radius = r * 0.3
-	t.outer_radius = r * 0.3 + 0.12
-	_malha(n, t, mat).scale = Vector3(1, 0.04, 1)
-	var tw := n.create_tween().set_parallel()
-	tw.tween_property(n, "rotation:y", PI / 2, ArrowRain.WARN)
-	tw.tween_property(n, "scale", Vector3.ONE * 0.7, ArrowRain.WARN).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tw.chain().tween_property(mat, "albedo_color:a", 0.0, 0.3)
-	tw.chain().tween_callback(n.queue_free)
+		Magia.lanca(g, p + off * 0.3, p + off + Vector3(0, 14.0, 0), "luz", 0.28, 0.45, {"cresce": 0.12, "corre": 5.0})
+	FxProjetil.faiscas(g, p, Color(1.0, 0.9, 0.5), 8, 7.0, Vector3.UP, 25.0)
+	var mira := Magia.selo(g, alvo, pal, r, ArrowRain.WARN + 0.35, {"pontas": 4, "escrita": 0.25, "giro": 0.5})
+	var tw := mira.create_tween()
+	tw.tween_property(mira, "scale", Vector3(r * 0.72, 1, r * 0.72), ArrowRain.WARN).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
 
-## Monge de Chi: lótus dourada abrindo no chão.
+## Kitsune Luz (Bênção da Raposa): lótus de luz abrindo pétala por pétala em
+## cima do selo, coluna serena e pétalas soltas subindo devagar.
 static func bencao(u: Unit) -> void:
 	var g := u.game
-	var n := _no(g, u.global_position + Vector3(0, 0.1, 0))
-	var mat := _mat(Color(1.8, 1.5, 0.7, 0.7))
-	var petalas: Array[MeshInstance3D] = []
-	for k in 10:
-		var a := TAU * k / 10.0
-		var pivo := Node3D.new()
-		pivo.rotation.y = a
-		n.add_child(pivo)
-		var s := SphereMesh.new()
-		s.radius = 0.5
-		s.height = 0.25
-		s.radial_segments = 8
-		s.rings = 3
-		var mi := MeshInstance3D.new()
-		mi.mesh = s
-		mi.material_override = mat
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		mi.scale = Vector3(0.8, 1, 2.2)
-		mi.position = Vector3(0, 0, 0.9)
-		pivo.add_child(mi)
-		petalas.append(mi)
-	n.scale = Vector3.ONE * 0.2
+	var p := u.global_position
+	var r := u.stats.power_radius
+	var n := _no(g, p + Vector3(0, 0.12, 0))
+	var mat := Magia.mat("luz", {"escala": Vector2(1.0, 1.0), "rola": Vector2(0.0, 0.35), "forca": 0.5, "base": 0.62, "topo": 0.62, "tinta": 0.05})
+	var s := SphereMesh.new()
+	s.radius = 0.5
+	s.height = 0.25
+	s.radial_segments = 8
+	s.rings = 3
 	var tw := n.create_tween().set_parallel()
-	tw.tween_property(n, "scale", Vector3.ONE * 1.6, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	for mi in petalas:
-		tw.tween_property(mi, "rotation:x", deg_to_rad(-45), 0.45)
-	tw.tween_property(n, "rotation:y", PI / 3, 1.2)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.5).set_delay(0.7)
+	for k in 10:
+		var pivo := Node3D.new()
+		pivo.rotation.y = TAU * k / 10.0
+		n.add_child(pivo)
+		var mi := _malha(pivo, s, mat)
+		mi.scale = Vector3(0.05, 0.05, 0.05)
+		mi.position = Vector3(0, 0, 0.9)
+		# Pétala por pétala: cada uma abre 0,03 s depois da vizinha.
+		tw.tween_property(mi, "scale", Vector3(0.8, 1, 2.2), 0.3).set_delay(0.03 * k).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(mi, "rotation:x", deg_to_rad(-45), 0.45).set_delay(0.03 * k)
+	n.scale = Vector3.ONE * 1.6
+	tw.tween_property(n, "rotation:y", PI / 3, 1.3)
+	Magia._anim(tw, mat, "corroi", 0.0, 1.0, 0.5).set_delay(0.8)
 	tw.chain().tween_callback(n.queue_free)
+	Magia.onda(g, p, "luz", r, 0.6, {"voltas": 6.0, "forca": 0.5})
+	Magia.anel_sobe(g, p + Vector3(0, 0.2, 0), "luz", r * 0.5, 3.0, 1.0, 0.1)
+	if Magia.enfeite():
+		FxProjetil.ps(g, p + Vector3(0, 0.4, 0), FxProjetil.quad("brilho", FxProjetil.tex_brilho(), false), Color(1.0, 0.8, 0.75), 16, 1.6, {
+			"esfera": r * 0.6, "explosao": 0.6, "dir": Vector3.UP, "spread": 20.0, "v0": 0.8, "v1": 2.0, "rampa": "pisca", "s0": 0.12, "s1": 0.24,
+		})
 
 
-## Em cada aliado curado/protegido: brilho subindo (cor do poder).
-static func em_aliado(alvo: Unit, cor: Color) -> void:
+## Em cada aliado curado/protegido: um fio de luz viaja de quem lançou até ele,
+## e nele sobem um anel e pontinhos de luz (cor do poder).
+static func em_aliado(alvo: Unit, cor: Color, de: Unit = null) -> void:
 	var g := alvo.game
+	var pal := Magia.paleta_de(cor)
+	if de != null and de != alvo and is_instance_valid(de):
+		Magia.lanca(g, de.global_position + Vector3(0, 1.3, 0), alvo.global_position + Vector3(0, 1.1, 0), pal, 0.22, 0.4, {"cresce": 0.14, "corre": 4.0, "forca": 0.8})
 	_motas(g, alvo.global_position, cor, 10)
-	Fx.ring(g, alvo.global_position, Color(cor, 0.8), 1.4)
+	Magia.anel_sobe(g, alvo.global_position + Vector3(0, 0.2, 0), pal, 0.9, 2.0, 0.7)
+	Magia.onda(g, alvo.global_position, pal, 1.4, 0.4)
 
 
-## Armadilheiro: aliados ganham rastro de vento enquanto a corrida dura.
+## Corrida (Armadilheiro, Construtor): riscos de vento saindo do corpo e uma
+## fita baixa atrás dos pés enquanto dura.
 static func rastro(alvo: Unit, cor: Color, dur: float) -> void:
-	var p := CPUParticles3D.new()
-	p.amount = 18
-	p.lifetime = 0.35
-	p.local_coords = false
-	p.direction = Vector3.UP
-	p.spread = 10.0
-	p.initial_velocity_min = 0.2
-	p.initial_velocity_max = 0.6
-	p.gravity = Vector3.ZERO
+	if not Magia.enfeite():
+		return
+	var p := FxProjetil.ps(alvo, Vector3(0, 0.9, 0), FxProjetil.lasca(0.5, 0.045), Color(cor.lerp(Color.WHITE, 0.3), 0.85), 12, 0.3, {
+		"one_shot": false, "local": false, "local_pos": true, "dir": Vector3.UP, "spread": 10.0, "v0": 0.2, "v1": 0.6, "rampa": "nasce",
+	})
 	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
 	p.emission_box_extents = Vector3(0.3, 0.6, 0.3)
-	var b := BoxMesh.new()
-	b.size = Vector3(0.05, 0.05, 0.7)
-	b.material = _mat(Color(cor * 1.6, 0.7))
-	p.mesh = b
-	p.scale_amount_min = 0.6
-	p.scale_amount_max = 1.2
-	p.position.y = 0.9
-	alvo.add_child(p)
 	var tw := p.create_tween()
 	tw.tween_interval(dur)
 	tw.tween_callback(func(): p.emitting = false)
 	tw.tween_interval(0.4)
 	tw.tween_callback(p.queue_free)
+	Magia.fita(alvo, Vector3(-0.3, 0.12, 0), Vector3(0.3, 0.12, 0), Magia.paleta_de(cor), dur, {"pontos": 10, "forca": 0.9})
 
 
-## Bombas de Fumaça: estouro roxo e bolas de fumaça arremessadas.
+## Bombas de Fumaça: estouro que se rasga e poucas nuvens de pincel (leve).
 static func nuvem(g: Node, centro: Vector3, r: float) -> void:
-	var n := _no(g, centro + Vector3(0, 0.8, 0))
-	var s := SphereMesh.new()
-	s.radius = 1.0
-	s.height = 2.0
-	s.radial_segments = 12
-	s.rings = 6
-	var mat := _mat(Color(1.2, 0.6, 1.8, 0.7))
-	_malha(n, s, mat)
-	n.scale = Vector3.ONE * 0.3
-	var tw := n.create_tween().set_parallel()
-	tw.tween_property(n, "scale", Vector3.ONE * r * 0.9, 0.25).set_ease(Tween.EASE_OUT)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.3)
-	tw.chain().tween_callback(n.queue_free)
-	var bola := SphereMesh.new()
-	bola.radius = 0.6
-	bola.height = 1.0
-	bola.radial_segments = 8
-	bola.rings = 4
-	for k in 8:
-		var a := TAU * k / 8.0
-		var b := _no(g, centro + Vector3(0, 0.6, 0))
-		var bm := Fx.unshaded(Color(0.5, 0.45, 0.62, 0.8), true)
-		_malha(b, bola, bm)
-		var t2 := b.create_tween().set_parallel()
-		t2.tween_property(b, "position", centro + Vector3(cos(a), 0, sin(a)) * r * 0.9 + Vector3(0, 0.5, 0), 0.4).set_ease(Tween.EASE_OUT)
-		t2.tween_property(b, "scale", Vector3.ONE * 1.8, 0.6)
-		t2.tween_property(bm, "albedo_color:a", 0.0, 0.5).set_delay(0.3)
-		t2.chain().tween_callback(b.queue_free)
+	Magia.estouro(g, centro, "fumaca", r * 0.9, 0.45, {"sobe": false})
+	Magia.onda(g, centro, "fumaca", r * 1.05, 0.5)
 
 
-## Onmyoji: estrela de cinco pontas de luz e pilares nos vértices.
+## Kitsune Sombria (Selo Sombrio): o selo se ESCREVE no chão em tinta roxa,
+## acende, e de cada ponta da estrela sobe uma chama tremida com um raio em
+## ziguezague; no miolo, um estouro que se rasga e brasas roxas que ficam.
 static func selo(g: Node, centro: Vector3, r: float) -> void:
-	var pts: Array[Vector3] = []
-	for k in 5:
-		var a := TAU * k / 5.0 - PI / 2
-		pts.append(centro + Vector3(cos(a), 0.12, sin(a)) * r * 0.85)
-	for k in 5:
-		Fx.beam(g, pts[k], pts[(k + 2) % 5], Color(0.7, 0.9, 1.0), 0.16, 1.0)
-	var c := CylinderMesh.new()
-	c.top_radius = 0.12
-	c.bottom_radius = 0.2
-	c.height = 4.0
-	c.radial_segments = 6
-	for p in pts:
-		var n := _no(g, p + Vector3(0, 2.0, 0))
-		var mat := _mat(Color(0.8, 1.2, 2.0, 0.8))
-		_malha(n, c, mat)
-		n.scale = Vector3(1, 0.1, 1)
-		var tw := n.create_tween()
-		tw.tween_property(n, "scale", Vector3.ONE, 0.18).set_ease(Tween.EASE_OUT)
-		tw.tween_property(mat, "albedo_color:a", 0.0, 0.6).set_delay(0.3)
-		tw.tween_callback(n.queue_free)
+	var pal: Array = Magia.paleta("sombra")
+	Magia.selo(g, centro, pal, r * 1.02, 1.7, {"pontas": 5, "escrita": 0.2, "giro": 0.05})
+	Magia.carga(g, centro + Vector3(0, 1.0, 0), pal[1], r * 0.9, 0.2, 12)
+	var n := _no(g, centro)
+	var tw := n.create_tween()
+	tw.tween_interval(0.18)
+	tw.tween_callback(func() -> void:
+		for k in 5:
+			var a := TAU * k / 5.0 - PI / 2
+			var p := centro + Vector3(cos(a), 0.0, sin(a)) * r * 0.7
+			Magia.chama(g, p, pal, 0.55, 3.4 + (k % 2) * 0.7, 0.95, {"rola": Vector2(0.5, -2.6), "forca": 1.25, "r_topo": 0.1, "giro": 1.2})
+			Fx.zap(g, p + Vector3(0, 0.2, 0), p + Vector3(cos(a) * 0.5, 4.6, sin(a) * 0.5), pal[0], 5)
+		Magia.estouro(g, centro, pal, minf(r * 0.55, 4.5), 0.45)
+		Magia.onda(g, centro, pal, r * 1.15, 0.5, {"voltas": 5.0})
+		Magia.clarao(g, centro, pal[1], r * 2.2)
+		Magia.brasas(g, centro, pal[1], 14, r * 0.7, 1.5)
+		FxProjetil.marca_chao(g, centro, Color(Magia.TINTA, 0.55), r * 0.6, 3.0))
+	tw.tween_interval(1.0)
+	tw.tween_callback(n.queue_free)
 
 
-## Kitsune: erupção de fogo-raposa e orbes girando em volta das colunas.
+## Kitsune (Coluna de Fogo-Raposa): labareda que nasce do chão num pulo e se
+## desfaz em línguas, bolas de fogo-raposa girando em volta e brasas subindo.
 static func coluna_fogo(g: Node, centro: Vector3, r: float, dur: float, cor := Color(0.25, 0.9, 1.25)) -> void:
-	_labareda(g, centro, Color(cor.r * 1.6, cor.g * 1.6, cor.b * 1.6, 0.75), r * 0.55, 8.0, 0.7)
+	var pal := Magia.paleta_de(cor)
+	Magia.chama(g, centro, pal, minf(r * 0.42, 2.0), 5.2, 0.7, {"giro": 0.6, "forca": 1.2, "r_topo": 0.12})
+	Magia.onda(g, centro, pal, r * 1.1, 0.45)
+	Magia.clarao(g, centro, pal[1], r * 2.2)
+	Magia.brasas(g, centro, pal[1], 12, r * 0.6, 1.4)
 	var n := _no(g, centro + Vector3(0, 1.4, 0))
 	var s := SphereMesh.new()
-	s.radius = 0.28
-	s.height = 0.56
+	s.radius = 0.34
+	s.height = 0.8
 	s.radial_segments = 8
 	s.rings = 4
-	var mat := _mat(Color(cor.r * 1.6, cor.g * 1.6, cor.b * 1.6, 0.95).lerp(Color(2, 2, 2, 0.95), 0.35))
+	var mat := Magia.mat(pal, {"base": 0.45, "topo": 0.75, "forca": 0.8, "escala": Vector2(2.0, 1.0), "rola": Vector2(0.0, 1.6)})
 	for k in 6:
 		var a := TAU * k / 6.0
 		var mi := _malha(n, s, mat)
 		mi.position = Vector3(cos(a), sin(a * 2.0) * 0.4, sin(a)) * r * 0.75
 	var tw := n.create_tween().set_parallel()
 	tw.tween_property(n, "rotation:y", TAU * dur * 0.8, dur)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.3).set_delay(maxf(dur - 0.3, 0.0))
+	Magia._anim(tw, mat, "corroi", 0.0, 1.0, 0.35).set_delay(maxf(dur - 0.35, 0.0))
 	tw.chain().tween_callback(n.queue_free)
 
 
-## Carpinteiro: feixe de trabalho até a oficina e faíscas douradas nela.
+## Construtor (Mutirão): fio de luz até a oficina e três marteladas nela
+## (clarão, faíscas douradas e serragem voando).
 static func mutirao(u: Unit, oficina: Node3D) -> void:
 	var g := u.game
 	var alvo := oficina.global_position
-	Fx.beam(g, u.global_position + Vector3(0, 1.2, 0), alvo + Vector3(0, 1.5, 0), Color(1.0, 0.8, 0.35), 0.3, 0.7)
-	_motas(g, alvo, Color(1.0, 0.85, 0.35), 24)
-	_detritos(g, alvo + Vector3(0, 1.0, 0), Color(0.6, 0.4, 0.25), 10)
+	Magia.lanca(g, u.global_position + Vector3(0, 1.2, 0), alvo + Vector3(0, 1.5, 0), "luz", 0.5, 0.7, {"cresce": 0.15})
+	Magia.anel_sobe(g, alvo + Vector3(0, 0.3, 0), "luz", 2.2, 3.5, 1.0, 0.15)
+	var n := _no(g, alvo)
+	var tw := n.create_tween()
+	for k in 3:
+		tw.tween_interval(0.14 if k == 0 else 0.22)
+		tw.tween_callback(func() -> void:
+			var q := alvo + Vector3(randf_range(-1.0, 1.0), 1.0 + k * 0.7, randf_range(-1.0, 1.0))
+			FxProjetil.brilho(g, q, Color(1.0, 0.95, 0.7), 1.3)
+			FxProjetil.faiscas(g, q, Color(1.0, 0.8, 0.3), 8, 6.0)
+			Fx.burst(g, q, Color(0.72, 0.55, 0.36), 6, 3.5))  # serragem
+	tw.tween_callback(n.queue_free)
+	_motas(g, alvo, Color(1.0, 0.85, 0.35), 16)
+	_detritos(g, alvo + Vector3(0, 1.0, 0), Color(0.6, 0.4, 0.25), 8)
 
 
-## Bombardeiro: aviso com pavio em cada ponto. O anel encolhe até o centro no
-## tempo exato da explosão, então dá para ler a ordem da fila e fugir.
+## Bombardeiro: aviso com pavio em cada ponto. A onda de brasa encolhe até o
+## centro no tempo exato da explosão (dá para ler a ordem da fila e fugir) e
+## uma faísca de pavio corre pela borda.
 static func aviso_bombardeio(g: Node, pontos: Array, r: float, intervalo: float) -> void:
 	for i in pontos.size():
-		var atraso := intervalo * (i + 1)
-		var n := _no(g, pontos[i] + Vector3(0, 0.08, 0))
-		# Mistura normal (não aditiva): aditivo laranja sobre grama vira amarelo.
-		var mat := Fx.unshaded(Color(1.0, 0.4, 0.06, 0.8), true)
-		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		var t := TorusMesh.new()
-		t.inner_radius = r - 0.12
-		t.outer_radius = r
-		_malha(n, t, mat).scale = Vector3(1, 0.05, 1)
-		var faisca := SphereMesh.new()
-		faisca.radius = 0.16
-		faisca.height = 0.32
-		faisca.radial_segments = 6
-		faisca.rings = 3
-		var fmat := _mat(Color(2.2, 1.3, 0.4, 1.0))
-		var fi := _malha(n, faisca, fmat)
-		fi.position = Vector3(0, 0.15, r)
+		var atraso: float = intervalo * (i + 1)
+		var centro: Vector3 = pontos[i]
+		Magia.onda(g, centro, "brasa", r * 0.12, atraso, {"r0": 1.0 / 0.12, "banda": 0.14, "tinta": 0.02, "forca": 0.4, "voltas": 6.0, "gira": 0.6, "y": 0.1, "linear": true, "segura": 0.92})
+		var n := _no(g, centro + Vector3(0, 0.1, 0))
+		var pavio := FxProjetil.brilho_fixo(n, Vector3(0, 0.15, r), Color(1.0, 0.75, 0.3), 0.5, false)
+		pavio.name = "Pavio"
 		var tw := n.create_tween().set_parallel()
 		tw.tween_property(n, "scale", Vector3(0.12, 1, 0.12), atraso).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		tw.tween_property(n, "rotation:y", -TAU * (0.5 + i * 0.25), atraso)
-		tw.tween_property(mat, "albedo_color", Color(1.0, 0.15, 0.05, 0.95), atraso)
 		tw.chain().tween_callback(n.queue_free)
 
 
-## Explosão de pólvora: bola de fogo que incha, coluna curta, fumaça escura,
-## estilhaços e o chão queimado que fica uns segundos (lê onde caiu).
+## Explosão de pólvora: bola de fogo que incha e se corrói, labareda curta,
+## onda, estilhaços, brasas e o chão queimado que fica uns segundos.
 static func explosao_polvora(g: Node, at: Vector3, r: float) -> void:
-	var n := _no(g, at + Vector3(0, 0.5, 0))
-	var bola := SphereMesh.new()
-	bola.radius = 1.0
-	bola.height = 2.0
-	bola.radial_segments = 10
-	bola.rings = 5
-	# Casca laranja opaca (mistura normal, lê laranja em qualquer chão) e
-	# miolo aditivo amarelo menor: fogo com volume sem estourar para branco.
-	var mat := Fx.unshaded(Color(1.0, 0.42, 0.08, 0.9), true)
-	_malha(n, bola, mat)
-	var miolo := _mat(Color(1.6, 1.1, 0.35, 1.0))
-	_malha(n, bola, miolo).scale = Vector3.ONE * 0.6
-	n.scale = Vector3.ONE * 0.3
-	var tw := n.create_tween().set_parallel()
-	tw.tween_property(n, "scale", Vector3(r * 0.8, r * 0.55, r * 0.8), 0.18).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tw.tween_property(mat, "albedo_color", Color(0.25, 0.08, 0.04, 0.0), 0.45).set_delay(0.08)
-	tw.tween_property(miolo, "albedo_color:a", 0.0, 0.25).set_delay(0.05)
-	tw.chain().tween_callback(n.queue_free)
-	_labareda(g, at, Color(1.0, 0.45, 0.08, 0.55), r * 0.45, 3.2, 0.45)
+	Magia.bola(g, at + Vector3(0, 0.5, 0), "brasa", r * 0.85, 0.5, {"achata": 0.7})
+	Magia.chama(g, at, "brasa", r * 0.5, 3.4, 0.5, {"forca": 1.2})
+	Magia.onda(g, at, "brasa", r * 1.15, 0.4)
+	Magia.clarao(g, at, Color(1.0, 0.55, 0.2), r * 2.5, 0.3, 3.5)
+	Magia.brasas(g, at, Color(1.0, 0.6, 0.2), 8, r * 0.5, 1.2)
 	_detritos(g, at, Color(0.22, 0.18, 0.16), 8)
-	_poeira(g, at, Color(0.2, 0.18, 0.2), 10)
-	# Mancha queimada: material normal (não aditivo), some em 4 s.
-	var q := _no(g, at + Vector3(0, 0.04, 0))
-	var disco := CylinderMesh.new()
-	disco.top_radius = r * 0.75
-	disco.bottom_radius = r * 0.75
-	disco.height = 0.02
-	disco.radial_segments = 14
-	var qmat := Fx.unshaded(Color(0.05, 0.035, 0.03, 0.6), true)
-	_malha(q, disco, qmat)
-	q.rotation.y = randf() * TAU
-	var tq := q.create_tween()
-	tq.tween_property(qmat, "albedo_color:a", 0.0, 2.5).set_delay(1.5)
-	tq.tween_callback(q.queue_free)
+	FxProjetil.marca_chao(g, at, Color(0.05, 0.035, 0.03, 0.6), r * 0.75, 4.0)
 
 
 ## Arremate da Chuva de Flechas: cinco lanças de luz caem juntas no centro e
-## abrem um clarão em cruz na cor do time (`cor` = cor pura, sem clarear).
+## abrem um estouro com onda na cor do time (`cor` = cor pura, sem clarear).
 static func arremate_chuva(g: Node, centro: Vector3, r: float, cor: Color) -> void:
+	var pal := Magia.paleta_de(cor)
 	for k in 5:
 		var a := k * TAU / 5.0
 		var p: Vector3 = centro + Vector3(cos(a), 0, sin(a)) * r * 0.35 if k > 0 else centro
-		Fx.beam(g, p + Vector3(0, 12.0, 0), p + Vector3(0, 0.2, 0), cor, 0.18 if k == 0 else 0.1, 0.3)
-	# Cor pura do time e alfa baixo: aditivo forte em chão claro estoura para
-	# branco e vira um cone de gesso (visto no print do 2.4l).
-	_labareda(g, centro, Color(cor, 0.45), r * 0.35, 3.0, 0.35)
-	var n := _no(g, centro + Vector3(0, 0.1, 0))
-	var mat := _mat(Color(cor * 1.3, 0.9))
-	for k in 4:
-		var b := BoxMesh.new()
-		b.size = Vector3(0.22, 0.02, r * 1.6)
-		_malha(n, b, mat).rotation.y = k * PI / 4
-	n.scale = Vector3.ONE * 0.3
-	var tw := n.create_tween().set_parallel()
-	tw.tween_property(n, "scale", Vector3.ONE, 0.15).set_ease(Tween.EASE_OUT)
-	tw.tween_property(mat, "albedo_color:a", 0.0, 0.45).set_delay(0.1)
-	tw.chain().tween_callback(n.queue_free)
+		Magia.lanca(g, p + Vector3(0, 12.0, 0), p + Vector3(0, 0.2, 0), pal, 0.5 if k == 0 else 0.3, 0.32, {"cresce": 0.08, "corre": 6.0})
+	Magia.estouro(g, centro, pal, r * 0.7, 0.4)
+	Magia.chama(g, centro, pal, r * 0.4, 3.2, 0.4)
+	Magia.onda(g, centro, pal, r * 1.3, 0.45, {"voltas": 5.0})
+	Magia.clarao(g, centro, cor, r * 3.0)
+	Magia.brasas(g, centro, cor.lightened(0.4), 10, r * 0.6, 1.1)
+	FxProjetil.marca_chao(g, centro, Color(Magia.TINTA, 0.5), r * 0.7, 2.5)
+
+
+# --- Habilidade rápida (Q), golpe básico e super -----------------------------------
+
+## Som de camada do elemento do poder (gerado por tools/gerar_sons.py magia).
+static func som_elemento(u: Unit) -> String:
+	match ELEMENTO.get(u.stats.power, [""])[0]:
+		"brasa": return "magia_fogo"
+		"vento", "aco": return "magia_vento"
+		"sombra": return "magia_selo"
+		"luz": return "magia_luz"
+	return "magia_fogo" if u.stats.power == "coluna_fogo" else "magia_vento"
+
+
+## Fita da lâmina: a faixa por onde a arma passou no golpe (segue a mão de
+## verdade). Fina e curta nos golpes comuns, dourada e maior no golpe final.
+static func fita_lamina(u: Unit, forte: bool) -> void:
+	if not Magia.enfeite():
+		return
+	var mao := u.mao_da_arma()
+	if mao == null:
+		return
+	var ponta := 1.9 if u.stats.id == &"ronin_oni" else (1.7 if u.stats.id == &"guerreiro" else 1.1)
+	var pal: Variant = "luz" if forte else ("brasa" if u.stats.id == &"ronin_oni" else "aco")
+	Magia.fita(mao, Vector3(0, ponta * (0.3 if forte else 0.5), 0), Vector3(0, ponta, 0), pal, 0.2 if forte else 0.16, {"pontos": 9, "forca": 0.5, "lados": 0.3})
+
+
+## Ronin (Pisão): o chão cospe brasa por um instante.
+static func q_pisao(u: Unit) -> void:
+	var g := u.game
+	var p := u.global_position
+	var r := u.stats.skill_radius
+	Magia.estouro(g, p, "brasa", r * 0.55, 0.32)
+	Magia.clarao(g, p, Color(1.0, 0.4, 0.15), r * 2.0, 0.22, 2.2)
+	Magia.brasas(g, p, Color(1.0, 0.5, 0.15), 8, r * 0.5, 1.0)
+	FxProjetil.marca_chao(g, p, Color(0.06, 0.03, 0.03, 0.5), r * 0.5, 2.5)
+
+
+## Samurai (Investida): risco de aço no ar e o rasgo de vento que fica no chão.
+static func q_investida(u: Unit, de: Vector3, ate: Vector3) -> void:
+	var g := u.game
+	Magia.lanca(g, de + Vector3(0, 1.0, 0), ate + Vector3(0, 1.0, 0), "aco", 1.0, 0.3, {"corre": 6.0})
+	Magia.lanca(g, de + Vector3(0, 0.08, 0), ate + Vector3(0, 0.08, 0), "vento", 0.7, 0.7, {"corre": 1.5, "forca": 1.0})
+	Magia.onda(g, ate, "aco", 1.6, 0.3)
+	Sfx.play("magia_vento", ate, 0.08, 1.25, -5.0)
+
+
+## Tiro carregado: a boca do disparo acende na cor da classe.
+static func q_tiro(u: Unit, dir: Vector3) -> void:
+	var g := u.game
+	var p := u.global_position + Vector3(0, 1.4, 0) + dir * 0.7
+	var pal := Magia.paleta_de(u.stats.hat_color)
+	Magia.lanca(g, p, p + dir * 2.2, pal, 0.55, 0.22, {"cresce": 0.05, "corre": 6.0})
+	FxProjetil.brilho(g, p, pal[0], 1.1, 0.14)
+
+
+## Kitsune (Cura): flor de luz que se escreve no chão e pétalas subindo.
+static func q_cura(u: Unit) -> void:
+	var g := u.game
+	var pal: Variant = "luz" if u.stats.power == "bencao" else "cura"
+	Magia.selo(g, u.global_position, pal, minf(u.stats.heal_radius, 5.5), 0.9, {"pontas": 0, "petalas": 6, "escrita": 0.2, "giro": 0.1})
+	Magia.anel_sobe(g, u.global_position + Vector3(0, 0.2, 0), pal, 1.0, 2.2, 0.7)
+
+
+## Fio de fogo-raposa que viaja de quem cura até o aliado curado.
+static func fio_cura(de: Unit, alvo: Unit) -> void:
+	var pal: Variant = "luz" if de.stats.power == "bencao" else "cura"
+	Magia.lanca(de.game, de.global_position + Vector3(0, 1.3, 0), alvo.global_position + Vector3(0, 1.1, 0), pal, 0.22, 0.35, {"cresce": 0.12, "corre": 4.0, "forca": 0.9})
+	Magia.anel_sobe(alvo.game, alvo.global_position + Vector3(0, 0.2, 0), pal, 0.8, 1.9, 0.6, 0.1)
+
+
+## Armadilha/estrepes armados: poeirinha e um aro curto na cor da classe.
+static func q_armadilha(u: Unit, at: Vector3) -> void:
+	Magia.onda(u.game, at, Magia.paleta_de(u.stats.hat_color), 1.2, 0.3)
+	Fx.burst(u.game, at + Vector3(0, 0.2, 0), Color(0.62, 0.55, 0.45), 6, 2.5)
+
+
+## Abertura do super (R): o selo grande de ouro, tudo é sugado e a cúpula estoura.
+static func abrir_super(u: Unit) -> void:
+	var g := u.game
+	var p := u.global_position
+	Magia.selo(g, p, "luz", 4.5, 1.4, {"pontas": 8, "escrita": 0.2, "giro": 0.25})
+	Magia.carga(g, p + Vector3(0, 1.2, 0), Color(1.0, 0.85, 0.4), 3.5, 0.22, 18)
+	Magia.estouro(g, p, "luz", 3.2, 0.4)
+	Magia.brasas(g, p, Color(1.0, 0.85, 0.4), 14, 2.2, 1.4)
 
 
 # --- Economia e placar ------------------------------------------------------------
 
-## Oficina sobe de nível: três anéis dourados sobem pela casa e o letreiro
-## "NÍVEL N!" estoura em cima.
+## Oficina sobe de nível: três anéis de energia dourada sobem pela casa e o
+## letreiro "NÍVEL N!" estoura em cima.
 static func subir_nivel(g: Node, pos: Vector3, cor: Color, nivel: int) -> void:
 	var ouro := Color(1.0, 0.82, 0.35)
+	var pal := Magia.paleta_de(ouro.lerp(cor, 0.25))
 	for i in 3:
-		var n := _no(g, pos + Vector3(0, 0.3, 0))
-		var t := TorusMesh.new()
-		t.inner_radius = 2.2
-		t.outer_radius = 2.45
-		t.rings = 32
-		t.ring_segments = 4
-		var mat := Fx.unshaded(Color(ouro.lerp(cor, 0.25), 0.0), true)
-		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		var mi := _malha(n, t, mat)
-		mi.scale = Vector3(1, 0.08, 1)
-		var tw := n.create_tween()
-		tw.tween_interval(0.18 * i)
-		tw.tween_property(mat, "albedo_color:a", 0.9, 0.08)
-		tw.set_parallel()
-		tw.tween_property(n, "global_position:y", pos.y + 4.5 + i * 0.6, 1.1).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-		tw.tween_property(n, "scale", Vector3.ONE * (0.55 - 0.08 * i), 1.1).set_ease(Tween.EASE_OUT)
-		tw.tween_property(mat, "albedo_color:a", 0.0, 0.5).set_delay(0.6)
-		tw.chain().tween_callback(n.queue_free)
+		Magia.anel_sobe(g, pos + Vector3(0, 0.3, 0), pal, 2.45, 4.2 + i * 0.6, 1.1, 0.18 * i)
+	Magia.onda(g, pos, pal, 3.2, 0.5)
+	Magia.clarao(g, pos, ouro, 9.0)
 	_motas(g, pos + Vector3(0, 1.0, 0), ouro, 16)
 	var l := Label3D.new()
 	l.text = "NÍVEL %d!" % nivel
@@ -583,56 +560,19 @@ static func subir_nivel(g: Node, pos: Vector3, cor: Color, nivel: int) -> void:
 ## longe (sobe acima dos telhados), com anéis subindo e a marca no chão.
 static func coluna_captura(g: Node, pos: Vector3, cor_time: Color) -> void:
 	var claro := cor_time.lightened(0.45)
-	for camada in [[2.2, 0.45, claro], [0.9, 0.8, Color(1.0, 0.95, 0.8)]]:
-		var n := _no(g, pos)
-		var c := CylinderMesh.new()
-		c.top_radius = camada[0] * 0.7
-		c.bottom_radius = camada[0]
-		c.height = 40.0
-		c.radial_segments = 16
-		c.cap_top = false
-		c.cap_bottom = false
-		var mat := Fx.unshaded(Color(camada[2], camada[1]), true)
-		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		var mi := _malha(n, c, mat)
-		mi.position.y = 20.0
-		n.scale = Vector3(0.1, 1, 0.1)
-		var tw := n.create_tween().set_parallel()
-		tw.tween_property(n, "scale", Vector3.ONE, 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-		tw.tween_property(mat, "albedo_color:a", 0.0, 1.2).set_delay(1.6)
-		tw.tween_property(n, "scale", Vector3(0.3, 1, 0.3), 1.2).set_delay(1.6)
-		tw.chain().tween_callback(n.queue_free)
+	var pal := Magia.paleta_de(cor_time.lightened(0.15))
+	Magia.chama(g, pos, pal, 2.4, 40.0, 2.9, {"segura": 0.6, "r_topo": 0.7, "barriga": 0.0, "base": 0.55, "topo": 0.3, "forca": 0.7, "escala": Vector2(2.0, 4.0), "rola": Vector2(0.15, -1.2)})
+	Magia.chama(g, pos, "luz", 1.0, 40.0, 2.6, {"segura": 0.6, "r_topo": 0.8, "barriga": 0.0, "base": 0.75, "topo": 0.4, "forca": 0.5, "escala": Vector2(1.0, 4.0), "rola": Vector2(-0.2, -2.0)})
 	for i in 4:
-		var n := _no(g, pos + Vector3(0, 0.3, 0))
-		var t := TorusMesh.new()
-		t.inner_radius = 2.6
-		t.outer_radius = 3.0
-		t.rings = 32
-		t.ring_segments = 4
-		var mat := Fx.unshaded(Color(claro, 0.0), true)
-		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		var mi := _malha(n, t, mat)
-		mi.scale = Vector3(1, 0.06, 1)
-		var tw := n.create_tween()
-		tw.tween_interval(0.25 * i)
-		tw.tween_property(mat, "albedo_color:a", 0.85, 0.08)
-		tw.set_parallel()
-		tw.tween_property(n, "global_position:y", pos.y + 14.0, 1.6).set_ease(Tween.EASE_IN)
-		tw.tween_property(n, "scale", Vector3.ONE * 0.4, 1.6)
-		tw.tween_property(mat, "albedo_color:a", 0.0, 0.6).set_delay(1.0)
-		tw.chain().tween_callback(n.queue_free)
+		Magia.anel_sobe(g, pos + Vector3(0, 0.3, 0), pal, 3.0, 14.0, 1.6, 0.25 * i)
+	Magia.onda(g, pos, pal, 6.0, 0.7, {"voltas": 6.0})
+	Magia.selo(g, pos, pal, 4.0, 3.0, {"pontas": 8, "escrita": 0.4, "giro": 0.15})
+	Magia.clarao(g, pos, claro, 16.0, 0.6, 4.0)
 	_motas(g, pos + Vector3(0, 0.5, 0), claro, 24)
 	FxProjetil.marca_chao(g, pos, Color(claro, 0.5), 3.5, 3.0)
 
 
 # --- Peças --------------------------------------------------------------------------
-
-static func _mat(cor: Color) -> StandardMaterial3D:
-	var m := Fx.unshaded(cor, true)
-	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	m.cull_mode = BaseMaterial3D.CULL_DISABLED
-	return m
-
 
 static func _no(parent: Node, pos: Vector3) -> Node3D:
 	var n := Node3D.new()
@@ -649,27 +589,6 @@ static func _malha(parent: Node3D, mesh: Mesh, mat: Material) -> MeshInstance3D:
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	parent.add_child(mi)
 	return mi
-
-
-## Coluna de fogo/luz que nasce do chão e some.
-static func _labareda(g: Node, pos: Vector3, cor: Color, raio: float, altura: float, vida: float) -> void:
-	var n := _no(g, pos)
-	var c := CylinderMesh.new()
-	c.top_radius = raio * 0.15
-	c.bottom_radius = raio
-	c.height = altura
-	c.radial_segments = 10
-	c.cap_top = false
-	c.cap_bottom = false
-	var mat := _mat(cor)
-	var mi := _malha(n, c, mat)
-	mi.position.y = altura / 2.0
-	n.scale = Vector3(1, 0.05, 1)
-	var tw := n.create_tween().set_parallel()
-	tw.tween_property(n, "scale", Vector3(1.2, 1, 1.2), 0.15).set_ease(Tween.EASE_OUT)
-	tw.tween_property(n, "rotation:y", PI, vida)
-	tw.tween_property(mat, "albedo_color:a", 0.0, vida * 0.7).set_delay(vida * 0.3)
-	tw.chain().tween_callback(n.queue_free)
 
 
 ## Pedaços (pedra/madeira) voando e caindo.
@@ -700,60 +619,6 @@ static func _detritos(g: Node, pos: Vector3, cor: Color, qtd: int) -> void:
 	p.finished.connect(p.queue_free)
 
 
-## Pontinhos de luz subindo devagar.
+## Pontinhos de luz subindo devagar piscando.
 static func _motas(g: Node, pos: Vector3, cor: Color, qtd: int) -> void:
-	var p := CPUParticles3D.new()
-	p.one_shot = true
-	p.emitting = false
-	p.amount = qtd
-	p.lifetime = 1.0
-	p.explosiveness = 0.8
-	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-	p.emission_sphere_radius = 0.8
-	p.direction = Vector3.UP
-	p.spread = 15.0
-	p.initial_velocity_min = 1.5
-	p.initial_velocity_max = 3.5
-	p.gravity = Vector3.ZERO
-	p.mesh = Fx.cached("mota" + cor.to_html(), func() -> Mesh:
-		var s := SphereMesh.new()
-		s.radius = 0.07
-		s.height = 0.14
-		s.radial_segments = 4
-		s.rings = 2
-		s.material = _mat(Color(cor * 1.8, 1.0))
-		return s)
-	g.add_child(p)
-	p.global_position = pos + Vector3(0, 0.6, 0)
-	p.emitting = true
-	p.finished.connect(p.queue_free)
-
-
-## Poeira baixa em anel (giro do Samurai).
-static func _poeira(g: Node, pos: Vector3, cor: Color, qtd: int) -> void:
-	var p := CPUParticles3D.new()
-	p.one_shot = true
-	p.emitting = false
-	p.amount = qtd
-	p.lifetime = 0.6
-	p.explosiveness = 1.0
-	p.direction = Vector3(1, 0.2, 0)
-	p.spread = 180.0
-	p.flatness = 0.9
-	p.initial_velocity_min = 4.0
-	p.initial_velocity_max = 7.0
-	p.damping_min = 6.0
-	p.damping_max = 8.0
-	p.gravity = Vector3.ZERO
-	p.mesh = Fx.cached("poeira" + cor.to_html(), func() -> Mesh:
-		var s := SphereMesh.new()
-		s.radius = 0.25
-		s.height = 0.4
-		s.radial_segments = 6
-		s.rings = 3
-		s.material = Fx.unshaded(Color(cor, 0.5), true)
-		return s)
-	g.add_child(p)
-	p.global_position = pos + Vector3(0, 0.3, 0)
-	p.emitting = true
-	p.finished.connect(p.queue_free)
+	Magia.brasas(g, pos + Vector3(0, 0.3, 0), cor.lerp(Color.WHITE, 0.3), qtd, 0.8, 1.0)
