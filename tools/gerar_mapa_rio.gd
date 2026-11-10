@@ -1612,9 +1612,14 @@ func _gerar_mapa_rio() -> void:
 	var boca := deg_to_rad(F_BOCA)
 	m.tower_spots = PackedVector2Array([FC + Vector2(cos(boca), -sin(boca)) * (FR + 0.4), FC + Vector2(cos(boca), sin(boca)) * (FR + 0.4)])
 	m.tower_collider_radius = 2.0
-	m.hat_spots = PackedVector2Array([_anel(-122, 15.0), _anel(122, 15.0), _anel(-148, 15.0), _anel(148, 15.0)])
-	m.oficina_spots = PackedVector2Array([_anel(-68, 16.0), _anel(68, 16.0)])
-	m.mago_spots = PackedVector2Array([_anel(-40, 16.0), _anel(40, 16.0)])
+	# Ciclo 2.21: um bairro por trecho de muralha (entre os portões), na ordem
+	# de GameConfig.hat_class_list. Fundo (perto da máscara): Samurai (z-) e
+	# Ninja (z+); frente: Kitsune (z-) e Construtor (z+, junto do depósito e do
+	# portão do bosque). Cada bairro tem a barraquinha, a casa e os dois tapetes
+	# dos caminhos (Oficina.gd). Oficinas comuns e terrenos de mago saíram.
+	m.hat_spots = PackedVector2Array([_anel(-141.5, 14.5), _anel(141.5, 14.5), _anel(-63.0, 14.5), _anel(63.0, 14.5)])
+	m.oficina_spots = PackedVector2Array()
+	m.mago_spots = PackedVector2Array()
 	# Renascer espalhado (thread do Construtor, PR #22): pontos no arco, perto
 	# das saídas (frente e laterais), longe da torre.
 	if "spawn_spots" in m:
@@ -1625,7 +1630,7 @@ func _gerar_mapa_rio() -> void:
 	if "tree_spots" in m:  # bosque seguro fora do portão de baixo, perto da trilha
 		m.tree_spots = PackedVector2Array([Vector2(-1.0, 27.5), Vector2(4.5, 28.5)])
 	if "pilha_spot" in m:  # depósito por dentro do portão de baixo, no caminho das árvores
-		m.pilha_spot = Vector2(3.0, 10.0)
+		m.pilha_spot = Vector2(0.0, 16.0)
 	if "bamboo_spots" in m:
 		m.bamboo_spots = PackedVector2Array([Vector2(6.8, -16.2), Vector2(8.4, -16.9), Vector2(7.2, 16.4), Vector2(-6.8, -16.2), Vector2(-8.4, -16.9), Vector2(-7.2, 16.4)])
 	# Torretas (2.9) e catapulta (2.10) ficavam só no .tres e o gerador os
@@ -1633,7 +1638,7 @@ func _gerar_mapa_rio() -> void:
 	if "torreta_spots" in m:
 		m.torreta_spots = PackedVector2Array([Vector2(29, -8), Vector2(29, 8)])
 	if "catapulta_spot" in m:
-		m.catapulta_spot = Vector2(-9, -12)
+		m.catapulta_spot = Vector2(0.0, -16.0)
 	m.wall_height = ALT_MURO
 	m.wall_thickness = ESP_MURO
 	m.wall_parapet = 1.0

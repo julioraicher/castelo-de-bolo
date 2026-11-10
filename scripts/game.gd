@@ -24,11 +24,7 @@ var plantas: Array[Planta] = []
 var toras: Array[Tora] = []
 var pilhas: Array[Pilha] = []
 var madeira := [0, 0]
-## Caminho dos magos de cada time: -1 = ainda não escolheu; senão o índice em
-## GameConfig.magos_opostos. classe/nivel servem o bônus do Unit sem varrer.
-var caminho := [-1, -1]
-var caminho_classe: Array[StringName] = [&"", &""]
-var caminho_nivel := [0, 0]
+## Aviso grande da escolha de caminho (uma vez, no primeiro bairro visitado).
 var _caminho_avisado := false
 var score := [0, 0]
 var abates_jogador := 0  # HUD (canto superior esquerdo)
@@ -245,36 +241,22 @@ func _ready() -> void:
 		p.setup(self, team, arena.princess_spot[team])
 		p.state_changed.connect(_on_princess_changed)
 		princesses.append(p)
+		# Um bairro por classe do pátio (Ciclo 2.21): barraquinha da classe base,
+		# tapetes dos dois caminhos e a casa que vira um deles. Classe sem
+		# caminhos fica só com a maquininha.
 		var hats := Config.cfg.hat_classes()
 		for i in hats.size():
-			var pad := HatPad.new()
-			add_child(pad)
-			pad.setup(team, hats[i], arena.hat_spots[team][i])
-			hat_pads.append(pad)
-		# Terrenos de oficina: começam com opções diferentes, sorteadas. Os
-		# magos opostos ganham terrenos fixos, um de cada lado do castelo.
-		var magos := Config.cfg.magos_opostos
-		var com_caminho: bool = magos.size() == 2 and arena.mago_spots[team].size() >= 2
-		var opts: Array[ClassStats] = Config.cfg.oficina_classes.duplicate()
-		if not com_caminho:
-			for m in magos:
-				if not opts.has(m):
-					opts.append(m)
-		var n_opts := opts.size()
-		if n_opts > 0:
-			var order := range(n_opts)
-			order.shuffle()
-			for i in arena.oficina_spots[team].size():
+			var pos: Vector3 = arena.hat_spots[team][i]
+			if hats[i].caminhos.size() >= 2:
 				var of := Oficina.new()
 				add_child(of)
-				of.setup(self, team, arena.oficina_spots[team][i], order[i % n_opts], opts)
+				of.setup(self, team, pos, hats[i])
 				oficinas.append(of)
-		if com_caminho:
-			for i in 2:
-				var of := Oficina.new()
-				add_child(of)
-				of.setup(self, team, arena.mago_spots[team][i], i, magos, i)
-				oficinas.append(of)
+			else:
+				var pad := HatPad.new()
+				add_child(pad)
+				pad.setup(team, hats[i], pos)
+				hat_pads.append(pad)
 		for tp in arena.torreta_spots[team]:
 			var tor := Torreta.new()
 			add_child(tor)
@@ -292,7 +274,7 @@ func _ready() -> void:
 	var cfg := Config.cfg
 	var start_classes: Array[ClassStats] = cfg.bot_start_classes if not cfg.bot_start_classes.is_empty() else [cfg.villager]
 	if _variacoes:
-		start_classes = cfg.hat_classes() + cfg.oficina_classes + cfg.magos_opostos
+		start_classes = cfg.todas_classes()
 	placar = Placar.new(cfg)
 	reanimar = Reanimar.new(self)
 	for team in 2:
@@ -451,8 +433,9 @@ func _prints_tutorial(menus: Menus) -> void:
 	get_tree().quit()
 
 
-## Modo teste: todas as oficinas do time azul prontas (as duas dos magos
-## também, sem selo) e todas as maquininhas no nível 2.
+## Modo teste: todas as casas do time do jogador prontas (no primeiro
+## caminho; [F] sobe o nível e, no máximo, troca o caminho) e as
+## barraquinhas no nível 2.
 func _montar_sandbox() -> void:
 	_montando_sandbox = true
 	_caminho_avisado = true
@@ -487,7 +470,7 @@ func _aliado_de_treino() -> void:
 
 func _on_started() -> void:
 	if sandbox:
-		hud.show_big("MODO TESTE\nTudo pronto e recarregando rápido (Q, E, R, catapulta).\nNas oficinas, F troca a classe ou sobe o nível.", Color(1, 0.9, 0.5), 4.5)
+		hud.show_big("MODO TESTE\nTudo pronto e recarregando rápido (Q, E, R, catapulta).\nNas casas, F sobe o nível (no máximo, troca o caminho).", Color(1, 0.9, 0.5), 4.5)
 		Sfx.start_music()
 		return
 	var inimiga := "vermelha" if time_jogador == Config.TEAM_BLUE else "azul"
@@ -579,7 +562,7 @@ func _censo() -> void:
 		elif n is MultiMeshInstance3D and (n as MultiMeshInstance3D).multimesh and (n as MultiMeshInstance3D).multimesh.mesh:
 			var mmx := (n as MultiMeshInstance3D).multimesh
 			tris = _tris_da_malha(mmx.mesh) * (mmx.visible_instance_count if mmx.visible_instance_count >= 0 else mmx.instance_count)
-		if OS.get_environment("CENSO_DETALHE") == nome.get_slice("/", 0):
+		if nome.get_slice("/", 0) in OS.get_environment("CENSO_DETALHE").split(","):
 			print("CENSO.  %-50s surf=%d passes=%d tris=%d sombra=%s" % [String(n.get_path()).right(60), surfs, passes, tris,
 					gi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF])
 		var g: Dictionary = grupos.get(nome, {"inst": 0, "surf": 0, "passes": 0, "sombra": 0, "tris": 0})
@@ -632,6 +615,8 @@ func _physics_process(delta: float) -> void:
 		return
 	if game_over:
 		return
+	if _autoplay and int(_time / 30.0) != int((_time - delta) / 30.0):
+		_status_economia()
 	_spawn_cakes(delta)
 	_spawn_pickups(delta)
 	if _equilibrio:
@@ -729,6 +714,27 @@ func _prancha_reanimar() -> void:
 	await get_tree().create_timer(0.25).timeout
 	await foto.call("5-camera-do-jogo")
 	get_tree().quit()
+
+
+## Partida simulada: a cada 30 s, o ciclo da madeira de cada time (para
+## acertar o ritmo das casas: tools/sonda_equilibrio.sh e o CHANGELOG).
+func _status_economia() -> void:
+	for team in 2:
+		var lenh := 0
+		var vivos := 0
+		for u in units:
+			if u.team == team and u.lenhador():
+				lenh += 1
+				vivos += 1 if u.alive else 0
+		var adultas := 0
+		for p in plantas:
+			if p.adulta() and p.lado == team:
+				adultas += 1
+		var casas := PackedStringArray()
+		for of in oficinas:
+			if of.team == team:
+				casas.append("%s%s" % [of.opcao().id if of.caminho >= 0 else of.base.id, ":%d" % of.nivel if of.estado == Oficina.Estado.PRONTA else ("~%d%%" % int(of.progresso * 100) if of.caminho >= 0 else "")])
+		_log("status %s t=%.0fs madeira=%d construtores=%d/%d adultas=%d casas=[%s]" % [Config.TEAM_NAMES[team], _time, madeira[team], vivos, lenh, adultas, ", ".join(casas)])
 
 
 func _log(msg: String) -> void:
@@ -1022,73 +1028,38 @@ func _rules() -> void:
 				break
 
 		# Chapéus: recruta veste ao encostar; quem já tem classe troca com F.
-		for pad in hat_pads:
-			if pad.team != u.team or not pad.available or pad.stats == u.stats or u.is_equipping():
-				continue
-			if pos.distance_to(pad.global_position) < 2.0:
-				if u.is_player:
-					hint = "[F] pegar o chapéu de %s" % pad.stats.display_name
-				# Jogador: só com F. Bots recrutas (e o jogador no modo teste) pegam sozinhos.
-				var bot_pega := u.brain is BotBrain and u.is_villager() and not (pad.stats.velocidade_obra > 0.0 \
-						and _bots_lenhadores(u.team, u) >= Config.cfg.bots_construtores_max)
-				if wants_interact or bot_pega:
-					var from: Vector3 = pad.hat_world_position()
-					u.start_equip(pad.take(), from)
-				break
+		# A barraquinha e a casa do bairro ficam perto: vale a mais próxima.
+		var pad: HatPad = null
+		var pad_d := INF
+		if not u.is_equipping():
+			for pd in hat_pads:
+				if pd.team != u.team or not pd.available or pd.stats == u.stats:
+					continue
+				var d := pos.distance_to(pd.global_position)
+				if d < pd.raio_pegar and d < pad_d:
+					pad_d = d
+					pad = pd
+		if pad:
+			if u.is_player:
+				hint = "[F] pegar o chapéu de %s" % pad.stats.display_name
+			# Jogador: só com F. Bots recrutas (e o jogador no modo teste) pegam sozinhos.
+			var bot_pega := u.brain is BotBrain and u.is_villager() and not (pad.stats.velocidade_obra > 0.0 \
+					and _bots_lenhadores(u.team, u) >= Config.cfg.bots_construtores_max)
+			if wants_interact or bot_pega:
+				var from: Vector3 = pad.hat_world_position()
+				u.start_equip(pad.take(), from)
 
 	if sandbox:
 		hint = _regras_sandbox(hint)
 
-	# Oficina: o jogador troca a opção do terreno com F.
+	# Bairro da classe: tapetes (escolha do caminho), obra e níveis da casa.
 	if player.alive and not player.carried_princess and hint == "":
-		var of := nearest_oficina(player.team, player.global_position, Oficina.BUILD_RADIUS + 0.5, true)
-		if of:
-			var builder := "fique aqui para construir" if player.stats.velocidade_obra > 0.0 else "precisa de um Construtor"
-			if of.caminho >= 0:
-				var outro := mago_oposto(of)
-				var nome_outro := outro.nome_caminho() if outro else "outra"
-				if of.comecada():
-					hint = "Caminho da %s (%s): %d%%  ·  faltam %d madeiras  ·  %s" % [of.nome_caminho(), of.opcao().display_name, int(of.progresso * 100.0), of.faltam(), builder]
-				else:
-					hint = "Caminho da %s (%s): construir aqui sela a %s até o fim  ·  %s" % [of.nome_caminho(), of.opcao().display_name, nome_outro, builder]
-			elif of.comecada():
-				# Obra começada: mostra o progresso guardado; [F] não troca nem apaga nada.
-				var falta := "  ·  faltam %d madeiras" % of.faltam() if of.faltam() > 0 else ""
-				hint = "Obra de %s: %d%%%s  ·  %s" % [of.opcao().display_name, int(of.progresso * 100.0), falta, builder]
-			else:
-				hint = "[F] trocar oficina: %s  (%s)" % [of.opcao().display_name, builder]
-				if player_brain != null and player_brain.interact_pressed:
-					of.trocar_opcao()
-
-	# Primeira vez perto de um terreno de mago: aviso grande da escolha.
-	if player.alive and not _caminho_avisado and caminho[player.team] < 0:
-		for of in oficinas:
-			if of.team == player.team and of.caminho >= 0 and player.global_position.distance_to(of.global_position) < 7.0:
-				_caminho_avisado = true
-				var outro := mago_oposto(of)
-				hud.show_big("Caminho da %s ou da %s\nConstruir um sela o outro" % [of.nome_caminho(), outro.nome_caminho() if outro else "?"],
-					of.opcao().hat_color.lightened(0.35), 3.0)
-				break
-
-	# Perto da oficina do caminho (pronta) ou do terreno selado.
-	if player.alive and hint == "":
-		for of in oficinas:
-			if of.team != player.team or of.caminho < 0 or player.global_position.distance_to(of.global_position) > Oficina.BUILD_RADIUS + 1.5:
-				continue
-			if of.selada:
-				var esc := mago_oposto(of)
-				hint = "Caminho selado: seu time seguiu a %s" % (esc.nome_caminho() if esc else "outro mago")
-			elif of.pode_subir():
-				hint = "Suba %s ao nível %d: faltam %d madeiras  ·  %s" % [of.opcao().display_name, of.nivel + 1, of.faltam_nivel(),
-					"fique aqui" if player.lenhador() else "precisa de um Construtor"]
-			elif of.estado == Oficina.Estado.PRONTA:
-				hint = "%s no nível máximo (%d)" % [of.opcao().display_name, of.nivel]
-			break
+		hint = _dica_casa()
 
 	# Construtor perto de uma maquininha nível 1: ela sobe com madeira.
 	if player.alive and hint == "" and player.lenhador() and not player.carried_tora:
 		for pad in hat_pads:
-			if pad.team == player.team and pad.nivel == 1 and player.global_position.distance_to(pad.global_position) < HatPad.OBRA_RAIO:
+			if pad.team == player.team and pad.nivel == 1 and pad.aceita_madeira and player.global_position.distance_to(pad.global_position) < HatPad.OBRA_RAIO:
 				hint = "Nível 2 da maquininha de %s: faltam %d madeiras  ·  fique perto" % [pad.stats.display_name, pad.faltam_n2()]
 				break
 
@@ -1108,7 +1079,7 @@ func _rules() -> void:
 			"PEGUE":
 				hint = "Pegue a tora no chão: é só encostar"
 			"CONSTRUA":
-				hint = "Tem madeira no depósito: siga a seta e construa (oficina ou torreta)"
+				hint = "Tem madeira no depósito: siga a seta e construa (casa ou torreta)"
 
 	if player.alive and player.reanimando == null and not player.carried_princess and player.carried_tora == null:
 		var caido := reanimar.corpo_perto(player, Config.cfg.reanimar_raio)
@@ -1131,8 +1102,8 @@ func respawn_atual() -> float:
 			Config.cfg.respawn_max)
 
 
-## Modo teste: maquininhas repõem o chapéu em 1 s; perto da casa de uma
-## oficina pronta, [F] troca a classe (comum) ou sobe o nível (mago).
+## Modo teste: maquininhas repõem o chapéu em 1 s; no bairro de uma casa
+## pronta, [F] sobe o nível e, no nível máximo, troca para o outro caminho.
 func _regras_sandbox(hint: String) -> String:
 	for pad in hat_pads:
 		pad.intervalo = minf(pad.intervalo, 1.0)
@@ -1141,20 +1112,55 @@ func _regras_sandbox(hint: String) -> String:
 	var aperta := player_brain != null and player_brain.interact_pressed
 	for of in oficinas:
 		if of.team != player.team or of.estado != Oficina.Estado.PRONTA \
-				or player.global_position.distance_to(of.global_position) > Oficina.BUILD_RADIUS:
+				or player.global_position.distance_to(of.global_position) > Oficina.RAIO:
 			continue
-		if of.caminho >= 0:
-			if of.nivel >= Config.cfg.mago_nivel_max:
-				return "%s no nível máximo (%d)" % [of.opcao().display_name, of.nivel]
+		if of.nivel >= Config.cfg.mago_nivel_max:
+			var outro := of.caminhos()[1 - of.caminho]
 			if aperta:
-				of.subir_nivel()
-				caminho_classe[of.team] = of.opcao().id
-				caminho_nivel[of.team] = of.nivel
-			return "[F] subir %s para o nível %d" % [of.opcao().display_name, of.nivel + 1]
+				of.trocar_pronta()
+			return "[F] trocar %s por %s (o outro caminho)" % [of.opcao().display_name, outro.display_name]
 		if aperta:
-			of.trocar_pronta()
-		return "[F] trocar a oficina: %s" % of.opcao().display_name
+			of.subir_nivel()
+		return "[F] subir %s para o nível %d" % [of.opcao().display_name, of.nivel + 1]
 	return hint
+
+
+## Dica do bairro onde o jogador está: tapetes, obra ou nível da casa.
+func _dica_casa() -> String:
+	var pos := player.global_position
+	var construtor := player.lenhador()
+	var precisa := "fique aqui para construir" if construtor else "precisa de um Construtor"
+	for of in oficinas:
+		if of.team != player.team or pos.distance_to(of.global_position) > Oficina.RAIO + 0.5:
+			continue
+		var cs := of.caminhos()
+		match of.estado:
+			Oficina.Estado.VAZIO:
+				if cs.size() < 2:
+					return ""
+				if not _caminho_avisado and construtor and hud:
+					_caminho_avisado = true
+					hud.show_big("Escolha o caminho: %s ou %s\nPise num tapete. O outro fica selado até o fim" % [cs[0].display_name, cs[1].display_name],
+						of.base.hat_color.lightened(0.35), 3.2)
+				var t := of.tapete_sob(pos)
+				if t >= 0:
+					if not construtor:
+						return "Tapete de %s: só um Construtor escolhe o caminho" % cs[t].display_name
+					if madeira[player.team] <= 0:
+						return "Tapete de %s: falta madeira no depósito do time" % cs[t].display_name
+					return "Fique no tapete: %s (%s)  ·  %s fica selado até o fim" % [cs[t].display_name, of.nome_caminho(t), cs[1 - t].display_name]
+				return "%s: pise num tapete para escolher %s ou %s%s" % [of.base.display_name, cs[0].display_name, cs[1].display_name,
+						"" if construtor else "  (precisa de um Construtor)"]
+			Oficina.Estado.OBRA:
+				var falta := "  ·  faltam %d madeiras" % of.faltam() if of.faltam() > 0 else ""
+				return "Casa de %s: %d%%%s  ·  %s" % [of.opcao().display_name, int(of.progresso * 100.0), falta, precisa]
+			Oficina.Estado.PRONTA:
+				if not construtor:
+					return ""
+				if of.pode_subir():
+					return "Suba %s ao nível %d: faltam %d madeiras  ·  fique no bairro" % [of.opcao().display_name, of.nivel + 1, of.faltam_nivel()]
+				return "%s no nível máximo (%d)" % [of.opcao().display_name, of.nivel]
+	return ""
 
 
 ## Máscara caída com alguém do time ladrão perto: ninguém a devolve.
@@ -1418,12 +1424,12 @@ func _regras_madeira(u: Unit) -> String:
 
 # --- Consultas usadas pelos bots ----------------------------------------------
 
-## Oficina do time mais perto (só as não prontas, se unbuilt_only).
+## Casa do time mais perto (só as em obra, se unbuilt_only: o Mutirão).
 func nearest_oficina(team: int, from: Vector3, max_dist: float, unbuilt_only: bool) -> Oficina:
 	var best: Oficina = null
 	var best_d := max_dist
 	for of in oficinas:
-		if of.team != team or of.selada or (unbuilt_only and of.estado == Oficina.Estado.PRONTA):
+		if of.team != team or (unbuilt_only and of.estado != Oficina.Estado.OBRA):
 			continue
 		var d := from.distance_to(of.global_position)
 		if d < best_d:
@@ -1432,20 +1438,28 @@ func nearest_oficina(team: int, from: Vector3, max_dist: float, unbuilt_only: bo
 	return best
 
 
-## Obra que o Construtor deve tocar: a começada mais adiantada do time (todos
-## continuam de onde os outros pararam, sem espalhar madeira em vários
-## terrenos); sem obra começada, o terreno vazio mais perto.
+## Casa que o Construtor deve tocar: a obra mais adiantada do time (todos
+## continuam de onde os outros pararam, sem espalhar madeira); sem obra, o
+## bairro ainda sem caminho mais perto (o bot vai ao tapete e escolhe).
 func obra_do_time(team: int, from: Vector3) -> Oficina:
 	var best: Oficina = null
 	var best_v := 0.0
+	var vazio: Oficina = null
+	var vazio_d := INF
 	for of in oficinas:
-		if of.team != team or of.selada or of.estado == Oficina.Estado.PRONTA or not of.comecada():
+		if of.team != team:
 			continue
-		var v := of.progresso + float(of.madeira_entregue) / maxf(of.custo(), 1)
-		if best == null or v > best_v:
-			best_v = v
-			best = of
-	return best if best else nearest_oficina(team, from, 1e9, true)
+		if of.estado == Oficina.Estado.OBRA:
+			var v := of.progresso + float(of.madeira_entregue) / maxf(of.custo(), 1)
+			if best == null or v > best_v:
+				best_v = v
+				best = of
+		elif of.estado == Oficina.Estado.VAZIO and of.caminhos().size() >= 2:
+			var d := from.distance_to(of.global_position)
+			if d < vazio_d:
+				vazio_d = d
+				vazio = of
+	return best if best else vazio
 
 
 ## Terreno de torreta do time para o Construtor: a obra começada, senão o
@@ -1548,11 +1562,12 @@ func golpear_torretas(u: Unit, dir: Vector3, alcance: float, arco_deg: float, da
 
 
 ## Maquininha nível 1 do time para o Construtor subir com madeira: a que já
-## tem mais madeira posta, depois a mais perto.
+## tem mais madeira posta, depois a mais perto. (Só as soltas: as barraquinhas
+## dos bairros sobem junto com a casa.)
 func maquina_para_n2(team: int, from: Vector3) -> HatPad:
 	var best: HatPad = null
 	for pad in hat_pads:
-		if pad.team != team or pad.nivel >= 2:
+		if pad.team != team or pad.nivel >= 2 or not pad.aceita_madeira:
 			continue
 		if best == null or pad.madeira_n2 > best.madeira_n2 or (pad.madeira_n2 == best.madeira_n2 \
 				and from.distance_to(pad.global_position) < from.distance_to(best.global_position)):
@@ -1560,85 +1575,82 @@ func maquina_para_n2(team: int, from: Vector3) -> HatPad:
 	return best
 
 
-## Oficina de mago pronta abaixo do nível máximo, para o Construtor subir.
-func mago_para_subir(team: int) -> Oficina:
+## Casa pronta abaixo do nível máximo para o Construtor subir: a que já tem
+## mais madeira posta, depois a de nível mais alto (o time foca numa casa até
+## o máximo, ~8 min de partida), depois a mais perto.
+func mago_para_subir(team: int, from := Vector3.INF) -> Oficina:
+	var best: Oficina = null
 	for of in oficinas:
-		if of.team == team and of.pode_subir():
-			return of
-	return null
+		if of.team != team or not of.pode_subir():
+			continue
+		if best == null or of.madeira_nivel > best.madeira_nivel or (of.madeira_nivel == best.madeira_nivel \
+				and (of.nivel > best.nivel or (of.nivel == best.nivel and from != Vector3.INF \
+				and from.distance_to(of.global_position) < from.distance_to(best.global_position)))):
+			best = of
+	return best
 
 
-## O outro terreno de mago do mesmo time (null em terreno comum).
-func mago_oposto(of: Oficina) -> Oficina:
-	if of.caminho < 0:
-		return null
-	for o in oficinas:
-		if o != of and o.team == of.team and o.caminho >= 0:
-			return o
-	return null
-
-
-## A primeira madeira (ou martelada) num terreno de mago escolhe o caminho
-## do time: o terreno do outro lado é selado pelo resto da partida.
-func on_obra_comecou(of: Oficina) -> void:
-	if of.caminho < 0 or caminho[of.team] >= 0:
+## Um Construtor escolheu o caminho de uma casa: aviso para os dois times.
+func on_caminho_escolhido(of: Oficina) -> void:
+	var cls := of.opcao()
+	var outro: ClassStats = of.caminhos()[1 - of.caminho]
+	_log("caminho %s: %s -> %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.base.display_name, cls.display_name, _time])
+	if hud == null or player == null or _montando_sandbox:
 		return
-	caminho[of.team] = of.caminho
-	caminho_classe[of.team] = of.opcao().id
-	var outro := mago_oposto(of)
-	if outro:
-		outro.selar()
-	_log("caminho %s: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.opcao().display_name, _time])
-	if hud and player and of.team == player.team:
-		hud.show_big("Caminho da %s escolhido\n%s selada até o fim" % [of.nome_caminho(),
-			outro.nome_caminho() if outro else "A outra"], of.opcao().hat_color.lightened(0.3), 2.6)
+	if of.team == player.team:
+		hud.show_big("Caminho escolhido: %s!\n%s fica selado até o fim" % [cls.display_name, outro.display_name],
+			cls.hat_color.lightened(0.3), 2.6)
+	elif Config.cfg.caminho_aviso_inimigo:
+		hud.show_big("O inimigo escolheu %s (%s)" % [cls.display_name, of.base.display_name], Color(1, 0.6, 0.55), 1.8)
 
 
 func on_mago_nivel(of: Oficina) -> void:
-	caminho_nivel[of.team] = of.nivel
 	for u in units:
-		if u.team == of.team and u.stats and u.stats.id == of.opcao().id:
+		if u.team == of.team and u.stats and u.stats.classe_base == of.base.id:
 			u.atualizar_nivel_visual()
-	_log("mago %s nível %d: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.nivel, of.opcao().display_name, _time])
-	if hud and player:
+	_log("casa %s nível %d: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.nivel, of.opcao().display_name, _time])
+	if hud and player and not _montando_sandbox:
 		if of.team == player.team:
 			hud.show_big("%s: nível %d/%d!" % [of.opcao().display_name, of.nivel, Config.cfg.mago_nivel_max], of.opcao().hat_color.lightened(0.3), 2.2)
 		else:
 			hud.show_big("O inimigo subiu %s para o nível %d" % [of.opcao().display_name, of.nivel], Color(1, 0.6, 0.55), 1.6)
 
 
-## Nível visual de um soldado dessa classe: o nível da oficina do mago (2-5)
-## para a Kitsune Luz/Sombria (caudas, halo, coroa); 1 para as outras classes.
+## Nível visual de um soldado dessa classe: o nível da casa do caminho (2 a
+## mago_nivel_max; o máximo mostra tudo, 5 caudas na Kitsune). Classe evoluída
+## sem casa pronta = 2; classe do pátio = 1.
 func nivel_visual_mago(team: int, id: StringName) -> int:
+	var evoluida := false
 	for of in oficinas:
-		if of.team == team and of.caminho >= 0 and of.opcao().id == id:
-			return maxi(of.nivel, 2)
-	return 1
+		if of.team != team:
+			continue
+		if of.estado == Oficina.Estado.PRONTA and of.opcao().id == id:
+			return 5 if of.nivel >= Config.cfg.mago_nivel_max else of.nivel
+		for c in of.caminhos():
+			if c.id == id:
+				evoluida = true
+	return 2 if evoluida else 1
 
 
-## Níveis acima do 2 do mago do caminho, para um soldado dessa classe (0 = sem bônus).
+## Níveis acima do 2 da casa dessa classe (0 = sem bônus).
 func bonus_mago(team: int, id: StringName) -> int:
-	if id == &"" or caminho_classe[team] != id:
+	if id == &"":
 		return 0
-	return maxi(caminho_nivel[team] - 2, 0)
+	for of in oficinas:
+		if of.team == team and of.estado == Oficina.Estado.PRONTA and of.opcao().id == id:
+			return maxi(of.nivel - 2, 0)
+	return 0
 
 
 func on_oficina_pronta(of: Oficina) -> void:
-	if of.caminho >= 0:
-		caminho_nivel[of.team] = of.nivel
-	_log("oficina %s pronta: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.opcao().display_name, _time])
-	# A maquininha da classe de origem sobe para o nível 2 (Ronin Oni -> Samurai).
-	var base := of.opcao().classe_base
-	for pad in hat_pads:
-		if base != &"" and pad.team == of.team and pad.stats.id == base and pad.subir_nivel():
-			_log("maquininha %s nível 2: %s" % [Config.TEAM_NAMES[of.team], pad.stats.display_name])
-			if of.team == player.team and not _montando_sandbox:
-				hud.show_big("Oficina pronta: %s!\nMaquininha de %s no nível 2" % [of.opcao().display_name, pad.stats.display_name], of.opcao().hat_color.lightened(0.3), 2.4)
-				return
-	if _montando_sandbox:
+	_log("casa %s pronta: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.opcao().display_name, _time])
+	for u in units:
+		if u.team == of.team and u.stats and u.stats.id == of.opcao().id:
+			u.atualizar_nivel_visual()
+	if _montando_sandbox or hud == null or player == null:
 		return
 	if of.team == player.team:
-		hud.show_big("Oficina pronta: %s!" % of.opcao().display_name, of.opcao().hat_color.lightened(0.3), 2.0)
+		hud.show_big("Casa pronta: %s!\nBarraquinha de %s no nível 2" % [of.opcao().display_name, of.base.display_name], of.opcao().hat_color.lightened(0.3), 2.4)
 	else:
 		hud.show_big("O inimigo liberou %s" % of.opcao().display_name, Color(1, 0.6, 0.55), 1.6)
 

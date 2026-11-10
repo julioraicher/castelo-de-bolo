@@ -27,6 +27,11 @@ var nivel := 1
 var madeira_n2 := 0
 
 const OBRA_RAIO := 2.8
+## Distância para pegar o chapéu (a casa evoluída é maior que a barraquinha).
+var raio_pegar := 2.0
+## false = a casa da classe (Oficina) cuida da madeira: a maquininha não puxa
+## madeira sozinha para o nível 2 (Ciclo 2.21).
+var aceita_madeira := true
 
 var _hat: Node3D          # sem modelo: o chapéu que flutua no pedestal
 var _fab_t := 0.0
@@ -39,6 +44,7 @@ var _molde: Node3D
 var _slots: Array[Node3D] = []      # Estoque_1..N
 var _chapeus: Array[Node3D] = []    # um por chapéu em estoque, na ordem dos slots
 var _n2: Array[Node3D] = []         # nós "N2_*" do modelo (aparecem no nível 2)
+var _n34: Array[Node3D] = []        # nós "N3_*"/"N4_*" da casa evoluída (aparecem no nível 3/4)
 var _puxar_t := 0.0
 var _contador: ContadorMadeira
 
@@ -105,6 +111,10 @@ func _montar_maquina(th: ThemeConfig, cena: PackedScene) -> void:
 	for n in _maquina.find_children("N2_*", "Node3D", true, false):
 		n.visible = false
 		_n2.append(n)
+	for padrao in ["N3_*", "N4_*"]:
+		for n in _maquina.find_children(padrao, "Node3D", true, false):
+			n.visible = false
+			_n34.append(n)
 	var enfeite := _maquina.find_child("Enfeite", true, false) as Node3D
 	var emblema := th.model_path("emblema_%s.scn" % stats.resource_path.get_file().get_basename())
 	if enfeite and ResourceLoader.exists(emblema):
@@ -113,7 +123,7 @@ func _montar_maquina(th: ThemeConfig, cena: PackedScene) -> void:
 		_chapeus.append(_novo_chapeu(_slot(i), 0.62))
 	# Corpo da maquininha numa malha só; ficam de fora o que a animação move,
 	# o molde, as prateleiras (os chapéus saem dali) e as peças do nível 2.
-	var fora := MalhaUnica.animados(_maquina) + _slots + _n2
+	var fora := MalhaUnica.animados(_maquina) + _slots + _n2 + _n34
 	if _molde:
 		fora.append(_molde)
 	MalhaUnica.juntar(_maquina, fora)
@@ -141,8 +151,28 @@ func _process(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	avancar(delta)
-	if nivel == 1:
+	if nivel == 1 and aceita_madeira:
 		_obra_n2(delta)
+
+
+## Casa evoluída (Ciclo 2.21): mostra as peças "N3_*" e "N4_*" até o nível n
+## (um telhado a mais por nível) e o letreiro passa a dizer o nível.
+func mostrar_nivel(n: int) -> void:
+	nivel = n
+	for no in _n34:
+		var nv := int(no.name.substr(1, 1))
+		if n >= nv and not no.visible:
+			no.visible = true
+			if is_inside_tree():
+				no.scale = Vector3(0.2, 0.2, 0.2)
+				no.create_tween().tween_property(no, "scale", Vector3.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_atualizar()
+
+
+## Altura do letreiro (a casa evoluída é bem mais alta que a barraquinha).
+func altura_letreiro(y: float) -> void:
+	_label.position.y = y
+	_contador.position.y = y + 0.9
 
 
 func faltam_n2() -> int:
@@ -264,7 +294,7 @@ func _atualizar() -> void:
 		_hat.visible = available
 	# Nome em cima, contagem embaixo: as maquininhas vizinhas ficam a ~4,5 m e
 	# o letreiro numa linha só invadia o da lado.
-	var txt := "%s%s\n%d/%d" % [stats.display_name, " Nv2" if nivel >= 2 else "", estoque, estoque_max]
+	var txt := "%s%s\n%d/%d" % [stats.display_name, " Nv%d" % nivel if nivel >= 2 else "", estoque, estoque_max]
 	if estoque < estoque_max:
 		txt += "  · %ds" % ceili(intervalo - _fab_t)
 	if _label.text != txt:

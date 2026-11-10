@@ -472,6 +472,101 @@ func _arqueiro_yumi(time: Color) -> void:
 		_peca(peito, _cone(0.06, 0.2), Vector3(0.32 + i * 0.06, 0.92 - i * 0.03, -0.45), Vector3(0, 0, -25), Vector3.ONE, _neon(time.lightened(0.3), 1.4))
 
 
+## Sohei (caminho da Fé do Samurai): monge guerreiro. Capuz de pano claro
+## que deixa só os olhos, juzu (rosário) de contas grandes no peito, kesa
+## (estola) na cor da classe, saiote largo e a naginata: cabo longo e lâmina
+## curva na ponta com fio aceso (a arma lê "alcance" de longe).
+func _sohei(time: Color) -> void:
+	var cab := "head"
+	var pano := Color(0.9, 0.88, 0.82)
+	var kesa := Color(0.2, 0.62, 0.55)
+	var madeira := Color(0.28, 0.17, 0.1)
+	# Kashira-zutsumi: capuz que envolve a cabeça, com aba caída na nuca e
+	# o rosto tapado até o nariz (fica só a faixa dos olhos).
+	_peca(cab, _esfera(0.6, 0.55), Vector3(0, 0.8, -0.14), Vector3.ZERO, Vector3(1.06, 0.85, 1.0), _plano(pano))
+	_peca(cab, _esfera(0.5, 0.3), Vector3(0, 0.38, 0.12), Vector3.ZERO, Vector3(1.04, 0.55, 0.95), _plano(pano.darkened(0.08)))
+	_peca(cab, _caixa(Vector3(0.7, 0.5, 0.08)), Vector3(0, 0.36, -0.5), Vector3(18, 0, 0), Vector3.ONE, _plano(pano.darkened(0.12)))
+	_peca(cab, _cilindro(0.6, 0.6, 0.06), Vector3(0, 0.86, 0.0), Vector3(-8, 0, 0), Vector3.ONE, _plano(kesa.darkened(0.2)))
+	var peito := "chest"
+	# Juzu: contas escuras em volta do pescoço e uma conta grande acesa
+	for i in 11:
+		var a := PI * (0.05 + 0.9 * i / 10.0)
+		_peca(peito, _esfera(0.075, 0.075), Vector3(cos(a) * 0.38, 0.5 - sin(a) * 0.28, 0.22 + sin(a) * 0.14), Vector3.ZERO, Vector3.ONE, _plano(Color(0.18, 0.1, 0.07)))
+	_peca(peito, _esfera(0.11, 0.11), Vector3(0, 0.18, 0.4), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.35), 1.6))
+	# Kesa: faixa larga do ombro esquerdo ao quadril direito, com barra clara
+	_peca(peito, _caixa(Vector3(0.34, 1.15, 0.06)), Vector3(0.02, 0.15, 0.3), Vector3(12, 0, -36), Vector3.ONE, _plano(kesa))
+	_peca(peito, _caixa(Vector3(0.36, 1.15, 0.05)), Vector3(0.02, 0.15, -0.36), Vector3(-8, 0, -36), Vector3.ONE, _plano(kesa.darkened(0.15)))
+	_peca(peito, _caixa(Vector3(0.05, 1.16, 0.065)), Vector3(0.16, 0.25, 0.31), Vector3(12, 0, -36), Vector3.ONE, _plano(Color(0.95, 0.82, 0.45)))
+	_peca(peito, _cilindro(0.45, 0.48, 0.5), Vector3(0, 0.1, 0), Vector3.ZERO, Vector3(1, 1, 0.82), _plano(pano.darkened(0.2)))
+	# Hakama larga (saiote) e faixa na cintura
+	var quad := "hips"
+	_peca(quad, _cilindro(0.46, 0.53, 0.4), Vector3(0, -0.1, 0), Vector3.ZERO, Vector3(1, 1, 0.85), _plano(Color(0.34, 0.33, 0.4)))
+	_peca(quad, _cilindro(0.5, 0.5, 0.12), Vector3(0, 0.1, 0), Vector3.ZERO, Vector3(1, 1, 0.85), _plano(kesa.darkened(0.3)))
+	_peca(quad, _fita(0.5, 0.16, kesa.darkened(0.3), kesa), Vector3(0.26, 0.06, 0.38), Vector3(175, 0, 10), Vector3.ONE,
+			{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true, "balanco": Vector3(0.7, 0.4, 0.0)})
+	# Mangas largas presas nos antebraços e perneiras de pano
+	for lado in [".l", ".r"]:
+		var sx := 1 if lado == ".l" else -1
+		_peca("upperarm" + lado, _cilindro(0.24, 0.2, 0.4), Vector3(0.1 * sx, 0.05, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(pano.darkened(0.15)))
+		_peca("lowerarm" + lado, _cilindro(0.13, 0.15, 0.24), Vector3(0.14 * sx, 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(Color(0.22, 0.2, 0.24)))
+		_peca("lowerleg" + lado, _cilindro(0.16, 0.18, 0.3), Vector3(0, 0.0, 0.02), Vector3.ZERO, Vector3.ONE, _plano(pano.darkened(0.1)))
+	# Naginata: cabo longo, anéis de metal, lâmina curva com fio aceso
+	var mao := "handslot.r"
+	_peca(mao, _cilindro(0.045, 0.05, 2.5), Vector3(0, 0.75, 0), Vector3.ZERO, Vector3.ONE, _plano(madeira))
+	_peca(mao, _cilindro(0.065, 0.065, 0.1), Vector3(0, 1.95, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.75, 0.62, 0.3)))
+	_peca(mao, _cilindro(0.06, 0.06, 0.08), Vector3(0, -0.45, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.75, 0.62, 0.3)))
+	_peca(mao, _caixa(Vector3(0.05, 0.7, 0.16)), Vector3(0, 2.32, 0.03), Vector3(-8, 0, 0), Vector3.ONE, _plano(Color(0.78, 0.82, 0.86)))
+	_peca(mao, _caixa(Vector3(0.03, 0.62, 0.05)), Vector3(0, 2.34, 0.12), Vector3(-12, 0, 0), Vector3.ONE, _neon(CIANO, 2.0))
+	_peca(mao, _cone(0.09, 0.3), Vector3(0, 2.78, 0.1), Vector3(-20, 0, 0), Vector3(0.4, 1, 1), _neon(CIANO, 2.0))
+	# Fita na cor do time amarrada logo abaixo da lâmina
+	_peca(mao, _fita(0.5, 0.1, time, time.lightened(0.3)), Vector3(0, 1.92, -0.05), Vector3(180, 0, 0), Vector3.ONE,
+			{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true, "balanco": Vector3(0.9, 1.1, 0.0)})
+
+
+## Kusarigama (caminho da Corrente do Arqueiro): shinobi de capuz (o do
+## modelo Rogue, com ponta caída atrás) e lenço claro até o nariz, foice curta na mão e a corrente enrolada no braço até o
+## peso, que balança pendurado (a arma lê "puxa" mesmo parada).
+func _kusarigama(time: Color) -> void:
+	var cab := "head"
+	var escuro := Color(0.17, 0.17, 0.26)
+	var aco := Color(0.7, 0.74, 0.82)
+	var roxo := Color(0.5, 0.56, 1.0)
+	for s in [-1, 1]:
+		_peca(cab, _caixa(Vector3(0.14, 0.04, 0.03)), Vector3(0.17 * s, 0.62, 0.62), Vector3(0, 0, -12 * s), Vector3.ONE, _neon(roxo.lightened(0.3), 1.6))
+	_peca(cab, _cone(0.36, 0.45), Vector3(0, 0.95, -0.62), Vector3(-70, 0, 0), Vector3(1.0, 1, 0.6), _plano(escuro))
+	_peca(cab, _esfera(0.5, 0.3), Vector3(0, 0.38, 0.12), Vector3.ZERO, Vector3(1.04, 0.55, 0.95), _plano(Color(0.85, 0.85, 0.9)))
+	_peca(cab, _cilindro(0.6, 0.6, 0.07), Vector3(0, 0.86, 0.0), Vector3(-8, 0, 0), Vector3.ONE, _neon(roxo, 1.6))
+	var peito := "chest"
+	# Colete curto de placas e a corrente atravessada no peito
+	_peca(peito, _cilindro(0.44, 0.46, 0.45), Vector3(0, 0.1, 0), Vector3.ZERO, Vector3(1, 1, 0.8), _plano(time.darkened(0.4)))
+	for i in 7:
+		var t := float(i) / 6.0
+		_peca(peito, _anel(0.06, 0.018, 8), Vector3(lerpf(-0.3, 0.32, t), lerpf(0.42, -0.2, t), 0.38), Vector3(0, 90 * (i % 2), 40), Vector3.ONE, _plano(aco))
+	_peca(peito, _fita(0.7, 0.2, escuro, time.darkened(0.2)), Vector3(-0.1, 0.55, -0.3), Vector3(-30, 180, 10), Vector3.ONE,
+			{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true, "balanco": Vector3(1.0, 0.6, 0.0)})
+	var quad := "hips"
+	_peca(quad, _cilindro(0.47, 0.47, 0.1), Vector3(0, 0.08, 0), Vector3.ZERO, Vector3(1, 1, 0.8), _plano(roxo.darkened(0.45)))
+	_peca(quad, _caixa(Vector3(0.4, 0.36, 0.05)), Vector3(0, -0.14, 0.33), Vector3(8, 0, 0), Vector3.ONE, _plano(escuro.lightened(0.05)))
+	for lado in [".l", ".r"]:
+		var sx := 1 if lado == ".l" else -1
+		_peca("lowerarm" + lado, _cilindro(0.14, 0.16, 0.28), Vector3(0.16 * sx, 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(escuro.lightened(0.15)))
+		_peca("lowerleg" + lado, _cilindro(0.17, 0.19, 0.26), Vector3(0, -0.02, 0.02), Vector3.ZERO, Vector3.ONE, _plano(escuro.lightened(0.15)))
+	# Foice (kama): cabo curto e lâmina em L com fio aceso
+	var mao := "handslot.r"
+	_peca(mao, _cilindro(0.045, 0.05, 0.75), Vector3(0, 0.25, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.25, 0.16, 0.1)))
+	_peca(mao, _caixa(Vector3(0.05, 0.12, 0.55)), Vector3(0, 0.62, 0.22), Vector3(-12, 0, 0), Vector3.ONE, _plano(aco))
+	_peca(mao, _caixa(Vector3(0.03, 0.04, 0.5)), Vector3(0, 0.56, 0.24), Vector3(-12, 0, 0), Vector3.ONE, _neon(roxo.lightened(0.2), 2.0))
+	# Corrente enrolada no braço esquerdo e o peso pendurado na mão
+	for i in 4:
+		_peca("lowerarm.l", _anel(0.17, 0.02, 10), Vector3(0.08 + i * 0.07, 0, 0), Vector3(0, 0, 90 + (i % 2) * 20), Vector3.ONE, _plano(aco))
+	var mao_l := "handslot.l"
+	for i in 5:
+		_peca(mao_l, _anel(0.05, 0.016, 8), Vector3(0, -0.05 - i * 0.09, 0.04), Vector3(0, 90 * (i % 2), 0), Vector3.ONE,
+				{"cor": aco, "neon": false, "balanco": Vector3(0.25 + i * 0.08, 0.9, 0.0)})
+	_peca(mao_l, _esfera(0.12, 0.12), Vector3(0, -0.55, 0.04), Vector3.ZERO, Vector3.ONE, {"cor": escuro.lightened(0.25), "neon": false, "balanco": Vector3(0.7, 0.9, 0.0)})
+	_peca(mao_l, _anel(0.12, 0.02, 12), Vector3(0, -0.55, 0.04), Vector3(90, 0, 0), Vector3.ONE, {"cor": roxo, "neon": true, "balanco": Vector3(0.7, 0.9, 0.0)})
+
+
 func _polvora(time: Color) -> void:
 	var cab := "head"
 	for s in [-1, 1]:

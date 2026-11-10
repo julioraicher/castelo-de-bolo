@@ -114,7 +114,7 @@ func calcular() -> void:
 	if of:
 		var falta := of.faltam()
 		if (falta > 0 and game.madeira[u.team] >= falta) or (falta == 0 and of.comecada() and of.progresso < 1.0):
-			alvo = of.global_position
+			alvo = of.alvo_obra(pos)
 			verbo = "CONSTRUA"
 			return
 	# Torreta do time esperando madeira (mesma regra dos bots: Game.torreta_para_construir).
@@ -123,6 +123,13 @@ func calcular() -> void:
 		alvo = tor.global_position
 		verbo = "CONSTRUA"
 		return
+	# Casa pronta subindo de nível (mesma regra dos bots).
+	if of == null:
+		var casa: Oficina = game.mago_para_subir(u.team, pos)
+		if casa and game.madeira[u.team] >= mini(casa.faltam_nivel(), 2):
+			alvo = casa.alvo_obra(pos)
+			verbo = "CONSTRUA"
+			return
 	# Árvore/bambu adulto mais perto (as do próprio bosque contam como mais perto).
 	var melhor := INF
 	for p in game.plantas:

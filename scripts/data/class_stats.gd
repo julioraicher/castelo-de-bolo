@@ -53,6 +53,10 @@ extends Resource
 ## Velocidade do empurrão no alvo (m/s). Distância empurrada = v²/80 (8 -> 0,8 m).
 @export var knockback := 6.0
 @export var projectile_speed := 30.0
+## Golpe corpo a corpo: só acerta (com dano) quem está a mais de alcance_min m.
+## Lâmina na ponta de uma haste (naginata do Sohei): quem está colado leva só o
+## empurrão do cabo. 0 = acerta do corpo até o alcance.
+@export var alcance_min := 0.0
 ## Golpe corpo a corpo pelas costas ou pelo lado do alvo: dano × (1 + dano_costas).
 ## O Samurai pune quem vira as costas (Ciclo 2.10). 0 = sem bônus.
 @export var dano_costas := 0.0
@@ -73,6 +77,9 @@ extends Resource
 ## Classes de tiro: tiros seguidos até o golpe final (0 = sem combo). O final
 ## do shuriken vira um leque; o de fogo explode (combo_finisher_mult no dano).
 @export var combo_tiros := 0
+## O último golpe do combo corpo a corpo gira 360° em volta (Kusarigama) em vez
+## de descer na vertical.
+@export var final_giro := false
 
 @export_group("Defesa (botão direito) e habilidade rápida (Q)")
 ## Botão direito = DEFESA para todas as classes (bloqueio + contra-golpe).
@@ -81,7 +88,10 @@ extends Resource
 ## bomba maior); armadilha = solta estrepes/mina; investida = corte em avanço
 ## (skill_radius m); pisao = onda de choque curta em volta; corrida = acelera
 ## você e quem estiver perto. "bloqueio" (antigo) = sem Q.
-@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha", "investida", "pisao", "corrida") var skill := "nenhum"
+## varrida = giro da naginata que acerta só a faixa entre alcance_min e skill_radius
+## e dá escudo aos aliados perto (Sohei); gancho = corrente que PUXA o primeiro
+## inimigo na linha até skill_radius m (Kusarigama).
+@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho") var skill := "nenhum"
 ## Nome mostrado no HUD ao lado da tecla Q.
 @export var skill_name := ""
 ## Recarga do Q em s (cura usa heal_cooldown e armadilha usa trap_cooldown).
@@ -119,9 +129,20 @@ extends Resource
 ## nível 2. Vazio = nenhuma.
 @export var classe_base: StringName = &""
 
+@export_group("Caminhos (Ciclo 2.21)")
+## Classe do pátio: as duas evoluções OPOSTAS da casa dela, na ordem dos
+## tapetes (esquerda, direita). Pisar num tapete com madeira escolhe o caminho e
+## sela o outro pela partida. Vazio = a barraquinha não evolui.
+@export var caminhos: Array[ClassStats] = []
+## Classe evoluída: nome curto do caminho (tapete, estandarte, avisos). Ex.: "Luz".
+@export var caminho_nome := ""
+
 @export_group("Poder de Chi (E)")
 ## Poder especial, liberado quando o medidor de Glacê enche.
-@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "furia", "leque", "selo", "coluna_fogo", "mutirao", "campo_minado", "bombardeio") var power := "nenhum"
+## muralha = Muralha de Fé do Sohei (aliados em volta ganham escudo e pressa,
+## inimigos na borda são empurrados para fora); ciranda = a Kusarigama gira a
+## corrente em volta (pulsos que acertam só a ponta e arremessam).
+@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "furia", "leque", "selo", "coluna_fogo", "mutirao", "campo_minado", "bombardeio", "muralha", "ciranda") var power := "nenhum"
 @export var power_name := ""
 ## Raio de efeito (m).
 @export var power_radius := 3.0

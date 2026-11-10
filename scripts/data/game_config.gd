@@ -153,12 +153,16 @@ extends Resource
 @export_group("Oficinas")
 ## Segundos de obra de um Construtor com velocidade_obra = 1 (com madeira).
 @export var oficina_build_time := 10.0
-## Madeira que uma casinha consome. O Construtor perto da obra puxa 1 do
+## Madeira que uma casinha consome (Ciclo 2.21: a evolução da casa de uma classe). O Construtor perto da obra puxa 1 do
 ## estoque do time a cada oficina_puxar_intervalo s (dividido pela velocidade_obra);
 ## a obra não passa da fração de madeira já entregue.
 @export var oficina_custo_madeira := 6
+## Ritmo "escada" (Ciclo 2.21): cada casa que o time já escolheu deixa a
+## próxima mais cara em tantas madeiras (6, 8, 10, 12 com degrau 2). A 1ª
+## evolução sai cedo, a 4ª lá pelos 5 min de uma partida de ~10.
+@export var oficina_custo_degrau := 2
 @export var oficina_puxar_intervalo := 1.5
-## Variações que o time pode escolher nas oficinas (o pedestal do pátio dá a variação A).
+## Antigo (antes do Ciclo 2.21): variações das oficinas comuns. Vazio no jogo.
 @export var oficina_classes: Array[ClassStats] = []
 
 @export_group("Sensação do combate")
@@ -212,24 +216,46 @@ extends Resource
 @export var maquina_n2_intervalo := 12.0
 @export var maquina_n2_estoque := 4
 
-@export_group("Caminho dos magos")
-## Magos opostos (Ciclo 2.5): duas oficinas fixas em lados opostos do castelo
-## (MapLayout.mago_spots). Começar uma sela a outra pelo resto da partida; a
-## escolhida fica pronta no nível 2 e sobe com madeira até mago_nivel_max.
-## Sem mago_spots no mapa, as duas voltam para o sorteio das oficinas comuns.
+@export_group("Caminhos e níveis")
+## Ciclo 2.21: cada classe do pátio (hat_class_list) tem UMA casa no pátio
+## (MapLayout.hat_spots), que começa como barraquinha de chapéu. Os dois
+## caminhos opostos dela (ClassStats.caminhos) ficam em tapetes dos lados: o
+## Construtor pisa num com madeira, escolhe e sela o outro pela partida. A casa
+## evoluída fica pronta no nível 2 e sobe com madeira até mago_nivel_max.
+## (Os nomes "mago_*" ficaram do Ciclo 2.5, quando só a Kitsune tinha caminho.)
+## magos_opostos: antigo, só vale num mapa sem as casas novas.
 @export var magos_opostos: Array[ClassStats] = []
-@export var mago_nivel_max := 5
-## Madeira para subir do nível 2 ao 3, do 3 ao 4 e do 4 ao 5.
-@export var mago_nivel_custo := PackedInt32Array([6, 8, 10])
-## Bônus por nível acima do 2, para quem usa o mago do caminho (nível 5 = 3x):
-## dano, vida máxima e ganho de Chi (Q mais frequente).
+@export var mago_nivel_max := 4
+## Madeira para subir do nível 2 ao 3 e do 3 ao 4 (um por nível acima do 2).
+@export var mago_nivel_custo := PackedInt32Array([6, 9])
+## Bônus por nível acima do 2, para quem usa a classe daquele caminho
+## (nível 4 = 2x): dano, vida máxima e ganho de Chi (Q mais frequente).
 @export var mago_bonus_dano := 0.08
 @export var mago_bonus_vida := 0.08
 @export var mago_bonus_chi := 0.10
-## A maquininha da oficina ganha +1 de estoque e fabrica mais rápido por nível.
+## A casa evoluída ganha +1 de estoque e fabrica mais rápido por nível.
 @export var mago_pad_intervalo_mult := 0.85
-## Nome curto de cada caminho (título a pincel na placa e nos avisos).
+## Nome curto de cada caminho no mapa antigo (o novo usa ClassStats.caminho_nome).
 @export var magos_caminho_nomes := PackedStringArray(["Luz", "Sombra"])
+## Os dois times veem o aviso quando um deles escolhe um caminho.
+@export var caminho_aviso_inimigo := true
+
+@export_group("Sohei e Kusarigama (Ciclo 2.21)")
+## Varrida (Q do Sohei): aliados a até varrida_aliados_raio m ganham escudo.
+@export var varrida_escudo := 22.0
+@export var varrida_escudo_t := 3.0
+@export var varrida_aliados_raio := 5.5
+## Muralha de Fé (E do Sohei): pressa dos aliados dentro do círculo.
+@export var muralha_pressa := 1.2
+## Gancho (Q da Kusarigama): velocidade da corrente (m/s) e atordoamento de quem
+## é puxado. O puxão usa o mesmo empurrão de todo golpe: d = v²/80, então para
+## trazer o alvo de d metros a corrente dá v = √(80·d).
+@export var gancho_vel := 34.0
+@export var gancho_atordoa := 0.45
+## Ciranda de Aço (E da Kusarigama): um pulso a cada ciranda_intervalo s; a
+## corrente só corta da metade do raio para fora (o peso fica na ponta).
+@export var ciranda_intervalo := 0.3
+@export var ciranda_vel_mult := 0.8
 
 @export_group("Economia do Construtor")
 ## Só quem tem velocidade_obra > 0 (Construtor e variações) corta e carrega.
@@ -372,3 +398,16 @@ extends Resource
 
 func hat_classes() -> Array[ClassStats]:
 	return hat_class_list
+
+
+## Todas as classes jogáveis: as do pátio e, depois, os caminhos de cada uma
+## (ClassStats.caminhos), sem repetir.
+func todas_classes() -> Array[ClassStats]:
+	var out: Array[ClassStats] = []
+	for c in hat_class_list:
+		out.append(c)
+	for c in hat_class_list:
+		for e in c.caminhos:
+			if not out.has(e):
+				out.append(e)
+	return out

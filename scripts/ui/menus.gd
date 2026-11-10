@@ -288,7 +288,7 @@ func _secao_jogar() -> Control:
 	var dicas := HBoxContainer.new()
 	dicas.add_theme_constant_override("separation", 12)
 	for tip in [
-		["katana", Estilo.OURO, "Chapéus", "No pátio, aperte F perto de um chapéu: %s. Oficinas liberam classes novas." % lista],
+		["katana", Estilo.OURO, "Chapéus", "No pátio, aperte F perto de um chapéu: %s. Cada casa vira um de dois caminhos." % lista],
 		["espirito", Estilo.FANTASMA, "Espíritos", "Leve as chamas verdes até a SUA máscara: pesada, o ladrão anda devagar com ela."],
 		["mascara", Estilo.AZUL, "Resgate", "Quem cai pode ser reanimado por um aliado (segure F); senão volta como recruta. Vence quem fizer %d resgates primeiro." % Config.cfg.score_to_win],
 	]:
