@@ -4,6 +4,58 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.20 (2026-11-10), Diretor Visual + Jogabilidade: magia de verdade nos poderes
+Pedido do Julio (quiz "Magia de verdade": 1C, 2B, 3 tudo, 4 sem piloto, 5 ABCD):
+tirar os "cones e cilindros secos". Diagnóstico: `FxPoder` montava tudo com
+malha primitiva + cor chapada aditiva + tween de escala/alfa. Agora cada poder é
+feito de ENERGIA desenhada: ruído rolando, borda que se rasga em degraus e filete
+de tinta escura (o mesmo traço do cenário), em três atos: carga, estouro, resto.
+- **Kit `Magia`** (`scripts/fx/magia.gd` + `assets/shaders/magia_energia.gdshader`
+  e `magia_selo.gdshader`): chama, onda, estouro, selo que se ESCREVE no chão,
+  vórtice, lança, rachaduras, bola de fogo, brasas, clarão e fita de rastro
+  (`scripts/fx/fita.gd`). Um shader só (compila uma vez), 1 malha por peça,
+  ruído de 128² gerado no começo. Paletas por elemento em `Magia.PALETAS`.
+- **Poder [E] e super [R] das 10 classes refeitos** (`fx_poder.gd` inteiro):
+  Redemoinho (funil de vento com faixas girando), Fúria do Oni (estouro de brasa,
+  chifres de fogo, aura atrás do corpo), Corte Relâmpago, Leque, Chuva de
+  Flechas (lanças de luz + arremate), Campo Minado, Bombardeio (aviso que fecha,
+  bola de fogo que se corrói, chão queimado), Mutirão, Coluna de Fogo-Raposa,
+  Bênção (pétalas + pilar de luz), Selo Sombrio (o selo se escreve, chamas nas 5
+  pontas, raios). Todo lançamento abre com o selo do elemento escrito no chão.
+- **Q de cada classe** ganhou efeito próprio (pisão, investida, tiro carregado,
+  cura com fio de luz até cada aliado, armadilha); a corrida deixa selo de vento.
+- **Golpe básico**: corte fino de energia (uma malha; antes duas) e fita de
+  rastro na lâmina só no golpe que arremata o combo. De propósito leve, como
+  pedido: nada de clarão nem câmera no básico.
+- **Impactos**: projéteis de nível 2+ estouram em energia; a explosão de pólvora
+  virou bola de fogo. Fumaça leve, como pedido: só 2 sopros por explosão, e a
+  nuvem do Bombardeio (8 esferas lilases chapadas que tapavam a luta) virou
+  dois véus de fiapos girando (2 malhas, dá para ver quem está dentro).
+- **Marca no chão** depois dos poderes fortes (tinta queimada que some em 3-4 s)
+  e **clarão que ilumina** o chão e os bonecos (luz curta, só na qualidade Alta).
+- **Câmera e som**: poder [E] dá tranco + zoom curto + 0,16 s de câmera lenta;
+  o super [R] um pouco mais. Cinco sons novos gerados (`magia_selo`, `_fogo`,
+  `_vento`, `_luz`, `_estouro` em `tools/gerar_sons.py magia`), um por elemento.
+- **Custo**: cada peça é 1 chamada de desenho e vive < 1 s; na qualidade Baixa
+  os enfeites (brasas, cargas, luz) desligam. Medido com todo mundo soltando
+  poder a cada 4 s (`--perf=3 --poderes`, 40 s): 457 → 470 chamadas por quadro
+  em média (pico 505 → 483) e 1,14 → 1,16 M de triângulos, ou seja, dentro do
+  ruído entre partidas. O que o xvfb NÃO mede é custo por pixel: efeito grande
+  na tela cheia pode pesar no Intel UHD; se pesar, o ajuste é no tamanho.
+- Modo teste (sandbox): tudo vale igual lá (os efeitos são os mesmos nós), e é
+  o melhor lugar para ver, porque Q/E/R recarregam rápido e todos os chapéus
+  estão disponíveis.
+- Ferramentas: `tools/bancada_magia.gd` (cada peça do kit em 6 tempos, sem
+  partida) e `tools/vitrine.sh` (antes/depois por classe).
+- Testes de regra: cada peça do kit nasce e se libera sozinha, fita usa o
+  shader de energia, todo poder tem paleta; 357/357.
+- **O que testar** (no Modo teste é mais rápido): (1) pegue cada chapéu e solte
+  [E] e [R]: dá para reconhecer o elemento de cada classe? Algum efeito tapa
+  demais o boneco ou a luta? (2) O golpe básico ficou discreto o bastante?
+  (3) A marca no chão e a câmera lenta de 0,16 s ajudam ou atrapalham? (4) Os
+  sons novos combinam (dá para trocar um por um)? (5) Na sua máquina, soltar
+  vários poderes juntos derruba o FPS? Se sim, me diga em qual poder.
+
 ## Ciclo 2.19b (2026-11-09), Jogabilidade: desistir desconta a espera já passada
 Pedido do Julio: caído há um tempo, apertar [F] para desistir recomeçava uma
 contagem própria (metade da espera, mínimo 4 s) e às vezes demorava mais do que

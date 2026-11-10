@@ -13,7 +13,9 @@ const SOUNDS := ["swing", "hit", "shoot", "magic", "heal", "pickup", "hat", "eat
 	"kitsune_poder", "kitsune_super", "luz_poder", "sombra_poder", "mutirao", "super_maior",
 	"madeira_golpe", "renascer", "corte_critico",
 	# Reanimar (Ciclo 2.18): pano arrastando no chão e o "voltou" com sino.
-	"reanimar_arrasto", "reanimado"]
+	"reanimar_arrasto", "reanimado",
+	# Camada do kit de magia (Ciclo 2.20): um som curto por elemento.
+	"magia_selo", "magia_fogo", "magia_vento", "magia_luz", "magia_estouro"]
 const POOL_SIZE := 32
 
 const MAX_VARIACOES := 8

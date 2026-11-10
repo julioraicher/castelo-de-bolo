@@ -89,3 +89,26 @@ Pátio circular e castelo novo, ritmo da partida ("cheio demais na entrada"),
 página de tutorial (classes, evolução, Construtor), identidade única das
 letras e da interface, e se as variações do Construtor (Bombardeiro,
 Armadilheiro) cortam árvores.
+
+## 8. Ciclo 2.20: energia desenhada (kit `Magia`)
+
+**Decidido pelo Julio em 2026-11-10** (quiz "Magia de verdade"): elemento com
+contorno de tinta, pico forte de ~0,3 s que limpa rápido, tudo refeito (E/R, Q,
+básico, impactos, auras), marca no chão, clarão, câmera e som. Dois freios dele:
+**fumaça só leve** e **golpe básico discreto**.
+
+Como se monta um efeito agora (`scripts/fx/magia.gd`):
+
+- Nada de malha primitiva com cor chapada. Toda forma usa `Magia.mat(paleta)`
+  (shader `magia_energia`): uma máscara `m` (0..1) diz onde há energia e um
+  ruído rolando decide a borda. `a = m + (ruído-0,5)·forca - corroi` é a
+  existência (a < 0 some; faixa fina acima de 0 vira o filete de tinta); a cor
+  sai em degraus (borda › meio › núcleo em 0,27 / 0,42 / 0,62). Animar `corroi`
+  de 0 a 1 faz a peça se RASGAR em vez de só ficar transparente.
+- Três atos: carga (selo se escreve + faíscas entrando, ~0,2 s), estouro (peça
+  principal + onda + clarão, ~0,3 s), resto (brasas e marca no chão, 1-4 s).
+- Mistura normal, não aditiva: aditivo estoura para branco no chão claro.
+- Orçamento: 1 malha por peça, material por efeito (uniforme de instância
+  estoura o buffer no Compatibility), luz só na Alta, enfeite desliga na Baixa.
+- Conferir sempre na bancada (`tools/bancada_magia.gd`) e na vitrine
+  (`tools/vitrine.sh`) antes de subir.

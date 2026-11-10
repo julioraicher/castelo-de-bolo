@@ -20,6 +20,8 @@ const COR_OURO := Color(1.0, 0.68, 0.12)
 const COR_RAPOSA := Color(0.95, 0.2, 0.6)
 const COR_VAZIO := Color(0.55, 0.2, 1.0)
 const COR_TINTA := Color(0.09, 0.03, 0.14)
+## Paleta do kit Magia para o estouro do golpe forte de cada elemento.
+const ELEMENTO_MAGIA := {"fogo": "raposa_rosa", "chi": "luz", "magia": "sombra", "shuriken": "aco", "flecha": "vento", "terra": "brasa"}
 
 static var _cache := {}
 
@@ -579,6 +581,9 @@ static func impacto_cenario(g: Node, at: Vector3, kind: String, dir: Vector3, ni
 ## Impacto no corpo ou no chão: cada elemento com o seu. dir = sentido do tiro.
 static func impacto(g: Node, at: Vector3, kind: String, dir: Vector3, nivel := 1) -> void:
 	var k := 1.0 if nivel <= 1 else 1.6
+	if nivel >= 2 and kind in ELEMENTO_MAGIA:
+		# Golpe forte (Q carregado ou poder): o elemento estoura no alvo.
+		Magia.estouro(g, at - Vector3(0, 0.5, 0), ELEMENTO_MAGIA[kind], 0.9 * k, 0.26)
 	match kind:
 		"shuriken":  # estilhaço de metal
 			faiscas(g, at, COR_METAL * 1.4, int(6 * k), 7.0, dir + Vector3.UP * 0.4, 50.0, 0.2)
@@ -611,9 +616,12 @@ static func impacto(g: Node, at: Vector3, kind: String, dir: Vector3, nivel := 1
 ## Explosão de bomba comum: bola de fogo, fumaça escura subindo, estilhaços
 ## e a marca de queimado que fica uns 2 s.
 static func explosao(g: Node, at: Vector3, r: float) -> void:
-	brilho(g, at + Vector3(0, 0.7, 0), Color(1.0, 0.45, 0.1, 0.95), r * 1.5, 0.28, false)
-	brilho(g, at + Vector3(0, 0.7, 0), Color(1.0, 0.9, 0.5), r * 0.8, 0.14)
-	fumaca(g, at + Vector3(0, 0.6, 0), Color(0.24, 0.21, 0.2, 0.6), 7, r * 0.9, 1.1, 2.2)
+	# Bola de fogo de energia que se corrói (1 malha) no lugar dos clarões e
+	# de quase toda a fumaça: mais fogo, menos névoa (pedido do quiz 2.20).
+	Magia.bola(g, at + Vector3(0, 0.6, 0), "brasa", r * 0.8, 0.42, {"achata": 0.8})
+	Magia.onda(g, at, "brasa", r * 1.1, 0.35)
+	Magia.clarao(g, at, Color(1.0, 0.55, 0.2), r * 2.5, 0.22, 2.5)
+	fumaca(g, at + Vector3(0, 0.9, 0), Color(0.24, 0.21, 0.2, 0.5), 2, r * 0.8, 1.0, 2.2)
 	faiscas(g, at + Vector3(0, 0.3, 0), Color(1.0, 0.75, 0.3), 8, 9.0, Vector3.UP, 75.0, 0.3)
 	marca_chao(g, at, Color(0.06, 0.05, 0.05, 0.75), r * 0.8, 2.2)
 

@@ -351,6 +351,30 @@ def elementos():
     save("renascer", mix(ganho(tigela(784, 0.9), 0.5), noise(0.4, cutoff=lambda x: 0.05 + 0.3 * x, release_pow=0.8)), 0.4)
 
 
+def magia():
+    """Camada sonora do kit de magia (Ciclo 2.20): um som curto por elemento que
+    toca junto do som próprio da classe quando o poder sai. Semente própria.
+    Rode: gerar_sons.py magia"""
+    random.seed(20)
+    # Selo: pincelada (ruído que abre e fecha) + nota grave que sobe e corta.
+    pincel = noise(0.34, cutoff=lambda x: 0.05 + 0.5 * math.sin(math.pi * x) ** 2, release_pow=1.0)
+    save("magia_selo", mix(pincel, ganho(ao_contrario(tone(lambda x: 150 - 70 * x, 0.34, release_pow=1.6)), 0.7),
+                           [0.0] * n(0.3) + ganho(tigela(660, 0.5), 0.35)), 0.5)
+    # Fogo: rugido (ruído grave que incha) + estalos de brasa.
+    rugido = noise(0.7, cutoff=lambda x: 0.03 + 0.22 * math.sin(math.pi * min(1.0, x * 1.6)), release_pow=1.3)
+    estalos = noise(0.7, cutoff=lambda x: 0.9 if random.random() < 0.04 else 0.02, release_pow=1.2)
+    save("magia_fogo", mix(rugido, ganho(estalos, 0.5), ganho(tone(lambda x: 95 + 60 * x, 0.5, vib=0.08, release_pow=1.6), 0.5)), 0.6)
+    # Vento: sopro que gira (dois ruídos com o filtro oscilando fora de fase).
+    v1 = noise(0.6, cutoff=lambda x: 0.12 + 0.3 * abs(math.sin(9 * x)), release_pow=1.2)
+    v2 = noise(0.6, cutoff=lambda x: 0.1 + 0.25 * abs(math.cos(7 * x)), release_pow=1.4)
+    save("magia_vento", mix(v1, ganho(v2, 0.7), ganho(sopro(520, 0.5), 0.25)), 0.5)
+    # Luz: tigela de templo + guizos subindo.
+    save("magia_luz", mix(tigela(880, 0.8), ganho(guizos(0.5), 0.3), ganho(sino(1760, 0.5), 0.25)), 0.45)
+    # Estouro: clarão seco (estalo) + corpo grave curto + cauda de ar.
+    save("magia_estouro", mix(noise(0.04, cutoff=lambda x: 0.95), ganho(tone(lambda x: 120 - 75 * x, 0.35, release_pow=2.2), 1.2),
+                              noise(0.5, cutoff=lambda x: 0.2 * (1 - x) + 0.02, release_pow=1.6)), 0.7)
+
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1:] == ["efeitos"]:
@@ -359,8 +383,11 @@ if __name__ == "__main__":
         torretas()
     elif sys.argv[1:] == ["elementos"]:
         elementos()
+    elif sys.argv[1:] == ["magia"]:
+        magia()
     else:
         main()
         efeitos()
         torretas()
         elementos()
+        magia()
