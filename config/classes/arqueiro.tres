@@ -2,11 +2,12 @@
 
 [ext_resource type="PackedScene" path="res://assets/characters/Rogue_Hooded.glb" id="1_8uvy1"]
 [ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="2_b2vcn"]
+[ext_resource type="Resource" path="res://config/classes/arqueiro_yumi.tres" id="2_n3qr4"]
+[ext_resource type="Resource" path="res://config/classes/kusarigama.tres" id="3_e1h2c"]
 
 [resource]
 script = ExtResource("2_b2vcn")
 id = &"arqueiro"
-chapeu_tempo_mult = 0.9
 display_name = "Ninja de Shuriken"
 epiteto = "A sombra nos telhados"
 descricao = "Shinobi criado nas vielas da vila, leve e debochado. Não acredita em duelo justo: acerta de longe, some antes do troco e volta pelo flanco. Cada shuriken leva um fio de Chi, e dizem que ele nunca erra duas vezes o mesmo alvo."
@@ -14,10 +15,10 @@ model = ExtResource("1_8uvy1")
 visible_meshes = PackedStringArray("Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Body", "Rogue_Head_Hooded", "Rogue_LegLeft", "Rogue_LegRight")
 hat_color = Color(0.3, 0.95, 1, 1)
 hat_style = "capuz"
-dash_estilo = "rolamento"
 estilo_ninja = "_ninja"
 escala_cabeca = 0.58
 escala_extremidades = 1.3
+dash_estilo = "rolamento"
 max_hp = 80.0
 move_speed = 7.1
 attack_kind = "ranged"
@@ -26,6 +27,8 @@ attack_range = 15.0
 attack_cooldown = 0.5
 knockback = 3.0
 projectile_speed = 38.0
+queda_dist_ini = 8.0
+queda_dano_min = 0.8
 projetil = "shuriken"
 combo_anims = PackedStringArray()
 combo_finisher_mult = 0.85
@@ -34,14 +37,14 @@ skill = "tiro_carregado"
 skill_name = "Shuriken Perfurante"
 skill_cooldown = 4.0
 block_reduction = 0.5
+chapeu_tempo_mult = 0.9
+caminhos = Array[ExtResource("2_b2vcn")]([ExtResource("2_n3qr4"), ExtResource("3_e1h2c")])
 power = "leque"
 power_name = "Leque de Shuriken"
 power_radius = 70.0
 power_value = 14.0
 power_duration = 9.0
-anim_attack = "Throw"
 som_poder = "ninja_poder"
 som_super = "super_maior"
 som_golpe_final = "ninja_final"
-queda_dist_ini = 8.0
-queda_dano_min = 0.8
+anim_attack = "Throw"

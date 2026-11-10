@@ -6,11 +6,7 @@
 [ext_resource type="Resource" path="res://config/classes/guerreiro.tres" id="3"]
 [ext_resource type="Resource" path="res://config/classes/arqueiro.tres" id="4"]
 [ext_resource type="Resource" path="res://config/classes/construtor.tres" id="11"]
-[ext_resource type="Resource" path="res://config/classes/ronin_oni.tres" id="of_ronin_oni"]
-[ext_resource type="Resource" path="res://config/classes/arqueiro_yumi.tres" id="of_arqueiro_yumi"]
 [ext_resource type="Resource" path="res://config/classes/kitsune.tres" id="of_kitsune"]
-[ext_resource type="Resource" path="res://config/classes/kitsune_luz.tres" id="of_kitsune_luz"]
-[ext_resource type="Resource" path="res://config/classes/kitsune_sombria.tres" id="of_kitsune_sombria"]
 [ext_resource type="Resource" path="res://config/mapas/rio_lanternas.tres" id="7_rio"]
 [ext_resource type="Script" path="res://scripts/data/map_layout.gd" id="7_mapl"]
 [ext_resource type="Script" path="res://scripts/data/theme_config.gd" id="8_txtu1"]
@@ -25,18 +21,17 @@ villager = ExtResource("2")
 hat_class_list = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource("4"), ExtResource("of_kitsune"), ExtResource("11")])
 bot_start_classes = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource("4"), ExtResource("of_kitsune"), ExtResource("11"), ExtResource("2")])
 inicio_calmo = 30.0
-oficina_classes = Array[ExtResource("1_3yous")]([ExtResource("of_ronin_oni"), ExtResource("of_arqueiro_yumi")])
-magos_opostos = Array[ExtResource("1_3yous")]([ExtResource("of_kitsune_luz"), ExtResource("of_kitsune_sombria")])
 themes = Array[ExtResource("8_txtu1")]([ExtResource("11_dia"), ExtResource("12_crep"), ExtResource("9_f5mmm"), ExtResource("10_wo1y8")])
 map = ExtResource("7_rio")
 maps = Array[ExtResource("7_mapl")]([ExtResource("7_rio")])
 oficina_build_time = 10.0
-oficina_custo_madeira = 4
+oficina_custo_madeira = 6
 oficina_puxar_intervalo = 1.5
 maquina_intervalo = 20.0
 maquina_estoque_max = 3
 maquina_n2_custo = 6
-mago_nivel_custo = PackedInt32Array(4, 6, 8)
+mago_nivel_custo = PackedInt32Array(8, 12)
+mago_nivel_max = 4
 torreta_custo = 3
 maquina_n2_intervalo = 12.0
 maquina_n2_estoque = 4
