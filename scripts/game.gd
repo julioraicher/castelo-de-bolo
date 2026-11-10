@@ -562,7 +562,7 @@ func _censo() -> void:
 		elif n is MultiMeshInstance3D and (n as MultiMeshInstance3D).multimesh and (n as MultiMeshInstance3D).multimesh.mesh:
 			var mmx := (n as MultiMeshInstance3D).multimesh
 			tris = _tris_da_malha(mmx.mesh) * (mmx.visible_instance_count if mmx.visible_instance_count >= 0 else mmx.instance_count)
-		if OS.get_environment("CENSO_DETALHE") == nome.get_slice("/", 0):
+		if nome.get_slice("/", 0) in OS.get_environment("CENSO_DETALHE").split(","):
 			print("CENSO.  %-50s surf=%d passes=%d tris=%d sombra=%s" % [String(n.get_path()).right(60), surfs, passes, tris,
 					gi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF])
 		var g: Dictionary = grupos.get(nome, {"inst": 0, "surf": 0, "passes": 0, "sombra": 0, "tris": 0})

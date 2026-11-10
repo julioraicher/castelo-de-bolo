@@ -483,10 +483,10 @@ func _sohei(time: Color) -> void:
 	var madeira := Color(0.28, 0.17, 0.1)
 	# Kashira-zutsumi: capuz que envolve a cabeça, com aba caída na nuca e
 	# o rosto tapado até o nariz (fica só a faixa dos olhos).
-	_peca(cab, _esfera(0.66, 0.6), Vector3(0, 0.66, -0.06), Vector3.ZERO, Vector3(1.0, 1.0, 1.02), _plano(pano))
-	_peca(cab, _esfera(0.5, 0.3), Vector3(0, 0.36, 0.16), Vector3.ZERO, Vector3(1.05, 0.6, 1.0), _plano(pano.darkened(0.08)))
-	_peca(cab, _caixa(Vector3(0.7, 0.55, 0.08)), Vector3(0, 0.3, -0.52), Vector3(18, 0, 0), Vector3.ONE, _plano(pano.darkened(0.12)))
-	_peca(cab, _cilindro(0.67, 0.67, 0.06), Vector3(0, 0.82, 0.0), Vector3(-6, 0, 0), Vector3.ONE, _plano(kesa.darkened(0.2)))
+	_peca(cab, _esfera(0.6, 0.55), Vector3(0, 0.8, -0.14), Vector3.ZERO, Vector3(1.06, 0.85, 1.0), _plano(pano))
+	_peca(cab, _esfera(0.5, 0.3), Vector3(0, 0.38, 0.12), Vector3.ZERO, Vector3(1.04, 0.55, 0.95), _plano(pano.darkened(0.08)))
+	_peca(cab, _caixa(Vector3(0.7, 0.5, 0.08)), Vector3(0, 0.36, -0.5), Vector3(18, 0, 0), Vector3.ONE, _plano(pano.darkened(0.12)))
+	_peca(cab, _cilindro(0.6, 0.6, 0.06), Vector3(0, 0.86, 0.0), Vector3(-8, 0, 0), Vector3.ONE, _plano(kesa.darkened(0.2)))
 	var peito := "chest"
 	# Juzu: contas escuras em volta do pescoço e uma conta grande acesa
 	for i in 11:
@@ -500,7 +500,7 @@ func _sohei(time: Color) -> void:
 	_peca(peito, _cilindro(0.45, 0.48, 0.5), Vector3(0, 0.1, 0), Vector3.ZERO, Vector3(1, 1, 0.82), _plano(pano.darkened(0.2)))
 	# Hakama larga (saiote) e faixa na cintura
 	var quad := "hips"
-	_peca(quad, _cilindro(0.5, 0.62, 0.55), Vector3(0, -0.2, 0), Vector3.ZERO, Vector3(1, 1, 0.85), _plano(Color(0.24, 0.23, 0.28)))
+	_peca(quad, _cilindro(0.46, 0.53, 0.4), Vector3(0, -0.1, 0), Vector3.ZERO, Vector3(1, 1, 0.85), _plano(Color(0.34, 0.33, 0.4)))
 	_peca(quad, _cilindro(0.5, 0.5, 0.12), Vector3(0, 0.1, 0), Vector3.ZERO, Vector3(1, 1, 0.85), _plano(kesa.darkened(0.3)))
 	_peca(quad, _fita(0.5, 0.16, kesa.darkened(0.3), kesa), Vector3(0.26, 0.06, 0.38), Vector3(175, 0, 10), Vector3.ONE,
 			{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true, "balanco": Vector3(0.7, 0.4, 0.0)})
@@ -523,23 +523,22 @@ func _sohei(time: Color) -> void:
 			{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true, "balanco": Vector3(0.9, 1.1, 0.0)})
 
 
-## Kusarigama (caminho da Corrente do Arqueiro): shinobi de capuz escuro e
-## lenço até o nariz, foice curta na mão e a corrente enrolada no braço até o
+## Kusarigama (caminho da Corrente do Arqueiro): shinobi de capuz (o do
+## modelo Rogue, com ponta caída atrás) e lenço claro até o nariz, foice curta na mão e a corrente enrolada no braço até o
 ## peso, que balança pendurado (a arma lê "puxa" mesmo parada).
 func _kusarigama(time: Color) -> void:
 	var cab := "head"
-	var escuro := Color(0.12, 0.12, 0.17)
+	var escuro := Color(0.17, 0.17, 0.26)
 	var aco := Color(0.7, 0.74, 0.82)
 	var roxo := Color(0.5, 0.56, 1.0)
-	_peca(cab, _esfera(0.64, 0.58), Vector3(0, 0.68, -0.08), Vector3.ZERO, Vector3(1.0, 1.0, 1.0), _plano(escuro))
-	_peca(cab, _cone(0.42, 0.45), Vector3(0, 1.05, -0.4), Vector3(-60, 0, 0), Vector3(1.0, 1, 0.6), _plano(escuro))
-	_peca(cab, _esfera(0.5, 0.3), Vector3(0, 0.38, 0.14), Vector3.ZERO, Vector3(1.05, 0.55, 1.0), _plano(escuro.lightened(0.08)))
-	_peca(cab, _cilindro(0.66, 0.66, 0.08), Vector3(0, 0.76, 0.0), Vector3(-6, 0, 0), Vector3.ONE, _neon(time.lightened(0.25), 1.6))
 	for s in [-1, 1]:
-		_peca(cab, _caixa(Vector3(0.13, 0.04, 0.03)), Vector3(0.17 * s, 0.6, 0.6), Vector3(0, 0, -10 * s), Vector3.ONE, _neon(roxo.lightened(0.3), 1.6))
+		_peca(cab, _caixa(Vector3(0.14, 0.04, 0.03)), Vector3(0.17 * s, 0.62, 0.62), Vector3(0, 0, -12 * s), Vector3.ONE, _neon(roxo.lightened(0.3), 1.6))
+	_peca(cab, _cone(0.36, 0.45), Vector3(0, 0.95, -0.62), Vector3(-70, 0, 0), Vector3(1.0, 1, 0.6), _plano(escuro))
+	_peca(cab, _esfera(0.5, 0.3), Vector3(0, 0.38, 0.12), Vector3.ZERO, Vector3(1.04, 0.55, 0.95), _plano(Color(0.85, 0.85, 0.9)))
+	_peca(cab, _cilindro(0.6, 0.6, 0.07), Vector3(0, 0.86, 0.0), Vector3(-8, 0, 0), Vector3.ONE, _neon(roxo, 1.6))
 	var peito := "chest"
 	# Colete curto de placas e a corrente atravessada no peito
-	_peca(peito, _cilindro(0.44, 0.46, 0.45), Vector3(0, 0.1, 0), Vector3.ZERO, Vector3(1, 1, 0.8), _plano(escuro.lightened(0.1)))
+	_peca(peito, _cilindro(0.44, 0.46, 0.45), Vector3(0, 0.1, 0), Vector3.ZERO, Vector3(1, 1, 0.8), _plano(time.darkened(0.4)))
 	for i in 7:
 		var t := float(i) / 6.0
 		_peca(peito, _anel(0.06, 0.018, 8), Vector3(lerpf(-0.3, 0.32, t), lerpf(0.42, -0.2, t), 0.38), Vector3(0, 90 * (i % 2), 40), Vector3.ONE, _plano(aco))

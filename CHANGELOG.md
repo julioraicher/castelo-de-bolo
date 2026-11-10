@@ -4,6 +4,73 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.21 (2026-11-10), Diretor Visual + Jogabilidade: casinhas 2.0 (casa da classe)
+Pedido do Julio (quizzes "Casinhas 2.0": 1A, 2C, 3A, 4AC, 5ABCDE; classes novas:
+1C, 2A, 3A, 4B, 5A): repensar as casinhas de chapéu num pedido só. Antes eram
+duas oficinas soltas (Luz/Sombria) e barraquinhas sem leitura de onde ficava
+cada coisa. Agora **cada classe base tem um bairro** no seu trecho da ferradura
+e **uma casa só** que vira um de dois caminhos.
+- **Bairro da classe** (`Oficina`, `scripts/items/oficina.gd`, reescrita): chão de
+  areia, barraquinha de festival na frente (o chapéu da classe base, sempre
+  disponível), dois **tapetes** com o **fantasma translúcido** da casa evoluída
+  em cima (shader `casa_fantasma.gdshader`, 1 passe sem luz) e um estandarte alto.
+  O Construtor **escolhe parando no tapete** (0,5 s) e a obra começa ali; o
+  outro tapete se sela. Pronta, a casa vira o pad da classe evoluída (nível 2)
+  e a barraquinha também sobe. Depois, cada nível custa 6 e 9 madeiras (até o 4),
+  e **cada nível põe um telhado/andar a mais** na casa.
+- **Todos os caminhos em pares** (2C): Samurai → Ronin Oni **ou Sohei**; Ninja de
+  Shuriken → Arqueiro Yumi **ou Kusarigama**; Kitsune → Luz ou Sombria;
+  Construtor → Armadilheiro ou Bombardeiro. Níveis 2 a 4 para todos (4B).
+- **Sohei** (novo, `config/classes/sohei.tres`): monge da naginata, tanque de
+  apoio. Regra própria (1C): **a lâmina só corta na faixa entre 1,5 m e o
+  alcance**; colado demais leva o cabo (empurrão, sem dano), menos no golpe final,
+  que desce na vertical. [Q] Varrida: giro de ~300° que fere na faixa da lâmina e
+  dá escudo aos aliados a 5,5 m. [E] Muralha de Fé: anel de 5,5 m que fica no
+  lugar por 5 s, dá escudo + pressa aos aliados e empurra inimigos até a borda
+  (v0 = √(2·a·s), com a = 40 m/s², para parar exatamente na borda).
+- **Kusarigama** (nova, `kusarigama.tres`): foice com corrente, alcance de 5,2 m
+  em faixa estreita e último golpe do combo girando 360°. [Q] Gancho: o peso vai
+  na linha da mira (9,5 m), fere, **PRENDE** 0,45 s (não anda, não ataca, não
+  esquiva) e puxa até ~1,6 m; errou, a recarga volta rápido. [E] Ciranda de Aço:
+  corrente girando 2,4 s, pulsos a cada 0,3 s no anel (o miolo não corta).
+  Visual das duas por código (`NinjaVisual._sohei`, `_kusarigama`), efeitos com o
+  kit `Magia` (`FxPoder.q_varrida`, `q_gancho`, `muralha`, `ciranda`).
+- **Ritmo de ~10 min em escada** (4AC, 5A): a 1ª casa custa 6 e cada casa a mais
+  do time custa +2 (`oficina_custo_degrau`). Partida simulada de 10 min: 1º
+  caminho ~15 s, 2º ~2,2 min, 3º ~3,7 min, 4º ~6-7 min, 1º nível 3 aos ~6,5 min.
+- **Onde fica cada casa** (5ABCDE): minimapa com emblema da classe e anel de
+  estado (cinza vazio, arco da obra na cor do caminho, dourado pronta, pontos de
+  nível; o do inimigo menor); estandarte alto; chão pintado do bairro; aviso
+  grande para os DOIS times quando alguém escolhe um caminho
+  (`caminho_aviso_inimigo`); dicas novas do Construtor (`_dica_casa`).
+- Modelos: `tools/gerar_casas.gd` (estende `gerar_economia.gd`) gera as 4
+  barraquinhas, as 8 casas (com `Telhado`, `N3_Andar`, `N4_Topo`) e os 4 bairros
+  para os 4 temas; as `oficina_azul/vermelho` antigas saíram. Casa ~2,3-3,1 mil
+  triângulos, bairro ~2,4 mil, tudo juntado com `MalhaUnica`.
+- **Custo** (CENSO, 900 quadros com xvfb, mesma partida): main 556 chamadas por
+  quadro em média (pico 680) → 618 (pico 701), +11 %, por 8 bairros e casas
+  novas. O chão do bairro, o pano e o emblema do estandarte não projetam
+  sombra (cortou ~35). Os fantasmas (2 por bairro) só existem até a escolha.
+  `CENSO_DETALHE` agora aceita vários nomes separados por vírgula.
+- Como jogar: abas "Casas" e "Caminhos" reescritas (linhas geradas dos dados).
+  Classes: cada base seguida dos seus caminhos, com a origem ("casa, N madeiras").
+- Bots: escolhem um tapete ao acaso, sobem o nível da casa mais avançada, usam
+  Varrida/Gancho/Muralha/Ciranda (`bot_brain.gd`).
+- **Modo teste (sandbox)**: todas as casas já prontas; [F] perto de uma casa
+  sobe o nível e, no nível máximo, troca para o outro caminho (dá para ver as 8
+  casas e testar Sohei/Kusarigama na hora). Custos de nível = 1.
+- Testes de regra: pares de caminho em todas as classes, escolha no tapete,
+  custo em escada, níveis até 4, e as regras do Sohei/Kusarigama (cabo sem dano,
+  lâmina na faixa, escudo da Varrida, empurrão da Muralha até a borda, Gancho
+  prende e puxa ~1,6 m, Ciranda poupa o miolo); 460/460.
+- **O que testar**: (1) no começo, ache no minimapa e no pátio onde fica cada
+  casa: dá para ler de longe? (2) Como Construtor, pare num tapete: o fantasma
+  e a escolha ficam claros? (3) Jogue de Sohei: a regra "colado só empurra" fica
+  justa ou frustrante? A Muralha ajuda o time? (4) Jogue de Kusarigama: o Gancho
+  acerta onde você mira? Prender 0,45 s é muito? (5) O ritmo de ~10 min para
+  ver as casas subindo ficou bom? (6) No Modo teste, [F] nas casas para ver
+  todos os níveis e os 8 modelos.
+
 ## Ciclo 2.20 (2026-11-10), Diretor Visual + Jogabilidade: magia de verdade nos poderes
 Pedido do Julio (quiz "Magia de verdade": 1C, 2B, 3 tudo, 4 sem piloto, 5 ABCD):
 tirar os "cones e cilindros secos". Diagnóstico: `FxPoder` montava tudo com

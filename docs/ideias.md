@@ -5,6 +5,10 @@ Lista viva. Qualquer frente anota aqui; o Julio escolhe o que sobe de nível.
 a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 
 ## A — próxima
+- **Casinhas 2.0, sobras** (Ciclo 2.21): planta do pátio no placar [Tab] (quiz 5D,
+  ficou só o minimapa), regravar o clipe "oficinas" do Como jogar com o bairro
+  novo (`tools/clipes_tutorial.sh oficinas`), e ajustar Sohei/Kusarigama depois
+  do playtest (`tools/sonda_equilibrio.sh`).
 - **Revisão geral 2026-11-06** (pasta do projeto: `revisao/revisao-geral-2026-11-06.md` +
   `revisao/01-revisao-geral.jpg`): máscara quase nunca chega (1 ponto em 8 partidas),
   Samurai K/D 0,42, madeira trava depois da 1ª oficina, bots lançam catapulta demais,

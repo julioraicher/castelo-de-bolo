@@ -481,7 +481,14 @@ func _montar_bairro() -> void:
 			e3.rotation_degrees.x = -12.0
 			mk.add_child(e3)
 	_pintar_estandarte()
-	MalhaUnica.juntar(_bairro, fora)
+	var chao := MalhaUnica.juntar(_bairro, fora)
+	# Desempenho: o bairro é quase todo chão (areia, pedras, tatame) e o pano é
+	# fino; a sombra deles quase não se vê mas custava 1 passe a mais em cada
+	# superfície (~7 chamadas por bairro, 16 bairros). Postes e casa mantêm a dela.
+	if chao:
+		chao.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for p in _panos.values():
+		_sem_sombra(p)
 
 
 ## Estandarte: pano na cor do time com o emblema da classe base; com o caminho
@@ -501,7 +508,16 @@ func _pintar_estandarte() -> void:
 		var th: ThemeConfig = _game.arena.theme if _game and _game.arena else Config.theme()
 		var em := th.model_path("emblema_%s.scn" % cls.resource_path.get_file().get_basename())
 		if ResourceLoader.exists(em):
-			_emblema_bandeira.add_child((load(em) as PackedScene).instantiate())
+			var e3: Node3D = (load(em) as PackedScene).instantiate()
+			_emblema_bandeira.add_child(e3)
+			_sem_sombra(e3)
+
+
+static func _sem_sombra(n: Node) -> void:
+	if n is GeometryInstance3D:
+		(n as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for c in n.get_children():
+		_sem_sombra(c)
 
 
 func _selar_tapete(i: int) -> void:
