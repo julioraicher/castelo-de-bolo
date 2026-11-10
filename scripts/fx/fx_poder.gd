@@ -347,7 +347,7 @@ static func selo(g: Node, centro: Vector3, r: float) -> void:
 ## desfaz em línguas, bolas de fogo-raposa girando em volta e brasas subindo.
 static func coluna_fogo(g: Node, centro: Vector3, r: float, dur: float, cor := Color(0.25, 0.9, 1.25)) -> void:
 	var pal := Magia.paleta_de(cor)
-	Magia.chama(g, centro, pal, minf(r * 0.42, 2.0), 5.2, 0.7, {"giro": 0.6, "forca": 1.2, "r_topo": 0.12})
+	Magia.chama(g, centro, pal, minf(r * 0.3, 1.4), 5.5, 0.7, {"giro": 0.6, "forca": 1.7, "r_topo": 0.3, "barriga": 0.2, "base": 0.68, "topo": -0.45, "escala": Vector2(3.0, 0.4)})
 	Magia.onda(g, centro, pal, r * 1.1, 0.45)
 	Magia.clarao(g, centro, pal[1], r * 2.2)
 	Magia.brasas(g, centro, pal[1], 12, r * 0.6, 1.4)

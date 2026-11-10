@@ -27,6 +27,7 @@ const PALETAS := {
 	"raposa_rosa": [Color(1.0, 0.92, 0.97), Color(1.0, 0.45, 0.75), Color(0.75, 0.12, 0.5)],
 	"cura": [Color(0.94, 1.0, 0.94), Color(0.5, 1.0, 0.65), Color(0.12, 0.62, 0.4)],
 	"fumaca": [Color(0.8, 0.78, 0.8), Color(0.56, 0.53, 0.58), Color(0.36, 0.33, 0.42)],
+	"nevoa": [Color(0.92, 0.9, 1.0), Color(0.68, 0.62, 0.88), Color(0.44, 0.38, 0.64)],
 }
 
 static var _cache := {}
@@ -241,7 +242,8 @@ static func onda(g: Node, pos: Vector3, pal: Variant, raio: float, vida := 0.45,
 	var m := mat(pal, {
 		"escala": Vector2(o.get("voltas", 4.0), 0.6), "rola": Vector2(o.get("gira", 0.0), -0.9),
 		"forca": o.get("forca", 0.7), "base": 0.85, "topo": 0.85,
-		"banda": o.get("banda", 0.22), "centro": 0.76, "tinta": o.get("tinta", 0.07),
+		"banda": o.get("banda", 0.22), "centro": 0.76,
+		"tinta": o.get("tinta", 0.07 * clampf(3.0 / maxf(raio, 0.1), 0.4, 1.0)),
 	})
 	_malha(n, disco(), m)
 	var r0: float = o.get("r0", 0.15)
@@ -311,7 +313,7 @@ static func vortice(pai: Node3D, pal: Variant, raio: float, altura: float, dur: 
 	var m := mat(pal, {
 		"escala": o.get("escala", Vector2(1.0, 3.2)), "rola": Vector2(o.get("gira", 1.6), o.get("sobe", -0.35)),
 		"forca": o.get("forca", 1.5), "base": o.get("base", 0.2), "topo": o.get("topo", 0.08), "tinta": o.get("tinta", 0.04),
-		"teto": 4.0, "ondula": 0.05,
+		"teto": 4.0, "ondula": 0.05, "alfa": o.get("alfa", 1.0),
 	})
 	_malha(n, tubo(o.get("r_topo", 1.9), 0.0, 16, 4), m)
 	n.scale = Vector3(raio * 0.4, altura * 0.3, raio * 0.4)

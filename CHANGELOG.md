@@ -28,15 +28,20 @@ de tinta escura (o mesmo traço do cenário), em três atos: carga, estouro, res
   rastro na lâmina só no golpe que arremata o combo. De propósito leve, como
   pedido: nada de clarão nem câmera no básico.
 - **Impactos**: projéteis de nível 2+ estouram em energia; a explosão de pólvora
-  virou bola de fogo. Fumaça: só 2 sopros por explosão e a nuvem do Bombardeio
-  perdeu as bolas (era o pedido: fumaça leve).
+  virou bola de fogo. Fumaça leve, como pedido: só 2 sopros por explosão, e a
+  nuvem do Bombardeio (8 esferas lilases chapadas que tapavam a luta) virou
+  dois véus de fiapos girando (2 malhas, dá para ver quem está dentro).
 - **Marca no chão** depois dos poderes fortes (tinta queimada que some em 3-4 s)
   e **clarão que ilumina** o chão e os bonecos (luz curta, só na qualidade Alta).
 - **Câmera e som**: poder [E] dá tranco + zoom curto + 0,16 s de câmera lenta;
   o super [R] um pouco mais. Cinco sons novos gerados (`magia_selo`, `_fogo`,
   `_vento`, `_luz`, `_estouro` em `tools/gerar_sons.py magia`), um por elemento.
 - **Custo**: cada peça é 1 chamada de desenho e vive < 1 s; na qualidade Baixa
-  os enfeites (brasas, cargas, luz) desligam. DESEMPENHO_AQUI
+  os enfeites (brasas, cargas, luz) desligam. Medido com todo mundo soltando
+  poder a cada 4 s (`--perf=3 --poderes`, 40 s): 457 → 470 chamadas por quadro
+  em média (pico 505 → 483) e 1,14 → 1,16 M de triângulos, ou seja, dentro do
+  ruído entre partidas. O que o xvfb NÃO mede é custo por pixel: efeito grande
+  na tela cheia pode pesar no Intel UHD; se pesar, o ajuste é no tamanho.
 - Modo teste (sandbox): tudo vale igual lá (os efeitos são os mesmos nós), e é
   o melhor lugar para ver, porque Q/E/R recarregam rápido e todos os chapéus
   estão disponíveis.

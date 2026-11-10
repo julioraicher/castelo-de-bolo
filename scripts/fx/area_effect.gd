@@ -33,12 +33,11 @@ func setup(game: Game, owner_unit: Unit, center: Vector3, kind: String, radius: 
 	MarcaChao.criar(self, kind, radius, col, Config.team_color(owner_unit.team), duration if kind != "selo" else 1.0)
 	match kind:
 		"nuvem":
-			_mat = Fx.unshaded(Color(0.55, 0.52, 0.68, 0.55), true)
-			for i in 7:
-				var a := TAU * i / 7.0
-				var r := radius * (0.25 + 0.45 * (i % 3) / 2.0)
-				_part(_sphere(radius * 0.42), Vector3(cos(a) * r, 0.8 + (i % 2) * 0.5, sin(a) * r), _mat)
-			_part(_sphere(radius * 0.5), Vector3(0, 1.2, 0), _mat)
+			# Névoa leve (Ciclo 2.20): dois véus de fiapos girando em sentidos
+			# opostos (2 malhas; antes 8 esferas chapadas que tapavam a luta).
+			# A borda da área quem mostra é a MarcaChao.
+			Magia.vortice(self, "nevoa", radius * 0.6, 1.5, duration + 0.3, {"r_topo": 1.5, "gira": 0.4, "sobe": -0.12, "base": 0.25, "topo": 0.1, "alfa": 0.65, "tinta": 0.03})
+			Magia.vortice(self, "nevoa", radius * 0.3, 2.4, duration + 0.3, {"r_topo": 1.4, "gira": -0.6, "sobe": -0.2, "base": 0.25, "topo": 0.06, "alfa": 0.65, "tinta": 0.03})
 			Sfx.play("hit", center, 0.1)
 		"selo":
 			# Talismãs em pé formando o círculo + anel de raio.
@@ -60,7 +59,7 @@ func setup(game: Game, owner_unit: Unit, center: Vector3, kind: String, radius: 
 			var pal := Magia.paleta_de(col)  # cor do chapéu de quem lança
 			for i in 3:
 				var a := TAU * i / 3.0
-				Magia.chama(self, center + Vector3(cos(a), 0, sin(a)) * radius * 0.5, pal, 0.6, 3.0, duration + 0.3, {"segura": 0.8, "giro": duration * 0.5, "r_topo": 0.12, "forca": 1.3, "base": 0.7})
+				Magia.chama(self, center + Vector3(cos(a), 0, sin(a)) * radius * 0.5, pal, 0.5, 3.0, duration + 0.3, {"segura": 0.8, "giro": duration * 0.5, "r_topo": 0.3, "barriga": 0.22, "forca": 1.7, "base": 0.62, "topo": -0.5, "escala": Vector2(3.0, 0.4)})
 			Sfx.play("fogo", center, 0.05, 0.8)
 	scale = Vector3(0.2, 1, 0.2)
 	create_tween().tween_property(self, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -86,8 +85,6 @@ func _physics_process(delta: float) -> void:
 		if _kind == "coluna_fogo":
 			p.scale = Vector3(1.0 + 0.2 * sin(_t * 14.0 + i), 1.0 + 0.15 * sin(_t * 9.0 + i * 2.0), 1.0 + 0.2 * sin(_t * 14.0 + i))
 			p.rotation.y += delta * 3.0
-		elif _kind == "nuvem":
-			p.position.y += sin(_t * 2.0 + i) * delta * 0.3
 	if _kind == "selo":
 		if _t > 1.0:
 			queue_free()
@@ -138,11 +135,3 @@ func _part(mesh: Mesh, pos: Vector3, mat: Material) -> MeshInstance3D:
 	_parts.append(mi)
 	return mi
 
-
-func _sphere(r: float) -> SphereMesh:
-	var s := SphereMesh.new()
-	s.radius = r
-	s.height = r * 1.6
-	s.radial_segments = 10
-	s.rings = 5
-	return s
