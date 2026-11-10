@@ -19,6 +19,7 @@ func _ready() -> void:
 	_contra_golpe()
 	_carga()
 	_poderes_q()
+	_sohei_kusarigama()
 	_controles()
 	await _empurrao()
 	_madeira()
@@ -113,6 +114,7 @@ func _super() -> void:
 		u._dodge_t = 0.0
 		u._equip_t = 0.0
 		u._spin_t = 0.0
+		u._ciranda_t = 0.0
 		var mats0 := []
 		for mi in u._meshes:
 			mats0.append(mi.material_override)
@@ -919,6 +921,118 @@ func _poderes_q() -> void:
 		u.hp = u.max_hp()
 		u._explosao(u.global_position, 20.0, 1.0)
 		_check(_perto(u.hp, u.max_hp(), 0.01), "Bombardeio: a explosão não fere o próprio time")
+
+
+## Ciclo 2.21: Sohei corta só na faixa [alcance_min, alcance] (colado = cabo,
+## só empurra), Varrida dá escudo aos aliados, Muralha empurra até a borda;
+## Kusarigama puxa e prende com o Gancho e a Ciranda poupa o miolo.
+func _sohei_kusarigama() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var u = _alvo()
+	if u == null:
+		return
+	var inim = null
+	var aliado = null
+	for x in game.units:
+		if not x.alive or x == u or x.is_player:
+			continue
+		if x.team != u.team and inim == null:
+			inim = x
+		elif x.team == u.team and aliado == null:
+			aliado = x
+	if inim == null or aliado == null:
+		_check(false, "sohei/kusarigama: faltou boneco")
+		return
+	var p0: Vector3 = u.global_position
+	var i0: Vector3 = inim.global_position
+	var a0: Vector3 = aliado.global_position
+	var dir := Vector3(1, 0, 0)
+	var limpa := func() -> void:
+		inim.hp = inim.max_hp()
+		inim._shield = 0.0
+		inim._dodge_t = 0.0
+		inim._blocking = false
+		inim._knock = Vector3.ZERO
+		inim._preso_t = 0.0
+		inim._intocavel_t = 0.0
+	var poe := func(quem, d: float) -> void:
+		quem.global_position = p0 + dir * d
+	u._dodge_t = 0.0
+	u._equip_t = 0.0
+	u._spin_t = 0.0
+	u._ciranda_t = 0.0
+	u.carried_princess = null
+	u.aim_dir = dir
+	u._visual.rotation.y = atan2(-dir.x, -dir.z)
+	# Sohei: colado leva o cabo (empurra, sem dano); na ponta, a lâmina.
+	u.set_class(load("res://config/classes/sohei.tres"))
+	u.aim_dir = dir
+	limpa.call()
+	poe.call(inim, 0.9)
+	u._golpe_mult = 1.0
+	u._golpe_final = false
+	u._attack_hit()
+	_check(_perto(inim.hp, inim.max_hp(), 0.01) and inim._knock.length() > 1.0, "Sohei: colado (0,9 m) deveria só empurrar, sem dano")
+	limpa.call()
+	poe.call(inim, 3.0)
+	u._attack_hit()
+	_check(inim.hp < inim.max_hp(), "Sohei: a 3 m a lâmina deveria ferir")
+	# Varrida: faixa da lâmina fere; aliado perto ganha escudo.
+	limpa.call()
+	poe.call(inim, 0.9)
+	aliado._shield = 0.0
+	aliado.global_position = p0 - dir * 2.0
+	u._varrida()
+	_check(_perto(inim.hp, inim.max_hp(), 0.01), "Varrida: colado não deveria levar dano")
+	_check(aliado._shield >= cfg.varrida_escudo - 0.01, "Varrida: aliado a 2 m deveria ganhar escudo")
+	limpa.call()
+	poe.call(inim, 3.5)
+	u._varrida()
+	_check(inim.hp < inim.max_hp(), "Varrida: a 3,5 m deveria ferir")
+	# Muralha de Fé: inimigo a 2 m do centro sai com v0 = sqrt(2a(R+0,5-2)).
+	limpa.call()
+	poe.call(inim, 2.0)
+	u.power = u.POWER_MAX
+	u._use_power()
+	var v_esp := sqrt(2.0 * u.KNOCK_DECAY * (u.stats.power_radius + 0.5 - 2.0))
+	_check(u._muralha_t > 0.0, "Muralha: deveria ficar de pé")
+	u._tick_muralha()
+	_check(_perto(inim._knock.length(), v_esp, 0.05) and inim._knock.x > 0.0, "Muralha: empurrão até a borda esperado %.1f m/s, deu %.1f" % [v_esp, inim._knock.length()])
+	u._muralha_t = 0.0
+	u._power_active_t = 0.0
+	# Kusarigama: Gancho a 7 m fere, prende e puxa até ~1,6 m.
+	u.set_class(load("res://config/classes/kusarigama.tres"))
+	u.aim_dir = dir
+	limpa.call()
+	poe.call(inim, 7.0)
+	u._quick_cd = 0.0
+	var saiu: bool = u._gancho()
+	_check(saiu and inim.hp < inim.max_hp(), "Gancho: deveria acertar o inimigo a 7 m na mira")
+	_check(inim._preso_t > 0.0 and not inim.maos_livres(), "Gancho: o alvo deveria ficar PRESO")
+	var puxa: float = inim._knock.length_squared() / (2.0 * u.KNOCK_DECAY)
+	_check(inim._knock.x < 0.0 and _perto(puxa, 7.0 - 1.6, 0.1), "Gancho: puxão deveria trazer até ~1,6 m (andou %.1f m)" % puxa)
+	limpa.call()
+	poe.call(inim, 7.0)
+	inim.global_position += Vector3(0, 0, 4.0)  # fora da linha
+	_check(not u._gancho() and _perto(inim.hp, inim.max_hp(), 0.01), "Gancho: fora da linha não deveria pegar")
+	# Ciranda: pulso fere no anel e poupa o miolo.
+	limpa.call()
+	poe.call(inim, u.stats.power_radius * 0.8)
+	u._pulso_ciranda()
+	_check(inim.hp < inim.max_hp(), "Ciranda: deveria ferir no anel")
+	limpa.call()
+	poe.call(inim, 0.6)
+	u._pulso_ciranda()
+	_check(_perto(inim.hp, inim.max_hp(), 0.01), "Ciranda: colado (miolo) não deveria levar dano")
+	limpa.call()
+	inim.global_position = i0
+	aliado.global_position = a0
+	u.global_position = p0
+	for x in [u, inim, aliado]:
+		x.reset_physics_interpolation()
+	u.power = 0.0
+	u._quick_cd = 0.0
+	u.set_class(cfg.villager)
 
 
 ## Empurrão: freia a KNOCK_DECAY m/s², logo |v| cai a/60 por quadro (d = v²/2a).

@@ -227,7 +227,7 @@ extends Resource
 @export var magos_opostos: Array[ClassStats] = []
 @export var mago_nivel_max := 4
 ## Madeira para subir do nível 2 ao 3 e do 3 ao 4 (um por nível acima do 2).
-@export var mago_nivel_custo := PackedInt32Array([8, 12])
+@export var mago_nivel_custo := PackedInt32Array([6, 9])
 ## Bônus por nível acima do 2, para quem usa a classe daquele caminho
 ## (nível 4 = 2x): dano, vida máxima e ganho de Chi (Q mais frequente).
 @export var mago_bonus_dano := 0.08

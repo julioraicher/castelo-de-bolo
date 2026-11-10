@@ -1576,14 +1576,15 @@ func maquina_para_n2(team: int, from: Vector3) -> HatPad:
 
 
 ## Casa pronta abaixo do nível máximo para o Construtor subir: a que já tem
-## mais madeira posta, depois a de nível mais baixo, depois a mais perto.
+## mais madeira posta, depois a de nível mais alto (o time foca numa casa até
+## o máximo, ~8 min de partida), depois a mais perto.
 func mago_para_subir(team: int, from := Vector3.INF) -> Oficina:
 	var best: Oficina = null
 	for of in oficinas:
 		if of.team != team or not of.pode_subir():
 			continue
 		if best == null or of.madeira_nivel > best.madeira_nivel or (of.madeira_nivel == best.madeira_nivel \
-				and (of.nivel < best.nivel or (of.nivel == best.nivel and from != Vector3.INF \
+				and (of.nivel > best.nivel or (of.nivel == best.nivel and from != Vector3.INF \
 				and from.distance_to(of.global_position) < from.distance_to(best.global_position)))):
 			best = of
 	return best

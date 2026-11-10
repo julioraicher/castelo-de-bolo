@@ -131,6 +131,11 @@ var _slow_mult := 1.0
 var _quick_cd := 0.0  # recarga do Q
 var _escudo_def: MeshInstance3D  # arco na frente enquanto defende
 var _silence_t := 0.0   # Selo do Onmyoji: sem ataque, botão direito nem poder
+var _preso_t := 0.0     # Gancho da Kusarigama: preso na corrente (não anda, não ataca, não esquiva)
+var _muralha_t := 0.0   # Muralha de Fé do Sohei: anel que empurra inimigos para fora
+var _muralha_pos := Vector3.ZERO
+var _ciranda_t := 0.0   # Ciranda de Aço da Kusarigama: corrente girando em volta
+var _ciranda_tick := 0.0
 var _fury_t := 0.0      # Fúria do Ronin: dano multiplicado
 var _gigante := 1.0     # Fúria: o Ronin cresce (poder no corpo); volta a 1 suave
 var _dmg_boost_t := 0.0 # item no chão "Dano dobrado"
@@ -483,7 +488,7 @@ func parar_reanimar() -> void:
 ## do dash, do chapéu, do Redemoinho e do Selo).
 func maos_livres() -> bool:
 	return not carried_princess and not carried_tora and _dodge_t <= 0.0 and _equip_t <= 0.0 \
-			and _spin_t <= 0.0 and _silence_t <= 0.0
+			and _spin_t <= 0.0 and _silence_t <= 0.0 and _preso_t <= 0.0 and _ciranda_t <= 0.0
 
 
 ## Corta madeira (Construtor e variações: quem tem velocidade_obra).
@@ -549,6 +554,10 @@ func current_speed() -> float:
 		s *= _slow_mult
 	if _sombra_t > 0.0:
 		s *= Config.cfg.sombra_vel
+	if _preso_t > 0.0:
+		s *= 0.1
+	if _ciranda_t > 0.0:
+		s *= Config.cfg.ciranda_vel_mult
 	if _tiro_lento_t > 0.0:
 		s *= Config.cfg.atirador_lento_mult
 	if game and _em_escolta():
@@ -648,7 +657,7 @@ func _physics_process(delta: float) -> void:
 	_tick_power(delta)
 	_tick_buffs(delta)
 
-	if wants_dodge and _dodge_cd <= 0.0 and not carried_princess and _spin_t <= 0.0:
+	if wants_dodge and _dodge_cd <= 0.0 and not carried_princess and _spin_t <= 0.0 and _ciranda_t <= 0.0 and _preso_t <= 0.0:
 		_start_dodge()
 	wants_dodge = false
 
@@ -933,7 +942,15 @@ func _attack_hit() -> void:
 			# à frente (arco × final_arco_mult) e um pouco mais de alcance.
 			var arco := stats.attack_arc_deg
 			var alcance := stats.attack_range + 0.6
-			if finisher and combo.size() > 0:
+			var giro := finisher and stats.final_giro
+			if giro:
+				# Kusarigama: o último elo gira a corrente em volta do corpo (360°),
+				# um pouco mais curto que a estocada reta.
+				arco = 360.0
+				alcance = stats.attack_range * 0.8 + 0.6
+				Fx.slash(game, global_position + Vector3(0, 0.9, 0), dir, alcance, 360.0, col, 0.0, true)
+				FxPoder.giro_corrente(self, alcance)
+			elif finisher and combo.size() > 0:
 				arco *= Config.cfg.final_arco_mult
 				alcance += 0.5
 				Fx.slash(game, global_position + Vector3(0, 1.1, 0) + dir * 0.3, dir, reach + 0.4, 150.0, col, 88.0, true)
@@ -952,6 +969,14 @@ func _attack_hit() -> void:
 				if to.length() > alcance:
 					continue
 				if to.length() > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > arco / 2.0:
+					continue
+				# Sohei: a lâmina da naginata fica na ponta. Colado demais, o cabo só
+				# empurra (sem dano); o golpe final, de cima para baixo, acerta perto.
+				if stats.alcance_min > 0.0 and to.length() < stats.alcance_min and not (finisher and combo.size() > 0):
+					var dir_emp := to.normalized() if to.length() > 0.1 else dir
+					other._knock = dir_emp * stats.knockback * 0.7
+					Fx.burst(game, other.global_position + Vector3(0, 1.0, 0), Color(0.85, 0.8, 0.7), 4, 3.0)
+					hit_any = true
 					continue
 				var costas := mult_costas(other, to)
 				if costas > 1.0:
@@ -1171,7 +1196,7 @@ func _update_skill(delta: float, free_hands: bool) -> void:
 
 
 func tem_rapida() -> bool:
-	return stats.skill in ["cura", "tiro_carregado", "armadilha", "investida", "pisao", "corrida"]
+	return stats.skill in ["cura", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho"]
 
 
 func quick_cooldown() -> float:
@@ -1230,6 +1255,10 @@ func _usar_rapida() -> bool:
 			_corte_relampago(stats.skill_radius, stats.skill_value * damage_mult(), false)
 		"pisao":
 			_pisao()
+		"varrida":
+			_varrida()
+		"gancho":
+			return _gancho()
 		"corrida":
 			_play_upper("Cheer", 1.6)
 			Fx.ring(game, global_position, Color(1, 0.8, 0.3, 0.9), stats.skill_radius)
@@ -1270,6 +1299,108 @@ func _pisao() -> void:
 			acertou = true
 	if acertou:
 		hitstop(Config.cfg.hitstop_time * 1.3)
+
+
+## Sohei (Q): a naginata varre ~300° em volta. Só a LÂMINA corta: dano na
+## faixa [alcance_min, skill_radius]; quem está colado leva o cabo (empurrão).
+## Aliados perto ganham escudo (a fé dele protege quem luta junto).
+func _varrida() -> void:
+	_play_once("2H_Melee_Attack_Spinning", 0.45)
+	_mola(-3.0, 4.0)
+	var r := stats.skill_radius
+	var fr := Vector3(aim_dir.x, 0, aim_dir.z)
+	fr = fr.normalized() if fr.length() > 0.1 else _facing()
+	FxPoder.q_varrida(self, r)
+	Sfx.play("swing", global_position, 0.1, 0.8)
+	var acertou := false
+	for other in game.units:
+		if not other.alive:
+			continue
+		var d := other.global_position - global_position
+		if absf(d.y) > 1.8:
+			continue
+		d.y = 0
+		var dist := d.length()
+		if other.team == team:
+			if other != self and dist <= Config.cfg.varrida_aliados_raio:
+				other.give_shield(Config.cfg.varrida_escudo, Config.cfg.varrida_escudo_t)
+				FxPoder.em_aliado(other, stats.hat_color.lightened(0.3), self)
+			continue
+		if dist > r + 0.3:
+			continue
+		var dn := d / dist if dist > 0.1 else fr
+		if dist > 1.0 and rad_to_deg(fr.angle_to(dn)) > 150.0:
+			continue  # as costas ficam abertas (o giro não fecha)
+		if dist < stats.alcance_min:
+			other._knock = dn * 9.0
+			continue
+		other.take_damage(stats.skill_value * damage_mult(), self, dn, 1.1, true)
+		acertou = true
+	give_shield(Config.cfg.varrida_escudo * 0.5, Config.cfg.varrida_escudo_t)
+	if acertou:
+		hitstop(Config.cfg.hitstop_time)
+		if is_player:
+			game.camera.add_trauma(0.3)
+
+
+## Kusarigama (Q): lança o peso na linha da mira; o primeiro inimigo nela
+## (até skill_radius) leva o dano, fica PRESO e é puxado até ~1,6 m.
+## Puxão: empurrão inicial v0 = sqrt(2·a·d) com a = KNOCK_DECAY, o mesmo
+## atrito que freia todo empurrão, então ele para exatamente na distância d.
+## Sem ninguém na linha, a corrente vai e volta e o Q não gasta (recarga curta).
+func _gancho() -> bool:
+	var dir := aim_dir.normalized()
+	dir.y = 0
+	if dir.length() < 0.1:
+		dir = _facing()
+	dir = dir.normalized()
+	var alvo: Unit = null
+	var melhor := INF
+	for other in game.units:
+		if not other.alive or other.team == team:
+			continue
+		var to := other.global_position - global_position
+		if absf(to.y) > 1.8:
+			continue
+		to.y = 0
+		var ao_longo := to.dot(dir)
+		if ao_longo < 0.3 or ao_longo > stats.skill_radius:
+			continue
+		var lado := (to - dir * ao_longo).length()
+		if lado > 1.1 + 0.08 * ao_longo:  # o peso abre um pouco com a distância
+			continue
+		if ao_longo < melhor:
+			melhor = ao_longo
+			alvo = other
+	_play_upper("Throw", 1.6)
+	var ponta := alvo.global_position if alvo else global_position + dir * stats.skill_radius
+	FxPoder.q_gancho(self, ponta, alvo != null)
+	Sfx.play("swing", global_position, 0.08, 0.7)
+	if alvo == null:
+		_quick_cd = quick_cooldown() * 0.35  # errou: volta logo
+		return false
+	var to_a := alvo.global_position - global_position
+	to_a.y = 0
+	var dist := to_a.length()
+	alvo.take_damage(stats.skill_value * damage_mult(), self, -to_a.normalized(), 0.0, true)
+	if alvo.alive:
+		var puxa := maxf(dist - 1.6, 0.0)
+		alvo._knock = -to_a.normalized() * minf(sqrt(2.0 * KNOCK_DECAY * puxa), Config.cfg.gancho_vel)
+		alvo.prender(Config.cfg.gancho_atordoa)
+	if is_player:
+		game.camera.add_trauma(0.25)
+		game.camera.kick(dir, 0.4)
+	return true
+
+
+## Preso (corrente da Kusarigama): quase parado, sem atacar, sem esquivar.
+func prender(t: float) -> void:
+	_preso_t = maxf(_preso_t, t)
+	_cancel_skill()
+	if _dodge_t > 0.0:
+		_dodge_t = 0.0
+		_fim_dash()
+	Fx.damage_number(game, global_position + Vector3(0, 0.5, 0), "PRESO", Color(0.75, 0.8, 1.0))
 
 
 ## Arco translúcido na cor do time na frente do corpo enquanto defende:
@@ -1748,7 +1879,7 @@ func na_sombra_para(quem: Unit) -> bool:
 
 
 func _use_super() -> void:
-	if not super_ready() or not alive or carried_princess or _dodge_t > 0.0 or _equip_t > 0.0 or _spin_t > 0.0:
+	if not super_ready() or not alive or carried_princess or _dodge_t > 0.0 or _equip_t > 0.0 or _spin_t > 0.0 or _ciranda_t > 0.0:
 		return
 	var cfg := Config.cfg
 	super_carga = 0.0
@@ -1885,7 +2016,7 @@ func _fim_sombra() -> void:
 
 
 func _use_power() -> void:
-	if not power_ready() or _dodge_t > 0.0 or _equip_t > 0.0 or _spin_t > 0.0:
+	if not power_ready() or _dodge_t > 0.0 or _equip_t > 0.0 or _spin_t > 0.0 or _ciranda_t > 0.0:
 		return
 	if carried_princess:
 		return
@@ -1973,6 +2104,30 @@ func _use_power() -> void:
 			Fx.burst(game, global_position + Vector3(0, 1.4, 0) + base, Color(0.4, 1.0, 1.0), 16, 8.0)
 			FxPoder.leque(self, base)
 			_leque_onda2(n, base)
+		"muralha":
+			# Sohei: anel de fé no chão onde ele está. Aliados dentro ganham
+			# escudo e pressa; inimigos são empurrados para fora pela borda.
+			_muralha_t = stats.power_duration
+			_muralha_pos = global_position
+			_power_active_t = stats.power_duration
+			_play_upper("Spellcast_Raise", 1.2)
+			_mola(-5.0, 0.0)
+			FxPoder.muralha(self, stats.power_radius, stats.power_duration)
+			game.camera.shake_at(global_position, 0.35)
+			for other in game.units:
+				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
+					other.give_shield(stats.power_value, stats.power_duration)
+					other.give_boost(Config.cfg.muralha_pressa, stats.power_duration)
+					if other != self:
+						FxPoder.em_aliado(other, stats.hat_color.lightened(0.3), self)
+		"ciranda":
+			# Kusarigama: a corrente gira em volta; pulsos de dano no anel
+			# [r/2, r] (o peso bate longe, o cabo perto não corta).
+			_ciranda_t = stats.power_duration
+			_ciranda_tick = 0.0
+			_power_active_t = stats.power_duration
+			_play_once("2H_Melee_Attack_Spinning", stats.power_duration)
+			FxPoder.ciranda(self, stats.power_radius, stats.power_duration)
 		"selo", "coluna_fogo":
 			var to := aim_point - global_position
 			to.y = 0
@@ -2122,6 +2277,19 @@ func _tick_buffs(delta: float) -> void:
 				_shield_mesh.visible = false
 	if _slow_t > 0.0:
 		_slow_t -= delta
+	if _preso_t > 0.0:
+		_preso_t -= delta
+	if _muralha_t > 0.0:
+		_muralha_t -= delta
+		_tick_muralha()
+	if _ciranda_t > 0.0:
+		_ciranda_t -= delta
+		_ciranda_tick -= delta
+		if _ciranda_tick <= 0.0:
+			_ciranda_tick = Config.cfg.ciranda_intervalo
+			_pulso_ciranda()
+		if _ciranda_t <= 0.0:
+			_anim_lock = 0.0
 	if _silence_t > 0.0:
 		_silence_t -= delta
 		if fmod(_silence_t, 0.4) < delta:
@@ -2151,9 +2319,50 @@ func _tick_buffs(delta: float) -> void:
 			Fx.burst(game, global_position + Vector3(0, 0.2, 0), Color(1, 0.85, 0.4), 3, 2.0)
 
 
+## Muralha de Fé: inimigo dentro do anel é jogado até a borda (+0,5 m).
+## v0 = sqrt(2·a·s) com a = KNOCK_DECAY: o empurrão freia e para na borda.
+func _tick_muralha() -> void:
+	var r := stats.power_radius
+	for other in game.units:
+		if not other.alive or other.team == team or other.carried_princess:
+			continue
+		var d := other.global_position - _muralha_pos
+		if absf(d.y) > 1.8:
+			continue
+		d.y = 0
+		var dist := d.length()
+		if dist >= r:
+			continue
+		var dn := d / dist if dist > 0.1 else Vector3.RIGHT
+		var v := sqrt(2.0 * KNOCK_DECAY * (r + 0.5 - dist))
+		if other._knock.dot(dn) < v * 0.8:
+			other._knock = dn * v
+			Fx.burst(game, other.global_position + Vector3(0, 1.0, 0), stats.hat_color.lightened(0.4), 5, 3.0)
+
+
+func _pulso_ciranda() -> void:
+	var r := stats.power_radius
+	Fx.slash(game, global_position + Vector3(0, 0.8, 0), _facing(), r, 360.0, stats.hat_color.lightened(0.3), 0.0, false)
+	Sfx.play("swing", global_position, 0.2, 1.2, -4.0)
+	for other in game.units:
+		if not other.alive or other.team == team:
+			continue
+		var d := other.global_position - global_position
+		if absf(d.y) > 1.8:
+			continue
+		d.y = 0
+		var dist := d.length()
+		if dist < r * 0.45 or dist > r + 0.4:
+			continue
+		other.take_damage(stats.power_value * Config.cfg.dano_poder_mult, self, d / maxf(dist, 0.1), 0.7)
+
+
 func _end_buffs() -> void:
 	_fury_t = 0.0
 	_silence_t = 0.0
+	_preso_t = 0.0
+	_muralha_t = 0.0
+	_ciranda_t = 0.0
 	_dmg_boost_t = 0.0
 	building_t = 0.0
 	_spin_t = 0.0

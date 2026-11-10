@@ -600,6 +600,19 @@ func _should_use_power() -> bool:
 			return _count(1 - unit.team, me, 7.0) >= 2 or (role == Role.DEFEND and unit.global_position.distance_to(game.arena.gate_spot[unit.team]) < 6.0)
 		"mutirao":
 			return game.nearest_oficina(unit.team, me, r * 2.0, true) != null
+		"muralha":
+			# Fé: com aliados e inimigos misturados em volta (ou a máscara perto).
+			var aliados := _count(unit.team, me, r)
+			return (_count(1 - unit.team, me, r) >= 2 and aliados >= 2) or unit.hp_ratio() < 0.35 \
+					or (_target != null and _target.carried_princess != null and me.distance_to(_target.global_position) < r)
+		"ciranda":
+			var n := 0
+			for u in game.units:
+				if u.alive and u.team != unit.team:
+					var d := me.distance_to(u.global_position)
+					if d > r * 0.45 and d < r + 0.3:
+						n += 1
+			return n >= 2
 	return false
 
 
@@ -620,6 +633,17 @@ func _should_use_quick() -> bool:
 			return alvo_ok and d > 2.5 and d < unit.stats.skill_radius * 0.9 and randf() < 0.5
 		"pisao":
 			return _count(1 - unit.team, me, unit.stats.skill_radius * 0.8) >= 1 and randf() < 0.6
+		"varrida":
+			# A lâmina corta na faixa [alcance_min, raio]; perto demais só empurra.
+			return alvo_ok and d > unit.stats.alcance_min and d < unit.stats.skill_radius and randf() < 0.6
+		"gancho":
+			# Puxa quem está longe (fujão com a máscara primeiro).
+			if alvo_ok and d > 3.5 and d < unit.stats.skill_radius * 0.95:
+				var to := _target.global_position - me
+				to.y = 0
+				unit.aim_dir = to.normalized()
+				return _target.carried_princess != null or randf() < 0.5
+			return false
 		"corrida":
 			if unit.carried_tora or unit.carried_princess:
 				return true

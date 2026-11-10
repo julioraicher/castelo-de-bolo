@@ -23,6 +23,8 @@ const ELEMENTO := {
 	"campo_minado": ["veneno", 6, 0],
 	"mutirao": ["luz", 8, 0],
 	"bombardeio": ["brasa", 3, 0],
+	"muralha": ["", 8, 0],
+	"ciranda": ["aco", 6, 0],
 }
 
 
@@ -446,6 +448,72 @@ static func som_elemento(u: Unit) -> String:
 	return "magia_fogo" if u.stats.power == "coluna_fogo" else "magia_vento"
 
 
+## Sohei (Varrida): a lâmina da naginata risca um anel de aço só na faixa
+## que corta (dentro fica vazio: o cabo não fere) e a fé sobe em volta.
+static func q_varrida(u: Unit, r: float) -> void:
+	var g := u.game
+	var p := u.global_position
+	var pal := Magia.paleta_de(u.stats.hat_color)
+	Magia.onda(g, p, "aco", r, 0.3, {"r0": u.stats.alcance_min / maxf(r, 0.1), "gira": 2.2, "banda": 0.18})
+	Magia.onda(g, p, pal, r * 1.1, 0.42, {"gira": -1.0, "banda": 0.08, "forca": 0.8})
+	Magia.anel_sobe(g, p + Vector3(0, 0.1, 0), pal, Config.cfg.varrida_aliados_raio * 0.35, 1.4, 0.5)
+	FxProjetil.marca_chao(g, p, Color(0.08, 0.06, 0.04, 0.4), r * 0.55, 2.0)
+
+
+## Kusarigama (Gancho): a corrente estica até o alvo (ou o fim do alcance) e
+## volta; quando prende, estala um anel de aço nele.
+static func q_gancho(u: Unit, ponta: Vector3, prendeu: bool) -> void:
+	var g := u.game
+	var de := u.global_position + Vector3(0, 1.2, 0)
+	var ate := ponta + Vector3(0, 1.0, 0)
+	Magia.lanca(g, de, ate, "aco", 0.32, 0.38, {"cresce": 0.1, "corre": 7.0, "forca": 1.1})
+	Magia.lanca(g, de, ate, Magia.paleta_de(u.stats.hat_color), 0.14, 0.5, {"cresce": 0.12, "corre": -4.0})
+	if prendeu:
+		Magia.estouro(g, ate - Vector3(0, 0.6, 0), "aco", 1.1, 0.28)
+		Magia.anel_sobe(g, ponta + Vector3(0, 0.5, 0), "aco", 0.7, 0.6, 0.45)
+		FxProjetil.faiscas(g, ate, Color(0.85, 0.9, 1.0), 8, 6.0, Vector3.UP, 60.0)
+		Sfx.play("hit", ponta, 0.1, 0.8)
+
+
+## Último elo do combo da Kusarigama: a corrente dá a volta no corpo.
+static func giro_corrente(u: Unit, r: float) -> void:
+	if not Magia.enfeite():
+		return
+	Magia.onda(u.game, u.global_position, "aco", r, 0.28, {"r0": 0.6, "gira": 3.0, "banda": 0.1})
+
+
+## Sohei (Muralha de Fé): parede de fé translúcida no ponto onde ele fincou
+## a naginata (não segue o corpo: é um lugar), selo de 8 pontas no chão e um
+## estouro de luz quando ela some.
+static func muralha(u: Unit, r: float, dur: float) -> void:
+	var g := u.game
+	var p := u.global_position
+	var pal := Magia.paleta_de(u.stats.hat_color)
+	var no := _no(g, p)
+	Magia.vortice(no, pal, r, 2.6, dur, {"r_topo": 1.0, "gira": 0.5, "sobe": -0.6, "forca": 1.2, "base": 0.35, "topo": 0.0, "alfa": 0.85})
+	Magia.vortice(no, "luz", r * 0.98, 1.2, dur, {"r_topo": 1.0, "gira": -0.8, "forca": 0.8, "base": 0.6, "topo": 0.0, "alfa": 0.6})
+	Magia.selo(g, p, pal, r, dur, {"pontas": 8, "escrita": 0.3, "giro": 0.05})
+	Magia.onda(g, p, pal, r * 1.2, 0.45, {"banda": 0.1})
+	FxProjetil.marca_chao(g, p, Color(0.06, 0.08, 0.07, 0.45), 1.0, dur)
+	var tw := no.create_tween()
+	tw.tween_interval(maxf(dur - 0.05, 0.1))
+	tw.tween_callback(func() -> void:
+		Magia.onda(g, p, "luz", r * 1.3, 0.4, {"gira": 0.6})
+		Magia.brasas(g, p, pal[1], 8, r * 0.7, 0.9))
+	tw.tween_interval(0.5)
+	tw.tween_callback(no.queue_free)
+
+
+## Kusarigama (Ciranda de Aço): anel baixo de corrente girando em volta do
+## corpo (acompanha) e faíscas na borda; o miolo fica limpo (o cabo não corta).
+static func ciranda(u: Unit, r: float, dur: float) -> void:
+	var g := u.game
+	Magia.vortice(u, "aco", r, 0.9, dur, {"r_topo": 1.15, "gira": 3.2, "sobe": 0.0, "forca": 1.4, "base": 0.5, "topo": 0.1, "y": 0.4})
+	Magia.vortice(u, Magia.paleta_de(u.stats.hat_color), r * 0.55, 0.6, dur, {"r_topo": 1.3, "gira": -2.0, "forca": 0.7, "base": 0.4, "topo": 0.05, "y": 0.5})
+	Magia.orbita(u, Color(0.85, 0.9, 1.0), r * 0.9, dur, 10, 0.8)
+	Magia.onda(g, u.global_position, "aco", r * 1.2, 0.35, {"gira": 2.0, "banda": 0.12})
+
+
 ## Fita da lâmina: a faixa por onde a arma passou no golpe (segue a mão de
 ## verdade). Fina e curta nos golpes comuns, dourada e maior no golpe final.
 static func fita_lamina(u: Unit, forte: bool) -> void:
@@ -454,7 +522,7 @@ static func fita_lamina(u: Unit, forte: bool) -> void:
 	var mao := u.mao_da_arma()
 	if mao == null:
 		return
-	var ponta := 1.9 if u.stats.id == &"ronin_oni" else (1.7 if u.stats.id == &"guerreiro" else 1.1)
+	var ponta := 1.9 if u.stats.id in [&"ronin_oni", &"sohei"] else (1.7 if u.stats.id == &"guerreiro" else 1.1)
 	var pal: Variant = "luz" if forte else ("brasa" if u.stats.id == &"ronin_oni" else "aco")
 	Magia.fita(mao, Vector3(0, ponta * (0.3 if forte else 0.5), 0), Vector3(0, ponta, 0), pal, 0.2 if forte else 0.16, {"pontos": 9, "forca": 0.5, "lados": 0.3})
 
