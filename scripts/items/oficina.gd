@@ -24,10 +24,10 @@ enum Estado { VAZIO, OBRA, PRONTA }
 
 ## Posições no bairro (a câmera olha de +z): casa atrás, barraquinha na frente,
 ## tapetes dos lados, estandarte no canto de trás.
-const CASA := Vector3(0, 0, -2.1)
-const BARRACA := Vector3(0, 0, 2.3)
-const TAPETES := [Vector3(-3.7, 0, 0.5), Vector3(3.7, 0, 0.5)]
-const BANDEIRA := Vector3(4.3, 0, -2.9)
+const CASA := Vector3(0, 0, -2.6)
+const BARRACA := Vector3(0, 0, 3.0)
+const TAPETES := [Vector3(-3.7, 0, 0.3), Vector3(3.7, 0, 0.3)]
+const BANDEIRA := Vector3(4.3, 0, -3.3)
 const TAPETE_R := 1.3
 ## Construtor a menos disto do centro trabalha na casa (obra e níveis).
 const BUILD_RADIUS := 4.8
@@ -36,7 +36,7 @@ const RAIO := 5.4
 const ESCOLHA_T := 0.5
 ## Construtor mais lento que isto (m/s) conta como parado trabalhando.
 const PARADO_VEL := 1.5
-const FANTASMA_ESC := 0.46
+const FANTASMA_ESC := 0.56
 const SHADER_FANTASMA := preload("res://assets/shaders/casa_fantasma.gdshader")
 
 var team := 0
@@ -106,7 +106,7 @@ func setup(game: Game, p_team: int, pos: Vector3, p_base: ClassStats) -> void:
 	_label.outline_size = 12
 	_label.outline_modulate = Estilo.TINTA
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.position = CASA + Vector3(0, 3.0, 0)
+	_label.position = CASA + Vector3(0, 4.4, 0)
 	_label.add_to_group("letreiro_perto")  # some de longe (Game._letreiros_perto)
 	add_child(_label)
 	_contador = ContadorMadeira.new()
@@ -473,6 +473,13 @@ func _montar_bairro() -> void:
 	_emblema_bandeira = _bairro.find_child("Emblema_bandeira", true, false) as Node3D
 	if _emblema_bandeira:
 		fora.append(_emblema_bandeira)
+	for i in mini(caminhos().size(), 2):
+		var mk := _bairro.find_child("Emblema_%d" % i, true, false) as Node3D
+		var em := th.model_path("emblema_%s.scn" % caminhos()[i].resource_path.get_file().get_basename())
+		if mk and ResourceLoader.exists(em):
+			var e3: Node3D = (load(em) as PackedScene).instantiate()
+			e3.rotation_degrees.x = -12.0
+			mk.add_child(e3)
 	_pintar_estandarte()
 	MalhaUnica.juntar(_bairro, fora)
 
@@ -547,10 +554,10 @@ func _montar_fantasma(i: int) -> MeshInstance3D:
 	var mat := ShaderMaterial.new()
 	mat.shader = SHADER_FANTASMA
 	mat.set_shader_parameter("cor", cls.hat_color.lightened(0.15))
-	mat.set_shader_parameter("alfa", 0.5)
+	mat.set_shader_parameter("alfa", 0.62)
 	mat.set_shader_parameter("altura", 5.0)
 	mi.material_override = mat
-	mi.position = TAPETES[i] + Vector3(0, 0.12, -0.2)
+	mi.position = TAPETES[i] + Vector3(0, 0.2, -0.15)
 	mi.scale = Vector3.ONE * FANTASMA_ESC
 	add_child(mi)
 	return mi
@@ -571,13 +578,11 @@ static func _malha_fantasma(arq: String) -> Mesh:
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
 		var algum := false
 		for mi: MeshInstance3D in raiz.find_children("*", "MeshInstance3D", true, false):
-			if mi.mesh == null or mi.name.begins_with("N3_") or mi.name.begins_with("N4_") \
+			if mi.mesh == null or not mi.visible or mi.name.begins_with("N3_") or mi.name.begins_with("N4_") \
 					or _dentro_de(mi, raiz, ["N3_", "N4_", "Estoque", "Molde"]):
 				continue
 			var xf := _relativa(mi, raiz)
 			for s in mi.mesh.get_surface_count():
-				if mi.mesh.surface_get_primitive_type(s) != Mesh.PRIMITIVE_TRIANGLES:
-					continue
 				st.append_from(mi.mesh, s, xf)
 				algum = true
 		raiz.free()
@@ -647,10 +652,10 @@ func _process(delta: float) -> void:
 		if not f.visible:
 			continue
 		var pisado: float = clampf(_tapete_t[i] / ESCOLHA_T, 0.0, 1.0)
-		f.position.y = 0.12 + 0.08 * sin(_t * 1.6 + i * 2.0) + 0.25 * pisado
+		f.position.y = 0.2 + 0.08 * sin(_t * 1.6 + i * 2.0) + 0.25 * pisado
 		f.rotation.y = 0.18 * sin(_t * 0.7 + i)
 		f.scale = Vector3.ONE * FANTASMA_ESC * (1.0 + 0.25 * pisado)
-		(f.material_override as ShaderMaterial).set_shader_parameter("alfa", 0.5 + 0.4 * pisado)
+		(f.material_override as ShaderMaterial).set_shader_parameter("alfa", 0.62 + 0.3 * pisado)
 
 
 func _update_label() -> void:
@@ -668,7 +673,7 @@ func _update_label() -> void:
 		_label.visible = txt != ""
 	_label.modulate = (opcao().hat_color if estado == Estado.OBRA else base.hat_color).lightened(0.35)
 	if estado == Estado.OBRA:
-		_label.position.y = lerpf(2.4, 4.6, progresso)
+		_label.position.y = lerpf(3.0, 4.8, progresso)
 	# Contador de madeira: na obra e nos níveis (com madeira posta ou com o
 	# jogador Construtor perto); grande para quem joga de Construtor.
 	var p := _game.player
