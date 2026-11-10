@@ -27,6 +27,8 @@ var nivel := 1
 var madeira_n2 := 0
 
 const OBRA_RAIO := 2.8
+## Distância para pegar o chapéu (a casa evoluída é maior que a barraquinha).
+var raio_pegar := 2.0
 ## false = a casa da classe (Oficina) cuida da madeira: a maquininha não puxa
 ## madeira sozinha para o nível 2 (Ciclo 2.21).
 var aceita_madeira := true

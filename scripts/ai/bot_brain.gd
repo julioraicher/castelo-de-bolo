@@ -387,7 +387,9 @@ func _lenhador(me: Vector3) -> bool:
 		_goal = tor.global_position + (me - tor.global_position).normalized() * 1.6
 		return true
 	if of and ((falta > 0 and game.madeira[unit.team] >= falta) or (falta == 0 and of.progresso < 1.0)):
-		_goal = of.global_position + (me - of.global_position).normalized() * 1.2
+		# Bairro sem caminho: pisa no tapete sorteado (a escolha é dele);
+		# com a obra começada, fica na frente da casa.
+		_goal = of.alvo_obra(me)
 		return true
 	# Oficinas prontas: a madeira sobe as maquininhas para o nível 2.
 	var maq: HatPad = game.maquina_para_n2(unit.team, me) if of == null else null
@@ -396,10 +398,10 @@ func _lenhador(me: Vector3) -> bool:
 		lado.y = 0
 		_goal = maq.global_position + (lado.normalized() if lado.length() > 0.1 else Vector3.BACK) * 1.8
 		return true
-	# Oficina do caminho dos magos pronta: a madeira sobe o nível (3 a 5).
-	var mago: Oficina = game.mago_para_subir(unit.team) if of == null and maq == null else null
+	# Casa pronta: a madeira sobe o nível (3 e 4).
+	var mago: Oficina = game.mago_para_subir(unit.team, me) if of == null and maq == null else null
 	if mago and game.madeira[unit.team] >= mini(mago.faltam_nivel(), 2):
-		_goal = mago.global_position + (me - mago.global_position).normalized() * 1.2
+		_goal = mago.alvo_obra(me)
 		return true
 	var tora := game.nearest_tora_solta(me, 30.0)
 	if tora:

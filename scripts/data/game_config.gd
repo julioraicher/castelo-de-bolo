@@ -157,6 +157,10 @@ extends Resource
 ## estoque do time a cada oficina_puxar_intervalo s (dividido pela velocidade_obra);
 ## a obra não passa da fração de madeira já entregue.
 @export var oficina_custo_madeira := 6
+## Ritmo "escada" (Ciclo 2.21): cada casa que o time já escolheu deixa a
+## próxima mais cara em tantas madeiras (6, 8, 10, 12 com degrau 2). A 1ª
+## evolução sai cedo, a 4ª lá pelos 5 min de uma partida de ~10.
+@export var oficina_custo_degrau := 2
 @export var oficina_puxar_intervalo := 1.5
 ## Antigo (antes do Ciclo 2.21): variações das oficinas comuns. Vazio no jogo.
 @export var oficina_classes: Array[ClassStats] = []
@@ -394,3 +398,16 @@ extends Resource
 
 func hat_classes() -> Array[ClassStats]:
 	return hat_class_list
+
+
+## Todas as classes jogáveis: as do pátio e, depois, os caminhos de cada uma
+## (ClassStats.caminhos), sem repetir.
+func todas_classes() -> Array[ClassStats]:
+	var out: Array[ClassStats] = []
+	for c in hat_class_list:
+		out.append(c)
+	for c in hat_class_list:
+		for e in c.caminhos:
+			if not out.has(e):
+				out.append(e)
+	return out

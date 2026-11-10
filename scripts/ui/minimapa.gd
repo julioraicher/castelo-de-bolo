@@ -2,7 +2,7 @@ class_name Minimapa
 extends Control
 ## Minimapa do canto (estilo Battlefield, mas só com o que é público): os dois
 ## castelos, as máscaras, os bosques com madeira pronta para cortar, os
-## depósitos, as oficinas, as toras soltas, o seu time e você. Inimigos NÃO
+## depósitos, os bairros das classes, as toras soltas, o seu time e você. Inimigos NÃO
 ## aparecem (spotar inimigos é ideia guardada em docs/ideias.md).
 ## Desenhado com _draw (sem nós por ícone) e redesenhado a 10 Hz.
 ## Mundo -> mapa: x vai para a direita e z para baixo (a câmera olha para -z).
@@ -84,24 +84,29 @@ func _draw() -> void:
 		draw_rect(r, Color(cor, 0.22 if team == me.team else 0.14))
 		draw_rect(r, Color(cor, 0.9 if team == me.team else 0.55), false, 2.0)
 
-	# Oficinas (terreno vazio = contorno; pronta = cheia).
+	# Bairros das classes (Ciclo 2.21): ícone da classe num disco escuro.
+	# Anel cinza = só a barraquinha; arco na cor do caminho = casa em obra;
+	# anel dourado = casa pronta, com um pontinho por nível acima do 2.
 	for of in game.oficinas:
 		var c := _p(of.global_position)
-		var cor := Config.team_color(of.team).lerp(Color(0.8, 0.65, 0.45), 0.4)
-		var r := Rect2(c - Vector2(3.5, 3.5), Vector2(7, 7))
-		if of.estado == Oficina.Estado.PRONTA:
-			draw_rect(r, cor)
-		else:
-			draw_rect(r, Color(cor, 0.8), false, 1.2)
-		# Caminho dos magos: losango na cor do mago; selado = X apagado.
-		if of.caminho >= 0:
-			var cm := of.opcao().hat_color.lightened(0.25)
-			if of.selada:
-				draw_line(c + Vector2(-4, -4), c + Vector2(4, 4), Color(0.45, 0.42, 0.45, 0.9), 1.6)
-				draw_line(c + Vector2(-4, 4), c + Vector2(4, -4), Color(0.45, 0.42, 0.45, 0.9), 1.6)
-			else:
-				var pts := PackedVector2Array([c + Vector2(0, -6), c + Vector2(6, 0), c + Vector2(0, 6), c + Vector2(-6, 0), c + Vector2(0, -6)])
-				draw_polyline(pts, cm, 1.8)
+		var meu := of.team == me.team
+		var r := 7.0 if meu else 5.0
+		var cls: ClassStats = of.opcao() if of.caminho >= 0 else of.base
+		var a := 1.0 if meu else 0.6
+		draw_circle(c, r + 1.6, Color(0.05, 0.04, 0.03, 0.85 * a))
+		Icone.pintar(self, Icone.do_papel(cls), Color(cls.hat_color.lightened(0.2), a), c, r * 0.72)
+		var cinza := Color(0.62, 0.6, 0.58, 0.75 * a)
+		match of.estado:
+			Oficina.Estado.VAZIO:
+				draw_arc(c, r + 1.6, 0.0, TAU, 20, cinza, 1.4, true)
+			Oficina.Estado.OBRA:
+				draw_arc(c, r + 1.6, 0.0, TAU, 20, cinza, 1.2, true)
+				draw_arc(c, r + 1.6, -PI / 2.0, -PI / 2.0 + TAU * maxf(of.progresso, 0.04), 20, Color(cls.hat_color.lightened(0.35), a), 2.4, true)
+			Oficina.Estado.PRONTA:
+				draw_arc(c, r + 1.6, 0.0, TAU, 24, Color(Estilo.OURO, a), 2.2, true)
+				var n := of.nivel - 2
+				for k in n:
+					draw_circle(c + Vector2((k - (n - 1) * 0.5) * 4.0, r + 4.5), 1.6, Color(Estilo.OURO, a))
 
 	# Madeira: árvores/bambus adultos brilham; crescendo ficam apagados.
 	for p in game.plantas:

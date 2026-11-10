@@ -122,7 +122,9 @@ func _escondidos() -> void:
 	for p in game.plantas:
 		alvos.append([p.tipo, p.global_position, 1.5])
 	for of in game.oficinas:
-		alvos.append(["oficina", of.global_position, 2.5])
+		alvos.append(["casa", of.global_position + Oficina.CASA, 2.5])
+		for i in 2:
+			alvos.append(["tapete", of.tapete_pos(i), 1.0])
 	for team in 2:
 		alvos.append(["máscara", game.arena.princess_spot[team], 1.5])
 		alvos.append(["saída do castelo", game.arena.gate_spot[team], 1.5])

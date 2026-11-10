@@ -1,172 +1,183 @@
 class_name Oficina
 extends Node3D
-## Terreno de oficina no castelo. O time escolhe qual variação construir
-## (jogador: [E] troca a opção; bots: escolha aleatória) e os Construtores
-## erguem a casinha. Pronta, ela ganha um pedestal com o item da variação:
-## é assim que o time libera Ronin Oni, Kitsune etc.
+## Casa da classe (Ciclo 2.21): um bairro por classe do pátio. Na frente fica a
+## barraquinha de festival da classe base (HatPad pad_base, nível 1); dos lados,
+## dois tapetes com o FANTASMA da casa de cada caminho (ClassStats.caminhos:
+## [0] à esquerda, [1] à direita, como a câmera vê). Um Construtor do time de pé
+## num tapete por ESCOLHA_T s, com madeira no estoque, escolhe o caminho: a
+## primeira madeira entra, o outro tapete ganha o selo (corda + papéis) e a casa
+## daquele caminho começa a subir atrás da barraquinha.
 ##
-## Obra: d(progresso)/dt = Σ velocidade_obra / oficina_build_time, somando
-## todos os Construtores do time a menos de BUILD_RADIUS, mas o progresso não
-## passa de madeira_entregue / oficina_custo_madeira (Ciclo 2.3). Quem está na
-## obra puxa 1 madeira do estoque do time a cada oficina_puxar_intervalo / Σv s.
-## Em cima, o contador "NN% · faltam N" + barra (dourado = madeira entregue,
-## claro = já construído), grande para quem joga de Construtor. O progresso
-## fica guardado na casinha: quem volta (ele ou um aliado) continua dali, e a
-## opção do terreno trava assim que a obra começa.
+## Obra: d(progresso)/dt = Σ velocidade_obra / oficina_build_time, somando os
+## Construtores do time a menos de BUILD_RADIUS do centro do bairro, mas o
+## progresso não passa de madeira_entregue / oficina_custo_madeira (Ciclo 2.3).
+## Quem está no bairro puxa 1 madeira do estoque a cada oficina_puxar_intervalo
+## / Σv s. Pronta, a casa É a maquininha da classe evoluída (HatPad pad, modelo
+## maquina_<classe>.scn), já no nível 2; a barraquinha também sobe para o 2.
+## Com mais madeira a casa sobe até mago_nivel_max (custos em mago_nivel_custo):
+## cada nível um telhado a mais (nós "N3_*", "N4_*"), +1 chapéu de estoque,
+## fabricação mais rápida e bônus de dano/vida/Chi para quem usa a classe.
 ##
-## Caminho dos magos (caminho >= 0): terreno fixo de um dos magos opostos.
-## Começar um sela o do outro lado (selada) pelo resto da partida; pronto, ele
-## está no nível 2 e sobe com madeira (GameConfig.mago_nivel_custo) até o 5.
+## (O nome "Oficina" ficou dos ciclos antigos: game.oficinas, minimapa, bots.)
 
 enum Estado { VAZIO, OBRA, PRONTA }
 
-const BUILD_RADIUS := 3.2
+## Posições no bairro (a câmera olha de +z): casa atrás, barraquinha na frente,
+## tapetes dos lados, estandarte no canto de trás.
+const CASA := Vector3(0, 0, -2.1)
+const BARRACA := Vector3(0, 0, 2.3)
+const TAPETES := [Vector3(-3.7, 0, 0.5), Vector3(3.7, 0, 0.5)]
+const BANDEIRA := Vector3(4.3, 0, -2.9)
+const TAPETE_R := 1.3
+## Construtor a menos disto do centro trabalha na casa (obra e níveis).
+const BUILD_RADIUS := 4.8
+## Raio do chão pintado do bairro (QA do mapa, minimapa).
+const RAIO := 5.4
+const ESCOLHA_T := 0.5
+## Construtor mais lento que isto (m/s) conta como parado trabalhando.
+const PARADO_VEL := 1.5
+const FANTASMA_ESC := 0.46
+const SHADER_FANTASMA := preload("res://assets/shaders/casa_fantasma.gdshader")
 
 var team := 0
 var estado := Estado.VAZIO
 var progresso := 0.0
-var opcao_i := 0
-var pad: HatPad
 var madeira_entregue := 0
 ## Obra parada porque o time não tem madeira (o contador pisca).
 var falta_madeira := false
-## Caminho dos magos: -1 = terreno comum; 0/1 = índice em magos_opostos.
+## Classe do pátio desta casa (Samurai, Ninja...).
+var base: ClassStats
+## Barraquinha de festival da classe base (sempre de pé).
+var pad_base: HatPad
+## A casa pronta: maquininha da classe evoluída.
+var pad: HatPad
+## -1 = caminho ainda não escolhido; 0/1 = índice em base.caminhos.
 var caminho := -1
-## O time escolheu o outro caminho: este terreno nunca será construído.
-var selada := false
-## Nível do mago (2 ao ficar pronta; sobe até mago_nivel_max com madeira).
 var nivel := 1
 var madeira_nivel := 0
-var _lista: Array[ClassStats] = []
-var _selo: Node3D
-var _titulo: Label3D
-var _bandeira: Node3D
+## Antigo (terreno de mago selado). A casa nunca fica selada: quem é selado é
+## o tapete do caminho que não foi escolhido.
+var selada := false
+## Tapete que os bots vão escolher (sorteado no começo da partida).
+var escolha_bot := 0
 
 var _game: Game
-var _face := 0.0
+var _tapete_t := [0.0, 0.0]
+var _bairro: Node3D
+var _selos: Array[Node3D] = [null, null]
+var _panos: Dictionary = {}   # "azul"/"vermelho"/"c0"/"c1" -> Node3D
+var _emblema_bandeira: Node3D
+var _fantasmas: Array[MeshInstance3D] = []
+var _obra: Node3D
+var _telhado: Node3D
+var _obra_cena: PackedScene
 var _label: Label3D
-var _casa: Node3D
-var _roof: Node3D
-var _walls: Node3D
-var _dust_t := 0.0
-## Casa do tema (ThemeConfig.oficina_model): as peças "Gira_*" giram pelo
-## relógio próprio (pintura.gdshader, `relogio`), que anda na velocidade da obra.
-var _mats_gira: Array[ShaderMaterial] = []
-var _relogio := 0.0
-var _ritmo := 0.0
-var _alt_label := 3.6
-var _puxar_t := 0.0
 var _contador: ContadorMadeira
+var _puxar_t := 0.0
+var _dust_t := 0.0
+var _ritmo := 0.0
+var _t := randf() * TAU
+var _texto := ""
+var _custo := -1   # fixado na escolha do caminho
+
+static var _malhas_fantasma := {}   # caminho da cena -> ArrayMesh (uma superfície)
 
 
-func setup(game: Game, p_team: int, pos: Vector3, opcao: int, lista: Array[ClassStats] = [], p_caminho := -1) -> void:
+func setup(game: Game, p_team: int, pos: Vector3, p_base: ClassStats) -> void:
 	_game = game
 	team = p_team
-	opcao_i = opcao
-	_lista = lista
-	caminho = p_caminho
+	base = p_base
 	position = pos
-	_face = 0.0 if team == Config.TEAM_BLUE else PI
+	escolha_bot = randi() % 2
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # cresce por código
-	_build_lot()
-	_casa = _build_house()
-	_casa.visible = false
-	_walls.scale.y = 0.02
-	_roof.visible = false
-	add_child(_casa)
+	_montar_bairro()
+	pad_base = HatPad.new()
+	pad_base.aceita_madeira = false
+	game.add_child(pad_base)
+	pad_base.setup(team, base, pos + BARRACA)
+	game.hat_pads.append(pad_base)
+	for i in mini(caminhos().size(), 2):
+		_fantasmas.append(_montar_fantasma(i))
 	_label = Label3D.new()
 	_label.font = Estilo.LETREIRO
-	_label.font_size = 44
-	_label.pixel_size = 0.012
+	_label.font_size = 42
+	_label.pixel_size = 0.011
+	_label.line_spacing = -6
 	_label.outline_size = 12
 	_label.outline_modulate = Estilo.TINTA
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.position.y = _alt_label
+	_label.position = CASA + Vector3(0, 3.0, 0)
 	_label.add_to_group("letreiro_perto")  # some de longe (Game._letreiros_perto)
 	add_child(_label)
 	_contador = ContadorMadeira.new()
+	_contador.position = CASA + Vector3(0, 4.0, 0)
 	add_child(_contador)
-	if caminho >= 0:
-		_montar_placa()
 	_update_label()
 
 
-## Nome curto do caminho ("Luz", "Sombra").
-func nome_caminho() -> String:
-	var n := Config.cfg.magos_caminho_nomes
-	return n[caminho] if caminho >= 0 and caminho < n.size() else opcao().display_name
+func caminhos() -> Array[ClassStats]:
+	return base.caminhos if base else ([] as Array[ClassStats])
 
 
-## Terreno de mago: estandarte (nobori) na cor do mago, de pé desde o começo
-## para os dois lados do castelo se lerem de longe, e o título a pincel.
-func _montar_placa() -> void:
-	var cor := opcao().hat_color
-	var lado := -1.0 if position.z < 0.0 else 1.0  # para fora, longe do pátio
-	_bandeira = Node3D.new()
-	_bandeira.position = Vector3(1.9, 0, lado * 1.9)
-	add_child(_bandeira)
-	var mastro := MeshInstance3D.new()
-	var m := CylinderMesh.new()
-	m.top_radius = 0.05
-	m.bottom_radius = 0.07
-	m.height = 3.6
-	mastro.mesh = m
-	mastro.position.y = 1.8
-	mastro.material_override = Fx.lit(Color(0.22, 0.15, 0.1))
-	_bandeira.add_child(mastro)
-	var pano := MeshInstance3D.new()
-	pano.name = "Pano"
-	pano.mesh = _box(Vector3(0.04, 2.1, 0.75))
-	pano.position = Vector3(0, 2.35, 0.42)
-	pano.material_override = Fx.lit(cor.darkened(0.15))
-	_bandeira.add_child(pano)
-	var faixa := MeshInstance3D.new()
-	faixa.mesh = _box(Vector3(0.05, 0.22, 0.8))
-	faixa.position = Vector3(0, 3.3, 0.42)
-	faixa.material_override = Fx.unshaded(cor.lightened(0.45))
-	_bandeira.add_child(faixa)
-	MalhaUnica.juntar(_bandeira, [pano])  # o pano fica fora: muda de cor ao tombar
-	_titulo = Label3D.new()
-	_titulo.font = Estilo.TITULO
-	_titulo.font_size = 64
-	_titulo.pixel_size = 0.011
-	_titulo.outline_size = 14
-	_titulo.outline_modulate = Estilo.TINTA
-	_titulo.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_titulo.text = nome_caminho()
-	_titulo.modulate = cor.lightened(0.4)
-	add_child(_titulo)
-	_alt_label = 3.2
-	_label.font = Estilo.LETREIRO
-	_label.font_size = 46
-	_label.pixel_size = 0.01
-	_label.outline_modulate = Estilo.TINTA
-
-
+## Classe do caminho escolhido (ou, antes da escolha, a do tapete dos bots).
 func opcao() -> ClassStats:
-	var list := _lista if not _lista.is_empty() else Config.cfg.oficina_classes
-	return list[opcao_i % list.size()]
+	var c := caminhos()
+	if c.is_empty():
+		return base
+	return c[caminho if caminho >= 0 else escolha_bot]
 
 
-## A obra começou (tem progresso ou madeira): a opção fica travada e o
-## progresso é guardado para quem voltar, o mesmo Construtor ou um aliado.
+## Nome curto do caminho ("Fé", "Sombra").
+func nome_caminho(i := -1) -> String:
+	var c := caminhos()
+	var k := i if i >= 0 else (caminho if caminho >= 0 else escolha_bot)
+	if k >= c.size():
+		return ""
+	return c[k].caminho_nome if c[k].caminho_nome != "" else c[k].display_name
+
+
+func tapete_pos(i: int) -> Vector3:
+	return global_position + TAPETES[i]
+
+
+## Índice do tapete sob `pos` (-1 = nenhum).
+func tapete_sob(pos: Vector3) -> int:
+	for i in 2:
+		var d := pos - tapete_pos(i)
+		d.y = 0.0
+		if d.length() < TAPETE_R:
+			return i
+	return -1
+
+
+## Ponto de trabalho da casa para o Construtor: o tapete dos bots antes da
+## escolha, a frente da casa depois.
+func alvo_obra(from: Vector3) -> Vector3:
+	if caminho < 0:
+		return tapete_pos(escolha_bot)
+	var lado := from - global_position
+	lado.y = 0.0
+	var frente := global_position + CASA + Vector3(0, 0, 2.0)
+	return frente + Vector3(clampf(lado.x, -2.2, 2.2), 0, 0)
+
+
+## A obra começou: o caminho está escolhido (a primeira madeira já entrou).
 func comecada() -> bool:
-	return estado != Estado.VAZIO or progresso > 0.0 or madeira_entregue > 0
+	return caminho >= 0
 
 
-## Troca a variação do terreno. Só antes de a obra começar: depois disso o
-## [E] não apaga nada. Devolve true se trocou.
-func trocar_opcao() -> bool:
-	if comecada() or caminho >= 0:
-		return false
-	opcao_i = (opcao_i + 1) % (_lista.size() if not _lista.is_empty() else Config.cfg.oficina_classes.size())
-	Sfx.play("pickup", global_position, 0.1)
-	_update_label()
-	return true
-
-
+## Madeira da casa: oficina_custo_madeira + oficina_custo_degrau por casa que
+## o time já tinha escolhido antes desta (fica fixo na escolha).
 func custo() -> int:
-	return Config.cfg.oficina_custo_madeira
+	if _custo >= 0:
+		return _custo
+	if _game == null or _game.sandbox:
+		return Config.cfg.oficina_custo_madeira
+	var antes := 0
+	for of in _game.oficinas:
+		if of != self and of.team == team and of.caminho >= 0:
+			antes += 1
+	return Config.cfg.oficina_custo_madeira + Config.cfg.oficina_custo_degrau * antes
 
 
 func faltam() -> int:
@@ -178,25 +189,46 @@ func teto() -> float:
 	return 1.0 if custo() <= 0 else float(madeira_entregue) / custo()
 
 
+## Escolhe o caminho i: gasta a primeira madeira, sela o outro tapete e começa
+## a casa. false = já escolhido ou o time sem madeira.
+func escolher(i: int, gratis := false) -> bool:
+	if caminho >= 0 or i < 0 or i >= caminhos().size():
+		return false
+	if not gratis and not _game.gastar_madeira(team, 1):
+		return false
+	_custo = custo()
+	caminho = i
+	madeira_entregue = 0 if gratis else 1
+	estado = Estado.OBRA
+	_selar_tapete(1 - i)
+	_comecar_obra()
+	_pintar_estandarte()
+	if is_inside_tree():
+		var cor := opcao().hat_color.lightened(0.3)
+		Fx.pillar(_game, tapete_pos(i), cor, 1.6)
+		Fx.burst(_game, tapete_pos(i) + Vector3(0, 0.8, 0), cor, 14, 4.0)
+		Sfx.play("nivel", tapete_pos(i), 0.05)
+	_game.on_caminho_escolhido(self)
+	_update_label()
+	return true
+
+
 ## Puxa 1 madeira do estoque do time para a obra. false = sem estoque ou já cheia.
 func puxar_madeira() -> bool:
-	if selada or estado == Estado.PRONTA or faltam() <= 0 or not _game.gastar_madeira(team, 1):
+	if estado != Estado.OBRA or faltam() <= 0 or not _game.gastar_madeira(team, 1):
 		return false
 	madeira_entregue += 1
-	_game.on_obra_comecou(self)
 	if is_inside_tree():
-		Fx.burst(_game, global_position + Vector3(0, 0.6, 0), Color(0.7, 0.5, 0.25), 5, 2.5)
+		Fx.burst(_game, global_position + CASA + Vector3(0, 0.6, 1.2), Color(0.7, 0.5, 0.25), 5, 2.5)
 	return true
 
 
 func add_progress(frac: float, by: Unit) -> void:
-	if estado == Estado.PRONTA or selada:
+	if estado != Estado.OBRA:
 		return
-	_game.on_obra_comecou(self)
 	progresso = minf(progresso + frac, teto())
-	estado = Estado.OBRA
-	_casa.visible = true
-	_walls.scale.y = maxf(progresso, 0.02)
+	if _obra:
+		_obra.scale.y = maxf(progresso, 0.04)
 	if by:
 		by.building_t = 0.25
 	if progresso >= 1.0 - 1e-6:
@@ -204,29 +236,61 @@ func add_progress(frac: float, by: Unit) -> void:
 		_finish()
 
 
-## Σ velocidade_obra dos Construtores do time na obra (e os marca construindo).
+## Σ velocidade_obra dos Construtores do time parados no bairro (e os marca
+## construindo). Parado: quem só passa pelo bairro (indo ao depósito) não
+## puxa madeira para a casa sem querer.
 func _ritmo_obra() -> float:
 	var rate := 0.0
 	for u in _game.units:
 		if u.alive and u.team == team and u.stats.velocidade_obra > 0.0 and not u.carried_princess \
-				and not u.carried_tora and u.global_position.distance_to(global_position) < BUILD_RADIUS:
+				and not u.carried_tora and u.global_position.distance_to(global_position) < BUILD_RADIUS \
+				and Vector2(u.velocity.x, u.velocity.z).length() < PARADO_VEL:
 			rate += u.stats.velocidade_obra
 			u.building_t = 0.25
 	return rate
 
 
+## Construtor do time parado no tapete i? (Passar por cima não escolhe.)
+func _construtor_no_tapete(i: int) -> bool:
+	for u in _game.units:
+		if u.alive and u.team == team and u.stats.velocidade_obra > 0.0 and not u.carried_princess \
+				and not u.carried_tora and tapete_sob(u.global_position) == i \
+				and Vector2(u.velocity.x, u.velocity.z).length() < PARADO_VEL:
+			return true
+	return false
+
+
 func _physics_process(delta: float) -> void:
-	if selada or _game.game_over:
+	if _game.game_over:
 		return
-	if estado == Estado.PRONTA:
-		if pode_subir():
-			_obra_nivel(delta)
-		return
+	match estado:
+		Estado.VAZIO:
+			_escolha(delta)
+		Estado.OBRA:
+			_obra_tick(delta)
+		Estado.PRONTA:
+			if pode_subir():
+				_obra_nivel(delta)
+	_update_label()
+
+
+func _escolha(delta: float) -> void:
+	falta_madeira = false
+	for i in _fantasmas.size():
+		if _construtor_no_tapete(i):
+			_tapete_t[i] += delta
+			falta_madeira = _game.madeira[team] <= 0
+			if _tapete_t[i] >= ESCOLHA_T and escolher(i):
+				return
+		else:
+			_tapete_t[i] = 0.0
+
+
+func _obra_tick(delta: float) -> void:
 	var rate := _ritmo_obra()
 	_ritmo = rate
 	if rate <= 0.0:
 		falta_madeira = false
-		_update_label()
 		return
 	_puxar_t -= delta * rate
 	if _puxar_t <= 0.0 and faltam() > 0:
@@ -234,27 +298,25 @@ func _physics_process(delta: float) -> void:
 			_puxar_t = Config.cfg.oficina_puxar_intervalo
 	falta_madeira = faltam() > 0 and progresso >= teto() - 1e-4 and _game.madeira[team] <= 0
 	if progresso >= teto() - 1e-4:
-		_update_label()
 		return  # esperando madeira: sem poeira nem martelada
 	add_progress(rate * delta / Config.cfg.oficina_build_time, null)
 	_dust_t -= delta
-	if _dust_t <= 0.0:
+	if _dust_t <= 0.0 and estado == Estado.OBRA:
 		_dust_t = 0.35
-		Fx.burst(_game, global_position + Vector3(randf_range(-1, 1), 0.3, randf_range(-1, 1)), Color(0.75, 0.65, 0.5), 4, 2.5)
+		Fx.burst(_game, global_position + CASA + Vector3(randf_range(-1.4, 1.4), 0.3, randf_range(-0.5, 1.4)), Color(0.75, 0.65, 0.5), 4, 2.5)
 		Sfx.play("swing", global_position, 0.3)
-	_update_label()
 
 
-# --- Caminho dos magos: selo e níveis 3 a 5 -----------------------------------
+# --- Níveis 3 e 4 --------------------------------------------------------------
 
-## Oficina de mago pronta e abaixo do nível máximo: aceita madeira para subir.
+## Casa pronta abaixo do nível máximo: aceita madeira para subir.
 func pode_subir() -> bool:
-	return caminho >= 0 and estado == Estado.PRONTA and not selada and nivel < Config.cfg.mago_nivel_max
+	return estado == Estado.PRONTA and nivel < Config.cfg.mago_nivel_max
 
 
 func custo_nivel() -> int:
 	if _game and _game.sandbox:
-		return 1  # modo teste: 1 tora por nível, para ver as caudas 2→5 rápido
+		return 1  # modo teste: 1 tora por nível
 	var c := Config.cfg.mago_nivel_custo
 	var i := nivel - 2
 	return c[clampi(i, 0, c.size() - 1)] if not c.is_empty() else 0
@@ -270,28 +332,27 @@ func puxar_madeira_nivel() -> bool:
 		return false
 	madeira_nivel += 1
 	if is_inside_tree():
-		Fx.burst(_game, global_position + Vector3(0, 1.2, 0), opcao().hat_color.lightened(0.3), 5, 2.5)
+		Fx.burst(_game, global_position + CASA + Vector3(0, 1.2, 1.0), opcao().hat_color.lightened(0.3), 5, 2.5)
 	if faltam_nivel() <= 0:
 		subir_nivel()
 	return true
 
 
 func subir_nivel() -> void:
+	if estado != Estado.PRONTA or nivel >= Config.cfg.mago_nivel_max:
+		return
 	nivel += 1
 	madeira_nivel = 0
 	if pad:
 		pad.estoque_max += 1
 		pad.intervalo *= Config.cfg.mago_pad_intervalo_mult
 		pad.estoque = mini(pad.estoque + 1, pad.estoque_max)
+		pad.mostrar_nivel(nivel)
 	if is_inside_tree():
 		var cor := opcao().hat_color.lightened(0.3)
-		Fx.pillar(_game, global_position, cor, 2.6 + 0.4 * nivel)
-		FxPoder.subir_nivel(_game, global_position, cor, nivel)
+		Fx.pillar(_game, global_position + CASA, cor, 2.6 + 0.4 * nivel)
+		FxPoder.subir_nivel(_game, global_position + CASA, cor, nivel)
 		Sfx.play("nivel", global_position, 0.02)
-		var tw := _casa.create_tween()
-		var esc := Vector3.ONE * (1.0 + 0.06 * (nivel - 2))
-		tw.tween_property(_casa, "scale", esc * 1.15, 0.15)
-		tw.tween_property(_casa, "scale", esc, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_update_label()
 	_game.on_mago_nivel(self)
 
@@ -304,276 +365,322 @@ func _obra_nivel(delta: float) -> void:
 		if _puxar_t <= 0.0 and puxar_madeira_nivel():
 			_puxar_t = Config.cfg.oficina_puxar_intervalo
 	falta_madeira = rate > 0.0 and _game.madeira[team] <= 0
-	_update_label()
 
 
-## O time escolheu o caminho oposto: o terreno ganha a corda de selo
-## (shimenawa com papéis) e some das obras para sempre.
-func selar() -> void:
-	if selada or comecada():
-		return
-	selada = true
-	_selo = Node3D.new()
-	add_child(_selo)
-	var corda := MeshInstance3D.new()
-	var t := TorusMesh.new()
-	t.inner_radius = 2.18
-	t.outer_radius = 2.36
-	t.rings = 24
-	t.ring_segments = 6
-	corda.mesh = t
-	corda.position.y = 0.72
-	corda.material_override = Fx.lit(Color(0.78, 0.68, 0.45))
-	_selo.add_child(corda)
-	var papel := Fx.unshaded(Color(0.95, 0.93, 0.86))
-	for i in 6:
-		var a := TAU * (i + 0.5) / 6.0
-		var f := MeshInstance3D.new()
-		f.mesh = _box(Vector3(0.22, 0.42, 0.02))
-		f.material_override = papel
-		f.position = Vector3(cos(a) * 2.27, 0.48, sin(a) * 2.27)
-		f.rotation.y = -a + PI / 2
-		_selo.add_child(f)
-	if is_inside_tree():
-		Fx.burst(_game, global_position + Vector3(0, 0.8, 0), Color(0.5, 0.45, 0.6), 12, 3.0)
-	if _bandeira:
-		# Estandarte tombado e apagado: este caminho não volta mais.
-		_bandeira.create_tween().tween_property(_bandeira, "rotation:x", deg_to_rad(-62.0) * signf(position.z if position.z != 0.0 else 1.0), 0.6) \
-			.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-		var pano := _bandeira.get_node("Pano") as MeshInstance3D
-		pano.material_override = Fx.lit(opcao().hat_color.darkened(0.7).lerp(Color(0.3, 0.3, 0.32), 0.5))
-	_update_label()
+# --- Fim da obra -----------------------------------------------------------------
 
-
-func _finish() -> void:
+func _finish(anim := true) -> void:
 	estado = Estado.PRONTA
-	_walls.scale.y = 1.0
-	_roof.visible = true
-	_roof.position.y = 4.0
-	var tw := _roof.create_tween()
-	tw.tween_property(_roof, "position:y", 0.0, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tw.tween_callback(func(): Fx.burst(_game, global_position + Vector3(0, 2.2, 0), Color(0.75, 0.65, 0.5), 16, 5.0))
-	Fx.pillar(_game, global_position, Config.team_color(team).lightened(0.3), 3.0)
-	Sfx.play("score", global_position, 0.05)
-	_novo_pad()
-	if caminho >= 0:
-		nivel = 2
-	_label.position.y = _alt_label + (0.4 if _titulo else 1.0)
+	nivel = 2
+	madeira_nivel = 0
+	pad = HatPad.new()
+	_game.add_child(pad)
+	pad.setup(team, opcao(), global_position + CASA)
+	pad.raio_pegar = 2.7
+	pad.altura_letreiro(5.6)
+	pad.nivel = 2
+	pad.mostrar_nivel(2)
+	_game.hat_pads.append(pad)
+	if anim and _obra and is_inside_tree():
+		# O telhado cai, a poeira sobe e a casa de verdade toma o lugar da obra.
+		pad.visible = false
+		var obra := _obra
+		var tw := obra.create_tween()
+		if _telhado:
+			_telhado.visible = true
+			_telhado.position.y += 4.0
+			tw.tween_property(_telhado, "position:y", _telhado.position.y - 4.0, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.tween_callback(func():
+			Fx.burst(_game, global_position + CASA + Vector3(0, 2.2, 0), Color(0.75, 0.65, 0.5), 16, 5.0)
+			if is_instance_valid(pad):
+				pad.visible = true
+			obra.queue_free())
+		Fx.pillar(_game, global_position + CASA, Config.team_color(team).lightened(0.3), 3.0)
+		Sfx.play("score", global_position, 0.05)
+	elif _obra:
+		_obra.queue_free()
+	_obra = null
+	_telhado = null
+	if pad_base:
+		pad_base.subir_nivel()
 	_update_label()
 	_game.on_oficina_pronta(self)
 
 
-## Pedestal com o chapéu da opção atual, ao lado da casa, do lado do portão
-## (atrás dela, z menor, a câmera não vê).
-func _novo_pad() -> void:
-	pad = HatPad.new()
-	_game.add_child(pad)
-	var lado := signf(_game.arena.spawn_center[team].x - global_position.x)
-	pad.setup(team, opcao(), global_position + Vector3(lado * 3.0, 0, 0))
-	_game.hat_pads.append(pad)
-
-
-## Modo teste: a casa fica pronta na hora, sem obra nem madeira.
-func concluir_ja() -> void:
-	if estado == Estado.PRONTA or selada:
+## Modo teste: a casa fica pronta na hora, no caminho i, sem obra nem madeira.
+func concluir_ja(i := 0) -> void:
+	if estado == Estado.PRONTA:
 		return
+	if caminho < 0:
+		escolher(i, true)
 	madeira_entregue = custo()
 	progresso = 1.0
-	_casa.visible = true
-	_finish()
+	_finish(false)
 
 
-## Modo teste: troca a classe de uma oficina comum já pronta; o pedestal
-## é refeito com o chapéu novo. Devolve true se trocou.
+## Modo teste: casa pronta troca para o outro caminho (nível 2 de novo).
+## Devolve true se trocou.
 func trocar_pronta() -> bool:
-	if estado != Estado.PRONTA or caminho >= 0 or _lista.size() < 2:
+	if estado != Estado.PRONTA or caminhos().size() < 2:
 		return false
-	opcao_i = (opcao_i + 1) % _lista.size()
 	if pad:
 		_game.hat_pads.erase(pad)
 		pad.queue_free()
-	_novo_pad()
+		pad = null
+	_desselar()
+	var novo := 1 - caminho
+	caminho = novo
+	_selar_tapete(1 - novo)
+	_pintar_estandarte()
+	_finish(false)
+	_game.on_mago_nivel(self)
 	Sfx.play("pickup", global_position, 0.1)
-	_update_label()
-	_game.on_oficina_pronta(self)
 	return true
 
 
-func _update_label() -> void:
-	var cls := opcao()
-	var txt := "Oficina: %s" % cls.display_name
-	if estado != Estado.PRONTA:
-		txt = "Obra: %s" % cls.display_name if comecada() else "Terreno: %s" % cls.display_name
-	if caminho >= 0:
-		txt = _texto_caminho(cls)
-	if _label.text != txt:
-		_label.text = txt
-	if estado != Estado.PRONTA:
-		# O letreiro acompanha a altura da obra: perto do Construtor (e longe
-		# do placar no alto da tela) enquanto a casa ainda é baixa.
-		_label.position.y = lerpf(2.6, _alt_label, progresso)
-	_label.modulate = Estilo.TEXTO_FRACO if selada else cls.hat_color.lightened(0.35)
-	if _titulo:
-		_titulo.position.y = _label.position.y + 0.75
-		_titulo.modulate = Estilo.TEXTO_FRACO.darkened(0.25) if selada else cls.hat_color.lightened(0.4)
-		_titulo.text = nome_caminho()
-	# Contador de madeira: grande para quem joga de Construtor, pequeno nas
-	# outras classes; pisca "falta madeira" quando o time não tem estoque.
-	_contador.visible = estado != Estado.PRONTA and not selada
-	if pode_subir():
-		var p := _game.player
-		var perto := p != null and p.team == team and p.global_position.distance_to(global_position) < BUILD_RADIUS + 2.0
-		_contador.visible = madeira_nivel > 0 or perto
-		if _contador.visible:
-			_contador.position.y = _label.position.y + (1.75 if _titulo else 0.9)
-			_contador.mostrar(faltam_nivel(), custo_nivel(), p != null and p.lenhador(), falta_madeira)
+# --- Visual ------------------------------------------------------------------------
+
+## Chão pintado do bairro, tapetes, selos e estandarte (bairro_<classe>.scn do
+## tema). Sem o modelo (tema antigo): um disco de terra simples.
+func _montar_bairro() -> void:
+	var th: ThemeConfig = _game.arena.theme if _game and _game.arena else Config.theme()
+	var arq := th.model_path("bairro_%s.scn" % base.resource_path.get_file().get_basename())
+	if not ResourceLoader.exists(arq):
+		var chao := MeshInstance3D.new()
+		var c := CylinderMesh.new()
+		c.top_radius = RAIO - 0.2
+		c.bottom_radius = RAIO
+		c.height = 0.05
+		c.radial_segments = 10
+		chao.mesh = c
+		chao.position.y = 0.025
+		chao.material_override = Fx.lit(base.hat_color.darkened(0.55).lerp(Color(0.42, 0.33, 0.24), 0.5))
+		add_child(chao)
 		return
-	if _contador.visible:
-		var p := _game.player
-		var grande := p != null and p.team == team and p.lenhador()
-		_contador.position.y = _label.position.y + (1.0 if grande else 0.7) + (0.8 if _titulo else 0.0)
-		_contador.mostrar(faltam(), custo(), grande, falta_madeira or (faltam() > 0 and _game.madeira[team] <= 0), progresso if comecada() else -1.0)
+	_bairro = (load(arq) as PackedScene).instantiate()
+	add_child(_bairro)
+	var fora: Array = []
+	for i in 2:
+		_selos[i] = _bairro.find_child("Selo_%d" % i, true, false) as Node3D
+		if _selos[i]:
+			_selos[i].visible = false
+			fora.append(_selos[i])
+	for k in ["azul", "vermelho", "c0", "c1"]:
+		var p := _bairro.find_child("Pano_%s" % k, true, false) as Node3D
+		if p:
+			_panos[k] = p
+			fora.append(p)
+	_emblema_bandeira = _bairro.find_child("Emblema_bandeira", true, false) as Node3D
+	if _emblema_bandeira:
+		fora.append(_emblema_bandeira)
+	_pintar_estandarte()
+	MalhaUnica.juntar(_bairro, fora)
 
 
-## Letreiro do terreno de mago: o caminho, o selo ou o nível.
-func _texto_caminho(cls: ClassStats) -> String:
-	if selada:
-		return "SELADO"
-	if estado == Estado.PRONTA:
-		var mx := Config.cfg.mago_nivel_max
-		return "%s · NÍVEL %d/%d" % [cls.display_name.to_upper(), nivel, mx]
-	var outro := _game.mago_oposto(self)
-	var nome_outro := outro.nome_caminho() if outro else "o outro"
-	if comecada():
-		return "%s · %s SELADA" % [cls.display_name.to_upper(), nome_outro.to_upper()]
-	return "%s · SELA A %s" % [cls.display_name.to_upper(), nome_outro.to_upper()]
+## Estandarte: pano na cor do time com o emblema da classe base; com o caminho
+## escolhido, pano e emblema passam para os do caminho.
+func _pintar_estandarte() -> void:
+	if _panos.is_empty():
+		return
+	var chave: String = ("c%d" % caminho) if caminho >= 0 else ("azul" if team == Config.TEAM_BLUE else "vermelho")
+	if not _panos.has(chave):
+		chave = "azul" if team == Config.TEAM_BLUE else "vermelho"
+	for k in _panos:
+		(_panos[k] as Node3D).visible = k == chave
+	if _emblema_bandeira:
+		for c in _emblema_bandeira.get_children():
+			c.queue_free()
+		var cls := opcao() if caminho >= 0 else base
+		var th: ThemeConfig = _game.arena.theme if _game and _game.arena else Config.theme()
+		var em := th.model_path("emblema_%s.scn" % cls.resource_path.get_file().get_basename())
+		if ResourceLoader.exists(em):
+			_emblema_bandeira.add_child((load(em) as PackedScene).instantiate())
 
 
-## Estacas nos cantos + chão de terra batida.
-func _build_lot() -> void:
-	var lote := Node3D.new()
-	lote.name = "Lote"
-	add_child(lote)
-	var dirt := MeshInstance3D.new()
-	var c := CylinderMesh.new()
-	c.top_radius = 2.4
-	c.bottom_radius = 2.5
-	c.height = 0.06
-	c.radial_segments = 6
-	dirt.mesh = c
-	dirt.position.y = 0.03
-	dirt.material_override = Fx.lit(Color(0.42, 0.33, 0.24))
-	lote.add_child(dirt)
-	var stake := CylinderMesh.new()
-	stake.top_radius = 0.07
-	stake.bottom_radius = 0.09
-	stake.height = 0.9
-	stake.radial_segments = 5
-	var wood := Fx.lit(Color(0.55, 0.4, 0.22))
-	for i in 6:
-		var a := TAU * i / 6.0
-		var s := MeshInstance3D.new()
-		s.mesh = stake
-		s.material_override = wood
-		s.position = Vector3(cos(a) * 2.3, 0.45, sin(a) * 2.3)
-		lote.add_child(s)
-	MalhaUnica.juntar(lote)
+func _selar_tapete(i: int) -> void:
+	if i < 0 or i >= _fantasmas.size():
+		return
+	if _selos[i]:
+		_selos[i].visible = true
+		if is_inside_tree():
+			_selos[i].scale = Vector3(1.0, 0.1, 1.0)
+			_selos[i].create_tween().tween_property(_selos[i], "scale", Vector3.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	var f := _fantasmas[i]
+	if f and f.visible and is_inside_tree():
+		# O fantasma do caminho selado se apaga e afunda no tapete.
+		var mat := f.material_override as ShaderMaterial
+		var tw := f.create_tween().set_parallel()
+		tw.tween_method(func(a: float): mat.set_shader_parameter("alfa", a), 0.5, 0.0, 0.6)
+		tw.tween_property(f, "position:y", -0.6, 0.6)
+		tw.chain().tween_callback(func(): f.visible = false)
+		Fx.burst(_game, tapete_pos(i) + Vector3(0, 0.8, 0), Color(0.5, 0.45, 0.6), 12, 3.0)
+	elif f:
+		f.visible = false
+	# O fantasma escolhido também some: a obra de verdade sobe no lugar da casa.
+	var j := 1 - i
+	if j < _fantasmas.size() and _fantasmas[j]:
+		var g := _fantasmas[j]
+		if is_inside_tree() and g.visible:
+			var tw2 := g.create_tween().set_parallel()
+			tw2.tween_property(g, "position", CASA + Vector3(0, 1.0, 0), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			tw2.tween_property(g, "scale", Vector3.ONE * 0.9, 0.45)
+			tw2.chain().tween_callback(func(): g.visible = false)
+		else:
+			g.visible = false
+
+
+## Modo teste: tira o selo e devolve os fantasmas (antes de trocar de caminho).
+func _desselar() -> void:
+	for i in _fantasmas.size():
+		if _selos[i]:
+			_selos[i].visible = false
+		_fantasmas[i].visible = false
+
+
+## Fantasma da casa do caminho i, pairando sobre o tapete: a malha da casa
+## inteira numa superfície só (1 chamada), com o shader translúcido.
+func _montar_fantasma(i: int) -> MeshInstance3D:
+	var cls: ClassStats = caminhos()[i]
+	var mi := MeshInstance3D.new()
+	mi.mesh = _malha_fantasma(_cena_casa(cls))
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat := ShaderMaterial.new()
+	mat.shader = SHADER_FANTASMA
+	mat.set_shader_parameter("cor", cls.hat_color.lightened(0.15))
+	mat.set_shader_parameter("alfa", 0.5)
+	mat.set_shader_parameter("altura", 5.0)
+	mi.material_override = mat
+	mi.position = TAPETES[i] + Vector3(0, 0.12, -0.2)
+	mi.scale = Vector3.ONE * FANTASMA_ESC
+	add_child(mi)
+	return mi
+
+
+func _cena_casa(cls: ClassStats) -> String:
+	var th: ThemeConfig = _game.arena.theme if _game and _game.arena else Config.theme()
+	return th.model_path("maquina_%s.scn" % cls.resource_path.get_file().get_basename())
+
+
+static func _malha_fantasma(arq: String) -> Mesh:
+	if _malhas_fantasma.has(arq):
+		return _malhas_fantasma[arq]
+	var mesh: Mesh
+	if ResourceLoader.exists(arq):
+		var raiz: Node3D = (load(arq) as PackedScene).instantiate()
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var algum := false
+		for mi: MeshInstance3D in raiz.find_children("*", "MeshInstance3D", true, false):
+			if mi.mesh == null or mi.name.begins_with("N3_") or mi.name.begins_with("N4_") \
+					or _dentro_de(mi, raiz, ["N3_", "N4_", "Estoque", "Molde"]):
+				continue
+			var xf := _relativa(mi, raiz)
+			for s in mi.mesh.get_surface_count():
+				if mi.mesh.surface_get_primitive_type(s) != Mesh.PRIMITIVE_TRIANGLES:
+					continue
+				st.append_from(mi.mesh, s, xf)
+				algum = true
+		raiz.free()
+		if algum:
+			mesh = st.commit()
+	if mesh == null:
+		var b := BoxMesh.new()
+		b.size = Vector3(3.0, 3.6, 3.0)
+		mesh = b
+	_malhas_fantasma[arq] = mesh
+	return mesh
+
+
+static func _dentro_de(n: Node, raiz: Node, prefixos: Array) -> bool:
+	var p := n.get_parent()
+	while p and p != raiz:
+		for pre in prefixos:
+			if String(p.name).begins_with(pre):
+				return true
+		p = p.get_parent()
+	return false
+
+
+static func _relativa(n: Node3D, raiz: Node3D) -> Transform3D:
+	var t := n.transform
+	var p := n.get_parent()
+	while p and p != raiz:
+		if p is Node3D:
+			t = (p as Node3D).transform * t
+		p = p.get_parent()
+	return t
+
+
+## Obra: a casa do caminho cresce do chão (escala em y), sem os telhados dos
+## níveis 3/4; o "Telhado" fica escondido e cai no fim.
+func _comecar_obra() -> void:
+	var arq := _cena_casa(opcao())
+	_obra = Node3D.new()
+	_obra.position = CASA
+	_obra.scale.y = 0.04
+	add_child(_obra)
+	if not ResourceLoader.exists(arq):
+		return
+	var casa: Node3D = (load(arq) as PackedScene).instantiate()
+	_obra.add_child(casa)
+	for padrao in ["N2_*", "N3_*", "N4_*", "Estoque_*"]:
+		for n in casa.find_children(padrao, "Node3D", true, false):
+			n.visible = false
+	_telhado = casa.find_child("Telhado", true, false) as Node3D
+	if _telhado:
+		_telhado.visible = false
+	var fora := MalhaUnica.animados(casa)
+	if _telhado:
+		fora.append(_telhado)
+	for padrao in ["N2_*", "N3_*", "N4_*", "Estoque_*"]:
+		fora.append_array(casa.find_children(padrao, "Node3D", true, false))
+	MalhaUnica.juntar(casa, fora)
 
 
 func _process(delta: float) -> void:
-	if _mats_gira.is_empty() or not _casa.visible:
+	if estado != Estado.VAZIO:
 		return
-	# Pronta: gira devagar sozinha. Em obra: na velocidade dos Construtores.
-	_relogio += delta * (0.6 if estado == Estado.PRONTA else _ritmo)
-	for m in _mats_gira:
-		m.set_shader_parameter("relogio", _relogio)
+	_t += delta
+	# Fantasmas pairando e balançando devagar; o tapete pisado cresce e brilha.
+	for i in _fantasmas.size():
+		var f := _fantasmas[i]
+		if not f.visible:
+			continue
+		var pisado: float = clampf(_tapete_t[i] / ESCOLHA_T, 0.0, 1.0)
+		f.position.y = 0.12 + 0.08 * sin(_t * 1.6 + i * 2.0) + 0.25 * pisado
+		f.rotation.y = 0.18 * sin(_t * 0.7 + i)
+		f.scale = Vector3.ONE * FANTASMA_ESC * (1.0 + 0.25 * pisado)
+		(f.material_override as ShaderMaterial).set_shader_parameter("alfa", 0.5 + 0.4 * pisado)
 
 
-## Casa do tema: o corpo cresce com a obra, o "Telhado" cai no fim e as peças
-## "Gira_*" ganham material próprio (o relógio é desta oficina).
-func _casa_do_tema(path: String) -> Node3D:
-	var root := Node3D.new()
-	var casa: Node3D = (load(path) as PackedScene).instantiate()
-	root.add_child(casa)
-	_walls = casa
-	_roof = casa.get_node_or_null("Telhado")
-	if _roof:
-		casa.remove_child(_roof)  # não achata junto com as paredes
-		_roof.owner = null
-		for n in _roof.find_children("*", "", true, false):
-			n.owner = null
+func _update_label() -> void:
+	var txt := ""
+	var cs := caminhos()
+	match estado:
+		Estado.VAZIO:
+			if cs.size() >= 2:
+				txt = "%s\n%s  ou  %s" % [base.display_name, cs[0].display_name, cs[1].display_name]
+		Estado.OBRA:
+			txt = "Obra: %s  %d%%" % [opcao().display_name, int(progresso * 100.0)]
+	if txt != _texto:
+		_texto = txt
+		_label.text = txt
+		_label.visible = txt != ""
+	_label.modulate = (opcao().hat_color if estado == Estado.OBRA else base.hat_color).lightened(0.35)
+	if estado == Estado.OBRA:
+		_label.position.y = lerpf(2.4, 4.6, progresso)
+	# Contador de madeira: na obra e nos níveis (com madeira posta ou com o
+	# jogador Construtor perto); grande para quem joga de Construtor.
+	var p := _game.player
+	var construtor := p != null and p.team == team and p.lenhador()
+	var perto := construtor and p.global_position.distance_to(global_position) < BUILD_RADIUS + 2.0
+	if estado == Estado.OBRA:
+		_contador.visible = true
+		_contador.position.y = _label.position.y + (1.0 if construtor else 0.7)
+		_contador.mostrar(faltam(), custo(), construtor, falta_madeira or (faltam() > 0 and _game.madeira[team] <= 0), progresso)
+	elif pode_subir() and (madeira_nivel > 0 or perto):
+		_contador.visible = true
+		_contador.position.y = 6.6
+		_contador.mostrar(faltam_nivel(), custo_nivel(), construtor, falta_madeira)
 	else:
-		_roof = Node3D.new()
-	root.add_child(_roof)
-	var contorno := Settings.quality >= 3
-	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
-		var gira := mi.name.begins_with("Gira_")
-		for s in mi.mesh.get_surface_count():
-			var mat := mi.mesh.surface_get_material(s) as ShaderMaterial
-			if mat == null or (not gira and (contorno or mat.next_pass == null)):
-				continue
-			var m: ShaderMaterial = mat.duplicate()
-			m.next_pass = (mat.next_pass.duplicate() as ShaderMaterial) if contorno and mat.next_pass else null
-			mi.set_surface_override_material(s, m)
-			if gira:
-				_mats_gira.append(m)
-				if m.next_pass:
-					_mats_gira.append(m.next_pass)
-	_alt_label = 5.6
-	return root
-
-
-## Casinha de oficina japonesa: base de madeira, telhado na cor do time e lanterna.
-func _build_house() -> Node3D:
-	var th := _game.arena.theme
-	if th.oficina_model != "" and ResourceLoader.exists(th.model_path(th.oficina_model, team)):
-		return _casa_do_tema(th.model_path(th.oficina_model, team))
-	var root := Node3D.new()
-	var col := Config.team_color(team)
-	_walls = Node3D.new()
-	_roof = Node3D.new()
-	root.add_child(_walls)
-	root.add_child(_roof)
-	# Base, paredes de papel (shoji) com vigas, e a viga do topo.
-	var parts := [
-		[root, _box(Vector3(3.0, 0.3, 3.0)), Vector3(0, 0.15, 0), Fx.lit(Color(0.3, 0.22, 0.16))],
-		[_walls, _box(Vector3(2.6, 1.7, 2.6)), Vector3(0, 1.15, 0), Fx.lit(Color(0.9, 0.85, 0.72))],
-		[_walls, _box(Vector3(2.7, 0.18, 2.7)), Vector3(0, 2.05, 0), Fx.lit(Color(0.25, 0.17, 0.12))],
-	]
-	for x in [-1.3, 1.3]:
-		for z in [-1.3, 1.3]:
-			parts.append([_walls, _box(Vector3(0.2, 1.9, 0.2)), Vector3(x, 1.15, z), Fx.lit(Color(0.25, 0.17, 0.12))])
-	for p in parts:
-		var mi := MeshInstance3D.new()
-		mi.mesh = p[1]
-		mi.position = p[2]
-		mi.material_override = p[3]
-		p[0].add_child(mi)
-	var roof := MeshInstance3D.new()
-	var rc := CylinderMesh.new()
-	rc.top_radius = 0.2
-	rc.bottom_radius = 2.4
-	rc.height = 1.1
-	rc.radial_segments = 4
-	roof.mesh = rc
-	roof.rotation.y = PI / 4
-	roof.position.y = 2.65
-	roof.material_override = Fx.lit(col.darkened(0.25))
-	_roof.add_child(roof)
-	var lamp := MeshInstance3D.new()
-	var ls := SphereMesh.new()
-	ls.radius = 0.22
-	ls.height = 0.5
-	lamp.mesh = ls
-	lamp.position = Vector3(1.45, 1.6, 1.45)
-	lamp.material_override = Fx.unshaded(col.lightened(0.3) * 1.6)
-	_roof.add_child(lamp)
-	MalhaUnica.juntar(_walls)
-	MalhaUnica.juntar(_roof)
-	return root
-
-
-func _box(size: Vector3) -> BoxMesh:
-	var b := BoxMesh.new()
-	b.size = size
-	return b
+		_contador.visible = false

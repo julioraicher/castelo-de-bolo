@@ -54,13 +54,15 @@ var _ativo := false
 var _max := {"vida": 1.0, "velocidade": 1.0, "dano": 1.0}
 
 
-## Todas as classes jogáveis, na ordem do pátio, oficinas e caminho dos magos.
+## Todas as classes jogáveis: cada classe do pátio seguida dos seus dois caminhos.
 static func lista() -> Array[ClassStats]:
-	var cfg := Config.cfg
 	var out: Array[ClassStats] = []
-	for s in cfg.hat_classes() + cfg.oficina_classes + cfg.magos_opostos:
-		if s and s not in out:
-			out.append(s)
+	for b in Config.cfg.hat_classes():
+		if b and b not in out:
+			out.append(b)
+		for e in b.caminhos:
+			if e and e not in out:
+				out.append(e)
 	return out
 
 
@@ -71,17 +73,14 @@ static func nome_super(s: ClassStats) -> String:
 
 
 static func origem(s: ClassStats) -> String:
-	var cfg := Config.cfg
-	if s in cfg.magos_opostos:
-		return "caminho dos magos"
-	if s in cfg.oficina_classes:
-		return "oficina (%d madeiras)" % cfg.oficina_custo_madeira
-	return "pátio"
+	if s.classe_base != &"":
+		return "caminho %s (casa, %d madeiras)" % [s.caminho_nome if s.caminho_nome != "" else s.display_name, Config.cfg.oficina_custo_madeira]
+	return "pátio (barraquinha)"
 
 
 static func papel(s: ClassStats) -> String:
 	if s.velocidade_obra > 0.0:
-		return "Economia: corta madeira, ergue oficinas e torretas"
+		return "Economia: corta madeira, ergue casas e torretas"
 	match s.attack_kind:
 		"ranged":
 			return "De longe: mantém distância e atira"

@@ -38,17 +38,17 @@ func _ready() -> void:
 		["martelo", Estilo.OURO, "Construa",
 			"Fique perto de um terreno do pátio: a obra puxa a madeira do time e sobe enquanto houver Construtor ali. A árvore volta a crescer (%d s por estágio)." % roundi(cfg.arvore_tempo_estagio)],
 	])
-	_aba("Oficinas", "oficinas", [
-		["katana", Estilo.OURO, "Maquininhas do pátio",
-			"Cada uma fabrica um chapéu a cada %d s (até %d). Chegue perto e aperte F para trocar de classe." % [roundi(cfg.maquina_intervalo), cfg.maquina_estoque_max]],
-		["martelo", Estilo.OURO, "Oficinas (%d madeiras)" % cfg.oficina_custo_madeira,
-			"Terrenos vazios viram oficinas de classes novas: Ronin Oni ou Arqueiro Yumi. Perto do terreno, F troca qual construir."],
-		["losango", Estilo.OURO, "Nível 2",
-			"A maquininha sobe de nível quando a oficina da variação dela fica pronta, ou com %d madeiras de um Construtor: até %d chapéus, um a cada %d s." % [cfg.maquina_n2_custo, cfg.maquina_n2_estoque, roundi(cfg.maquina_n2_intervalo)]],
+	_aba("Casas", "oficinas", [
+		["katana", Estilo.OURO, "Barraquinhas do pátio",
+			"Cada classe tem um bairro no pátio. A barraquinha da frente fabrica o chapéu dela a cada %d s (até %d): chegue perto e aperte F." % [roundi(cfg.maquina_intervalo), cfg.maquina_estoque_max]],
+		["martelo", Estilo.OURO, "Escolha o caminho",
+			"Dos lados ficam dois tapetes com o fantasma de cada casa. Um Construtor pisa num deles com madeira no depósito: aquele caminho começa e o outro fica SELADO até o fim."],
+		["losango", Estilo.OURO, "A casa (%d madeiras)" % cfg.oficina_custo_madeira,
+			"Pronta, ela fabrica o chapéu da classe evoluída e a barraquinha sobe ao nível 2: até %d chapéus, um a cada %d s." % [cfg.maquina_n2_estoque, roundi(cfg.maquina_n2_intervalo)]],
 	])
 	_aba("Torreta", "torreta", [
 		["martelo", Estilo.OURO, "Posto da raposa (%d madeiras)" % cfg.torreta_custo,
-			"Selo TORRETA no chão, na frente do castelo. Depois da 1ª oficina, o Construtor leva madeira até lá e ergue uma besta encantada que atira no inimigo mais perto."],
+			"Selo TORRETA no chão, na frente do castelo. Depois da 1ª casa, o Construtor leva madeira até lá e ergue uma besta encantada que atira no inimigo mais perto."],
 		["shuriken", Estilo.AZUL, "O escudo devolve",
 			"Defenda (botão direito) virado para o virote: ele volta e acerta a própria torreta. Para derrubar de vez, bata nela."],
 	])
@@ -61,14 +61,17 @@ func _ready() -> void:
 	var custos: PackedStringArray = []
 	for c in cfg.mago_nivel_custo:
 		custos.append(str(c))
-	_aba("Luz e Sombra", "luz_sombra", [
-		["chi", Estilo.OURO, "Kitsune da Luz",
-			"Cura e protege. Q: Cura da Luz. E: Bênção da Raposa, cura mais escudo nos aliados."],
-		["chi", Estilo.AZUL, "Kitsune Sombria",
-			"Ataca de longe. Q: Orbe Perfurante. E: Selo Sombrio, inimigos em volta sem atacar."],
-		["losango", Estilo.VERMELHO, "Um caminho só, até o nível %d" % cfg.mago_nivel_max,
-			"Os dois terrenos ficam em lados opostos do pátio: a primeira madeira num deles SELA o outro. Mais madeira sobe os níveis (%s): +%d%% de dano e vida por nível." % [", ".join(custos), roundi(cfg.mago_bonus_dano * 100.0)]],
-	])
+	var linhas: Array = []
+	for base in cfg.hat_classes():
+		if base.caminhos.size() < 2:
+			continue
+		var a: ClassStats = base.caminhos[0]
+		var b: ClassStats = base.caminhos[1]
+		linhas.append([Icone.do_papel(base), base.hat_color, "%s: %s ou %s" % [base.display_name, a.display_name, b.display_name],
+			"Caminho da %s (E: %s) ou da %s (E: %s)." % [a.caminho_nome, a.power_name, b.caminho_nome, b.power_name]])
+	linhas.append(["losango", Estilo.VERMELHO, "Níveis 2 a %d" % cfg.mago_nivel_max,
+		"Mais madeira na casa pronta sobe o nível (%s): um telhado a mais, +1 chapéu e +%d%% de dano e vida para a classe." % [", ".join(custos), roundi(cfg.mago_bonus_dano * 100.0)]])
+	_aba("Caminhos", "luz_sombra", linhas)
 	_tabs.tab_changed.connect(_ao_trocar)
 
 
