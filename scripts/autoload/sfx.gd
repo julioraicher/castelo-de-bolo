@@ -15,7 +15,9 @@ const SOUNDS := ["swing", "hit", "shoot", "magic", "heal", "pickup", "hat", "eat
 	# Reanimar (Ciclo 2.18): pano arrastando no chão e o "voltou" com sino.
 	"reanimar_arrasto", "reanimado",
 	# Camada do kit de magia (Ciclo 2.20): um som curto por elemento.
-	"magia_selo", "magia_fogo", "magia_vento", "magia_luz", "magia_estouro"]
+	"magia_selo", "magia_fogo", "magia_vento", "magia_luz", "magia_estouro",
+	# Heróis raros (Ciclo 2.23): tools/sons/sintetizar_herois.py + Kenney.
+	"papel", "agua", "grasnido", "flauta"]
 const POOL_SIZE := 32
 
 const MAX_VARIACOES := 8

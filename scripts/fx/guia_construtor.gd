@@ -128,7 +128,7 @@ func calcular() -> void:
 		var casa: Oficina = game.mago_para_subir(u.team, pos)
 		if casa and game.madeira[u.team] >= mini(casa.faltam_nivel(), 2):
 			alvo = casa.alvo_obra(pos)
-			verbo = "CONSTRUA"
+			verbo = "★ HERÓI" if casa.pede_heroi() else "CONSTRUA"
 			return
 	# Árvore/bambu adulto mais perto (as do próprio bosque contam como mais perto).
 	var melhor := INF
@@ -163,7 +163,7 @@ func _process(delta: float) -> void:
 		_seta.global_basis = Basis.looking_at(dir, Vector3.UP).scaled(Vector3.ONE * 1.5)
 		_seta.transparency = vai * 0.5
 	# Marcador quicando em cima do alvo (mais alto em árvore e casa).
-	var alt := 4.2 if verbo == "CORTE" or verbo == "CONSTRUA" else 2.6
+	var alt := 4.2 if verbo == "CORTE" or verbo == "CONSTRUA" else (4.8 if verbo == "★ HERÓI" else 2.6)
 	_marca.global_position = alvo + Vector3(0, alt + absf(sin(_t * 4.0)) * 0.5, 0)
 	_cone.rotation.y = _t * 2.0
 	_texto.text = verbo

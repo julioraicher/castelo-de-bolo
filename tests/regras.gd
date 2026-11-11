@@ -1712,6 +1712,10 @@ func _herois_regras() -> void:
 		return
 	var c0 = a.stats
 	var c1 = b.stats
+	# Sem cérebro durante o teste: o bot desviaria do aviso de perigo do pouso.
+	var cerebros := [a.brain, b.brain]
+	a.brain = null
+	b.brain = null
 	var centro := Vector3(0, 0, 0)
 	centro.y = game.arena.ground_y(0, 0)
 	# Tira todo mundo de perto do teste.
@@ -1905,6 +1909,8 @@ func _herois_regras() -> void:
 			await get_tree().create_timer(0.1).timeout
 			espera += 1
 	await get_tree().create_timer(1.2).timeout  # mergulhos em cadeia pousam
+	a.brain = cerebros[0]
+	b.brain = cerebros[1]
 	a.set_class(c0)
 	b.set_class(c1)
 	for u in guardados:

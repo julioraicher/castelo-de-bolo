@@ -104,9 +104,16 @@ func _draw() -> void:
 				draw_arc(c, r + 1.6, -PI / 2.0, -PI / 2.0 + TAU * maxf(of.progresso, 0.04), 20, Color(cls.hat_color.lightened(0.35), a), 2.4, true)
 			Oficina.Estado.PRONTA:
 				draw_arc(c, r + 1.6, 0.0, TAU, 24, Color(Estilo.OURO, a), 2.2, true)
-				var n := of.nivel - 2
+				var n := mini(of.nivel, Config.cfg.mago_nivel_max) - 2
 				for k in n:
 					draw_circle(c + Vector2((k - (n - 1) * 0.5) * 4.0, r + 4.5), 1.6, Color(Estilo.OURO, a))
+		# Nv6 (Ciclo 2.23): estrela piscando = herói raro disponível com madeira;
+		# estrela fixa em cima = pavilhão de pé.
+		if meu and of.destaque_heroi():
+			var pisca := 0.55 + 0.45 * sin(Time.get_ticks_msec() * 0.008)
+			_estrela(c + Vector2(r + 3.0, -r - 3.0), 5.5, Color(Estilo.OURO_CLARO, pisca))
+		elif of.heroi_pronto:
+			_estrela(c + Vector2(r + 2.0, -r - 2.0), 4.0, Color(Estilo.OURO_CLARO, a))
 
 	# Madeira: árvores/bambus adultos brilham; crescendo ficam apagados.
 	for p in game.plantas:
@@ -196,3 +203,14 @@ func _tracejado(a: Vector2, b: Vector2, cor: Color) -> void:
 	for i in n:
 		if i % 2 == 0:
 			draw_line(a + v * (float(i) / n), a + v * (float(i + 1) / n), cor, 1.6)
+
+
+## Estrela de 5 pontas (herói raro).
+func _estrela(c: Vector2, r: float, cor: Color) -> void:
+	var pts := PackedVector2Array()
+	for k in 10:
+		var ang := -PI / 2.0 + PI * k / 5.0
+		pts.append(c + Vector2(cos(ang), sin(ang)) * (r if k % 2 == 0 else r * 0.45))
+	draw_colored_polygon(pts, cor)
+	pts.append(pts[0])
+	draw_polyline(pts, Color(0.1, 0.07, 0.03, cor.a), 1.0, true)

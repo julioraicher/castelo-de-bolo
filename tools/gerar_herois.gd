@@ -132,7 +132,7 @@ const HEROIS := {
 		"display_name": "Komusō", "epiteto": "O monge sem rosto", "modelo": "Knight",
 		"descricao": "Monge errante de cesto na cabeça que nunca mostra o rosto. A flauta dele faz dormir, puxa os inimigos para perto e, no fim, cala qualquer poder.",
 		"estilo_linha": "Controle pelo som: sono, hipnose e silêncio.",
-		"hat_style": "cesto", "hat_color": Color(0.55, 0.9, 0.85), "estilo_ninja": "_komuso",
+		"hat_style": "tengai", "hat_color": Color(0.55, 0.9, 0.85), "estilo_ninja": "_komuso",
 		"dash_estilo": "rolar",
 		"max_hp": 110.0, "move_speed": 6.2, "attack_kind": "ranged", "damage": 9.0, "attack_range": 12.0,
 		"attack_cooldown": 0.8, "knockback": 3.0, "projectile_speed": 22.0, "projetil": "nota",

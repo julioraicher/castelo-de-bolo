@@ -6,7 +6,8 @@ extends SceneTree
 ##   xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
 ##     --rendering-method gl_compatibility --audio-driver Dummy \
 ##     -s tools/prancha_casas.gd -- DIR --sandbox [--base=kitsune] [--caminho=1]
-## Salva DIR/nv1.png .. nv5.png, DIR/painel.png e DIR/patio.png. Sem tipos do jogo aqui.
+## Salva DIR/nv1.png .. nv5.png, DIR/painel.png e o pavilhão do Nv6 (pav_obra,
+## pav_pronto, pav_vazio; --heroi=N escolhe o herói). Sem tipos do jogo aqui.
 
 
 func _init() -> void:
@@ -23,11 +24,14 @@ func _rodar() -> void:
 	var saida: String = args[0]
 	var base_id := "kitsune"
 	var lado := 1
+	var heroi := 0
 	for a in args:
 		if a.begins_with("--base="):
 			base_id = a.trim_prefix("--base=")
 		elif a.begins_with("--caminho="):
 			lado = int(a.trim_prefix("--caminho="))
+		elif a.begins_with("--heroi="):
+			heroi = int(a.trim_prefix("--heroi="))
 	DirAccess.make_dir_recursive_absolute(saida)
 	root.size = Vector2i(1280, 720)
 	root.get_node("/root/Settings").auto_quality = false  # o xvfb é lento: sem baixar a qualidade
@@ -94,4 +98,20 @@ func _rodar() -> void:
 	for k in 80:
 		await process_frame
 	await _foto(saida.path_join("nv5.png"))
+	# Nv6 (Ciclo 2.23): pavilhão do herói raro no tapete do caminho, nos
+	# estados obra (metade da madeira), pronto e vazio (chapéu em uso).
+	of.escolher_heroi(heroi)
+	of.madeira_nivel = int(of.custo_nivel() / 2)
+	of._crescer_pavilhao()
+	for k in 60:
+		await process_frame
+	await _foto(saida.path_join("pav_obra.png"))
+	of.subir_nivel()
+	for k in 90:
+		await process_frame
+	await _foto(saida.path_join("pav_pronto.png"))
+	of.pad_heroi.take()
+	for k in 30:
+		await process_frame
+	await _foto(saida.path_join("pav_vazio.png"))
 	quit()

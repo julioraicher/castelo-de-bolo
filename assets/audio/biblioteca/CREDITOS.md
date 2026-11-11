@@ -9,3 +9,7 @@
 
 CC0: uso livre, inclusive comercial, sem crédito obrigatório. Texto em `LICENSE-CC0.txt`.
 Esta pasta tem `.gdignore`: não é importada nem exportada; o jogo só usa `assets/audio/*.ogg|wav`.
+
+## Síntese própria (Ciclo 2.23)
+
+`sintese/agua_*`, `grasnido_*`, `flauta_*`: gerados por `tools/sons/sintetizar_herois.py` (numpy), domínio público.

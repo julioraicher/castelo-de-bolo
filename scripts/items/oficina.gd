@@ -644,6 +644,7 @@ func _comecar_pavilhao() -> void:
 	if ResourceLoader.exists(arq):
 		var pav: Node3D = (load(arq) as PackedScene).instantiate()
 		_pav_obra.add_child(pav)
+		HatPad.so_do_time(pav, team)
 		for n in pav.find_children("Estoque_*", "Node3D", true, false):
 			n.visible = false
 		MalhaUnica.juntar(pav, MalhaUnica.animados(pav))

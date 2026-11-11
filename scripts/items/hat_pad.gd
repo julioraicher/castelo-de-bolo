@@ -108,6 +108,7 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3, modelo := "") -> void
 func _montar_maquina(th: ThemeConfig, cena: PackedScene) -> void:
 	_maquina = cena.instantiate()
 	add_child(_maquina)
+	so_do_time(_maquina, team)
 	_anim = _maquina.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	_molde = _maquina.find_child("Molde", true, false) as Node3D
 	for i in range(1, 9):
@@ -299,6 +300,16 @@ func subir_nivel() -> bool:
 	return true
 
 
+## Peças com dono (Pano_azul/Pano_vermelho, Luz_azul/Luz_vermelho no pavilhão):
+## some a do outro time antes de juntar a malha.
+static func so_do_time(raiz: Node, p_team: int) -> void:
+	var outro: String = ["vermelho", "azul"][clampi(p_team, 0, 1)]
+	for n in raiz.find_children("*_" + outro, "Node3D", true, false):
+		if n.name.begins_with("Pano_") or n.name.begins_with("Luz_"):
+			n.get_parent().remove_child(n)
+			n.free()
+
+
 ## Herói raro: o chapéu volta ao altar (a Oficina chama quando o herói sai de campo).
 func restaurar() -> void:
 	if estoque >= estoque_max:
@@ -431,6 +442,71 @@ static func make_hat(style: String, color: Color) -> Node3D:
 			for i in 5:
 				var a := TAU * i / 5.0
 				_add(root, _cyl(0.0, 0.06, 0.4), Vector3(cos(a) * 0.2, 0.45, sin(a) * 0.2), Vector3(sin(a) * 25, 0, -cos(a) * 25), Fx.lit(Color(0.6, 0.65, 0.75)))
+		# --- Heróis raros (Ciclo 2.23): um chapéu que já diz quem é ---
+		"coque":
+			# Chonmage do Sumotori: cabelo preto lustroso, coque dobrado em
+			# leque por cima e o laço de papel branco amarrando.
+			var cabelo := Fx.lit(Color(0.06, 0.05, 0.07), 0.25)
+			_add(root, _sph(0.5, 0.32), Vector3.ZERO, Vector3.ZERO, cabelo, Vector3(1, 1, 1.05))
+			_add(root, _cyl(0.11, 0.11, 0.62), Vector3(0, 0.36, 0.05), Vector3(90, 0, 0), cabelo)
+			_add(root, _sph(0.2, 0.12), Vector3(0, 0.38, 0.38), Vector3(-20, 0, 0), cabelo, Vector3(1.4, 1, 1))
+			_add(root, _cyl(0.125, 0.125, 0.08), Vector3(0, 0.36, -0.12), Vector3(90, 0, 0), Fx.lit(Color(0.97, 0.96, 0.92)))
+			_add(root, _cyl(0.53, 0.53, 0.05), Vector3(0, -0.04, 0), Vector3.ZERO, Fx.unshaded(color))
+		"prato":
+			# Sara do Kappa: tufo verde em volta e o prato com água acesa.
+			var verde := Fx.lit(Color(0.22, 0.5, 0.3))
+			for i in 9:
+				var a := TAU * i / 9.0
+				_add(root, _cyl(0.0, 0.1, 0.32), Vector3(cos(a) * 0.42, 0.02, sin(a) * 0.42), Vector3(sin(a) * 40, 0, -cos(a) * 40), verde)
+			_add(root, _cyl(0.42, 0.36, 0.1), Vector3(0, 0.08, 0), Vector3.ZERO, Fx.lit(Color(0.85, 0.82, 0.72)))
+			_add(root, _cyl(0.34, 0.34, 0.02), Vector3(0, 0.135, 0), Vector3.ZERO, Fx.unshaded(color))
+		"tokin":
+			# Yamabushi: tokin preto pequeno na testa e a máscara tengu de nariz longo.
+			var vermelho := Fx.lit(Color(0.75, 0.12, 0.1), 0.3)
+			var tk := _cyl(0.17, 0.24, 0.24)
+			tk.radial_segments = 6
+			_add(root, tk, Vector3(0, 0.22, 0.12), Vector3(18, 0, 0), Fx.lit(Color(0.05, 0.05, 0.07)))
+			_add(root, _sph(0.42, 0.36), Vector3(0, -0.15, 0.06), Vector3.ZERO, vermelho, Vector3(1, 1, 0.75))
+			_add(root, _cyl(0.0, 0.09, 0.55), Vector3(0, -0.12, 0.52), Vector3(80, 0, 0), vermelho)
+			for s in [-1, 1]:
+				_add(root, _sph(0.07, 0.07), Vector3(0.12 * s, 0.38, 0.38), Vector3.ZERO, Fx.unshaded(color))
+		"bico":
+			# Karasu Tengu: capuz de penas pretas, bico amarelo e olhos acesos.
+			var pena := Fx.lit(Color(0.07, 0.07, 0.1), 0.3)
+			_add(root, _sph(0.48, 0.42), Vector3.ZERO, Vector3.ZERO, pena, Vector3(1, 1, 1.05))
+			_add(root, _cyl(0.0, 0.16, 0.5), Vector3(0, -0.08, 0.6), Vector3(95, 0, 0), Fx.lit(Color(0.95, 0.72, 0.15)), Vector3(1, 1, 0.7))
+			for s in [-1, 1]:
+				_add(root, BoxMesh.new(), Vector3(0.16 * s, 0.08, 0.42), Vector3(0, 0, 20 * s), Fx.unshaded(color), Vector3(0.14, 0.04, 0.03))
+				_add(root, _cyl(0.0, 0.07, 0.45), Vector3(0.2 * s, 0.35, -0.25), Vector3(-50, 0, -20 * s), pena)
+		"mascara_lisa":
+			# Mujina: rosto liso e pálido, sem nada, e o cabelo escorrido.
+			_add(root, _sph(0.4, 0.46), Vector3(0, 0, 0.12), Vector3.ZERO, Fx.lit(Color(0.93, 0.9, 0.86), 0.2), Vector3(1, 1, 0.8))
+			_add(root, BoxMesh.new(), Vector3(0, -0.05, 0.44), Vector3.ZERO, Fx.unshaded(color), Vector3(0.22, 0.02, 0.02))
+			var cabelo := Fx.lit(Color(0.04, 0.04, 0.06))
+			_add(root, _sph(0.46, 0.4), Vector3(0, 0.12, -0.12), Vector3.ZERO, cabelo)
+			for s in [-1, 0, 1]:
+				_add(root, BoxMesh.new(), Vector3(0.22 * s, -0.4, -0.3), Vector3(10, 0, 0), cabelo, Vector3(0.16, 0.8, 0.05))
+		"halo":
+			# Tennin: coque alto com grampo e o halo fino de luz atrás.
+			var cabelo := Fx.lit(Color(0.08, 0.06, 0.09))
+			_add(root, _sph(0.45, 0.3), Vector3.ZERO, Vector3.ZERO, cabelo)
+			_add(root, _sph(0.2, 0.2), Vector3(0, 0.36, -0.05), Vector3.ZERO, cabelo)
+			_add(root, _cyl(0.025, 0.025, 0.7), Vector3(0, 0.38, -0.05), Vector3(0, 0, 80), Fx.lit(Color(1.0, 0.8, 0.35), 0.3))
+			var tor := TorusMesh.new()
+			tor.inner_radius = 0.6
+			tor.outer_radius = 0.66
+			tor.rings = 24
+			tor.ring_segments = 6
+			_add(root, tor, Vector3(0, 0.25, -0.35), Vector3(90, 0, 0), Fx.unshaded(color))
+		"tengai":
+			# Komusō: cesto fundo de palha que esconde a cabeça toda, com a
+			# janelinha trançada na frente e a faixa da classe.
+			var palha := Fx.lit(Color(0.66, 0.52, 0.28))
+			_add(root, _cyl(0.4, 0.52, 0.8), Vector3(0, 0.05, 0), Vector3.ZERO, palha)
+			for y in [-0.22, 0.02, 0.26]:
+				_add(root, _cyl(0.45 + (0.1 - y) * 0.15, 0.46 + (0.1 - y) * 0.15, 0.04), Vector3(0, y, 0), Vector3.ZERO, Fx.lit(Color(0.45, 0.33, 0.16)))
+			_add(root, BoxMesh.new(), Vector3(0, 0.1, 0.46), Vector3(-8, 0, 0), Fx.lit(Color(0.12, 0.08, 0.05)), Vector3(0.36, 0.12, 0.04))
+			_add(root, _cyl(0.53, 0.53, 0.07), Vector3(0, -0.32, 0), Vector3.ZERO, Fx.unshaded(color))
 		"barril":
 			_add(root, _cyl(0.38, 0.38, 0.75), Vector3.ZERO, Vector3.ZERO, Fx.lit(Color(0.42, 0.26, 0.13)))
 			for y in [-0.25, 0.25]:
