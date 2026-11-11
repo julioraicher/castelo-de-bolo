@@ -4,6 +4,47 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.23b (2026-11-11), Diretor Visual + Interface: clipes e fichas de todos os personagens
+Pedido do Julio: conferir a tela que explica cada personagem (Menu > Classes),
+pôr o clipe de quem não tinha, ver se o clipe pega o poder mesmo e completar o
+que falta, mudando pouco o resto.
+- **12 clipes novos** na ficha: Sohei, Kusarigama, Armadilheiro, Bombardeiro e os
+  8 heróis raros. **Os 8 antigos foram regravados**: eram de antes do Personagens
+  2.0 e da magia nova (Ciclo 2.20), então mostravam bonecos e efeitos velhos.
+- **Cada clipe mostra os 3 golpes, o Q, o E e o R acertando** (conferido quadro a
+  quadro): os alvos voltam ao lugar antes de cada poder (o combo e o E empurravam
+  e o poder seguinte acertava o vazio, ex.: Agarrão do Sumotori), a mira vai no
+  meio deles (o Jato do Kappa saía de costas depois da Rasteira), os de longe têm
+  alvos a 5 m com a câmera entre os dois (a 7 m ficavam fora do quadro), a Tennin
+  puxa um aliado **caído** com o Laço e o levanta, e o golpe saindo da sombra do
+  Passo da Sombra agora cabe no clipe. O aliado caído do modo teste não aparece
+  mais como "CAÍDO" nos outros clipes.
+- **Como jogar**: clipe novo na aba **Herói raro** (o pavilhão fica pronto, o
+  Recruta pega o chapéu, vira Sumotori, Agarrão e Pisão) e clipe da aba **Casas**
+  consertado (desde as casinhas 2.0 ficava atrás de um telhado; agora o Recruta
+  pega o chapéu na barraquinha do Samurai e sai golpeando).
+- **Textos que faltavam**: Q e E do Sohei (Varrida, Muralha de Fé) e da Kusarigama
+  (Gancho, Ciranda de Aço) estavam sem descrição na ficha.
+- **Visual**: o "ō" de Komusō e Dohyō saía numa fonte fina fora da linha (a Lilita
+  não tem a letra; agora cai na Nunito Black); a aba Caminhos estourava a moldura
+  para a direita e para baixo (títulos curtos, cartões com rolagem quando não
+  cabem, "Caminho da Arco" corrigido).
+- **Jogo mais leve**: os quadros dos clipes agora importam com compressão com perda
+  (WebP). Os 1.416 quadros ocupam ~17 MB no jogo exportado; sem isso seriam
+  ~147 MB (os 728 antigos já davam ~75 MB). O navegador baixa bem menos.
+- Arquivos: `scripts/ui/clipe_cenas.gd` (roteiros), `tools/clipes_tutorial.sh`
+  (lista de classes, cena `heroi`, importação com perda), `pagina_classes.gd`,
+  `tutorial.gd`, `estilo.gd`, `assets/tutorial/`.
+
+### O que testar
+- Menu > **Classes**: passe por todos (os heróis ficam no fim da lista). Todo mundo
+  tem clipe; o Q, o E e o R aparecem acertando os inimigos. Sohei e Kusarigama
+  com o texto do Q e do E.
+- Ficha do **Komusō** e o R do **Sumotori** (Dohyō): o "ō" igual às outras letras.
+- **Como jogar**: abas **Casas**, **Herói raro** (clipe novo) e **Caminhos** (tudo
+  dentro da moldura).
+- Na web: o jogo deve carregar mais rápido (pacote menor).
+
 ## Ciclo 2.23 (2026-11-11), Jogabilidade + Diretor Visual: heróis raros no nível 6 e relógio de 10 min
 Pedido do Julio (quiz dos heróis: Construtor sem herói; só o herói é Nv6, como
 terceira casa de chapéu; Nv5 com madeira destaca o bairro; um herói por bairro;

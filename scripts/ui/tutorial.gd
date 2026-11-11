@@ -77,10 +77,12 @@ func _ready() -> void:
 			continue
 		var a: ClassStats = base.caminhos[0]
 		var b: ClassStats = base.caminhos[1]
-		linhas.append([Icone.do_papel(base), base.hat_color, "%s: %s ou %s" % [base.display_name, a.display_name, b.display_name],
-			"Caminho da %s (E: %s) ou da %s (E: %s)." % [a.caminho_nome, a.power_name, b.caminho_nome, b.power_name]])
+		# Título curto (só a classe): com os dois nomes ele quebrava em 3 linhas
+		# e o último cartão saía da moldura.
+		linhas.append([Icone.do_papel(base), base.hat_color, base.display_name,
+			"%s (%s, E: %s) ou %s (%s, E: %s)." % [a.display_name, a.caminho_nome, a.power_name, b.display_name, b.caminho_nome, b.power_name]])
 	linhas.append(["losango", Estilo.VERMELHO, "Níveis 3 a %d" % cfg.mago_nivel_max,
-		"Barraquinha e casa sobem juntas (%s madeiras): +%d%% de dano e vida por nível acima do 2, para a classe base e para a do caminho." % [" e ".join(custos), roundi(cfg.mago_bonus_dano * 100.0)]])
+		"Barraquinha e casa sobem juntas (%s madeiras): +%d%% de dano e vida por nível acima do 2." % [" e ".join(custos), roundi(cfg.mago_bonus_dano * 100.0)]])
 	_aba("Caminhos", "luz_sombra", linhas)
 	_tabs.tab_changed.connect(_ao_trocar)
 
@@ -128,7 +130,13 @@ func _aba(titulo: String, pasta: String, cartoes: Array) -> void:
 	lista.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for c in cartoes:
 		lista.add_child(_cartao(c[0], c[1], c[2], c[3]))
-	h.add_child(lista)
+	# Rolagem: com muitos cartões (Caminhos) o último saía por baixo da moldura.
+	var rolagem := ScrollContainer.new()
+	rolagem.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	rolagem.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rolagem.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	rolagem.add_child(lista)
+	h.add_child(rolagem)
 	_tabs.add_child(margem)
 
 
@@ -143,7 +151,13 @@ func _cartao(icone: String, cor: Color, titulo: String, texto: String) -> PanelC
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	h.add_child(Icone.novo(icone, cor, 26))
-	h.add_child(Estilo.rotulo(titulo.to_upper(), Estilo.T_MEDIO, cor, Estilo.NUMERO))
+	# O título quebra linha: "NINJA DE SHURIKEN: ARQUEIRO YUMI OU KUSARIGAMA"
+	# empurrava o cartão para fora da moldura.
+	var tt := Estilo.rotulo(titulo.to_upper(), Estilo.T_MEDIO, cor, Estilo.NUMERO)
+	tt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tt.custom_minimum_size = Vector2(200, 0)
+	h.add_child(tt)
 	v.add_child(h)
 	var t := Estilo.rotulo(texto, Estilo.T_PEQUENO, Estilo.TEXTO)
 	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
