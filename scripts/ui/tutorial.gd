@@ -39,12 +39,12 @@ func _ready() -> void:
 			"Fique perto de um terreno do pátio: a obra puxa a madeira do time e sobe enquanto houver Construtor ali. A árvore volta a crescer (%d s por estágio)." % roundi(cfg.arvore_tempo_estagio)],
 	])
 	_aba("Casas", "oficinas", [
-		["katana", Estilo.OURO, "Barraquinhas do pátio",
-			"Cada classe tem um bairro no pátio. A barraquinha da frente fabrica o chapéu dela a cada %d s (até %d): chegue perto e aperte F." % [roundi(cfg.maquina_intervalo), cfg.maquina_estoque_max]],
-		["martelo", Estilo.OURO, "Escolha o caminho",
-			"Dos lados ficam dois tapetes com o fantasma de cada casa. Um Construtor pisa num deles com madeira no depósito: aquele caminho começa e o outro fica SELADO até o fim."],
-		["losango", Estilo.OURO, "A casa (%d madeiras)" % cfg.oficina_custo_madeira,
-			"Pronta, ela fabrica o chapéu da classe evoluída e a barraquinha sobe ao nível 2: até %d chapéus, um a cada %d s." % [cfg.maquina_n2_estoque, roundi(cfg.maquina_n2_intervalo)]],
+		["katana", Estilo.OURO, "Barraquinha (níveis 1 e 2)",
+			"Cada classe tem um bairro no pátio. A barraquinha fabrica o chapéu dela (F perto). No nível 1 o Super (R) da classe fica travado: um Construtor parado no bairro gasta %d madeiras e ela sobe ao 2." % cfg.casa_nv2_custo],
+		["martelo", Estilo.OURO, "Nível 3: escolha o caminho",
+			"No nível 2, o Construtor aperta F no bairro e clica num dos dois caminhos (fora da briga). A casa dele sobe atrás (%d madeiras, +%d por casa que o time já fez) e o outro fica SELADO até o fim." % [cfg.oficina_custo_madeira, cfg.oficina_custo_degrau]],
+		["losango", Estilo.OURO, "Níveis 4 e 5: as duas juntas",
+			"Pronta, a casa nasce no nível 3 junto com a barraquinha. Daí cada subida leva as duas: peça nova no telhado, +1 chapéu, fabricação mais rápida."],
 	])
 	_aba("Torreta", "torreta", [
 		["martelo", Estilo.OURO, "Posto da raposa (%d madeiras)" % cfg.torreta_custo,
@@ -69,8 +69,8 @@ func _ready() -> void:
 		var b: ClassStats = base.caminhos[1]
 		linhas.append([Icone.do_papel(base), base.hat_color, "%s: %s ou %s" % [base.display_name, a.display_name, b.display_name],
 			"Caminho da %s (E: %s) ou da %s (E: %s)." % [a.caminho_nome, a.power_name, b.caminho_nome, b.power_name]])
-	linhas.append(["losango", Estilo.VERMELHO, "Níveis 2 a %d" % cfg.mago_nivel_max,
-		"Mais madeira na casa pronta sobe o nível (%s): um telhado a mais, +1 chapéu e +%d%% de dano e vida para a classe." % [", ".join(custos), roundi(cfg.mago_bonus_dano * 100.0)]])
+	linhas.append(["losango", Estilo.VERMELHO, "Níveis 3 a %d" % cfg.mago_nivel_max,
+		"Barraquinha e casa sobem juntas (%s madeiras): +%d%% de dano e vida por nível acima do 2, para a classe base e para a do caminho." % [" e ".join(custos), roundi(cfg.mago_bonus_dano * 100.0)]])
 	_aba("Caminhos", "luz_sombra", linhas)
 	_tabs.tab_changed.connect(_ao_trocar)
 

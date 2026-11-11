@@ -74,7 +74,7 @@ static func nome_super(s: ClassStats) -> String:
 
 static func origem(s: ClassStats) -> String:
 	if s.classe_base != &"":
-		return "caminho %s (casa, %d madeiras)" % [s.caminho_nome if s.caminho_nome != "" else s.display_name, Config.cfg.oficina_custo_madeira]
+		return "caminho %s (nível 3 da casa, %d madeiras)" % [s.caminho_nome if s.caminho_nome != "" else s.display_name, Config.cfg.oficina_custo_madeira]
 	return "pátio (barraquinha)"
 
 

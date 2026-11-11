@@ -4,6 +4,66 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.22 (2026-11-11), Jogabilidade + Diretor Visual: casinhas até o nível 5 e o R repetido
+Pedido do Julio (quiz "Casinhas até o nível 5": 1B, 2A, 3A + "no nível 1 o R não
+está liberado", 4AB, 5A). Antes a barraquinha da classe base parava no nível 2,
+só a casa do caminho subia (até o 4) e a escolha era "ficar 0,5 s no tapete".
+- **Escada do bairro** (vale para os 4): **Nv1 → Nv2** a barraquinha sobe sozinha
+  (`casa_nv2_custo` = 4 madeiras, Construtor parado no bairro); **Nv2 → Nv3** é a
+  escolha do caminho, a casa sobe (6 madeiras, +2 por casa que o time já fez) e
+  **nasce no Nv3 junto com a barraquinha**; **Nv3 → 4 → 5** uma subida só leva as
+  duas (6 e 9 madeiras). `mago_nivel_max` = 5. Lógica em `Oficina` (`pode_subir`,
+  `pede_escolha`, `subir_nivel`, `_degrau_pad`).
+- **Painel da escolha** (1B): o jogador Construtor aperta **[F] no bairro** e clica
+  num dos dois caminhos (ou 1/2): nome, caminho, epíteto, Q e E de cada um
+  (`Hud.abrir_escolha`). Só abre e só fica aberto **fora da briga** (nenhum inimigo
+  a 9 m); fecha ao sair do bairro, cair, ou se um bot escolher antes. Clique no
+  painel não vira golpe. Pisar no tapete não escolhe mais nada para o jogador.
+- **Quem escolhe** (2A): só o Construtor. Os bots continuam no tapete sorteado, na hora.
+- **Bônus por nível** (3A): barraquinha e casa ganham o mesmo pacote por nível
+  acima do 2 (+1 chapéu, fabricação ×0,85) e a **classe base também** ganha
+  +8% dano, +8% vida e +10% Chi por nível (antes só a do caminho).
+- **R travado no Nv1** (comentário da 3): com o bairro da classe no nível 1, o
+  Super dela não sai (a barra enche igual; o HUD diz "Super travado: casa no Nv1").
+  Subiu ao 2, libera (`super_nivel_min`). Classes de caminho nascem no Nv3, então
+  nunca travam.
+- **Visual dos níveis** (4AB): a casa nasce no Nv3 como era; o **andar** aparece no
+  Nv4 e o **topo + estandartes** no Nv5 (nós renomeados `N4_Andar`, `N5_Topo`,
+  `N5_Estandartes`). A barraquinha ganhou uma peça por nível: **Nv3** dois tōrō de
+  pedra acesos, **Nv4** um nobori alto na cor da classe, **Nv5** um arco dourado
+  com shimenawa e fitas de papel balançando (`gerar_casas.gd`, `_barraca_niveis`).
+  Prancha: project-files/castelo-de-bolo/casinhas/03-escada-ate-nivel-5.jpg.
+- **Bug do R repetido** (Kitsune Sombria, também Ronin Oni): o Super "maior"
+  decidia se o poder E tinha saído olhando o Chi depois (`power > 0` = "não saiu,
+  devolve a barra"). O Selo e a Fúria ferem no mesmo quadro e o dano dá Chi, então
+  o Super era devolvido e saía DE NOVO a cada quadro enquanto houvesse alguém no
+  círculo (sim de 5 min com todas Sombrias: 129 devoluções, rajadas de 5 a 20 em
+  0,3 s, cada uma com o Selo gigante). Agora `Unit._use_power()` devolve se saiu;
+  o Chi que o dano do Super rendeu fica com quem lançou.
+- **Ritmo**: bots sobem primeiro as 4 barraquinhas ao Nv2 (liberam o R), depois
+  escolhem caminhos e só então sobem níveis (`Game.barraca_nv1`, `mago_para_subir`).
+  A escada inteira custa ~112 madeiras por time; para caber melhor, **cada árvore
+  agora rende 4 toras** (era 3). Três partidas simuladas de 10 min só com bots:
+  todas as barraquinhas no Nv2 entre 2 e 4,5 min, um caminho novo a cada ~1 min
+  a partir de ~3,5 min, o 1º Nv4 perto dos 9 min. Bots sozinhos não chegam ao Nv5
+  em 10 min; com você de Construtor focando num bairro, dá.
+- **Modo teste (sandbox)**: sem bots, **madeira infinita** (HUD mostra ∞),
+  **nenhuma casa construída** (barraquinhas no Nv1, R travado até o Nv2), obra e
+  entrega de madeira 3× mais rápidas (`sandbox_obra_mult`). A escolha vale de
+  verdade: F5 recomeça para testar o outro lado. Saiu o atalho "[F] sobe o nível /
+  troca o caminho". Torretas e catapultas continuam prontas.
+- Como jogar (aba Casas e Caminhos) e fichas das Classes com a escada nova.
+- Testes de regra: escolha só no Nv2, Nv1→2 com madeira sem caminho, casa nasce
+  no Nv3 com a barraquinha junto, as duas sobem até o 5, bônus da base, R travado
+  no Nv1, e "Super do Selo e da Fúria gasta a barra uma vez só"; 475/475.
+- **O que testar**: (1) No Modo teste, pegue o Construtor e suba uma barraquinha
+  ao Nv2: o R da classe liberou? (2) No Nv2, [F] no bairro: o painel deixa claro o
+  que você está escolhendo? Escolha, erga a casa e suba até o 5: as duas sobem
+  juntas, e dá para ver de longe cada nível (lanternas, nobori, arco)? (3) F5 e
+  faça a outra escolha. (4) Jogue de Kitsune Sombria: o R sai uma vez só por barra.
+  (5) Numa partida normal: o ritmo das casas (R travado no começo, caminhos a partir
+  de ~3 min) ficou bom?
+
 ## Ciclo 2.21 (2026-11-10), Diretor Visual + Jogabilidade: casinhas 2.0 (casa da classe)
 Pedido do Julio (quizzes "Casinhas 2.0": 1A, 2C, 3A, 4AC, 5ABCDE; classes novas:
 1C, 2A, 3A, 4B, 5A): repensar as casinhas de chapéu num pedido só. Antes eram

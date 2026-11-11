@@ -1855,7 +1855,13 @@ func _tick_power(delta: float) -> void:
 # --- Super (R) -------------------------------------------------------------------
 
 func super_ready() -> bool:
-	return super_carga >= POWER_MAX and stats.power != "nenhum"
+	return super_carga >= POWER_MAX and stats.power != "nenhum" and not super_travado()
+
+
+## Ciclo 2.22: com a casa da classe no nível 1, o R ainda não está liberado
+## (sobe para o 2 e libera). Classes sem casa no pátio não travam.
+func super_travado() -> bool:
+	return game != null and stats != null and game.super_travado(team, stats.id)
 
 
 func super_nome() -> String:
@@ -1922,13 +1928,18 @@ func _use_super() -> void:
 			var p0 := power
 			power = POWER_MAX
 			_power_active_t = 0.0
-			_use_power()
-			if power > 0.0:  # o poder não saiu (ocupado): devolve tudo
+			# Ciclo 2.22: antes o teste era "Chi > 0 depois = não saiu", mas o
+			# Selo e a Fúria ferem no mesmo quadro e o dano devolve Chi; o Super
+			# era "devolvido" e saía de novo a cada quadro (5 a 20 seguidos).
+			if not _use_power():  # o poder não saiu (ocupado): devolve tudo
 				stats = _stats_normal
 				_stats_normal = null
 				_super_t = 0.0
 				super_carga = POWER_MAX
-			power = p0  # o super não gasta o Chi do E
+				power = p0
+				return
+			# O super não gasta o Chi do E; o Chi que o dano dele rendeu fica.
+			power = minf(p0 + power, POWER_MAX)
 
 
 func _tick_super(delta: float) -> void:
@@ -2015,11 +2026,12 @@ func _fim_sombra() -> void:
 			Sfx.play("sombra_sai", global_position, 0.05)
 
 
-func _use_power() -> void:
+## true = o poder saiu (o Super usa isto para saber se devolve a barra).
+func _use_power() -> bool:
 	if not power_ready() or _dodge_t > 0.0 or _equip_t > 0.0 or _spin_t > 0.0 or _ciranda_t > 0.0:
-		return
+		return false
 	if carried_princess:
-		return
+		return false
 	power = 0.0
 	_agito = 1.0
 	_cancel_skill()
@@ -2172,6 +2184,7 @@ func _use_power() -> void:
 				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
 					other.give_boost(1.25, stats.power_duration)
 					FxPoder.rastro(other, Color(1.0, 0.75, 0.35), stats.power_duration)
+	return true
 
 
 ## Lâmina Dupla: atravessa até power_radius m na mira, cortando quem estiver

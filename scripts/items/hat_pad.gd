@@ -44,7 +44,7 @@ var _molde: Node3D
 var _slots: Array[Node3D] = []      # Estoque_1..N
 var _chapeus: Array[Node3D] = []    # um por chapéu em estoque, na ordem dos slots
 var _n2: Array[Node3D] = []         # nós "N2_*" do modelo (aparecem no nível 2)
-var _n34: Array[Node3D] = []        # nós "N3_*"/"N4_*" da casa evoluída (aparecem no nível 3/4)
+var _n34: Array[Node3D] = []        # nós "N3_*"/"N4_*"/"N5_*" (aparecem no nível 3/4/5)
 var _puxar_t := 0.0
 var _contador: ContadorMadeira
 
@@ -111,7 +111,7 @@ func _montar_maquina(th: ThemeConfig, cena: PackedScene) -> void:
 	for n in _maquina.find_children("N2_*", "Node3D", true, false):
 		n.visible = false
 		_n2.append(n)
-	for padrao in ["N3_*", "N4_*"]:
+	for padrao in ["N3_*", "N4_*", "N5_*"]:
 		for n in _maquina.find_children(padrao, "Node3D", true, false):
 			n.visible = false
 			_n34.append(n)
@@ -155,8 +155,8 @@ func _physics_process(delta: float) -> void:
 		_obra_n2(delta)
 
 
-## Casa evoluída (Ciclo 2.21): mostra as peças "N3_*" e "N4_*" até o nível n
-## (um telhado a mais por nível) e o letreiro passa a dizer o nível.
+## Mostra as peças "N3_*", "N4_*" e "N5_*" até o nível n (Ciclo 2.22: casa e
+## barraquinha sobem juntas do 3 ao 5) e o letreiro passa a dizer o nível.
 func mostrar_nivel(n: int) -> void:
 	nivel = n
 	for no in _n34:
