@@ -169,6 +169,25 @@ var _morte_t := -1.0  # s desde a morte (pulinho cômico); < 0 = vivo
 var building_t := 0.0
 var em_voo := false  # na catapulta ou voando: o corpo é da Catapulta, nada acerta
 
+# --- Heróis raros (Ciclo 2.23): estados; as regras ficam em Herois -------------
+var _forcado_t := 0.0       # andar forçado (Susto, Hipnose): o corpo ignora o cérebro
+var _forcado_de := Vector3.ZERO
+var _forcado_afasta := false
+var _cego_t := 0.0          # Revoada: a mira do bot desvia; o jogador vê a vinheta
+var _sono_t := 0.0          # Canção de Ninar: dormindo (acorda com dano)
+var _mudo_t := 0.0          # Réquiem: sem Q, E e R (o golpe continua)
+var _canto_t := 0.0         # Komusō tocando a flauta (parado, sem golpe)
+var _canto_alvos: Array = []
+var _disfarce_t := 0.0      # Mujina com o rosto de outro
+var _disfarce_time := -1    # time do rosto roubado (só visual)
+var shikigami := 0          # Onmyoji: bonecos de papel em volta (cada um engole um golpe)
+var _shiki_no: Node3D
+var _dohyo_t := 0.0         # Sumotori: ringue de sal
+var _dohyo_pos := Vector3.ZERO
+var _danca_t := 0.0         # Tennin: dança em volta dela
+var _danca_tick := 0.0
+var _ring: MeshInstance3D   # anel do time no chão (o disfarce troca a cor)
+
 static var _flash_mat: StandardMaterial3D
 static var _merged_body := {}  # caminho do .tres da classe -> ArrayMesh do corpo
 static var _upper_libs := {}  # caminho do modelo -> AnimationLibrary filtrada
@@ -217,41 +236,52 @@ func set_class(new_stats: ClassStats) -> void:
 	_stats_normal = null
 	if _sombra_t > 0.0:
 		_fim_sombra()
+	Herois.trocou_classe(self)
 	stats = new_stats
 	if not lenhador():
 		drop_tora()
 	hp = max_hp()  # trocar de chapéu cura por completo
+	_montar_modelo(stats, team)
+	_update_hp_bar()
+	class_changed.emit(self)
+
+
+## Corpo, peças e animação de `cls` na cor do time `cor_time`. Separado do
+## set_class para o disfarce da Mujina (Ciclo 2.23) trocar só o visual.
+func _montar_modelo(cls: ClassStats, cor_time: int) -> void:
+	var cor := Config.team_color(cor_time)
 	if _model:
 		_model.queue_free()
-	_model = stats.model.instantiate()
+	_mao_no = null
+	_model = cls.model.instantiate()
 	_visual.add_child(_model)
 	_meshes.clear()
 	for node in _model.find_children("*", "MeshInstance3D", true, false):
 		var mi := node as MeshInstance3D
-		mi.visible = stats.visible_meshes.has(mi.name)
+		mi.visible = cls.visible_meshes.has(mi.name)
 		if mi.visible:
 			_meshes.append(mi)
-		if mi.name == stats.cape_mesh:
+		if mi.name == cls.cape_mesh:
 			var mat := mi.get_active_material(0).duplicate() as StandardMaterial3D
 			if mat:
-				mat.albedo_color = Config.team_color(team).lightened(0.15)
+				mat.albedo_color = cor.lightened(0.15)
 				mi.material_override = mat
 	_merge_body_parts()
 	_pecas = null
-	_nivel_pecas = _nivel_visual()
-	if stats.estilo_ninja != "" or stats.escala_cabeca != 1.0:
-		_pecas = NinjaVisual.aplicar(_model, _meshes, stats.estilo_ninja, Config.team_color(team), stats.escala_cabeca, Settings.quality >= 2, stats.escala_extremidades, _nivel_pecas, Settings.quality >= 3)
+	_nivel_pecas = game.nivel_visual_mago(cor_time, cls.id) if game else 1
+	if cls.estilo_ninja != "" or cls.escala_cabeca != 1.0:
+		_pecas = NinjaVisual.aplicar(_model, _meshes, cls.estilo_ninja, cor, cls.escala_cabeca, Settings.quality >= 2, cls.escala_extremidades, _nivel_pecas, Settings.quality >= 3)
 		if _pecas:
 			_meshes.append(_pecas)
 			_pecas.visible = not pecas_longe
 	_pose_dash = null
 	_rolo = 0.0
-	if stats.dash_estilo == "ninja":
+	if cls.dash_estilo == "ninja":
 		var sk := _model.find_child("Skeleton3D", true, false) as Skeleton3D
 		if sk:
 			_pose_dash = PoseDash.new()
 			sk.add_child(_pose_dash)
-	_model.scale = Vector3.ONE * stats.escala_modelo
+	_model.scale = Vector3.ONE * cls.escala_modelo
 	_anim = _model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if _anim:
 		for a in LOOPING_ANIMS + [stats.anim_idle, stats.anim_run]:
@@ -260,12 +290,15 @@ func set_class(new_stats: ClassStats) -> void:
 		_setup_upper_player()
 	_current_anim = ""
 	_play(stats.anim_idle)
-	_update_hp_bar()
 	for mi in _meshes:
-		mi.set_instance_shader_parameter("cor_poder", stats.hat_color)
+		mi.set_instance_shader_parameter("cor_poder", cls.hat_color)
 	_carga_vista = -1.0
 	_agito_visto = 99.0
-	class_changed.emit(self)
+	if _ring:
+		var c := Config.team_color(cor_time)
+		if is_player:
+			c = c.lerp(Color(1, 1, 0.6), 0.45)
+		_ring.material_override = Fx.unshaded(Color(c, 0.85), true)
 
 
 ## LOD (Ciclo 2.19): longe do jogador, as peças pequenas (armadura, cachecol,
@@ -488,7 +521,8 @@ func parar_reanimar() -> void:
 ## do dash, do chapéu, do Redemoinho e do Selo).
 func maos_livres() -> bool:
 	return not carried_princess and not carried_tora and _dodge_t <= 0.0 and _equip_t <= 0.0 \
-			and _spin_t <= 0.0 and _silence_t <= 0.0 and _preso_t <= 0.0 and _ciranda_t <= 0.0
+			and _spin_t <= 0.0 and _silence_t <= 0.0 and _preso_t <= 0.0 and _ciranda_t <= 0.0 \
+			and _sono_t <= 0.0 and _forcado_t <= 0.0 and _canto_t <= 0.0
 
 
 ## Corta madeira (Construtor e variações: quem tem velocidade_obra).
@@ -556,6 +590,8 @@ func current_speed() -> float:
 		s *= Config.cfg.sombra_vel
 	if _preso_t > 0.0:
 		s *= 0.1
+	if _sono_t > 0.0 or _canto_t > 0.0:
+		s = 0.0
 	if _ciranda_t > 0.0:
 		s *= Config.cfg.ciranda_vel_mult
 	if _tiro_lento_t > 0.0:
@@ -642,6 +678,8 @@ func _physics_process(delta: float) -> void:
 		brain.tick(delta)
 		if game._perf:
 			game.perf_secoes["cerebro"] = game.perf_secoes.get("cerebro", 0) + Time.get_ticks_usec() - t0
+	if _forcado_t > 0.0 or _sono_t > 0.0:
+		Herois.corpo_sem_cerebro(self)
 
 	_attack_cd = maxf(_attack_cd - delta, 0.0)
 	_heal_cd = maxf(_heal_cd - delta, 0.0)
@@ -657,7 +695,7 @@ func _physics_process(delta: float) -> void:
 	_tick_power(delta)
 	_tick_buffs(delta)
 
-	if wants_dodge and _dodge_cd <= 0.0 and not carried_princess and _spin_t <= 0.0 and _ciranda_t <= 0.0 and _preso_t <= 0.0:
+	if wants_dodge and _dodge_cd <= 0.0 and not carried_princess and _spin_t <= 0.0 and _ciranda_t <= 0.0 and _preso_t <= 0.0 and _sono_t <= 0.0 and _canto_t <= 0.0:
 		_start_dodge()
 	wants_dodge = false
 
@@ -730,11 +768,11 @@ func _physics_process(delta: float) -> void:
 	_update_skill(delta, free_hands)
 	if wants_power:
 		wants_power = false
-		if _silence_t <= 0.0:
+		if _silence_t <= 0.0 and _mudo_t <= 0.0 and _sono_t <= 0.0 and _forcado_t <= 0.0:
 			_use_power()
 	if wants_super:
 		wants_super = false
-		if _silence_t <= 0.0:
+		if _silence_t <= 0.0 and _mudo_t <= 0.0 and _sono_t <= 0.0 and _forcado_t <= 0.0:
 			_use_super()
 	_tick_super(delta)
 	if _windup_t > 0.0:
@@ -895,6 +933,12 @@ func _attack() -> void:
 		_combo_t = _attack_cd + COMBO_WINDOW
 	_attack_t = minf(_attack_cd, 0.45)
 	_play_upper(anim, 1.35)
+	if _cego_t > 0.0 and not is_player:
+		aim_dir = aim_dir.rotated(Vector3.UP, deg_to_rad(randf_range(-35.0, 35.0)))
+	if _disfarce_t > 0.0:
+		mult *= Config.cfg.mujina_golpe_mult  # golpe saindo do rosto roubado
+		finisher = true
+		Herois.tirar_rosto(self)
 	if _sombra_t > 0.0:
 		# Golpe de surpresa saindo da sombra.
 		mult *= Config.cfg.sombra_golpe_mult
@@ -1078,6 +1122,9 @@ func _assisted_dir(dir: Vector3, alvo: Unit) -> Vector3:
 	return dir.rotated(Vector3.UP, ang * AIM_ASSIST_PULL).normalized()
 
 
+## Projéteis que voam retos (sem parábola).
+const RETOS := ["shuriken", "vento", "nota", "talisma", "grou"]
+
 func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZERO) -> Projectile:
 	var dir := aim_dir.normalized() if dir_override == Vector3.ZERO else dir_override
 	var to := aim_point - global_position
@@ -1097,7 +1144,7 @@ func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZE
 	var dist := clampf(to.length(), 6.0 if stats.projetil != "bomba" else 3.0, stats.attack_range * 1.4 * speed_mult)
 	# Altura do ALVO (não a do atirador): da ponte/muralha o tiro desce junto.
 	var chao_alvo := mirado.global_position.y if mirado else aim_point.y
-	if stats.projetil == "shuriken":
+	if stats.projetil in RETOS:
 		# Reto, cruzando a altura do peito do alvo na distância mirada.
 		p.velocity.y = (chao_alvo + Projectile.TARGET_HEIGHT - p.position.y) / maxf(dist / p.velocity.length(), 0.1)
 	else:
@@ -1133,6 +1180,8 @@ func damage_mult() -> float:
 		m *= 1.8
 	if _dmg_boost_t > 0.0:
 		m *= Config.cfg.pickup_damage_mult
+	if _dohyo_t > 0.0 and global_position.distance_to(_dohyo_pos) <= Config.cfg.dohyo_raio:
+		m *= 1.0 + Config.cfg.dohyo_dano
 	return m * (1.0 + Config.cfg.mago_bonus_dano * _nivel_mago())
 
 
@@ -1190,13 +1239,14 @@ func _update_skill(delta: float, free_hands: bool) -> void:
 	_tick_escudo_def(delta)
 	if wants_quick:
 		wants_quick = false
-		if quick_ready() and free_hands and not _blocking:
+		if quick_ready() and free_hands and not _blocking and _mudo_t <= 0.0:
 			if _usar_rapida():
 				_quick_cd = quick_cooldown()
 
 
 func tem_rapida() -> bool:
-	return stats.skill in ["cura", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho"]
+	return stats.skill in ["cura", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho"] \
+			or Herois.RAPIDAS.has(stats.skill)
 
 
 func quick_cooldown() -> float:
@@ -1268,7 +1318,7 @@ func _usar_rapida() -> bool:
 					other.give_boost(stats.skill_value, stats.skill_duration)
 					FxPoder.rastro(other, Color(1, 0.8, 0.3), stats.skill_duration)
 		_:
-			return false
+			return Herois.rapida(self)
 	return true
 
 
@@ -1532,6 +1582,11 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		if attacker and amount > 0.0:
 			_esquiva_perfeita(attacker)
 		return
+	amount = Herois.ao_apanhar(self, amount, attacker, dir, melee)
+	if amount < 0.0:
+		return  # boneco de papel engoliu o golpe
+	if stats.knock_imune:
+		knock_mult = 0.0
 	if attacker and attacker.team != game.time_jogador:
 		amount *= Settings.bot_damage_mult()
 	if carried_princess:
@@ -1880,6 +1935,8 @@ func add_super(amount: float) -> void:
 
 ## Invisível para os bots inimigos (a mais de sombra_visto m)?
 func na_sombra_para(quem: Unit) -> bool:
+	if _disfarce_t > 0.0 and quem.team != team:
+		return true  # Mujina com o rosto de um deles: os bots não a veem como inimiga
 	return _sombra_t > 0.0 and quem.team != team \
 		and quem.global_position.distance_to(global_position) > Config.cfg.sombra_visto
 
@@ -1908,6 +1965,10 @@ func _use_super() -> void:
 	else:
 		Sfx.play("poder_boom", global_position, 0.04, 0.8)
 	match stats.super_tipo:
+		"proprio":
+			if not Herois.super_proprio(self):
+				super_carga = POWER_MAX  # não saiu (sem alvo): devolve a barra
+				return
 		"sombra":
 			_sombra_t = cfg.sombra_tempo
 			_aplicar_sombra(true)
@@ -2184,6 +2245,8 @@ func _use_power() -> bool:
 				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.power_radius:
 					other.give_boost(1.25, stats.power_duration)
 					FxPoder.rastro(other, Color(1.0, 0.75, 0.35), stats.power_duration)
+		_:
+			Herois.poder(self)
 	return true
 
 
@@ -2316,6 +2379,7 @@ func _tick_buffs(delta: float) -> void:
 		_dmg_boost_t -= delta
 		if fmod(_dmg_boost_t, 0.25) < delta:
 			Fx.burst(game, global_position + Vector3(0, 1.6, 0), Color(1.0, 0.35, 0.3), 2, 2.0)
+	Herois.tick(self, delta)
 	if building_t > 0.0 and game and game.placar:
 		game.placar.somar(self, "obra_s", delta)
 	building_t = maxf(building_t - delta, 0.0)
@@ -2371,6 +2435,7 @@ func _pulso_ciranda() -> void:
 
 
 func _end_buffs() -> void:
+	Herois.limpar(self)
 	_fury_t = 0.0
 	_silence_t = 0.0
 	_preso_t = 0.0
@@ -2604,6 +2669,9 @@ func _tick_corpo(delta: float, horizontal: Vector3, congelado := false) -> void:
 		var amp := 0.09 * k * clampf(_tremor_t / 0.2, 0.0, 1.0)
 		off.x += randf_range(-amp, amp)
 		off.z += randf_range(-amp, amp)
+	if stats.flutua and alive:
+		# Tennin: boia acima do chão com um balanço lento (o corpo de colisão não sobe).
+		off.y += 0.28 + 0.07 * sin(Time.get_ticks_msec() * 0.0025 + get_instance_id() % 7)
 	_visual.position = off
 
 
@@ -2629,6 +2697,7 @@ func _build_team_ring() -> void:
 	ring.material_override = Fx.unshaded(Color(c, 0.85), true)
 	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(ring)
+	_ring = ring
 
 
 func _build_hp_bar() -> void:

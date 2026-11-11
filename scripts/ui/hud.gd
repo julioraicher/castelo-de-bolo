@@ -63,6 +63,8 @@ var _escolha_titulo: Label
 var _escolha_botoes: Array[Button] = []
 var _escolha_of: Oficina
 var _escolha_cb: Callable
+var _escolha_rodape: Label
+var _escolha_n := 2
 
 
 func _ready() -> void:
@@ -402,7 +404,7 @@ func _build_escolha(root: Control) -> void:
 	h.add_theme_constant_override("separation", 14)
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(h)
-	for i in 2:
+	for i in 4:  # Ciclo 2.23: até 4 opções (caminhos = 2, heróis = 2 ou 3)
 		var b := Button.new()
 		b.custom_minimum_size = Vector2(330, 176)
 		b.focus_mode = Control.FOCUS_NONE
@@ -412,7 +414,8 @@ func _build_escolha(root: Control) -> void:
 	var rodape := HBoxContainer.new()
 	rodape.alignment = BoxContainer.ALIGNMENT_CENTER
 	rodape.add_theme_constant_override("separation", 8)
-	rodape.add_child(Estilo.rotulo("Clique num caminho (ou 1 / 2). O outro fica selado até o fim.", Estilo.T_PEQUENO, Estilo.TEXTO_FRACO, Estilo.CORPO))
+	_escolha_rodape = Estilo.rotulo("Clique num caminho (ou 1 / 2). O outro fica selado até o fim.", Estilo.T_PEQUENO, Estilo.TEXTO_FRACO, Estilo.CORPO)
+	rodape.add_child(_escolha_rodape)
 	rodape.add_child(Estilo.tecla("F", Estilo.T_PEQUENO))
 	rodape.add_child(Estilo.rotulo("fecha", Estilo.T_PEQUENO, Estilo.TEXTO, Estilo.CORPO))
 	v.add_child(rodape)
@@ -421,14 +424,25 @@ func _build_escolha(root: Control) -> void:
 	_escolha.grow_vertical = Control.GROW_DIRECTION_BEGIN
 
 
-## Abre o painel com os dois caminhos da casa `of`; `cb(i)` recebe o escolhido.
-func abrir_escolha(of: Oficina, cb: Callable) -> void:
+## Abre o painel com os dois caminhos da casa `of` (ou, com heroi = true, os
+## heróis raros do Nv6, Ciclo 2.23); `cb(i)` recebe o escolhido.
+func abrir_escolha(of: Oficina, cb: Callable, heroi := false) -> void:
 	_escolha_of = of
 	_escolha_cb = cb
-	var cs := of.caminhos()
-	_escolha_titulo.text = "Casa de %s: escolha o caminho" % of.base.display_name
-	for i in 2:
+	var cs: Array[ClassStats] = of.herois() if heroi else of.caminhos()
+	_escolha_n = mini(cs.size(), _escolha_botoes.size())
+	if heroi:
+		_escolha_titulo.text = "Nível 6 de %s: escolha o herói raro" % of.base.display_name
+		var teclas := " / ".join(range(1, _escolha_n + 1).map(func(k): return str(k)))
+		_escolha_rodape.text = "Clique num herói (ou %s). Um chapéu só no pavilhão: volta 20 s depois que o herói sai de campo." % teclas
+	else:
+		_escolha_titulo.text = "Casa de %s: escolha o caminho" % of.base.display_name
+		_escolha_rodape.text = "Clique num caminho (ou 1 / 2). O outro fica selado até o fim."
+	for i in _escolha_botoes.size():
+		_escolha_botoes[i].visible = i < _escolha_n
+	for i in _escolha_n:
 		var b := _escolha_botoes[i]
+		b.custom_minimum_size = Vector2(300 if _escolha_n >= 3 else 330, 196 if heroi else 176)
 		for c in b.get_children():
 			c.queue_free()
 		var cls: ClassStats = cs[i]
@@ -456,12 +470,16 @@ func abrir_escolha(of: Oficina, cb: Callable) -> void:
 		var linhas := [cls.caminho_nome.to_upper() if cls.caminho_nome != "" else "", cls.epiteto,
 				"Q: %s" % cls.skill_name if cls.skill_name != "" else "",
 				"E: %s" % cls.power_name if cls.power_name != "" else ""]
+		if heroi:
+			linhas = ["★ HERÓI RARO", cls.epiteto, cls.estilo_linha,
+					"Q: %s  ·  E: %s" % [cls.skill_name, cls.power_name],
+					"R: %s" % (cls.super_nome if cls.super_nome != "" else "Super " + cls.power_name)]
 		for k in linhas.size():
 			if linhas[k] == "":
 				continue
 			var l := Estilo.rotulo(linhas[k], Estilo.T_PEQUENO if k > 0 else Estilo.T_MIN, Estilo.TEXTO if k > 0 else cor, Estilo.CORPO)
 			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			l.custom_minimum_size.x = 300
+			l.custom_minimum_size.x = 270 if _escolha_n >= 3 else 300
 			col.add_child(l)
 		for n in [mc, col, topo] + col.get_children() + topo.get_children():
 			if n is Control:
@@ -491,12 +509,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if not _escolha.visible or not (event is InputEventKey) or not event.pressed or event.echo:
 		return
 	var k := (event as InputEventKey).keycode
-	if k == KEY_1 or k == KEY_KP_1:
-		_escolheu(0)
-		get_viewport().set_input_as_handled()
-	elif k == KEY_2 or k == KEY_KP_2:
-		_escolheu(1)
-		get_viewport().set_input_as_handled()
+	for i in _escolha_n:
+		if k == KEY_1 + i or k == KEY_KP_1 + i:
+			_escolheu(i)
+			get_viewport().set_input_as_handled()
+			return
 
 
 func _build_fim(root: Control) -> void:

@@ -150,6 +150,20 @@ func _esquiva_projetil(me: Vector3) -> Vector3:
 			return Vector3.ZERO
 		var lado := v.normalized().rotated(Vector3.UP, PI / 2.0)
 		return lado if lado.dot(rel - v * t) >= 0.0 else -lado
+	# Marca no chão de um golpe que vai cair (Mergulho do Karasu, Ciclo 2.23):
+	# metade das vezes o bot vê e sai da marca.
+	for z in game.perigos:
+		if z.time == unit.team or z.ate < game._time:
+			continue
+		var de: Vector3 = me - z.pos
+		de.y = 0
+		if de.length() > z.raio:
+			continue
+		var visto: Dictionary = z.visto
+		if not visto.has(unit):
+			visto[unit] = randf() < 0.5
+		if visto[unit]:
+			return de.normalized() if de.length() > 0.1 else Vector3.RIGHT
 	return Vector3.ZERO
 
 
@@ -379,7 +393,7 @@ func _lenhador(me: Vector3) -> bool:
 	if perigo:
 		return false  # larga a tarefa e briga (prioridades de combate abaixo)
 	# Obra pendente e madeira no estoque para terminá-la: construir.
-	var of := game.obra_do_time(unit.team, me)
+	var of := game.obra_do_time(unit.team, me, true)
 	var falta := of.faltam() if of else 0
 	# Torreta na frente do castelo (regra em Game.torreta_para_construir).
 	var tor := game.torreta_para_construir(unit.team, me, of)
@@ -405,7 +419,7 @@ func _lenhador(me: Vector3) -> bool:
 		_goal = maq.global_position + (lado.normalized() if lado.length() > 0.1 else Vector3.BACK) * 1.8
 		return true
 	# Casa pronta: a madeira sobe o nível (4 e 5, barraquinha junto).
-	var mago: Oficina = game.mago_para_subir(unit.team, me) if of == null and maq == null else null
+	var mago: Oficina = game.mago_para_subir(unit.team, me, true) if of == null and maq == null else null
 	if mago and game.madeira[unit.team] >= mini(mago.faltam_nivel(), 2):
 		_goal = mago.alvo_obra(me)
 		return true
@@ -561,6 +575,8 @@ func _combat() -> void:
 ## Super: a sombra serve para chegar em quem atira de longe (ou fugir com
 ## pouca vida); o "maior" segue a mesma leitura do poder E.
 func _should_use_super() -> bool:
+	if unit.stats.super_tipo == "proprio":
+		return BotHerois.super_r(self)
 	if unit.stats.super_tipo == "sombra":
 		if unit.hp_ratio() < 0.3 and _nearest_enemy(6.0) != null:
 			return true
@@ -619,7 +635,7 @@ func _should_use_power() -> bool:
 					if d > r * 0.45 and d < r + 0.3:
 						n += 1
 			return n >= 2
-	return false
+	return BotHerois.poder(self)
 
 
 ## Quando soltar o Q (recarga curta: pode gastar sem muito critério).
@@ -654,7 +670,7 @@ func _should_use_quick() -> bool:
 			if unit.carried_tora or unit.carried_princess:
 				return true
 			return unit.lenhador() and me.distance_to(_goal) > 25.0 and _nearest_enemy(12.0) == null
-	return false
+	return BotHerois.rapida(self)
 
 
 ## Construtor: estrepes no caminho de quem vem (inimigo a até 7 m) ou, na

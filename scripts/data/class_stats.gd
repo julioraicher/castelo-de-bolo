@@ -21,7 +21,7 @@ extends Resource
 ## Cor do chapéu exibido no pedestal do castelo.
 @export var hat_color := Color.WHITE
 ## Formato do chapéu do pedestal (HatPad.make_hat).
-@export_enum("elmo", "capuz", "chapeu_pontudo", "kasa", "kabuto", "faixa", "mascara_oni", "eboshi", "orelhas", "cesto", "barril", "hachimaki") var hat_style := "elmo"
+@export_enum("elmo", "capuz", "chapeu_pontudo", "kasa", "kabuto", "faixa", "mascara_oni", "eboshi", "orelhas", "cesto", "barril", "hachimaki", "coque", "prato", "tokin", "bico", "mascara_lisa", "halo") var hat_style := "elmo"
 ## Visual ninja (NinjaVisual): nome da função que monta as peças (ex.: "_samurai").
 ## Vazio = modelo KayKit original, só com a capa na cor do time.
 @export var estilo_ninja := ""
@@ -65,7 +65,7 @@ extends Resource
 @export var queda_dist_ini := 0.0
 @export var queda_dano_min := 1.0
 ## Visual e comportamento do projétil: bomba cai em parábola e explode em área.
-@export_enum("flecha", "magia", "shuriken", "bomba", "talisma", "fogo", "chi") var projetil := "flecha"
+@export_enum("flecha", "magia", "shuriken", "bomba", "talisma", "fogo", "chi", "vento", "nota", "grou") var projetil := "flecha"
 ## Bomba: raio da explosão (m).
 @export var explosao_raio := 2.2
 @export_group("Combo")
@@ -91,7 +91,7 @@ extends Resource
 ## varrida = giro da naginata que acerta só a faixa entre alcance_min e skill_radius
 ## e dá escudo aos aliados perto (Sohei); gancho = corrente que PUXA o primeiro
 ## inimigo na linha até skill_radius m (Kusarigama).
-@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho") var skill := "nenhum"
+@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho", "agarrao", "rasteira", "rajada", "mergulho", "roubar_rosto", "dobrar", "laco", "sono") var skill := "nenhum"
 ## Nome mostrado no HUD ao lado da tecla Q.
 @export var skill_name := ""
 ## Recarga do Q em s (cura usa heal_cooldown e armadilha usa trap_cooldown).
@@ -137,12 +137,27 @@ extends Resource
 ## Classe evoluída: nome curto do caminho (tapete, estandarte, avisos). Ex.: "Luz".
 @export var caminho_nome := ""
 
+@export_group("Heróis raros (Ciclo 2.23)")
+## Classe do pátio: os heróis raros do nível 6 do bairro (2 ou mais). O
+## Construtor escolhe um no painel; os outros ficam fora da partida. Vazio = o
+## bairro para no nível 5. Herói novo = um .tres aqui, sem código de regra se
+## ele só usa poderes que já existem.
+@export var herois: Array[ClassStats] = []
+## Herói: uma linha de estilo no painel da escolha ("tanque que agarra").
+@export var estilo_linha := ""
+## Casco (Kappa): dano que chega por trás (mais de 110° do rosto) × (1 − casco).
+@export_range(0.0, 0.95) var casco := 0.0
+## Não é empurrado (Tennin flutua no manto).
+@export var knock_imune := false
+## O corpo flutua um pouco acima do chão, balançando (só visual).
+@export var flutua := false
+
 @export_group("Poder de Chi (E)")
 ## Poder especial, liberado quando o medidor de Glacê enche.
 ## muralha = Muralha de Fé do Sohei (aliados em volta ganham escudo e pressa,
 ## inimigos na borda são empurrados para fora); ciranda = a Kusarigama gira a
 ## corrente em volta (pulsos que acertam só a ponta e arremessam).
-@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "furia", "leque", "selo", "coluna_fogo", "mutirao", "campo_minado", "bombardeio", "muralha", "ciranda") var power := "nenhum"
+@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "furia", "leque", "selo", "coluna_fogo", "mutirao", "campo_minado", "bombardeio", "muralha", "ciranda", "pisao_grande", "jato", "redemoinho_longe", "revoada", "susto", "grou", "danca", "hipnose") var power := "nenhum"
 @export var power_name := ""
 ## Raio de efeito (m).
 @export var power_radius := 3.0
@@ -156,7 +171,9 @@ extends Resource
 @export_group("Super (R)")
 ## maior = o poder E em versão gigante (raio, dano e duração maiores);
 ## sombra = invisível por pouco tempo, mais rápido, golpe de surpresa.
-@export_enum("maior", "sombra") var super_tipo := "maior"
+@export_enum("maior", "sombra", "proprio") var super_tipo := "maior"
+## super_tipo "proprio" (heróis raros): qual R sai (dohyo, mergulho3, mil_grous, veu, requiem).
+@export var super_poder := ""
 ## Nome no HUD. Vazio = "Super " + power_name.
 @export var super_nome := ""
 

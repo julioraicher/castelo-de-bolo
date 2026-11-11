@@ -257,6 +257,52 @@ extends Resource
 ## Os dois times veem o aviso quando um deles escolhe um caminho.
 @export var caminho_aviso_inimigo := true
 
+@export_group("Heróis raros (Ciclo 2.23)")
+## Madeira do Pavilhão do Herói (Nv5 → Nv6; a 1ª entra na escolha).
+@export var heroi_custo := 10
+## Segundos para o chapéu do herói voltar ao altar depois que ele sai de campo
+## (renasce como aldeão ou troca de chapéu; caído esperando reanimar não conta).
+@export var heroi_retorno := 20.0
+@export var sandbox_heroi_retorno := 3.0
+## Bots não pegam o chapéu do herói nos primeiros s em que ele está no altar,
+## para o jogador do time ter a vez.
+@export var heroi_espera_jogador := 8.0
+## Níveis de bônus (dano/vida/Chi de mago_bonus_*) de quem veste o herói. A
+## base e o caminho param no Nv5 (3 níveis); o herói é "um pouco mais upado".
+@export var heroi_bonus_niveis := 4
+
+@export_group("Heróis raros: regras (Ciclo 2.23)")
+## Sumotori, Agarrão (Q): s segurando antes de arremessar, s no chão depois do
+## pouso, dano e raio do respingo em quem está perto do pouso.
+@export var agarrao_segura := 0.35
+@export var agarrao_chao := 0.6
+@export var agarrao_respingo := 14.0
+@export var agarrao_respingo_raio := 2.2
+## Sumotori, Dohyō (R): ringue de sal. Quem estava dentro não sai, quem estava
+## fora não entra; o Sumotori bate dohyo_dano a mais dentro dele.
+@export var dohyo_raio := 6.0
+@export var dohyo_tempo := 6.0
+@export var dohyo_dano := 0.2
+## Yamabushi, Rajada (Q): cone em graus e empurrão (m/s).
+@export var rajada_cone := 70.0
+@export var rajada_empurrao := 16.0
+## Karasu Tengu, Noite de Corvos (R): quantos mergulhos e até onde procura.
+@export var mergulho3_alvos := 3
+@export var mergulho3_raio := 16.0
+## Mujina: multiplicador do golpe que sai do rosto roubado.
+@export var mujina_golpe_mult := 1.5
+## Onmyoji: bonecos de papel no máximo; Mil Grous (R): grous e abertura.
+@export var shikigami_max := 3
+@export var mil_grous_n := 5
+@export var mil_grous_graus := 50.0
+## Tennin: vida de quem o Laço levanta (fração); Véu (R): raio e tempo intocável.
+@export var laco_vida := 0.4
+@export var veu_raio := 14.0
+@export var veu_tempo := 3.0
+## Komusō, Réquiem (R): raio e tempo sem Q, E e R.
+@export var requiem_raio := 16.0
+@export var requiem_tempo := 4.0
+
 @export_group("Sohei e Kusarigama (Ciclo 2.21)")
 ## Varrida (Q do Sohei): aliados a até varrida_aliados_raio m ganham escudo.
 @export var varrida_escudo := 22.0

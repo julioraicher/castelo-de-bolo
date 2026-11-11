@@ -25,6 +25,12 @@ var raio_mult := 1.0
 var explode_final := false
 var _acertados: Array[Unit] = []
 var _origem := Vector3.ZERO
+## Heróis raros (Ciclo 2.23): talismã que segue o alvo (Onmyoji), grou que
+## cura aliados que atravessa e tiro devolvido pela Rajada do Yamabushi.
+var segue: Unit = null
+var cura := 0.0
+var _curados: Array[Unit] = []
+const VIRA_SEGUE := 7.0  # rad/s que o talismã consegue virar atrás do alvo
 
 
 func setup(game: Game, shooter: Unit, origin: Vector3, dir: Vector3, p_kind: String) -> void:
@@ -35,6 +41,11 @@ func setup(game: Game, shooter: Unit, origin: Vector3, dir: Vector3, p_kind: Str
 	velocity = dir.normalized() * shooter.stats.projectile_speed
 	damage = shooter.stats.damage * shooter.damage_mult()
 	kind = {"arrow": "flecha", "magic": "magia"}.get(p_kind, p_kind)
+	match kind:
+		"vento":
+			perfura = 1  # lâmina de vento atravessa 2 alvos
+		"nota":
+			perfura = 99  # a nota atravessa todo mundo
 	# Leque/Chuva soltam vários de uma vez: um som só por rajada.
 	var agora := Time.get_ticks_msec()
 	if agora - int(shooter.get_meta("som_t", -1000)) > 60:
@@ -43,8 +54,10 @@ func setup(game: Game, shooter: Unit, origin: Vector3, dir: Vector3, p_kind: Str
 
 
 ## Som ao lançar e ao acertar, por projétil (gerados por tools/gerar_sons.py).
-const SOM_LANCAR := {"flecha": "shoot", "shuriken": "lancar_metal", "bomba": "pavio", "fogo": "fogo", "chi": "luz", "magia": "sombra"}
-const SOM_ACERTO := {"flecha": "flecha_chao", "shuriken": "tinido", "bomba": "explosao", "fogo": "brasa", "chi": "sino", "magia": "implosao"}
+const SOM_LANCAR := {"flecha": "shoot", "shuriken": "lancar_metal", "bomba": "pavio", "fogo": "fogo", "chi": "luz", "magia": "sombra",
+	"vento": "magia_vento", "nota": "flauta", "talisma": "papel", "grou": "papel"}
+const SOM_ACERTO := {"flecha": "flecha_chao", "shuriken": "tinido", "bomba": "explosao", "fogo": "brasa", "chi": "sino", "magia": "implosao",
+	"vento": "magia_vento", "nota": "sino", "talisma": "magia_selo", "grou": "magia_selo"}
 var nivel := 1  # 2 = tiro carregado (rastro e impacto maiores)
 var kind := "flecha"
 var _spin: Node3D
@@ -52,6 +65,26 @@ var _spin: Node3D
 
 ## Carga máxima: flecha/shuriken atravessa carga_perfura inimigos e fica maior
 ## e mais brilhante; bomba explode carga_raio_bomba × maior.
+## Vida do projétil para voar `d` m na velocidade atual.
+func alcance_vida(d: float) -> void:
+	_life = d / maxf(velocity.length(), 0.1)
+
+
+## Rajada do Leque: o tiro passa a ser de `novo_dono` e volta em `dir`.
+func rebater(novo_dono: Unit, dir: Vector3) -> void:
+	owner_unit = novo_dono
+	var v := maxf(Vector3(velocity.x, 0, velocity.z).length(), 18.0) * 1.15
+	velocity = dir.normalized() * v
+	gravity = 0.0
+	segue = null
+	_acertados.clear()
+	_origem = global_position
+	_life = maxf(_life, 1.0)
+	if velocity.length_squared() > 1e-6:
+		look_at(global_position + velocity, Vector3.UP)
+	FxProjetil.brilho(_game, global_position, Color(1.0, 0.8, 0.45), 1.2, 0.18)
+
+
 func carregar() -> void:
 	nivel = 2
 	FxProjetil.carregar(self, kind)
@@ -91,6 +124,16 @@ func _physics_process(delta: float) -> void:
 		_fim()
 		return
 	var from := global_position
+	if segue and is_instance_valid(segue) and segue.alive and not segue.em_voo:
+		# Vira a velocidade na direção do alvo com taxa limitada (dá para esquivar).
+		var quer := (segue.global_position + Vector3(0, TARGET_HEIGHT, 0) - from).normalized()
+		var v := velocity.length()
+		var atual := velocity / maxf(v, 0.01)
+		var ang := atual.angle_to(quer)
+		if ang > 0.001:
+			velocity = atual.slerp(quer, minf(VIRA_SEGUE * delta / ang, 1.0)) * v
+			if velocity.length_squared() > 1e-6:
+				look_at(from + velocity, Vector3.UP)
 	velocity.y -= gravity * delta
 	var to := from + velocity * delta
 	if _spin:
@@ -122,6 +165,13 @@ func _physics_process(delta: float) -> void:
 			_bateu(global_position)
 			_fim()
 			return
+	if cura > 0.0:
+		for u in _game.units:
+			if u.alive and u.team == owner_unit.team and u != owner_unit and not _curados.has(u) \
+					and Vector2(u.global_position.x - global_position.x, u.global_position.z - global_position.z).length() < HIT_RADIUS + 0.4:
+				_curados.append(u)
+				u.heal(cura, owner_unit)
+				FxProjetil.brilho(_game, u.global_position + Vector3(0, 1.2, 0), Color(0.6, 1.0, 0.7), 1.0, 0.25)
 	for u in _game.units:
 		if u.alive and u.team != owner_unit.team:
 			# Cápsula do boneco (0,7 m de raio somando o projétil, dos pés até 2,1 m).

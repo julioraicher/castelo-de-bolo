@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="ClassStats" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="1_6b6k1"]
+[ext_resource type="PackedScene" path="res://assets/characters/Barbarian.glb" id="2_g2tkw"]
+
+[resource]
+script = ExtResource("1_6b6k1")
+id = &"sumotori"
+display_name = "Sumotori"
+epiteto = "O lutador do santuário"
+descricao = "Campeão do ringue de sal do santuário da montanha. Desceu para a guerra porque ninguém mais aceitava lutar com ele. Agarra, gira e arremessa; dentro do ringue dele, ninguém sai e ninguém entra."
+model = ExtResource("2_g2tkw")
+visible_meshes = PackedStringArray("Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight")
+hat_color = Color(0.96, 0.86, 0.62, 1)
+hat_style = "coque"
+estilo_ninja = "_sumotori"
+escala_cabeca = 0.58
+escala_extremidades = 1.5
+escala_modelo = 1.18
+dash_estilo = "rolar"
+max_hp = 215.0
+move_speed = 5.8
+damage = 15.0
+attack_range = 2.6
+attack_arc_deg = 120.0
+attack_cooldown = 0.42
+knockback = 9.0
+combo_anims = PackedStringArray("Unarmed_Melee_Attack_Punch_A", "Unarmed_Melee_Attack_Punch_B", "Unarmed_Melee_Attack_Punch_A", "2H_Melee_Attack_Chop")
+combo_finisher_mult = 1.6
+skill = "agarrao"
+skill_name = "Agarrão"
+skill_cooldown = 7.0
+skill_value = 22.0
+skill_radius = 2.8
+skill_duration = 9.0
+block_reduction = 0.6
+classe_base = &"guerreiro"
+estilo_linha = "Tanque de mão vazia: agarra, arremessa e prende no ringue."
+power = "pisao_grande"
+power_name = "Pisão do Santuário"
+power_radius = 5.0
+power_value = 26.0
+power_duration = 0.9
+super_tipo = "proprio"
+super_poder = "dohyo"
+super_nome = "Dohyō"
+anim_idle = "Unarmed_Idle"
+anim_attack = "Unarmed_Melee_Attack_Punch_A"

@@ -596,6 +596,19 @@ func inicio_calmo() -> bool:
 	return _time < Config.cfg.inicio_calmo
 
 
+## Zonas que vão levar um golpe (marca do Mergulho, Ciclo 2.23): os bots do
+## outro time leem e às vezes saem (BotBrain._esquiva_projetil).
+var perigos: Array = []
+
+func perigo(pos: Vector3, raio: float, dur: float, time: int) -> void:
+	var i := perigos.size() - 1
+	while i >= 0:
+		if perigos[i].ate < _time:
+			perigos.remove_at(i)
+		i -= 1
+	perigos.append({"pos": pos, "raio": raio, "ate": _time + dur, "time": time, "visto": {}})
+
+
 func _physics_process(delta: float) -> void:
 	_time += delta
 	if _perf:
@@ -1036,7 +1049,7 @@ func _rules() -> void:
 		var pad_d := INF
 		if not u.is_equipping():
 			for pd in hat_pads:
-				if pd.team != u.team or not pd.available or pd.stats == u.stats:
+				if pd.team != u.team or not pd.available or pd.stats == u.stats or heroi_reservado(pd, u):
 					continue
 				var d := pos.distance_to(pd.global_position)
 				if d < pd.raio_pegar and d < pad_d:
@@ -1050,7 +1063,10 @@ func _rules() -> void:
 					and _bots_lenhadores(u.team, u) >= Config.cfg.bots_construtores_max)
 			if wants_interact or bot_pega:
 				var from: Vector3 = pad.hat_world_position()
-				u.start_equip(pad.take(), from)
+				var cls := pad.take()
+				u.start_equip(cls, from)
+				if pad.raro:
+					on_heroi_vestido(u, cls)
 
 	if sandbox:
 		hint = _regras_sandbox(hint)
@@ -1169,10 +1185,31 @@ func _dica_casa() -> String:
 				var falta := "  ·  faltam %d madeiras" % of.faltam() if of.faltam() > 0 else ""
 				return "Casa de %s: %d%%%s  ·  %s" % [of.opcao().display_name, int(of.progresso * 100.0), falta, precisa]
 			Oficina.Estado.PRONTA:
+				if of.pede_heroi():
+					var hs := " ou ".join(of.herois().map(func(c): return c.display_name))
+					if not construtor:
+						return "★ Nível 6: um Construtor escolhe o herói raro (%s)" % hs
+					if aberta == of:
+						if aperta:
+							hud.fechar_escolha()
+						return ""
+					if aperta:
+						if inimigo_perto(player, ESCOLHA_BRIGA_R):
+							hud.show_big("Saia da briga para escolher o herói", Color(1, 0.6, 0.55), 1.4)
+						elif not gastar_madeira_possivel(player.team, 1):
+							hud.show_big("Falta madeira no depósito para começar o pavilhão", Color(1, 0.6, 0.55), 1.4)
+						else:
+							hud.abrir_escolha(of, _confirmar_heroi.bind(of), true)
+							return ""
+					return "[F] ★ escolher o herói raro do nível 6: %s  ·  %d madeiras" % [hs, Config.cfg.heroi_custo]
 				if not construtor:
 					return ""
+				if of.heroi >= 0 and not of.heroi_pronto:
+					return "Pavilhão de %s: faltam %d madeiras  ·  fique no bairro" % [of.heroi_cls().display_name, of.faltam_nivel()]
 				if of.pode_subir():
 					return "Nível %d de %s e %s: faltam %d madeiras  ·  fique no bairro" % [of.nivel + 1, of.base.display_name, of.opcao().display_name, of.faltam_nivel()]
+				if of.heroi_pronto:
+					return "%s, %s e ★ %s: bairro completo (Nv6)" % [of.base.display_name, of.opcao().display_name, of.heroi_cls().display_name]
 				return "%s e %s no nível máximo (%d)" % [of.base.display_name, of.opcao().display_name, of.nivel]
 	return ""
 
@@ -1185,13 +1222,25 @@ func _confirmar_escolha(i: int, of: Oficina) -> void:
 		hud.show_big("Falta madeira no depósito para começar a casa", Color(1, 0.6, 0.55), 1.4)
 
 
+## Painel dos heróis (Nv6): o jogador clicou num herói.
+func _confirmar_heroi(i: int, of: Oficina) -> void:
+	if not is_instance_valid(of) or not of.pede_heroi():
+		return
+	if not of.escolher_heroi(i):
+		hud.show_big("Falta madeira no depósito para começar o pavilhão", Color(1, 0.6, 0.55), 1.4)
+
+
+func gastar_madeira_possivel(team: int, n: int) -> bool:
+	return sandbox or madeira[team] >= n
+
+
 ## O painel da escolha fecha sozinho se o jogador sai do bairro, entra na
 ## briga, cai, ou se um bot do time escolheu antes.
 func _vigiar_escolha() -> void:
 	var of := hud.escolha_aberta() if hud else null
 	if of == null:
 		return
-	if not player.alive or not of.pede_escolha() or player.global_position.distance_to(of.global_position) > Oficina.RAIO + 1.5 \
+	if not player.alive or not (of.pede_escolha() or of.pede_heroi()) or player.global_position.distance_to(of.global_position) > Oficina.RAIO + 1.5 \
 			or inimigo_perto(player, ESCOLHA_BRIGA_R):
 		hud.fechar_escolha()
 
@@ -1543,7 +1592,9 @@ func nearest_oficina(team: int, from: Vector3, max_dist: float, unbuilt_only: bo
 ## Casa que o Construtor deve tocar: a obra mais adiantada do time (todos
 ## continuam de onde os outros pararam, sem espalhar madeira); sem obra, o
 ## bairro ainda sem caminho mais perto (o bot vai ao tapete e escolhe).
-func obra_do_time(team: int, from: Vector3) -> Oficina:
+## com_foco (bots, Ciclo 2.23): com o bairro-foco já no Nv2+, os outros bairros
+## esperam a escolha do caminho até o herói do foco sair.
+func obra_do_time(team: int, from: Vector3, com_foco := false) -> Oficina:
 	var best: Oficina = null
 	var best_v := 0.0
 	var vazio: Oficina = null
@@ -1557,6 +1608,11 @@ func obra_do_time(team: int, from: Vector3) -> Oficina:
 				best_v = v
 				best = of
 		elif of.pede_escolha():
+			# Ciclo 2.23: bots levam o bairro-foco até o herói antes de abrir
+			# os outros caminhos.
+			var foco := foco_heroi(team) if com_foco else null
+			if foco != null and foco != of and foco.nivel >= 2:
+				continue
 			var d := from.distance_to(of.global_position)
 			if d < vazio_d:
 				vazio_d = d
@@ -1570,7 +1626,7 @@ func obra_do_time(team: int, from: Vector3) -> Oficina:
 ## terreno vazio espera (a madeira vai para o mago antes de reerguer a outra).
 func torreta_para_obra(team: int, from: Vector3) -> Torreta:
 	var best: Torreta = null
-	var espera := mago_para_subir(team) != null and torretas_de_pe(team) >= 1
+	var espera := mago_para_subir(team, Vector3.INF, false, false) != null and torretas_de_pe(team) >= 1
 	for t in torretas:
 		if t.team != team or t.pronta() or (espera and t.madeira_entregue == 0):
 			continue
@@ -1693,22 +1749,89 @@ func barraca_nv1(team: int, from: Vector3) -> Oficina:
 ## Casa pronta abaixo do nível máximo para o Construtor subir: a que já tem
 ## mais madeira posta, depois a de nível mais alto (o time foca numa casa até
 ## o máximo, ~8 min de partida), depois a mais perto.
-func mago_para_subir(team: int, from := Vector3.INF) -> Oficina:
+func mago_para_subir(team: int, from := Vector3.INF, com_foco := false, com_heroi := true) -> Oficina:
 	var best: Oficina = null
 	var best_k := -INF
+	var foco := foco_heroi(team) if com_foco else null
 	for of in oficinas:
-		if of.team != team or not of.pode_subir():
+		if of.team != team or not (of.pode_subir() or (com_heroi and of.pede_heroi())):
 			continue
 		# Ciclo 2.22: madeira já posta primeiro; depois as barraquinhas no Nv1
 		# (abrem o bairro e liberam o R); depois a casa mais alta (o time foca
 		# numa até o 5); a mais perto desempata.
 		var k := 1000.0 * of.madeira_nivel + (500.0 if of.nivel < 2 else 10.0 * of.nivel)
+		if of == foco and of.nivel >= 2:
+			k += 300.0  # Ciclo 2.23: o bairro-foco sobe até o herói primeiro
 		if from != Vector3.INF:
 			k -= from.distance_to(of.global_position) * 0.01
 		if best == null or k > best_k:
 			best_k = k
 			best = of
 	return best
+
+
+## Ciclo 2.23: bairro que os BOTS levam primeiro até o herói (sorteado por
+## time na 1ª consulta, entre os que têm herois). null = sem foco / já pronto.
+var _foco_heroi: Array = [null, null]
+var _foco_sorteado := [false, false]
+
+
+func foco_heroi(team: int) -> Oficina:
+	if not _foco_sorteado[team]:
+		_foco_sorteado[team] = true
+		var cands: Array = []
+		for of in oficinas:
+			if of.team == team and not of.herois().is_empty():
+				cands.append(of)
+		if not cands.is_empty():
+			_foco_heroi[team] = cands[randi() % cands.size()]
+	var f: Oficina = _foco_heroi[team]
+	if f == null or not is_instance_valid(f) or f.heroi_pronto:
+		return null
+	return f
+
+
+## Herói escolhido no Nv5: aviso para os dois times.
+func on_heroi_escolhido(of: Oficina) -> void:
+	var h := of.heroi_cls()
+	_log("heroi %s: %s -> %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], of.base.display_name, h.display_name, _time])
+	if hud == null or player == null or _montando_sandbox:
+		return
+	if of.team == player.team:
+		hud.show_big("★ Herói escolhido: %s!\nO pavilhão sobe com %d madeiras" % [h.display_name, Config.cfg.heroi_custo], Estilo.OURO_CLARO, 2.6)
+	else:
+		hud.show_big("O inimigo chamou o herói %s" % h.display_name, Color(1, 0.6, 0.55), 1.8)
+
+
+func on_heroi_pronto(of: Oficina) -> void:
+	var h := of.heroi_cls()
+	_log("heroi pronto %s: %s (t=%.0fs)" % [Config.TEAM_NAMES[of.team], h.display_name, _time])
+	if hud == null or player == null or _montando_sandbox:
+		return
+	if of.team == player.team:
+		hud.show_big("★ %s chegou ao pavilhão!\nUm chapéu só: quem pegar vira o herói" % h.display_name, Estilo.OURO_CLARO, 2.8)
+	else:
+		hud.show_big("O inimigo tem um herói: %s" % h.display_name, Color(1, 0.6, 0.55), 1.8)
+
+
+## Nv5 com madeira para o herói: o quintal acende (aviso uma vez por bairro).
+func on_heroi_disponivel(of: Oficina) -> void:
+	if hud and player and of.team == player.team and not _montando_sandbox:
+		hud.show_big("★ Herói raro disponível no bairro de %s\nUm Construtor sobe o nível 6" % of.base.display_name, Estilo.OURO_CLARO, 2.4)
+
+
+## Alguém do time vestiu o herói (Game._rules, ao pegar o chapéu).
+func on_heroi_vestido(u: Unit, cls: ClassStats) -> void:
+	_log("heroi vestido %s: %s (t=%.0fs)" % [Config.TEAM_NAMES[u.team], cls.display_name, _time])
+	if hud and player and u.team == player.team and not _montando_sandbox:
+		var quem := "Você é" if u == player else "%s entrou na briga:" % ("Um aliado")
+		hud.show_big("★ %s %s!" % [quem, cls.display_name], Estilo.OURO_CLARO, 2.0)
+
+
+## Bots esperam o jogador pegar o chapéu do herói nos primeiros s no altar.
+func heroi_reservado(pad: HatPad, quem: Unit) -> bool:
+	return pad.raro and quem != null and not quem.is_player and player != null and player.team == pad.team \
+			and not _autoplay and pad._livre_t < Config.cfg.heroi_espera_jogador
 
 
 ## Um Construtor escolheu o caminho de uma casa: aviso para os dois times.
@@ -1734,7 +1857,9 @@ func on_mago_nivel(of: Oficina) -> void:
 		var nome := of.base.display_name if of.estado != Oficina.Estado.PRONTA else "%s e %s" % [of.base.display_name, of.opcao().display_name]
 		if of.team == player.team:
 			var extra := "\nSuper (R) liberado  ·  próximo: escolher o caminho" if of.nivel == 2 else ""
-			hud.show_big("%s: nível %d/%d!%s" % [nome, of.nivel, Config.cfg.mago_nivel_max, extra], of.cor_nivel(), 2.2)
+			if of.nivel == Config.cfg.mago_nivel_max and not of.herois().is_empty():
+				extra = "\n★ Próximo: o herói raro do nível 6"
+			hud.show_big("%s: nível %d/%d!%s" % [nome, of.nivel, Config.cfg.mago_nivel_max + (1 if not of.herois().is_empty() else 0), extra], of.cor_nivel(), 2.2)
 		else:
 			hud.show_big("O inimigo subiu %s para o nível %d" % [nome, of.nivel], Color(1, 0.6, 0.55), 1.6)
 
@@ -1747,6 +1872,8 @@ func nivel_visual_mago(team: int, id: StringName) -> int:
 	for of in oficinas:
 		if of.team != team:
 			continue
+		if of.heroi_pronto and of.heroi_cls().id == id:
+			return 5
 		if of.estado == Oficina.Estado.PRONTA and of.opcao().id == id:
 			return 5 if of.nivel >= Config.cfg.mago_nivel_max else of.nivel
 		for c in of.caminhos():
@@ -1763,16 +1890,22 @@ func bonus_mago(team: int, id: StringName) -> int:
 	for of in oficinas:
 		if of.team != team:
 			continue
+		if of.heroi_pronto and of.heroi_cls().id == id:
+			return Config.cfg.heroi_bonus_niveis
 		if of.base.id == id or (of.estado == Oficina.Estado.PRONTA and of.opcao().id == id):
-			return maxi(of.nivel - 2, 0)
+			return maxi(mini(of.nivel, Config.cfg.mago_nivel_max) - 2, 0)
 	return 0
 
 
 ## Nível do bairro da classe (base ou caminho); 0 = classe sem casa no pátio.
 func nivel_casa(team: int, id: StringName) -> int:
 	for of in oficinas:
-		if of.team == team and (of.base.id == id or (of.caminho >= 0 and of.opcao().id == id)):
+		if of.team != team:
+			continue
+		if of.heroi_pronto and of.heroi_cls().id == id:
 			return of.nivel
+		if of.base.id == id or (of.caminho >= 0 and of.opcao().id == id):
+			return mini(of.nivel, Config.cfg.mago_nivel_max)
 	return 0
 
 
@@ -1805,7 +1938,7 @@ func nearest_free_hat(team: int, from: Vector3, quem: Unit = null) -> HatPad:
 	var best_d := INF
 	var sem_lenhador := quem != null and _bots_lenhadores(team, quem) >= Config.cfg.bots_construtores_max
 	for pad in hat_pads:
-		if pad.team == team and pad.available and not (sem_lenhador and pad.stats.velocidade_obra > 0.0):
+		if pad.team == team and pad.available and not (sem_lenhador and pad.stats.velocidade_obra > 0.0) and not heroi_reservado(pad, quem):
 			var d := from.distance_to(pad.global_position)
 			if d < best_d:
 				best_d = d

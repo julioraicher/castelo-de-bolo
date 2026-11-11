@@ -4,6 +4,8 @@
 [ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="2_7n6q6"]
 [ext_resource type="Resource" path="res://config/classes/ronin_oni.tres" id="2_ydr5x"]
 [ext_resource type="Resource" path="res://config/classes/sohei.tres" id="3_6s28l"]
+[ext_resource type="Resource" path="res://config/classes/sumotori.tres" id="4_jto0k"]
+[ext_resource type="Resource" path="res://config/classes/kappa.tres" id="5_qimo4"]
 
 [resource]
 script = ExtResource("2_7n6q6")
@@ -36,6 +38,7 @@ skill_value = 18.0
 skill_radius = 5.5
 chapeu_tempo_mult = 0.9
 caminhos = Array[ExtResource("2_7n6q6")]([ExtResource("2_ydr5x"), ExtResource("3_6s28l")])
+herois = Array[ExtResource("2_7n6q6")]([ExtResource("4_jto0k"), ExtResource("5_qimo4")])
 power = "redemoinho"
 power_name = "Redemoinho"
 power_radius = 3.2

@@ -32,6 +32,13 @@ var raio_pegar := 2.0
 ## false = a casa da classe (Oficina) cuida da madeira: a maquininha não puxa
 ## madeira sozinha para o nível 2 (Ciclo 2.21).
 var aceita_madeira := true
+## Ciclo 2.23: chapéu de herói raro (Pavilhão do Herói). Estoque 1, não
+## fabrica por tempo: a Oficina devolve o chapéu (restaurar) quando o herói sai
+## de campo. retorno = s até voltar (-1 = em campo / no altar). _livre_t = s
+## desde que o chapéu está no altar (bots esperam o jogador pegar primeiro).
+var raro := false
+var retorno := -1.0
+var _livre_t := 0.0
 
 var _hat: Node3D          # sem modelo: o chapéu que flutua no pedestal
 var _fab_t := 0.0
@@ -49,18 +56,18 @@ var _puxar_t := 0.0
 var _contador: ContadorMadeira
 
 
-func setup(p_team: int, p_stats: ClassStats, pos: Vector3) -> void:
+func setup(p_team: int, p_stats: ClassStats, pos: Vector3, modelo := "") -> void:
 	team = p_team
 	stats = p_stats
 	position = pos
-	estoque_max = Config.cfg.maquina_estoque_max
+	estoque_max = 1 if raro else Config.cfg.maquina_estoque_max
 	intervalo = Config.cfg.maquina_intervalo * stats.chapeu_tempo_mult
 	estoque = estoque_max
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # chapéu animado em _process
 	var th: ThemeConfig = Config.theme()
 	# Máquina própria da classe (maquina_<arquivo da classe>.scn na pasta do
-	# tema), senão a genérica do tema.
-	var propria := th.model_path("maquina_%s.scn" % stats.resource_path.get_file().get_basename())
+	# tema), senão a genérica do tema. modelo = cena forçada (pavilhão do herói).
+	var propria := modelo if modelo != "" else th.model_path("maquina_%s.scn" % stats.resource_path.get_file().get_basename())
 	var cena: PackedScene = load(propria) if ResourceLoader.exists(propria) else th.maquina_model
 	if cena:
 		_montar_maquina(th, cena)
@@ -217,6 +224,10 @@ func _obra_n2(delta: float) -> void:
 
 ## Relógio da fábrica (separado do _physics_process para os testes).
 func avancar(delta: float) -> void:
+	if raro:
+		_livre_t = _livre_t + delta if estoque > 0 else 0.0
+		_atualizar()
+		return
 	if estoque >= estoque_max:
 		_fab_t = 0.0
 		return
@@ -288,6 +299,31 @@ func subir_nivel() -> bool:
 	return true
 
 
+## Herói raro: o chapéu volta ao altar (a Oficina chama quando o herói sai de campo).
+func restaurar() -> void:
+	if estoque >= estoque_max:
+		return
+	estoque = estoque_max
+	retorno = -1.0
+	_livre_t = 0.0
+	_fabricou()
+	if is_inside_tree():
+		Fx.pillar(get_parent(), global_position, Color(1.0, 0.85, 0.45), 2.0)
+		Sfx.play("sino", global_position, 0.05)
+	_atualizar()
+
+
+## Herói raro: adorno do herói no topo do pavilhão ("Adorno" do modelo) e o
+## emblema no estandarte ("Enfeite", já posto em _montar_maquina).
+func adorno(th: ThemeConfig) -> void:
+	if _maquina == null:
+		return
+	var marca := _maquina.find_child("Adorno", true, false) as Node3D
+	var arq := th.model_path("adorno_%s.scn" % stats.resource_path.get_file().get_basename())
+	if marca and ResourceLoader.exists(arq):
+		marca.add_child((load(arq) as PackedScene).instantiate())
+
+
 func _atualizar() -> void:
 	available = estoque > 0
 	if _hat:
@@ -295,7 +331,9 @@ func _atualizar() -> void:
 	# Nome em cima, contagem embaixo: as maquininhas vizinhas ficam a ~4,5 m e
 	# o letreiro numa linha só invadia o da lado.
 	var txt := "%s%s\n%d/%d" % [stats.display_name, " Nv%d" % nivel if nivel >= 2 else "", estoque, estoque_max]
-	if estoque < estoque_max:
+	if raro:
+		txt = "★ %s  Nv%d\n%s" % [stats.display_name, nivel, "Herói raro" if available else ("volta em %ds" % ceili(retorno) if retorno >= 0.0 else "em campo")]
+	elif estoque < estoque_max:
 		txt += "  · %ds" % ceili(intervalo - _fab_t)
 	if _label.text != txt:
 		_label.text = txt
