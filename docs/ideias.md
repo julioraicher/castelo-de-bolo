@@ -5,6 +5,11 @@ Lista viva. Qualquer frente anota aqui; o Julio escolhe o que sobe de nível.
 a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 
 ## A — próxima
+- **Heróis raros, sobras** (Ciclo 2.23 entrou na main): clipes das fichas dos 8
+  heróis e da aba "Herói raro" (`tools/clipes_tutorial.sh classe:sumotori ...`
+  precisa de roteiro para Agarrão, Mergulho etc.), ícone ★ por cima do herói em
+  campo, contador de shikigami no HUD, e reequilibrar depois do playtest
+  (`HEROIS=1 tools/sonda_equilibrio.sh`).
 - **Casinhas 2.0, sobras** (Ciclo 2.21): planta do pátio no placar [Tab] (quiz 5D,
   ficou só o minimapa), regravar o clipe "oficinas" do Como jogar com o bairro
   novo (`tools/clipes_tutorial.sh oficinas`), e ajustar Sohei/Kusarigama depois
@@ -90,6 +95,12 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 - Efeito de chão por clima: poças que refletem o neon, pétalas caindo, névoa baixa.
 - Animação de vitória do time (todos comemoram em volta da máscara).
 - Sons próprios por poder (shuriken, talismã, fogo-raposa, explosão de pólvora).
+
+- **Personagens que ficaram de fora do Ciclo 2.23** (painel de 2026-11-11, o Julio
+  não escolheu): Taiko do Trovão (batida no compasso), Kugutsu, o Titereiro
+  (marionete que bate à frente), Tanuki (vira objeto do cenário), Rei Oni. Entram
+  como herói futuro pondo o .tres em `herois` da classe base. Também de fora:
+  baralho de caminhos, 5º bairro e Santuário dos Espíritos.
 
 ## C — talvez
 - **Spotar inimigos no minimapa, estilo Battlefield** (Julio, 2026-10-31): marcar um

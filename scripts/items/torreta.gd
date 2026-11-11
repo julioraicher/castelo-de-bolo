@@ -228,7 +228,7 @@ func _alvo() -> Unit:
 	var best: Unit = null
 	var best_d := Config.cfg.torreta_alcance
 	for u in _game.units:
-		if not u.alive or u.team == team or u._sombra_t > 0.0:
+		if not u.alive or u.team == team or u._sombra_t > 0.0 or u._disfarce_t > 0.0:
 			continue
 		var d := u.global_position - global_position
 		if absf(d.y) > 4.0:

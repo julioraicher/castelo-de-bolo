@@ -14,6 +14,13 @@ extends Node3D
 ##              madeira entra, o outro tapete é selado e a casa sobe; pronta,
 ##              nasce no Nv3 e a barraquinha vai junto.
 ##   Nv3 → Nv5: uma subida (mago_nivel_custo) leva barraquinha e casa juntas.
+##   Nv5 → Nv6 (Ciclo 2.23): segunda escolha, um HERÓI RARO entre os
+##              ClassStats.herois da classe base (2 ou mais; o Construtor não
+##              tem). O Pavilhão do Herói sobe no tapete do caminho escolhido
+##              (heroi_custo madeiras) e é a terceira casinha de chapéu: 1
+##              chapéu só, sem fabricar; volta heroi_retorno s depois que o
+##              herói sai de campo (renasce como aldeão ou troca de chapéu).
+##              Só o herói é Nv6; barraquinha e casa param no 5.
 ##
 ## Obra: d(progresso)/dt = Σ velocidade_obra / oficina_build_time, somando os
 ## Construtores do time a menos de BUILD_RADIUS do centro do bairro, mas o
@@ -86,6 +93,18 @@ var _ritmo := 0.0
 var _t := randf() * TAU
 var _texto := ""
 var _custo := -1   # fixado na escolha do caminho
+## Ciclo 2.23: herói raro do Nv6. heroi = índice em herois() (-1 = nenhum);
+## pad_heroi = o chapéu no pavilhão (estoque 1, sem fabricar).
+var heroi := -1
+var escolha_heroi_bot := 0
+var pad_heroi: HatPad
+var heroi_pronto := false
+var _retorno_t := -1.0
+var _heroi_t := 0.0
+var _pav_fantasma: MeshInstance3D
+var _pav_obra: Node3D
+var _destaque: Node3D
+var _destaque_avisado := false
 
 static var _malhas_fantasma := {}   # caminho da cena -> ArrayMesh (uma superfície)
 
@@ -96,6 +115,7 @@ func setup(game: Game, p_team: int, pos: Vector3, p_base: ClassStats) -> void:
 	base = p_base
 	position = pos
 	escolha_bot = randi() % 2
+	escolha_heroi_bot = randi() % maxi(herois().size(), 1)
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # cresce por código
 	_montar_bairro()
 	pad_base = HatPad.new()
@@ -124,6 +144,51 @@ func setup(game: Game, p_team: int, pos: Vector3, p_base: ClassStats) -> void:
 
 func caminhos() -> Array[ClassStats]:
 	return base.caminhos if base else ([] as Array[ClassStats])
+
+
+## Heróis raros do Nv6 desta classe (Ciclo 2.23); vazio = o bairro para no 5.
+func herois() -> Array[ClassStats]:
+	return base.herois if base else ([] as Array[ClassStats])
+
+
+## Herói escolhido (ou, antes, o sorteado dos bots). null = bairro sem herói.
+func heroi_cls() -> ClassStats:
+	var h := herois()
+	if h.is_empty():
+		return null
+	return h[heroi if heroi >= 0 else escolha_heroi_bot]
+
+
+## Nível 5 com herói para escolher (o Construtor decide no painel ou no tapete).
+func pede_heroi() -> bool:
+	return estado == Estado.PRONTA and nivel >= Config.cfg.mago_nivel_max and heroi < 0 \
+			and herois().size() >= 1 and caminho >= 0
+
+
+## Onde fica o pavilhão: o tapete do caminho escolhido (vazio depois da casa).
+func pavilhao_pos() -> Vector3:
+	return tapete_pos(maxi(caminho, 0))
+
+
+## Escolhe o herói i: gasta a primeira madeira e começa o pavilhão. false =
+## não é hora, já escolhido ou o time sem madeira.
+func escolher_heroi(i: int, gratis := false) -> bool:
+	if not pede_heroi() or i < 0 or i >= herois().size():
+		return false
+	if not gratis and not _game.gastar_madeira(team, 1):
+		return false
+	heroi = i
+	madeira_nivel = 0 if gratis else 1
+	_tapete_t = [0.0, 0.0]
+	_comecar_pavilhao()
+	if is_inside_tree():
+		var cor := Estilo.OURO_CLARO
+		Fx.pillar(_game, pavilhao_pos(), cor, 2.2)
+		Fx.burst(_game, pavilhao_pos() + Vector3(0, 0.8, 0), cor, 16, 4.0)
+		Sfx.play("sino", pavilhao_pos(), 0.05)
+	_game.on_heroi_escolhido(self)
+	_update_label()
+	return true
 
 
 ## Classe do caminho escolhido (ou, antes da escolha, a do tapete dos bots).
@@ -167,6 +232,9 @@ func alvo_obra(from: Vector3) -> Vector3:
 		return global_position + BARRACA + Vector3(clampf(lado.x, -1.6, 1.6), 0, 1.0)
 	if caminho < 0:
 		return tapete_pos(escolha_bot)
+	if pede_heroi() or (heroi >= 0 and not heroi_pronto):
+		# Nv6: o tapete do pavilhão (os bots param nele para escolher o herói).
+		return pavilhao_pos() + Vector3(0, 0, 0.2 if pede_heroi() else 1.6)
 	var frente := global_position + CASA + Vector3(0, 0, 2.0)
 	return frente + Vector3(clampf(lado.x, -2.2, 2.2), 0, 0)
 
@@ -284,8 +352,12 @@ func _physics_process(delta: float) -> void:
 		Estado.OBRA:
 			_obra_tick(delta)
 		Estado.PRONTA:
-			if pode_subir():
+			if pede_heroi():
+				_escolha_heroi(delta)
+			elif pode_subir():
 				_obra_nivel(delta)
+			if heroi_pronto:
+				_tick_heroi(delta)
 	_update_label()
 
 
@@ -327,7 +399,8 @@ func _obra_tick(delta: float) -> void:
 ## Aceita madeira para subir de nível: a barraquinha no Nv1 (sobe ao 2 sem
 ## caminho) ou a casa pronta abaixo do máximo (as duas sobem juntas).
 func pode_subir() -> bool:
-	return (estado == Estado.VAZIO and nivel < 2) or (estado == Estado.PRONTA and nivel < Config.cfg.mago_nivel_max)
+	return (estado == Estado.VAZIO and nivel < 2) or (estado == Estado.PRONTA and nivel < Config.cfg.mago_nivel_max) \
+			or (heroi >= 0 and not heroi_pronto)
 
 
 ## Esperando a escolha do caminho (Nv2, sem caminho).
@@ -338,12 +411,16 @@ func pede_escolha() -> bool:
 func custo_nivel() -> int:
 	if nivel < 2:
 		return Config.cfg.casa_nv2_custo
+	if nivel >= Config.cfg.mago_nivel_max:
+		return Config.cfg.heroi_custo
 	var c := Config.cfg.mago_nivel_custo
 	var i := nivel - 3
 	return c[clampi(i, 0, c.size() - 1)] if not c.is_empty() else 0
 
 
 func faltam_nivel() -> int:
+	if pede_heroi():
+		return Config.cfg.heroi_custo
 	return maxi(custo_nivel() - madeira_nivel, 0) if pode_subir() else 0
 
 
@@ -354,7 +431,11 @@ func puxar_madeira_nivel() -> bool:
 	madeira_nivel += 1
 	if is_inside_tree():
 		var onde := CASA + Vector3(0, 1.2, 1.0) if estado == Estado.PRONTA else BARRACA + Vector3(0, 1.0, 0)
+		if heroi >= 0:
+			onde = pavilhao_pos() - global_position + Vector3(0, 0.8, 0.6)
 		Fx.burst(_game, global_position + onde, cor_nivel(), 5, 2.5)
+	if heroi >= 0:
+		_crescer_pavilhao()
 	if faltam_nivel() <= 0:
 		subir_nivel()
 	return true
@@ -362,11 +443,16 @@ func puxar_madeira_nivel() -> bool:
 
 ## Cor dos efeitos de nível: a do caminho com a casa de pé, a da base antes.
 func cor_nivel() -> Color:
+	if heroi >= 0:
+		return Estilo.OURO_CLARO
 	return (opcao() if estado == Estado.PRONTA else base).hat_color.lightened(0.3)
 
 
 func subir_nivel() -> void:
 	if not pode_subir():
+		return
+	if heroi >= 0 and not heroi_pronto:
+		_finish_heroi()
 		return
 	nivel += 1
 	madeira_nivel = 0
@@ -410,6 +496,167 @@ func _obra_nivel(delta: float) -> void:
 		if _puxar_t <= 0.0 and puxar_madeira_nivel():
 			_puxar_t = Config.cfg.oficina_puxar_intervalo
 	falta_madeira = rate > 0.0 and _game.madeira[team] <= 0
+
+
+# --- Herói raro (Nv6, Ciclo 2.23) ------------------------------------------------
+
+## Bot Construtor parado no tapete do pavilhão: escolhe o herói sorteado.
+func _escolha_heroi(delta: float) -> void:
+	var i := maxi(caminho, 0)
+	falta_madeira = false
+	if _construtor_no_tapete(i):
+		_heroi_t += delta
+		falta_madeira = _game.madeira[team] <= 0
+		if _heroi_t >= ESCOLHA_T and escolher_heroi(escolha_heroi_bot):
+			_heroi_t = 0.0
+	else:
+		_heroi_t = 0.0
+
+
+## Depósito com madeira para o herói inteiro: o quintal avisa que dá para subir.
+func destaque_heroi() -> bool:
+	return pede_heroi() and (_game.sandbox or _game.madeira[team] >= Config.cfg.heroi_custo)
+
+
+## Herói deste bairro em campo: alguém do time vestido com ele (ou trocando
+## para ele). Caído esperando reanimar continua herói.
+func heroi_em_campo() -> bool:
+	var h := heroi_cls()
+	if h == null:
+		return false
+	for u in _game.units:
+		if u.team == team and (u.stats == h or u._equip_stats == h or u._stats_normal == h):
+			return true
+	return false
+
+
+## Pavilhão pronto: o chapéu volta heroi_retorno s depois que o herói sai de campo.
+func _tick_heroi(delta: float) -> void:
+	if pad_heroi == null or pad_heroi.estoque > 0:
+		_retorno_t = -1.0
+		return
+	if heroi_em_campo():
+		_retorno_t = -1.0
+		pad_heroi.retorno = -1.0
+		return
+	if _retorno_t < 0.0:
+		_retorno_t = Config.cfg.sandbox_heroi_retorno if _game.sandbox else Config.cfg.heroi_retorno
+	_retorno_t -= delta
+	pad_heroi.retorno = maxf(_retorno_t, 0.0)
+	if _retorno_t <= 0.0:
+		_retorno_t = -1.0
+		pad_heroi.restaurar()
+
+
+func _finish_heroi(anim := true) -> void:
+	heroi_pronto = true
+	nivel = Config.cfg.mago_nivel_max + 1
+	madeira_nivel = 0
+	pad_heroi = HatPad.new()
+	pad_heroi.raro = true
+	_game.add_child(pad_heroi)
+	pad_heroi.setup(team, heroi_cls(), pavilhao_pos(), _cena_pavilhao())
+	pad_heroi.raio_pegar = 2.0
+	pad_heroi.altura_letreiro(4.9)
+	pad_heroi.adorno(_game.arena.theme if _game.arena else Config.theme())
+	pad_heroi.mostrar_nivel(nivel)
+	_game.hat_pads.append(pad_heroi)
+	if _pav_obra:
+		_pav_obra.queue_free()
+		_pav_obra = null
+	if anim and is_inside_tree():
+		pad_heroi.scale = Vector3(1.0, 0.2, 1.0)
+		pad_heroi.create_tween().tween_property(pad_heroi, "scale", Vector3.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		Fx.pillar(_game, pavilhao_pos(), Estilo.OURO_CLARO, 4.0)
+		FxPoder.subir_nivel(_game, pavilhao_pos(), Estilo.OURO_CLARO, nivel)
+		Fx.burst(_game, pavilhao_pos() + Vector3(0, 2.0, 0), Color(1.0, 0.85, 0.45), 24, 6.0)
+		Sfx.play("sino", pavilhao_pos(), 0.0, 1.0, 3.0)
+	_update_label()
+	_game.on_heroi_pronto(self)
+
+
+## Modo teste e testes: pavilhão pronto na hora, sem obra nem madeira.
+func concluir_heroi_ja(i := 0) -> void:
+	if heroi_pronto or herois().is_empty():
+		return
+	if estado != Estado.PRONTA:
+		concluir_ja(0)
+	nivel = Config.cfg.mago_nivel_max
+	if heroi < 0:
+		escolher_heroi(i, true)
+	_finish_heroi(false)
+
+
+func _cena_pavilhao() -> String:
+	var th: ThemeConfig = _game.arena.theme if _game and _game.arena else Config.theme()
+	return th.model_path("pavilhao.scn")
+
+
+## Fantasma do pavilhão no Nv5 (sem herói escolhido): translúcido e dourado.
+func _montar_pav_fantasma() -> void:
+	if _pav_fantasma or herois().is_empty() or caminho < 0:
+		return
+	var mi := MeshInstance3D.new()
+	mi.mesh = _malha_fantasma(_cena_pavilhao())
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat := ShaderMaterial.new()
+	mat.shader = SHADER_FANTASMA
+	mat.set_shader_parameter("cor", Color(1.0, 0.82, 0.4))
+	mat.set_shader_parameter("alfa", 0.55)
+	mat.set_shader_parameter("altura", 4.4)
+	mi.material_override = mat
+	mi.position = TAPETES[maxi(caminho, 0)] + Vector3(0, 0.15, 0)
+	add_child(mi)
+	_pav_fantasma = mi
+	_destaque = Node3D.new()
+	_destaque.position = TAPETES[maxi(caminho, 0)] + Vector3(0, 0.06, 0)
+	_destaque.visible = false
+	add_child(_destaque)
+	# Anel dourado pulsando no tapete (1 chamada; luz omni custaria passes extras).
+	var anel := MeshInstance3D.new()
+	var tor := TorusMesh.new()
+	tor.inner_radius = 1.32
+	tor.outer_radius = 1.52
+	tor.rings = 24
+	tor.ring_segments = 6
+	anel.mesh = tor
+	anel.scale = Vector3(1.0, 0.25, 1.0)
+	var m := Fx.unshaded(Color(1.0, 0.82, 0.36, 0.85), true)
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	anel.material_override = m
+	anel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_destaque.add_child(anel)
+
+
+
+## Obra do pavilhão: o modelo de verdade sobe do chão por fração de madeira
+## (base, colunas, telhado) no lugar do fantasma.
+func _comecar_pavilhao() -> void:
+	if _pav_fantasma:
+		_pav_fantasma.visible = false
+	if _destaque:
+		_destaque.visible = false
+	_pav_obra = Node3D.new()
+	_pav_obra.position = TAPETES[maxi(caminho, 0)]
+	_pav_obra.scale.y = 0.06
+	add_child(_pav_obra)
+	var arq := _cena_pavilhao()
+	if ResourceLoader.exists(arq):
+		var pav: Node3D = (load(arq) as PackedScene).instantiate()
+		_pav_obra.add_child(pav)
+		HatPad.so_do_time(pav, team)
+		for n in pav.find_children("Estoque_*", "Node3D", true, false):
+			n.visible = false
+		MalhaUnica.juntar(pav, MalhaUnica.animados(pav))
+	_crescer_pavilhao()
+
+
+func _crescer_pavilhao() -> void:
+	if _pav_obra == null:
+		return
+	var f := float(madeira_nivel) / maxf(custo_nivel(), 1.0)
+	var tw := _pav_obra.create_tween()
+	tw.tween_property(_pav_obra, "scale:y", maxf(f, 0.06), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 # --- Fim da obra -----------------------------------------------------------------
@@ -689,6 +936,10 @@ func _comecar_obra() -> void:
 
 
 func _process(delta: float) -> void:
+	if estado == Estado.PRONTA:
+		_t += delta
+		_visual_heroi()
+		return
 	if estado != Estado.VAZIO:
 		return
 	_t += delta
@@ -704,6 +955,32 @@ func _process(delta: float) -> void:
 		(f.material_override as ShaderMaterial).set_shader_parameter("alfa", 0.62 + 0.3 * pisado)
 
 
+## Nv5 com herói: fantasma do pavilhão pairando; com madeira, anel dourado
+## pulsando e o fantasma acende (o quintal avisa que dá para subir).
+func _visual_heroi() -> void:
+	if not pede_heroi():
+		if _pav_fantasma and _pav_fantasma.visible and heroi >= 0:
+			_pav_fantasma.visible = false
+		return
+	if _pav_fantasma == null:
+		_montar_pav_fantasma()
+		if _pav_fantasma == null:
+			return
+	var luz := destaque_heroi()
+	_pav_fantasma.visible = true
+	var pisado: float = clampf(_heroi_t / ESCOLHA_T, 0.0, 1.0)
+	_pav_fantasma.position.y = 0.15 + 0.07 * sin(_t * 1.5) + 0.2 * pisado
+	var a := (0.5 + 0.3 * (0.5 + 0.5 * sin(_t * 4.0))) if luz else 0.32
+	(_pav_fantasma.material_override as ShaderMaterial).set_shader_parameter("alfa", a + 0.2 * pisado)
+	_destaque.visible = luz
+	if luz:
+		var k := 1.0 + 0.12 * sin(_t * 4.0)
+		_destaque.scale = Vector3(k, 1.0, k)
+		if not _destaque_avisado:
+			_destaque_avisado = true
+			_game.on_heroi_disponivel(self)
+
+
 func _update_label() -> void:
 	var txt := ""
 	var cs := caminhos()
@@ -716,6 +993,11 @@ func _update_label() -> void:
 					txt = "%s  Nv2\nEscolha: %s  ou  %s" % [base.display_name, cs[0].display_name, cs[1].display_name]
 		Estado.OBRA:
 			txt = "Obra: %s  %d%%" % [opcao().display_name, int(progresso * 100.0)]
+		Estado.PRONTA:
+			if pede_heroi():
+				txt = "★ Herói raro  Nv6\n%s" % "  ou  ".join(herois().map(func(c): return c.display_name))
+			elif heroi >= 0 and not heroi_pronto:
+				txt = "Pavilhão: %s  %d%%" % [heroi_cls().display_name, int(100.0 * madeira_nivel / maxf(custo_nivel(), 1.0))]
 	if txt != _texto:
 		_texto = txt
 		_label.text = txt
@@ -723,6 +1005,9 @@ func _update_label() -> void:
 	_label.modulate = (opcao().hat_color if estado == Estado.OBRA else base.hat_color).lightened(0.35)
 	if estado == Estado.OBRA:
 		_label.position.y = lerpf(3.0, 4.8, progresso)
+	elif estado == Estado.PRONTA and txt != "":
+		_label.modulate = Estilo.OURO_CLARO
+		_label.position = TAPETES[maxi(caminho, 0)] + Vector3(0, 4.6, 0)
 	# Contador de madeira: na obra e nos níveis (com madeira posta ou com o
 	# jogador Construtor perto); grande para quem joga de Construtor.
 	var p := _game.player
@@ -736,6 +1021,8 @@ func _update_label() -> void:
 	elif pode_subir() and (madeira_nivel > 0 or perto):
 		_contador.visible = true
 		_contador.position = BARRACA + Vector3(0, 4.6, 0) if estado == Estado.VAZIO else CASA + Vector3(0, 6.6, 0)
+		if heroi >= 0:
+			_contador.position = TAPETES[maxi(caminho, 0)] + Vector3(0, 5.4, 0)
 		_contador.mostrar(faltam_nivel(), custo_nivel(), construtor, falta_madeira)
 	else:
 		_contador.visible = false

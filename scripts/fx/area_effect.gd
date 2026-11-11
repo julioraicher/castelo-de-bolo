@@ -4,6 +4,8 @@ extends Node3D
 ##   nuvem       (fumaça do Bombardeio) inimigos dentro ficam lentos e levam dano em pulsos
 ##   selo        (Kitsune Sombria) talismãs fecham o círculo: dano e SELO (sem atacar/poder)
 ##   coluna_fogo (Kitsune) colunas de fogo-raposa queimam em pulsos
+##   redemoinho  (Yamabushi, Ciclo 2.23) suga para o centro; o último pulso ergue
+##   revoada     (Karasu Tengu, Ciclo 2.23) corvos: dano leve e cega quem está dentro
 ## Visual barato: poucas malhas grandes, emissivas, animadas à mão.
 
 const PULSE := 0.5
@@ -61,6 +63,12 @@ func setup(game: Game, owner_unit: Unit, center: Vector3, kind: String, radius: 
 				var a := TAU * i / 3.0
 				Magia.chama(self, center + Vector3(cos(a), 0, sin(a)) * radius * 0.5, pal, 0.5, 3.0, duration + 0.3, {"segura": 0.8, "giro": duration * 0.5, "r_topo": 0.3, "barriga": 0.22, "forca": 1.7, "base": 0.62, "topo": -0.5, "escala": Vector2(3.0, 0.4)})
 			Sfx.play("fogo", center, 0.05, 0.8)
+		"redemoinho":
+			FxHerois.redemoinho_area(self, radius, duration)
+			Sfx.play("magia_vento", center, 0.05, 0.8)
+		"revoada":
+			FxHerois.revoada_area(self, radius, duration)
+			Sfx.play("grasnido", center, 0.05)
 	scale = Vector3(0.2, 1, 0.2)
 	create_tween().tween_property(self, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
@@ -75,6 +83,10 @@ func _color() -> Color:
 		"coluna_fogo":
 			# Fogo-raposa na cor do chapéu (Kitsune = rosa, Luz = dourado, Sombria = roxo).
 			return _owner.stats.hat_color.lightened(0.15) if _owner else Color(0.3, 0.95, 1.0)
+		"redemoinho":
+			return Color(1.0, 0.78, 0.5)
+		"revoada":
+			return Color(0.3, 0.22, 0.42)
 	return Color(0.3, 0.95, 1.0)
 
 
@@ -100,9 +112,21 @@ func _physics_process(delta: float) -> void:
 				continue
 			d.y = 0
 			if d.length() <= _radius:
-				u.take_damage(_value, _owner, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.15, false, {"coluna_fogo": "fogo", "selo": "magia"}.get(_kind, "nuvem"), 3)
+				u.take_damage(_value, _owner, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.15 if _kind != "redemoinho" else 0.0, false,
+						{"coluna_fogo": "fogo", "selo": "magia", "redemoinho": "vento", "revoada": "pena"}.get(_kind, "nuvem"), 3)
+				if not u.alive:
+					continue
 				if _kind == "nuvem":
 					u.apply_slow(0.55, PULSE + 0.1)
+				elif _kind == "redemoinho":
+					if _t + PULSE >= _duration:
+						u.launch(7.0)  # o último pulso ergue
+					elif d.length() > 0.8 and not u.carried_princess and not u.stats.knock_imune:
+						u._knock = -d.normalized() * minf(sqrt(2.0 * Unit.KNOCK_DECAY * d.length() * 0.7), 9.0)
+				elif _kind == "revoada":
+					u._cego_t = maxf(u._cego_t, PULSE + 0.25)
+					if u.is_player:
+						_game.hud.flash(Color(0.04, 0.02, 0.07, 0.55), 0.45)
 		if _kind == "coluna_fogo":
 			Fx.burst(_game, global_position + Vector3(0, 1.0, 0), _color(), 10, 6.0)
 	if _t >= _duration:

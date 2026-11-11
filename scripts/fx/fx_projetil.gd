@@ -21,7 +21,8 @@ const COR_RAPOSA := Color(0.95, 0.2, 0.6)
 const COR_VAZIO := Color(0.55, 0.2, 1.0)
 const COR_TINTA := Color(0.09, 0.03, 0.14)
 ## Paleta do kit Magia para o estouro do golpe forte de cada elemento.
-const ELEMENTO_MAGIA := {"fogo": "raposa_rosa", "chi": "luz", "magia": "sombra", "shuriken": "aco", "flecha": "vento", "terra": "brasa"}
+const ELEMENTO_MAGIA := {"fogo": "raposa_rosa", "chi": "luz", "magia": "sombra", "shuriken": "aco", "flecha": "vento", "terra": "brasa",
+	"agua": "agua", "vento": "vento", "pena": "pena", "nota": "som", "talisma": "papel", "grou": "papel"}
 
 static var _cache := {}
 
@@ -475,6 +476,74 @@ static func montar(p: Node3D, kind: String, time_cor: Color) -> Node3D:
 			if rastro:  # fita de sombra (mistura normal: escurece em vez de clarear)
 				_fita(p, Color(COR_TINTA, 0.75), 0.3, 1.6)
 				ps(p, Vector3.ZERO, quad("fumaca", tex_fumaca()), Color(0.16, 0.06, 0.25, 0.8), 6, 0.4, {"one_shot": false, "esfera": 0.15, "s0": 0.35, "s1": 0.5, "curva": "encolhe", "ang1": 360.0, "local_pos": true})
+		"vento":
+			# Yamabushi: lâmina curva de vento (meia-lua achatada) com fita laranja.
+			corpo.mesh = _c("malha_vento", func() -> Mesh:
+				var t := TorusMesh.new()
+				t.inner_radius = 0.42
+				t.outer_radius = 0.55
+				t.rings = 16
+				t.ring_segments = 4
+				return t)
+			corpo.material_override = _c("mat_vento", func() -> StandardMaterial3D:
+				var m := StandardMaterial3D.new()
+				m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+				m.albedo_color = Color(1.0, 0.92, 0.8, 0.85)
+				return m)
+			corpo.scale = Vector3(1.0, 0.12, 0.55)
+			p.add_child(corpo)
+			brilho_fixo(p, Vector3.ZERO, Color(1.0, 0.7, 0.35, 0.8), 0.7, false)
+			if rastro:
+				_fita(p, Color(1.0, 0.78, 0.5, 0.55), 0.9, 1.4)
+		"nota":
+			# Komusō: nota musical (cabeça + haste) com eco de som em volta.
+			gira = Node3D.new()
+			p.add_child(gira)
+			var cab := MeshInstance3D.new()
+			cab.mesh = malha_bola(Color(0.45, 1.3, 1.2), 0.16)
+			cab.scale = Vector3(1.25, 0.85, 1.0)
+			gira.add_child(cab)
+			var haste := MeshInstance3D.new()
+			var hb := BoxMesh.new()
+			hb.size = Vector3(0.04, 0.42, 0.04)
+			haste.mesh = hb
+			haste.material_override = mat_solido()
+			haste.position = Vector3(0.13, 0.2, 0)
+			gira.add_child(haste)
+			brilho_fixo(p, Vector3.ZERO, Color(0.55, 0.95, 0.88, 0.8), 0.8, false)
+			corpo.free()
+			if rastro:
+				_fita(p, Color(0.55, 0.95, 0.88, 0.45), 0.35, 1.6)
+		"talisma", "grou":
+			# Onmyoji: ofuda de papel (talismã) ou grou dobrado (losango com asas).
+			var grou := kind == "grou"
+			corpo.mesh = _c("malha_" + kind, func() -> Mesh:
+				var st := SurfaceTool.new()
+				st.begin(Mesh.PRIMITIVE_TRIANGLES)
+				var pts: Array
+				if grou:
+					pts = [Vector3(0, 0, -0.7), Vector3(-0.9, 0.25, 0.1), Vector3(0, 0.05, 0.2), Vector3(0, 0, -0.7), Vector3(0, 0.05, 0.2), Vector3(0.9, 0.25, 0.1),
+						Vector3(0, 0.05, 0.2), Vector3(-0.08, 0.3, 0.6), Vector3(0.08, 0.3, 0.6)]
+				else:
+					pts = [Vector3(-0.12, 0, -0.3), Vector3(0.12, 0, -0.3), Vector3(0.12, 0, 0.3), Vector3(-0.12, 0, -0.3), Vector3(0.12, 0, 0.3), Vector3(-0.12, 0, 0.3)]
+				for v in pts:
+					st.set_normal(Vector3.UP)
+					st.add_vertex(v)
+				return st.commit())
+			corpo.material_override = _c("mat_papel_proj", func() -> StandardMaterial3D:
+				var m := StandardMaterial3D.new()
+				m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				m.cull_mode = BaseMaterial3D.CULL_DISABLED
+				m.albedo_color = Color(1.0, 0.97, 0.88)
+				return m)
+			p.add_child(corpo)
+			if not grou:
+				gira = corpo
+			brilho_fixo(p, Vector3.ZERO, Color(time_cor.lightened(0.3), 0.7), 0.9 if grou else 0.5, false)
+			if rastro:
+				_fita(p, Color(0.98, 0.94, 0.8, 0.5), 0.6 if grou else 0.2, 1.8 if grou else 1.0)
+				ps(p, Vector3.ZERO, quad("brilho", tex_brilho()), Color(0.6, 1.0, 0.7) if grou else Color(1.0, 0.4, 0.3), 6, 0.4, {"one_shot": false, "esfera": 0.3, "s0": 0.15, "s1": 0.3, "rampa": "pisca", "local_pos": true})
 		_:
 			corpo.mesh = malha_bola(Color(1.2, 0.9, 2.0), 0.26)
 			p.add_child(corpo)

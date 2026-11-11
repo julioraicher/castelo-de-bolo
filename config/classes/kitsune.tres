@@ -4,6 +4,9 @@
 [ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="2_fhba0"]
 [ext_resource type="Resource" path="res://config/classes/kitsune_luz.tres" id="2_p0v7d"]
 [ext_resource type="Resource" path="res://config/classes/kitsune_sombria.tres" id="3_4d5wp"]
+[ext_resource type="Resource" path="res://config/classes/onmyoji.tres" id="4_dfk7c"]
+[ext_resource type="Resource" path="res://config/classes/tennin.tres" id="5_0nfrg"]
+[ext_resource type="Resource" path="res://config/classes/komuso.tres" id="6_k3t5r"]
 
 [resource]
 script = ExtResource("2_fhba0")
@@ -37,6 +40,7 @@ skill = "cura"
 skill_name = "Cura"
 block_reduction = 0.5
 caminhos = Array[ExtResource("2_fhba0")]([ExtResource("2_p0v7d"), ExtResource("3_4d5wp")])
+herois = Array[ExtResource("2_fhba0")]([ExtResource("4_dfk7c"), ExtResource("5_0nfrg"), ExtResource("6_k3t5r")])
 power = "coluna_fogo"
 power_name = "Coluna de Fogo-Raposa"
 power_radius = 3.5

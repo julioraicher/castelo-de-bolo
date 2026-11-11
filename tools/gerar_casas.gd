@@ -48,7 +48,14 @@ func _gerar_economia() -> bool:
 	return false
 
 
+## false = um script filho (tools/gerar_pavilhao.gd) só quer as funções daqui.
+func _gerar_casas() -> bool:
+	return true
+
+
 func _init() -> void:
+	if not _gerar_casas():
+		return
 	for tema in TEMAS:
 		P = TEMAS[tema]
 		_dir = "res://assets/ninja/" + tema

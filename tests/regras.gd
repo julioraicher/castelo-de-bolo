@@ -45,6 +45,9 @@ func _ready() -> void:
 	_reanimar()
 	_alta_dinamica()
 	await _magia()
+	_heroi_nv6()
+	await _herois_regras()
+	_relogio()  # por último: encerra a partida
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -1564,3 +1567,353 @@ func _magia() -> void:
 		var pal: String = FxPoder.ELEMENTO[poder][0]
 		_check(pal == "" or Magia.PALETAS.has(pal), "magia: paleta '%s' do poder %s existe" % [pal, poder])
 	caixa.queue_free()
+
+
+## Ciclo 2.23: relógio de 10 min. No zero, mais pontos vence e igual empata;
+## máscara na mão estende a partida ("Última corrida") até prorrogacao_max.
+func _relogio() -> void:
+	var cfg = get_node("/root/Config").cfg
+	_check(cfg.tempo_limite > 0.0 and game.relogio_ligado(), "relógio: deveria estar ligado na partida normal")
+	game.tempo_partida = cfg.tempo_limite - 30.0
+	_check(_perto(game.tempo_restante(), 30.0, 0.01), "relógio: tempo restante errado")
+	# Máscara na mão no zero: última corrida, sem fim.
+	var p = game.princesses[0]
+	var ladrao = null
+	for u in game.units:
+		if u.alive and u.team == 1 and not u.carried_princess:
+			ladrao = u
+			break
+	game.score[0] = 1
+	game.score[1] = 1
+	game.tempo_partida = cfg.tempo_limite + 0.01
+	if ladrao and p.state == p.State.HOME:
+		ladrao.pick_up_princess(p)
+		game._relogio(0.016)
+		_check(not game.game_over and game.prorrogacao >= 0.0, "relógio: máscara na mão no zero deveria abrir a última corrida")
+		game._relogio(cfg.prorrogacao_max + 0.1)
+		_check(game.game_over and game.vencedor == -1, "relógio: última corrida estourada com placar igual deveria empatar")
+	else:
+		_check(false, "relógio: não deu para pôr a máscara na mão")
+		game._relogio(0.016)
+	_check(game.game_over, "relógio: no zero a partida deveria acabar")
+	# A decisão em si (sem encerrar de novo).
+	game.score[0] = 2
+	game.score[1] = 1
+	game.game_over = false
+	game.vencedor = -9
+	game._fim_por_tempo()
+	_check(game.vencedor == 0, "relógio: mais pontos no zero deveria vencer")
+
+
+## Ciclo 2.23: escada do Nv6 (herói raro). Usa a casa da Kitsune que o
+## _caminho_magos deixou no nível máximo.
+func _heroi_nv6() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var of = null
+	for o in game.oficinas:
+		if o.base.id == &"kitsune" and o.caminho >= 0 and o.estado == 2 and o.heroi < 0:
+			of = o
+			break
+	_check(of != null, "Nv6: nenhuma casa da Kitsune pronta para testar")
+	if of == null:
+		return
+	var t: int = of.team
+	of.nivel = cfg.mago_nivel_max
+	_check(of.herois().size() == 3 and of.pede_heroi() and not of.pode_subir(), "Nv6: casa no Nv5 com heróis pede a escolha e não sobe sozinha")
+	var cons = null
+	for o in game.oficinas:
+		if o.team == t and o.base.id == &"construtor":
+			cons = o
+	if cons:
+		var n0: int = cons.nivel
+		var c0: int = cons.caminho
+		var e0: int = cons.estado
+		cons.nivel = cfg.mago_nivel_max
+		cons.caminho = 0
+		cons.estado = 2
+		_check(not cons.pede_heroi() and cons.herois().is_empty(), "Nv6: bairro do Construtor (sem heróis) para no Nv5")
+		cons.nivel = n0
+		cons.caminho = c0
+		cons.estado = e0
+	game.madeira[t] = 0
+	_check(not of.escolher_heroi(0), "Nv6: sem madeira não escolhe o herói")
+	game.madeira[t] = cfg.heroi_custo + 3
+	_check(of.escolher_heroi(2) and of.heroi == 2 and of.madeira_nivel == 1 and game.madeira[t] == cfg.heroi_custo + 2,
+		"Nv6: escolher deveria gastar a 1ª madeira e fixar o herói")
+	_check(not of.escolher_heroi(0) and of.heroi == 2, "Nv6: herói escolhido não troca")
+	_check(of.pode_subir() and of.faltam_nivel() == cfg.heroi_custo - 1, "Nv6: o pavilhão pede o resto da madeira (faltam %d)" % of.faltam_nivel())
+	var n := 0
+	while of.puxar_madeira_nivel() and n < 50:
+		n += 1
+	_check(n == cfg.heroi_custo - 1 and of.heroi_pronto and of.nivel == cfg.mago_nivel_max + 1 and game.madeira[t] == 3,
+		"Nv6: %d madeiras deveriam erguer o pavilhão (puxou %d, nível %d)" % [cfg.heroi_custo - 1, n, of.nivel])
+	var pad = of.pad_heroi
+	_check(pad != null and pad.raro and pad.estoque_max == 1 and pad.estoque == 1 and game.hat_pads.has(pad) and pad.stats == of.heroi_cls(),
+		"Nv6: pavilhão pronto cria o chapéu raro com estoque 1")
+	var h = of.heroi_cls()
+	_check(game.bonus_mago(t, h.id) == cfg.heroi_bonus_niveis and game.bonus_mago(t, of.base.id) == cfg.mago_nivel_max - 2
+			and game.bonus_mago(t, of.opcao().id) == cfg.mago_nivel_max - 2, "Nv6: herói com bônus %d, base e caminho com %d" % [cfg.heroi_bonus_niveis, cfg.mago_nivel_max - 2])
+	# Raro não fabrica por tempo.
+	pad.take()
+	pad.avancar(60.0)
+	_check(pad.estoque == 0, "Nv6: o chapéu do herói não fabrica sozinho")
+	# Quem veste é o herói; caído continua; renascer como aldeão faz o chapéu voltar.
+	var u = null
+	for x in game.units:
+		if x.team == t and x.alive and not x.is_player and not x.carried_princess:
+			u = x
+			break
+	if u == null:
+		_check(false, "Nv6: faltou boneco para vestir o herói")
+		return
+	var antes = u.stats
+	u.set_class(h)
+	of._tick_heroi(0.1)
+	_check(of._retorno_t < 0.0, "Nv6: herói em campo, o chapéu não volta")
+	u._die(null)
+	of._tick_heroi(cfg.heroi_retorno + 1.0)
+	_check(pad.estoque == 0, "Nv6: herói caído esperando reanimar ainda conta como em campo")
+	u._respawn()
+	of._tick_heroi(0.1)
+	_check(pad.estoque == 0 and of._retorno_t > 0.0, "Nv6: renasceu aldeão, o altar começa a contar")
+	of._tick_heroi(cfg.heroi_retorno)
+	_check(pad.estoque == 1, "Nv6: o chapéu volta %.0f s depois que o herói sai de campo" % cfg.heroi_retorno)
+	u.set_class(antes)
+	# Bot espera o jogador do time pegar primeiro (fora do autoplay).
+	var auto0: bool = game._autoplay
+	var p0 = game.player
+	game._autoplay = false
+	if game.player == null or game.player.team != t:
+		for x in game.units:
+			if x.team == t:
+				game.player = x
+				break
+	pad._livre_t = 0.0
+	_check(game.heroi_reservado(pad, u if u != game.player else null) or u == game.player, "Nv6: bot espera %.0f s pelo jogador" % cfg.heroi_espera_jogador)
+	pad._livre_t = cfg.heroi_espera_jogador + 0.1
+	_check(not game.heroi_reservado(pad, u), "Nv6: depois da espera o bot pode pegar")
+	game._autoplay = auto0
+	game.player = p0
+
+
+## Ciclo 2.23: o truque novo de cada herói (docs/direcao-ciclo-2.23-herois.md §10).
+func _herois_regras() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var a = null
+	var b = null
+	for u in game.units:
+		if u.alive and not u.is_player and not u.carried_princess and not u.em_voo:
+			if a == null:
+				a = u
+			elif b == null and u.team != a.team:
+				b = u
+	if a == null or b == null:
+		_check(false, "heróis: faltou boneco")
+		return
+	var c0 = a.stats
+	var c1 = b.stats
+	# Sem cérebro durante o teste: o bot desviaria do aviso de perigo do pouso.
+	var cerebros := [a.brain, b.brain]
+	a.brain = null
+	b.brain = null
+	var centro := Vector3(0, 0, 0)
+	centro.y = game.arena.ground_y(0, 0)
+	# Tira todo mundo de perto do teste.
+	var guardados := {}
+	for u in game.units:
+		if u != a and u != b:
+			guardados[u] = u.global_position
+			if u.global_position.distance_to(centro) < 30.0:
+				u.global_position = game.arena.spawn_center[u.team]
+	var por := func(x, p: Vector3, olha: Vector3) -> void:
+		x.global_position = p
+		x.velocity = Vector3.ZERO
+		x._knock = Vector3.ZERO
+		x._dodge_t = 0.0
+		x._blocking = false
+		x._shield = 0.0
+		x._intocavel_t = 0.0
+		x.hp = x.max_hp()
+		x._visual.rotation.y = atan2(olha.x, olha.z)
+		x.aim_dir = olha
+		x.reset_physics_interpolation()
+	var dx := Vector3(1, 0, 0)
+	b.set_class(load("res://config/classes/guerreiro.tres"))
+
+	# Sumotori: Agarrão arremessa, solta a máscara e fere no pouso.
+	a.set_class(load("res://config/classes/sumotori.tres"))
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 1.8, -dx)
+	var masc = game.princesses[a.team]
+	var tinha = b.carried_princess
+	b.carried_princess = null
+	a._quick_cd = 0.0
+	_check(a._usar_rapida() and b.em_voo, "Sumotori: Agarrão deveria levantar o alvo")
+	var hp0: float = b.hp
+	await get_tree().create_timer(cfg.agarrao_segura + 0.75).timeout
+	_check(not b.em_voo and b.hp < hp0 and b.global_position.distance_to(centro) > 4.0,
+		"Sumotori: alvo deveria pousar longe ferido (dist %.1f, dano %.1f)" % [b.global_position.distance_to(centro), hp0 - b.hp])
+	# Dohyō: quem estava dentro não sai; de fora não entra.
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 2.0, -dx)
+	a.super_carga = a.POWER_MAX
+	_check(Herois.super_proprio(a) and a._dohyo_t > 0.0, "Sumotori: Dohyō deveria abrir o ringue")
+	b.global_position = centro + dx * (cfg.dohyo_raio + 3.0)
+	Herois._tick_dohyo(a)
+	_check(b.global_position.distance_to(centro) <= cfg.dohyo_raio, "Sumotori: quem estava no ringue não sai (%.1f m)" % b.global_position.distance_to(centro))
+	a.set_meta("dohyo_dentro", [])
+	b.global_position = centro + dx * 1.0
+	Herois._tick_dohyo(a)
+	_check(b.global_position.distance_to(centro) >= cfg.dohyo_raio, "Sumotori: quem estava fora não entra no ringue")
+	a._dohyo_t = 0.0
+
+	# Kappa: casco reduz só por trás.
+	a.set_class(load("res://config/classes/kappa.tres"))
+	por.call(a, centro, dx)
+	a.take_damage(20.0, b, -dx)  # vindo da frente (b na frente batendo para trás)
+	var frente: float = a.max_hp() - a.hp
+	a.hp = a.max_hp()
+	a.take_damage(20.0, b, dx)  # vindo das costas
+	var costas: float = a.max_hp() - a.hp
+	_check(frente > 0.0 and costas < frente * 0.5,
+		"Kappa: casco deveria reduzir só por trás (frente %.1f, costas %.1f)" % [frente, costas])
+
+	# Yamabushi: Rajada troca dono e direção do projétil.
+	a.set_class(load("res://config/classes/yamabushi.tres"))
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 6.0, -dx)
+	var p = game.spawn_projectile(b, centro + dx * 3.0 + Vector3(0, 1.2, 0), -dx, "shuriken")
+	_check(Herois._rajada(a) and p.owner_unit == a and p.velocity.dot(dx) > 0.0, "Yamabushi: Rajada deveria devolver o tiro (dono e direção)")
+	p.queue_free()
+
+	# Karasu: intocável no ar e fere no raio do pouso.
+	a.set_class(load("res://config/classes/karasu_tengu.tres"))
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 6.0, -dx)
+	a.aim_point = b.global_position
+	_check(a._usar_rapida() and a.em_voo, "Karasu: Mergulho deveria subir")
+	hp0 = a.hp
+	a.take_damage(30.0, b, dx)
+	_check(a.hp == hp0, "Karasu: no ar o Mergulho é intocável")
+	var hb0: float = b.hp
+	await get_tree().create_timer(1.0).timeout
+	_check(not a.em_voo and b.hp < hb0, "Karasu: o pouso fere quem está no raio (dano %.1f)" % (hb0 - b.hp))
+	# Cego desvia a mira do bot.
+	por.call(a, centro, dx)
+	b._cego_t = 1.0
+	b.aim_dir = dx
+	b._attack_cd = 0.0
+	b._attack()
+	_check(b.aim_dir.angle_to(dx) > 0.001, "Karasu: cego deveria desviar a mira do bot")
+	b._cego_t = 0.0
+
+	# Mujina: disfarce tira dos alvos e quebra no golpe.
+	a.set_class(load("res://config/classes/mujina.tres"))
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 2.0, -dx)
+	_check(a._usar_rapida() and a._disfarce_t > 0.0 and a.na_sombra_para(b), "Mujina: rosto roubado tira a Mujina dos alvos inimigos")
+	_check(a._disfarce_time == b.team, "Mujina: o rosto é do time do inimigo")
+	a._attack_cd = 0.0
+	a._attack()
+	_check(a._disfarce_t <= 0.0 and not a.na_sombra_para(b), "Mujina: o golpe quebra o disfarce")
+
+	# Andar forçado: Susto afasta, Hipnose aproxima.
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 3.0, -dx)
+	Herois.forcar_andar(b, centro, 1.0, true)
+	Herois.corpo_sem_cerebro(b)
+	_check(b.move_intent.dot(dx) > 0.9 and not b.wants_attack, "andar forçado: Susto afasta")
+	Herois.forcar_andar(b, centro, 1.0, false)
+	b._forcado_afasta = false
+	Herois.corpo_sem_cerebro(b)
+	_check(b.move_intent.dot(-dx) > 0.9, "andar forçado: Hipnose aproxima")
+	b._forcado_t = 0.0
+
+	# Onmyoji: cada boneco engole um golpe; com 3, o Q lança os três.
+	a.set_class(load("res://config/classes/onmyoji.tres"))
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 8.0, -dx)
+	for i in 3:
+		Herois._dobrar(a)
+	_check(a.shikigami == 3, "Onmyoji: três Q fazem três bonecos")
+	a.take_damage(25.0, b, dx)
+	_check(a.hp == a.max_hp() and a.shikigami == 2, "Onmyoji: o boneco engole o golpe inteiro")
+	Herois._dobrar(a)
+	var antes_n: int = get_tree().get_nodes_in_group("projeteis").size()
+	Herois._dobrar(a)
+	_check(a.shikigami == 0 and get_tree().get_nodes_in_group("projeteis").size() >= antes_n + 3, "Onmyoji: com 3 bonecos o Q lança os três")
+
+	# Tennin: não é empurrada; o Laço levanta o caído com laco_vida.
+	a.set_class(load("res://config/classes/tennin.tres"))
+	por.call(a, centro, dx)
+	a.take_damage(5.0, b, dx, 3.0, true)
+	_check(a._knock.length() < 0.01, "Tennin: não é empurrada")
+	var aliado = null
+	for u in game.units:
+		if u != a and u.team == a.team and u.alive and not u.is_player and not u.carried_princess:
+			aliado = u
+			break
+	if aliado:
+		var ac = aliado.stats
+		aliado.global_position = centro + dx * 6.0
+		aliado._die(null)
+		_check(Herois._laco(a), "Tennin: Laço acha o aliado caído")
+		await get_tree().create_timer(0.45).timeout
+		_check(aliado.alive and aliado.hp >= aliado.max_hp() * cfg.laco_vida - 0.5, "Tennin: Laço levanta o caído com %.0f%%" % (cfg.laco_vida * 100))
+		aliado.set_class(ac)
+		aliado.global_position = guardados.get(aliado, game.arena.spawn_center[aliado.team])
+	# Véu: intocável por veu_tempo.
+	_check(Herois.super_proprio(a) and a._intocavel_t >= cfg.veu_tempo - 0.01, "Tennin: Véu deixa intocável por %.0f s" % cfg.veu_tempo)
+	a._intocavel_t = 0.0
+
+	# Komusō: Sono dorme quem fica no cone; dano acorda; interrompe com dano; Réquiem cala.
+	a.set_class(load("res://config/classes/komuso.tres"))
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 4.0, -dx)
+	_check(Herois._sono(a) and a._canto_t > 0.0, "Komusō: Canção começa a tocar")
+	Herois._tick_canto(a, a.stats.skill_duration + 0.01)
+	_check(b._sono_t > 0.0 and not b.maos_livres(), "Komusō: quem ficou no cone dorme")
+	b.take_damage(1.0, a, dx)
+	_check(b._sono_t <= 0.0, "Komusō: dano acorda")
+	Herois._sono(a)
+	a.take_damage(1.0, b, -dx)
+	_check(a._canto_t <= 0.0, "Komusō: dano interrompe a Canção")
+	_check(Herois.super_proprio(a) and b._mudo_t >= cfg.requiem_tempo - 0.01, "Komusō: Réquiem cala por %.0f s" % cfg.requiem_tempo)
+	b.power = b.POWER_MAX
+	b.wants_power = true
+	var pw: float = b.power
+	b._physics_process(1.0 / 60.0)
+	_check(b.power >= pw - 0.01, "Komusō: calado não solta o E")
+	b._mudo_t = 0.0
+
+	# Super de cada herói gasta a barra uma vez só (Ciclo 2.22, mesmo critério).
+	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso"]:
+		var cls = load("res://config/classes/%s.tres" % id)
+		a.set_class(cls)
+		por.call(a, centro, dx)
+		por.call(b, centro + dx * 3.0, -dx)
+		a.super_carga = a.POWER_MAX
+		a.wants_super = true
+		var usos := 0
+		for k in 5:
+			var sc: float = a.super_carga
+			if a.em_voo:
+				break
+			a._use_super()
+			if sc >= a.POWER_MAX and a.super_carga < a.POWER_MAX:
+				usos += 1
+		_check(usos == 1, "%s: o R deveria sair uma vez só (saiu %d)" % [id, usos])
+		await get_tree().create_timer(0.05).timeout
+		var espera := 0
+		while a.em_voo and espera < 40:  # Noite de Corvos: os mergulhos pousam
+			await get_tree().create_timer(0.1).timeout
+			espera += 1
+	await get_tree().create_timer(1.2).timeout  # mergulhos em cadeia pousam
+	a.brain = cerebros[0]
+	b.brain = cerebros[1]
+	a.set_class(c0)
+	b.set_class(c1)
+	for u in guardados:
+		if is_instance_valid(u):
+			u.global_position = guardados[u]
+			u.reset_physics_interpolation()

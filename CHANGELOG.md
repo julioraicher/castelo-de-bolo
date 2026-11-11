@@ -4,6 +4,93 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.23 (2026-11-11), Jogabilidade + Diretor Visual: heróis raros no nível 6 e relógio de 10 min
+Pedido do Julio (quiz dos heróis: Construtor sem herói; só o herói é Nv6, como
+terceira casa de chapéu; Nv5 com madeira destaca o bairro; um herói por bairro;
+tudo de uma vez na main; escada mais rápida + relógio de 10 min com empate).
+Plano em docs/direcao-ciclo-2.23-herois.md.
+- **Relógio de 10 min** no topo (`tempo_limite`): no zero vence quem tem mais
+  pontos; igual = **empate**. Se uma máscara está sendo levada, a partida segue
+  ("Última corrida", até `prorrogacao_max` = 30 s). Modo teste sem relógio.
+- **Escada mais rápida**: Nv3→4→5 custa 5 e 7 madeiras (era 6 e 9) e cada árvore
+  rende 5 toras (era 4).
+- **Nível 6 = herói raro** (Samurai, Shuriken e Kitsune; o Construtor para no 5).
+  Com o bairro no Nv5, o Construtor aperta [F] e escolhe um herói no painel (bots
+  sorteiam). O **Pavilhão do Herói** sobe no tapete do caminho (**8 madeiras**, a
+  1ª entra na escolha) e guarda **um chapéu só, sem fabricar**: ele volta
+  `heroi_retorno` = 20 s depois que o herói sai de campo de vez (caído esperando
+  reanimação ainda conta como em campo). Quem veste ganha 4 níveis de bônus (o 5
+  da casa dá 3). Bots não pegam o chapéu nos primeiros 8 s (vez do jogador).
+- **Destaque do Nv6**: bairro no 5 com madeira no depósito = anel dourado no
+  tapete, pavilhão fantasma, aviso único, **estrela piscando no minimapa** e a seta
+  do Construtor com "★ HERÓI". Pavilhão pronto = estrela fixa no minimapa.
+- **Os 8 heróis** (Q / E / R; R próprio quando o Super "maior" não bastava):
+  - **Sumotori** (Samurai): Agarrão (agarra e arremessa; quem cai em cima apanha),
+    Pisão do Santuário, R **Dohyō** (ringue de sal: ninguém entra nem sai, o time
+    dele bate +20% dentro). O maior do jogo (215 de vida, rola no dash).
+  - **Kappa do Rio** (Samurai): Rasteira (some na poça, reaparece no pé e derruba),
+    Jato d'Água em linha, R Enchente. **Casco**: golpe pelas costas leva 60% menos.
+  - **Yamabushi do Leque** (Shuriken): tiro de vento; Rajada (**devolve flechas e
+    shurikens** a quem atirou e empurra), Redemoinho onde mira (puxa e arremessa),
+    R Tufão.
+  - **Karasu Tengu** (Shuriken): Mergulho (sobe, intocável, e cai no atirador
+    isolado; o chão avisa onde vai cair e bots desviam metade das vezes), Revoada
+    (cega: quem está dentro erra os golpes), R **Noite de Corvos** (3 mergulhos).
+  - **Mujina** (Shuriken): Roubar Rosto (vira o inimigo tocado: bots e torretas
+    inimigos não a veem até o 1º golpe, que dá ×1,5), Susto (quem está perto foge),
+    R Passo sem Rosto (sombra).
+  - **Onmyoji de Papel** (Kitsune): talismãs retos; Dobrar Shikigami (até 3
+    bonecos de papel que engolem golpes; cheio, solta talismãs que caçam o alvo),
+    Grou de Papel (atravessa: fere inimigos e cura aliados), R **Mil Grous** em leque.
+  - **Tennin do Manto** (Kitsune): flutua e não leva empurrão; ataque em giro de
+    360°; Laço do Manto (puxa o aliado caído e o levanta com 40% da vida, ou puxa
+    o ferido longe), Dança Celeste (cura em volta), R **Véu Celeste** (aliados a
+    14 m não morrem por 3 s).
+  - **Komusō** (Kitsune): notas de flauta que atravessam; Canção de Ninar (dormem
+    até levar golpe), Hipnose (puxa para perto), R **Réquiem** (inimigos a 16 m sem
+    Q, E e R por 4 s).
+- **Bots**: bom senso por herói (`scripts/ai/bot_herois.gd`): Agarrão joga para
+  longe da máscara, Rajada quando vem projétil, Mergulho só em atirador isolado,
+  Rosto antes de entrar no pátio inimigo, Laço em caído, Canção com 2 juntos...
+- **Visual** (princípio 13): corpo próprio de cada um em `NinjaVisual` (barriga e
+  mawashi do time com a tsuna e os shide; casco, bico e prato aceso; máscara tengu
+  de nariz longo e leque de penas; capuz de corvo, bico e asas; rosto liso com a
+  fenda acesa; eboshi alto e kariginu; coque, halo e as fitas do hagoromo; tengai
+  e kesa do time), chapéus novos no pedestal (coque, prato, tokin, bico,
+  máscara lisa, halo, tengai), efeitos de cada poder no kit Magia (`FxHerois`,
+  paletas água, sal, papel, pena, som e celeste). **Pavilhão dourado** (hokora de
+  telhado duplo dourado, shimenawa e lanternas balançando, estandarte do time)
+  com o adorno do herói no topo e o emblema no estandarte, nos 4 temas
+  (`tools/gerar_pavilhao.gd`). Prancha: project-files/castelo-de-bolo/herois/.
+- **Sons novos**: papel (Kenney), água, grasnido e flauta (sintetizados por
+  `tools/sons/sintetizar_herois.py`, sem fonte externa).
+- **Menus**: fichas dos 8 heróis em Classes (grupo "★ herói raro"), aba **Herói
+  raro** no Como jogar, cartão do relógio na aba Objetivo. Sem clipe ainda.
+- **Modo teste (sandbox)**: o Nv6 funciona igual (madeira infinita, obra 3× mais
+  rápida) e o chapéu do herói volta em 3 s (`sandbox_heroi_retorno`).
+- Testes de regra: relógio/empate/última corrida, Nv6 (Construtor para no 5,
+  escolha gasta madeira, pavilhão, estoque 1 sem fabricar, retorno, bônus 4 vs 3,
+  bot espera o jogador) e uma regra por herói + "R sai uma vez só" nos 8; 535/535.
+- **Ritmo** (partidas só com bots): o 1º herói foi escolhido aos 4:50, 6:47,
+  7:08 e 8:42; numa de 10 min ninguém chegou (os dois times no Nv5 aos 9 min).
+  Pavilhão levava 80-100 s com 10 madeiras: agora são **8**. Com você de
+  Construtor focando num bairro, o herói chega antes.
+- **Equilíbrio** (`HEROIS=1 tools/sonda_equilibrio.sh`, 8 partidas com os heróis
+  em campo desde o início; amostra pequena, 6-13 mortes por herói): Kappa (1,7
+  abates/min) e Onmyoji (1,0) fortes; Sumotori, Komusō, Yamabushi, Karasu e
+  Tennin ficaram abaixo da classe base e foram reforçados (dano e recarga do ataque;
+  Agarrão 22→30, Mergulho 26→32). Reavaliar depois que você jogar.
+- **Desempenho**: cada herói é 1 malha de corpo + 1 de peças, como as classes
+  (CENSO: ~2,1 passes por boneco nos dois casos); o pavilhão vira 1 malha só
+  (fora o chapéu e o que balança). QA do mapa sem bot preso.
+- **O que testar**: (1) No Modo teste, suba um bairro de Samurai, Shuriken ou
+  Kitsune até o 5 com o Construtor: o tapete brilha e a estrela pisca no
+  minimapa? (2) [F] no bairro: o painel mostra os heróis; o pavilhão dourado sobe
+  no tapete? (3) Vista cada herói e teste Q, E e R (o chapéu volta em 3 s no modo
+  teste). (4) Numa partida normal: o relógio de 10 min aparece, e no fim dá
+  vitória por pontos ou empate? (5) Os corpos: dá para saber quem é cada herói de
+  longe? Diga qual ficou fraco que eu refaço.
+
 ## Ciclo 2.22 (2026-11-11), Jogabilidade + Diretor Visual: casinhas até o nível 5 e o R repetido
 Pedido do Julio (quiz "Casinhas até o nível 5": 1B, 2A, 3A + "no nível 1 o R não
 está liberado", 4AB, 5A). Antes a barraquinha da classe base parava no nível 2,

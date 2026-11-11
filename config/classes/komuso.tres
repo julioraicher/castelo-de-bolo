@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="ClassStats" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="1_nu7sq"]
+[ext_resource type="PackedScene" path="res://assets/characters/Knight.glb" id="2_i372l"]
+
+[resource]
+script = ExtResource("1_nu7sq")
+id = &"komuso"
+display_name = "Komusō"
+epiteto = "O monge sem rosto"
+descricao = "Monge errante de cesto na cabeça que nunca mostra o rosto. A flauta dele faz dormir, puxa os inimigos para perto e, no fim, cala qualquer poder."
+model = ExtResource("2_i372l")
+visible_meshes = PackedStringArray("Knight_ArmLeft", "Knight_ArmRight", "Knight_Body", "Knight_Head", "Knight_LegLeft", "Knight_LegRight")
+hat_color = Color(0.55, 0.9, 0.85, 1)
+hat_style = "tengai"
+estilo_ninja = "_komuso"
+escala_cabeca = 0.58
+escala_extremidades = 1.3
+dash_estilo = "rolar"
+max_hp = 110.0
+move_speed = 6.2
+attack_kind = "ranged"
+damage = 12.0
+attack_range = 12.0
+attack_cooldown = 0.65
+knockback = 3.0
+projectile_speed = 22.0
+projetil = "nota"
+combo_anims = PackedStringArray()
+combo_finisher_mult = 1.0
+skill = "sono"
+skill_name = "Canção de Ninar"
+skill_cooldown = 8.0
+skill_radius = 8.0
+skill_duration = 1.6
+block_reduction = 0.5
+classe_base = &"kitsune"
+estilo_linha = "Controle pelo som: sono, hipnose e silêncio."
+power = "hipnose"
+power_name = "Hipnose"
+power_radius = 7.0
+power_value = 0.0
+super_tipo = "proprio"
+super_poder = "requiem"
+super_nome = "Réquiem"
+anim_attack = "1H_Ranged_Shoot"

@@ -24,6 +24,15 @@ const RAPIDA := {
 	"armadilha": "Estrepes no chão: dano e lentidão em quem pisa.",
 	"bloqueio": "Bloqueio reforçado por alguns segundos.",
 	"corrida": "Arrancada curta.",
+	# Heróis raros (Ciclo 2.23)
+	"agarrao": "Agarra quem está na frente e arremessa longe; quem cai em cima também apanha.",
+	"rasteira": "Some numa poça e reaparece no pé do inimigo, derrubando.",
+	"rajada": "Abano do leque: devolve flechas e empurra quem está na frente.",
+	"mergulho": "Sobe ao céu e cai em cima do atirador mais isolado.",
+	"roubar_rosto": "Toca num inimigo e vira ele: os outros não te veem como inimigo até o 1º golpe.",
+	"dobrar": "Dobra um shikigami (até 3) que engole golpes; cheio, solta talismãs que caçam o alvo.",
+	"laco": "Puxa de volta o aliado caído (levanta na hora) ou o ferido longe, curando.",
+	"sono": "Canção: quem estiver na frente dorme até levar um golpe.",
 }
 ## O que cada poder de Chi (enum `power`) faz.
 const PODER := {
@@ -37,6 +46,22 @@ const PODER := {
 	"mutirao": "Adianta a obra perto de você.",
 	"campo_minado": "Minas em volta.",
 	"bombardeio": "Bombas caem numa área.",
+	"pisao_grande": "Pisão do santuário: dano e arremesso em volta.",
+	"jato": "Jato d'água em linha: empurra todos de uma vez.",
+	"redemoinho_longe": "Redemoinho onde você mira: puxa para o meio e arremessa no fim.",
+	"revoada": "Corvos numa área: quem está dentro fica cego e erra.",
+	"susto": "Mostra o rosto vazio: quem está perto foge correndo.",
+	"grou": "Grou de papel que atravessa: fere inimigos e cura aliados no caminho.",
+	"danca": "Dança: cura os aliados em volta enquanto dura.",
+	"hipnose": "Puxa os inimigos em volta para perto de você.",
+}
+## Super próprio dos heróis raros (super_tipo "proprio": ClassStats.super_poder).
+const SUPER_PROPRIO := {
+	"dohyo": "Ringue de sal: ninguém entra nem sai, e quem está dentro do seu time bate mais forte.",
+	"mergulho3": "Três mergulhos seguidos, cada um no inimigo mais perto.",
+	"mil_grous": "Revoada de grous em leque: atravessa tudo, fere e cura.",
+	"veu": "Véu do céu: aliados em volta não morrem por alguns segundos.",
+	"requiem": "Réquiem: inimigos em volta ficam sem Q, E e R por alguns segundos.",
 }
 
 var _ficha: VBoxContainer
@@ -54,7 +79,8 @@ var _ativo := false
 var _max := {"vida": 1.0, "velocidade": 1.0, "dano": 1.0}
 
 
-## Todas as classes jogáveis: cada classe do pátio seguida dos seus dois caminhos.
+## Todas as classes jogáveis: cada classe do pátio seguida dos seus dois caminhos;
+## os heróis raros do nível 6 (Ciclo 2.23) vêm no fim, num grupo só.
 static func lista() -> Array[ClassStats]:
 	var out: Array[ClassStats] = []
 	for b in Config.cfg.hat_classes():
@@ -63,7 +89,19 @@ static func lista() -> Array[ClassStats]:
 		for e in b.caminhos:
 			if e and e not in out:
 				out.append(e)
+	for b in Config.cfg.hat_classes():
+		for h in b.herois:
+			if h and h not in out:
+				out.append(h)
 	return out
+
+
+## Classe do pátio de quem `s` é herói raro (null = não é herói).
+static func base_do_heroi(s: ClassStats) -> ClassStats:
+	for b in Config.cfg.hat_classes():
+		if s in b.herois:
+			return b
+	return null
 
 
 static func nome_super(s: ClassStats) -> String:
@@ -73,6 +111,8 @@ static func nome_super(s: ClassStats) -> String:
 
 
 static func origem(s: ClassStats) -> String:
+	if base_do_heroi(s):
+		return "★ herói raro (nível 6, %d madeiras)" % Config.cfg.heroi_custo
 	if s.classe_base != &"":
 		return "caminho %s (nível 3 da casa, %d madeiras)" % [s.caminho_nome if s.caminho_nome != "" else s.display_name, Config.cfg.oficina_custo_madeira]
 	return "pátio (barraquinha)"
@@ -197,6 +237,10 @@ func ativo(sim: bool) -> void:
 		_clipe.tocar(sim)
 
 
+static func cfg_heroi_retorno() -> float:
+	return Config.cfg.heroi_retorno
+
+
 ## Dano por segundo do ataque normal (o combo e os poderes ficam fora).
 static func _dps(s: ClassStats) -> float:
 	return s.damage / maxf(s.attack_cooldown, 0.1)
@@ -209,6 +253,9 @@ func _mostrar(s: ClassStats) -> void:
 	_epiteto.text = s.epiteto
 	_epiteto.visible = s.epiteto != ""
 	_papel.text = "%s. Chapéu: %s." % [papel(s), origem(s)]
+	var bh := base_do_heroi(s)
+	if bh:
+		_papel.text += " Do bairro %s: um chapéu só por time, volta %d s depois que o herói sai de campo." % [bh.display_name, roundi(cfg_heroi_retorno())]
 	_descricao.text = s.descricao
 	_descricao.visible = s.descricao != ""
 	var cfg := Config.cfg
@@ -237,7 +284,9 @@ func _mostrar(s: ClassStats) -> void:
 	if s.power != "nenhum":
 		linhas.append(["E", s.power_name, PODER.get(s.power, ""), "quando o Chi enche"])
 		var super_txt := ""
-		if s.super_tipo == "sombra":
+		if s.super_tipo == "proprio":
+			super_txt = SUPER_PROPRIO.get(s.super_poder, "")
+		elif s.super_tipo == "sombra":
 			var tempo := ("%.1f" % cfg.sombra_tempo).replace(".", ",")
 			var mult := ("%.1f" % cfg.sombra_golpe_mult).replace(".", ",")
 			super_txt = "Some por %s s, anda mais rápido e o primeiro golpe dá ×%s." % [tempo, mult]

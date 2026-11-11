@@ -29,6 +29,8 @@ func _ready() -> void:
 			"Chamas verdes nascem no meio do mapa. Leve até a sua máscara: cheia, ela pesa e o ladrão anda devagar."],
 		["recruta", Estilo.TEXTO_FRACO, "Caiu? Recomeça",
 			"Quem morre volta como Recruta no castelo. Pegue um chapéu no pátio para virar uma classe de novo."],
+		["losango", Estilo.OURO, "Relógio de %d minutos" % roundi(cfg.tempo_limite / 60.0),
+			"No zero, vence quem tem mais pontos; igual é empate. Se uma máscara estiver sendo levada, a partida segue até ela chegar, cair ou voltar (Última corrida, até %d s)." % roundi(cfg.prorrogacao_max)],
 	])
 	_aba("Madeira", "madeira", [
 		["martelo", Estilo.OURO, "Só o Construtor corta",
@@ -45,6 +47,14 @@ func _ready() -> void:
 			"No nível 2, o Construtor aperta F no bairro e clica num dos dois caminhos (fora da briga). A casa dele sobe atrás (%d madeiras, +%d por casa que o time já fez) e o outro fica SELADO até o fim." % [cfg.oficina_custo_madeira, cfg.oficina_custo_degrau]],
 		["losango", Estilo.OURO, "Níveis 4 e 5: as duas juntas",
 			"Pronta, a casa nasce no nível 3 junto com a barraquinha. Daí cada subida leva as duas: peça nova no telhado, +1 chapéu, fabricação mais rápida."],
+	])
+	_aba("Herói raro", "heroi", [
+		["losango", Estilo.OURO_CLARO, "Nível 6: o herói do bairro",
+			"Com o bairro no nível 5, o Construtor aperta F e escolhe um herói raro da classe (Samurai: Sumotori ou Kappa; Shuriken: Yamabushi, Karasu Tengu ou Mujina; Kitsune: Onmyoji, Tennin ou Komusō). O Construtor não tem herói."],
+		["martelo", Estilo.OURO, "Pavilhão dourado (%d madeiras)" % cfg.heroi_custo,
+			"Sobe no tapete do caminho, ao lado da casa. Com madeira no depósito, o tapete brilha e a estrela pisca no minimapa. Pronto, dá +1 nível de bônus para o bairro."],
+		["katana", Estilo.OURO_CLARO, "Um chapéu só",
+			"O pavilhão guarda um chapéu, que não é fabricado. Ele volta %d s depois que o herói sai de campo de vez (caído ainda conta como em campo)." % roundi(cfg.heroi_retorno)],
 	])
 	_aba("Torreta", "torreta", [
 		["martelo", Estilo.OURO, "Posto da raposa (%d madeiras)" % cfg.torreta_custo,
