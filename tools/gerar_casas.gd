@@ -5,7 +5,9 @@ extends "res://tools/gerar_economia.gd"
 ##   maquina_<evoluída>  a casa de cada caminho (8): é a maquininha da classe
 ##                       evoluída (contrato do HatPad: Molde, Prensa, Estoque_1..5,
 ##                       Enfeite, Vapor, "fabricar"), com "Telhado" à parte (cai no
-##                       fim da obra) e um andar por nível: N3_* (nível 3) e N4_* (4)
+##                       fim da obra) e uma peça por nível (Ciclo 2.22: a casa nasce
+##                       no nível 3): N4_Andar (nível 4), N5_Topo e N5_Estandartes (5).
+##                       A barraquinha ganha N3_Lanternas, N4_Nobori e N5_Arco.
 ##   bairro_<base>       chão pintado do bairro, os dois tapetes (Tapete_0/1), o selo
 ##                       de cada um (Selo_0/1, escondido), o estandarte com um pano por
 ##                       dono (Pano_azul, Pano_vermelho, Pano_c0, Pano_c1) e os
@@ -118,6 +120,72 @@ func _barraquinha(base: String) -> void:
 	_blocod(Vector3(0.2, 0.9, 0.05), Vector3(-xs - 0.02, 2.2, zt + 0.1), Vector3.ZERO, P.papel, 0.01)
 	_blocod(Vector3(0.24, 0.08, 0.06), Vector3(-xs - 0.02, 2.66, zt + 0.1), Vector3.ZERO, cor.darkened(0.2), 0.01)
 	_nivel2()
+	_barraca_niveis(base, cor)
+
+
+## Níveis 3 a 5 da barraquinha (Ciclo 2.22: ela sobe junto com a casa do
+## caminho). Uma peça por nível, cada uma com silhueta própria para ler de
+## longe: N3 dois tōrō de pedra acesos na frente, N4 um nobori alto na cor da
+## classe ao lado, N5 um arco dourado com fitas de papel por cima do toldo.
+func _barraca_niveis(base: String, cor: Color) -> void:
+	for s in [-1.0, 1.0]:
+		var g := _inicio_peca()
+		_tipo = 3
+		_cil(0.3, 0.36, 0.16, 6, Vector3(0, 0.08, 0), Vector3.ZERO, P.pedra2.darkened(0.05))
+		_cil(0.1, 0.13, 0.62, 6, Vector3(0, 0.47, 0), Vector3.ZERO, P.pedra2)
+		_cil(0.26, 0.22, 0.1, 6, Vector3(0, 0.83, 0), Vector3.ZERO, P.pedra2.darkened(0.1))
+		_tipo = 0
+		_caixa(Vector3(0.3, 0.28, 0.3), Vector3(0, 1.02, 0), Vector3.ZERO, P.luz1, true)
+		for k in 4:
+			var a := k * PI / 2.0
+			_caixa(Vector3(0.06, 0.3, 0.06), Vector3(cos(a) * 0.17, 1.02, sin(a) * 0.17), Vector3.ZERO, P.pedra2.darkened(0.25))
+		_cil(0.04, 0.38, 0.26, 6, Vector3(0, 1.3, 0), Vector3.ZERO, P.pedra2.darkened(0.15))
+		_esfera(0.07, Vector3(0, 1.48, 0), Vector3.ONE, cor.lightened(0.1), true, 6, 3)
+		_fim_peca(g, "N3_Toro_%s" % ("E" if s < 0 else "D"), Transform3D(Basis(), Vector3(s * 1.95, 0.0, 1.05)))
+	# N4: nobori, a bandeira vertical de festival (pano comprido preso num
+	# mastro em "L"), na cor da classe com faixa branca e o pé de pedra.
+	var g4 := _inicio_peca()
+	var mad: Color = P.madeira.darkened(0.15)
+	_blocod(Vector3(0.36, 0.2, 0.36), Vector3(0, 0.1, 0), Vector3.ZERO, P.pedra2.darkened(0.1), 0.03)
+	_viga(Vector3(0, 0.1, 0), Vector3(0, 5.0, 0), 0.08, mad)
+	_viga(Vector3(0, 4.85, 0), Vector3(-0.75, 4.85, 0), 0.05, mad)
+	var m := _marca()
+	_blocod(Vector3(0.62, 3.0, 0.03), Vector3(-0.38, 3.3, 0), Vector3.ZERO, cor.darkened(0.12), 0.01)
+	_blocod(Vector3(0.18, 2.3, 0.04), Vector3(-0.38, 3.2, 0.01), Vector3.ZERO, P.branco, 0.01)
+	_blocod(Vector3(0.64, 0.12, 0.04), Vector3(-0.38, 4.75, 0.0), Vector3.ZERO, P.ouro, 0.01)
+	_vento_pendurado(m, 4.8, 3.2, 0.9)
+	_fim_peca(g4, "N4_Nobori", Transform3D(Basis(), Vector3(2.35, 0.0, -0.35)))
+	# N5: arco dourado (dois pilares e uma verga curva) com shide, as fitas de
+	# papel em ziguezague, e uma corda grossa (shimenawa) entre os pilares.
+	var g5 := _inicio_peca()
+	var xa := 1.85
+	for s in [-1.0, 1.0]:
+		_cil(0.11, 0.13, 3.7, 8, Vector3(s * xa, 1.85, 0), Vector3.ZERO, P.torii)
+		_cil(0.15, 0.15, 0.16, 8, Vector3(s * xa, 0.08, 0), Vector3.ZERO, P.ouro.darkened(0.2))
+	var n := 8
+	for k in n:
+		var t0 := float(k) / n
+		var t1 := float(k + 1) / n
+		var x0 := lerpf(-xa - 0.45, xa + 0.45, t0)
+		var x1 := lerpf(-xa - 0.45, xa + 0.45, t1)
+		var y0 := 3.75 + 0.35 * pow(absf(t0 * 2.0 - 1.0), 2.0)
+		var y1 := 3.75 + 0.35 * pow(absf(t1 * 2.0 - 1.0), 2.0)
+		_viga(Vector3(x0, y0, 0), Vector3(x1, y1, 0), 0.13, P.ouro)
+	_viga(Vector3(-xa, 3.3, 0.02), Vector3(xa, 3.3, 0.02), 0.08, P.torii.darkened(0.2))
+	var mc := _marca()
+	for k in 7:
+		var x := lerpf(-xa + 0.3, xa - 0.3, k / 6.0)
+		_esfera(0.09, Vector3(x, 3.34 - 0.08 * sin(k / 6.0 * PI), 0.06), Vector3(1.6, 1, 1), P.corda, false, 6, 3)
+	_vento_pendurado(mc, 3.4, 0.3, 0.3)
+	for k in 4:
+		var x := lerpf(-xa + 0.55, xa - 0.55, k / 3.0)
+		var mf := _marca()
+		for j in 3:
+			var dx := 0.06 if j % 2 == 0 else -0.06
+			_blocod(Vector3(0.12, 0.2, 0.01), Vector3(x + dx, 3.12 - j * 0.19, 0.09), Vector3(0, 0, -dx * 200.0), P.papel, 0.0)
+		_vento_pendurado(mf, 3.25, 0.7, 1.0)
+	_esfera(0.16, Vector3(0, 4.2, 0.05), Vector3(1, 1.2, 1), cor.lightened(0.2), true, 8, 4)
+	_fim_peca(g5, "N5_Arco", Transform3D(Basis(), Vector3(0, 0.0, 1.35)))
 
 
 # --- Casa da classe evoluída ------------------------------------------------------
@@ -274,7 +342,7 @@ func _ponta_cumeeira(c: String, e: Dictionary, p: Vector3, s: float) -> void:
 			_esfera(0.1, p + Vector3(0, 0.08, 0), Vector3.ONE, e.acento, false, 6, 3)
 
 
-## Nível 3 (N3_Andar): um andar a mais em cima do telhado, com janelas acesas
+## Nível 4 (N4_Andar; era o nível 3 antes do Ciclo 2.22): um andar a mais em cima do telhado, com janelas acesas
 ## e telhado próprio. Desenhado em volta da base dele (cresce dali).
 func _andar_n3(c: String, e: Dictionary) -> void:
 	var base := Vector3(0, Y0 + HP + 1.05, 0.0)
@@ -301,10 +369,10 @@ func _andar_n3(c: String, e: Dictionary) -> void:
 	_blocod(Vector3(2 * r + 0.5, 0.16, 0.26), Vector3(0, yc + 0.05, 0), Vector3.ZERO, e.telhado.darkened(0.4), 0.04)
 	# Faixa na cor da classe embaixo do beiral: o nível 3 se lê de longe.
 	_blocod(Vector3(w2 + 0.1, 0.12, d2 + 0.1), Vector3(0, h2 - 0.02, 0), Vector3.ZERO, e.acento.darkened(0.1), 0.02)
-	_fim_peca(g, "N3_Andar", Transform3D(Basis(), base))
+	_fim_peca(g, "N4_Andar", Transform3D(Basis(), base))
 
 
-## Nível 4 (N4_Topo e N4_Estandartes): coroa da classe no alto e dois
+## Nível 5 (N5_Topo e N5_Estandartes; era o 4 antes do Ciclo 2.22): coroa da classe no alto e dois
 ## estandartes altos na cor dela nos cantos da frente.
 func _topo_n4(c: String, e: Dictionary) -> void:
 	var base := Vector3(0, Y0 + HP + 1.05 + 0.85 + 0.85, 0.0)
@@ -349,7 +417,7 @@ func _topo_n4(c: String, e: Dictionary) -> void:
 			_cil(0.12, 0.14, 0.14, 8, Vector3(0.18, 0.84, 0), Vector3(0, 0, -30), FERRO.lightened(0.2))
 			_viga(Vector3(0.24, 0.9, 0), Vector3(0.4, 1.15, 0), 0.04, P.corda)
 			_esfera(0.11, Vector3(0.42, 1.2, 0.02), Vector3.ONE, e.luz, true, 6, 3)
-	_fim_peca(g, "N4_Topo", Transform3D(Basis(), base))
+	_fim_peca(g, "N5_Topo", Transform3D(Basis(), base))
 	g = _inicio_peca()
 	for s in [-1.0, 1.0]:
 		var x: float = s * (W / 2 + 0.45)
@@ -360,7 +428,7 @@ func _topo_n4(c: String, e: Dictionary) -> void:
 		_blocod(Vector3(0.58, 0.14, 0.04), Vector3(x - s * 0.3, 4.32, D / 2 + 0.7), Vector3.ZERO, P.ouro, 0.01)
 		_blocod(Vector3(0.14, 1.3, 0.04), Vector3(x - s * 0.3, 3.3, D / 2 + 0.71), Vector3.ZERO, P.branco.lerp(e.acento, 0.2), 0.01)
 		_vento_pendurado(m, 4.4, 2.2, 0.8)
-	_fim_peca(g, "N4_Estandartes", Transform3D())
+	_fim_peca(g, "N5_Estandartes", Transform3D())
 
 
 ## Prensa de cada casa (desenhada em volta da origem; desce até o molde).

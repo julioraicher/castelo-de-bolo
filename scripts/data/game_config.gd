@@ -220,20 +220,30 @@ extends Resource
 ## Ciclo 2.21: cada classe do pátio (hat_class_list) tem UMA casa no pátio
 ## (MapLayout.hat_spots), que começa como barraquinha de chapéu. Os dois
 ## caminhos opostos dela (ClassStats.caminhos) ficam em tapetes dos lados: o
-## Construtor pisa num com madeira, escolhe e sela o outro pela partida. A casa
-## evoluída fica pronta no nível 2 e sobe com madeira até mago_nivel_max.
+## Construtor escolhe um (painel no jogador, tapete nos bots) e sela o outro
+## pela partida. A casa evoluída nasce no nível 3 (Ciclo 2.22, abaixo).
 ## (Os nomes "mago_*" ficaram do Ciclo 2.5, quando só a Kitsune tinha caminho.)
 ## magos_opostos: antigo, só vale num mapa sem as casas novas.
 @export var magos_opostos: Array[ClassStats] = []
-@export var mago_nivel_max := 4
-## Madeira para subir do nível 2 ao 3 e do 3 ao 4 (um por nível acima do 2).
+## Ciclo 2.22, a escada do bairro (uma por classe do pátio):
+##   Nv1 → Nv2: só a barraquinha, com casa_nv2_custo madeiras;
+##   Nv2 → Nv3: o Construtor escolhe o caminho no painel e ergue a casa
+##              (oficina_custo_madeira + degrau); a casa nasce no Nv3 e a
+##              barraquinha vai junto;
+##   Nv3 → Nv5: uma subida leva as duas (mago_nivel_custo).
+@export var mago_nivel_max := 5
+@export var casa_nv2_custo := 4
+## Madeira para subir do nível 3 ao 4 e do 4 ao 5 (barraquinha e casa juntas).
 @export var mago_nivel_custo := PackedInt32Array([6, 9])
-## Bônus por nível acima do 2, para quem usa a classe daquele caminho
-## (nível 4 = 2x): dano, vida máxima e ganho de Chi (Q mais frequente).
+## Com a casa da classe abaixo deste nível, o Super (R) da classe fica travado.
+@export var super_nivel_min := 2
+## Bônus por nível acima do 2, para quem usa a classe base OU a do caminho
+## (nível 5 = 3x): dano, vida máxima e ganho de Chi (Q mais frequente).
 @export var mago_bonus_dano := 0.08
 @export var mago_bonus_vida := 0.08
 @export var mago_bonus_chi := 0.10
-## A casa evoluída ganha +1 de estoque e fabrica mais rápido por nível.
+## Por nível acima do 2, barraquinha e casa ganham +1 de estoque e fabricam
+## mais rápido (intervalo × isto).
 @export var mago_pad_intervalo_mult := 0.85
 ## Nome curto de cada caminho no mapa antigo (o novo usa ClassStats.caminho_nome).
 @export var magos_caminho_nomes := PackedStringArray(["Luz", "Sombra"])
@@ -318,6 +328,9 @@ extends Resource
 @export var sandbox_super_s := 6.0
 @export var sandbox_q_mult := 0.25
 @export var sandbox_catapulta_mult := 0.2
+## Casas no modo teste: madeira infinita e obra/entrega de madeira tantas
+## vezes mais rápidas (o resto da escada é igual à partida).
+@export var sandbox_obra_mult := 3.0
 
 @export_group("Equilíbrio 2.10")
 ## Atirar deixa lento: depois de cada tiro, atirador_lento_t s a

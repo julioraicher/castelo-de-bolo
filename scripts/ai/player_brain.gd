@@ -41,3 +41,7 @@ func tick(_delta: float) -> void:
 		unit.wants_dodge = true
 	interact_pressed = Input.is_action_just_pressed("interact")
 	unit.wants_reanimar = Input.is_action_pressed("interact")
+	# Painel da escolha do caminho aberto: o clique é do botão, não do golpe.
+	if game.hud and game.hud.escolha_aberta():
+		unit.wants_attack = false
+		unit.wants_block = false

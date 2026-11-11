@@ -386,8 +386,14 @@ func _lenhador(me: Vector3) -> bool:
 	if tor:
 		_goal = tor.global_position + (me - tor.global_position).normalized() * 1.6
 		return true
+	# Ciclo 2.22: barraquinhas no nível 1 vêm antes de escolher caminho ou subir
+	# casas (o nível 2 libera o Super da classe); a obra já começada termina antes.
+	var nv1: Oficina = game.barraca_nv1(unit.team, me)
+	if nv1 and (of == null or of.estado != Oficina.Estado.OBRA) and game.madeira[unit.team] >= 1:
+		_goal = nv1.alvo_obra(me)
+		return true
 	if of and ((falta > 0 and game.madeira[unit.team] >= falta) or (falta == 0 and of.progresso < 1.0)):
-		# Bairro sem caminho: pisa no tapete sorteado (a escolha é dele);
+		# Bairro no Nv2 sem caminho: pisa no tapete sorteado (a escolha é dele);
 		# com a obra começada, fica na frente da casa.
 		_goal = of.alvo_obra(me)
 		return true
@@ -398,7 +404,7 @@ func _lenhador(me: Vector3) -> bool:
 		lado.y = 0
 		_goal = maq.global_position + (lado.normalized() if lado.length() > 0.1 else Vector3.BACK) * 1.8
 		return true
-	# Casa pronta: a madeira sobe o nível (3 e 4).
+	# Casa pronta: a madeira sobe o nível (4 e 5, barraquinha junto).
 	var mago: Oficina = game.mago_para_subir(unit.team, me) if of == null and maq == null else null
 	if mago and game.madeira[unit.team] >= mini(mago.faltam_nivel(), 2):
 		_goal = mago.alvo_obra(me)

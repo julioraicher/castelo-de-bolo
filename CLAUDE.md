@@ -144,10 +144,13 @@ repo: `.claude/skills/`.
 - Cenário: `tools/gerar_cenario_ninja.gd` (+ `gerar_mapa_rio.gd`) gera tudo com o
   material `pintura.gdshader`: COLOR.a = oclusão, UV.x = vento, UV.y = desenho
   (0 liso, 1 tábuas, 2 telhas, 3 pedras, 4 reboco). Rode os dois depois de mudar.
-- Casas de chapéu (Ciclo 2.21): `Oficina` = bairro da classe base (barraquinha +
-  2 tapetes com fantasma + casa do caminho escolhido, níveis 2-4). Modelos em
-  `tools/gerar_casas.gd` (estende `gerar_economia.gd`; rode depois de mudar),
-  prancha em `tools/prancha_casas.gd`. Caminhos = `caminhos` no .tres da base.
+- Casas de chapéu (Ciclo 2.21, escada 2.22): `Oficina` = bairro da classe base
+  (barraquinha + 2 tapetes com fantasma + casa do caminho). Nv1→2 só a barraquinha;
+  Nv2→3 escolha (jogador: painel `Hud.abrir_escolha` com [F]; bots: tapete), a casa
+  nasce no Nv3; Nv3→5 as duas sobem juntas. Super da classe travado no Nv1.
+  Modelos em `tools/gerar_casas.gd` (estende `gerar_economia.gd`; rode depois de
+  mudar; peças N3_/N4_/N5_ por nível), prancha em `tools/prancha_casas.gd`.
+  Caminhos = `caminhos` no .tres da base.
 - Efeitos de poder: kit `Magia` (`scripts/fx/magia.gd`, shader `magia_energia`):
   energia com ruído que se rasga (`corroi`) + filete de tinta; nunca primitiva de
   cor chapada. Receita e orçamento em docs/direcao-efeitos.md §8; conferir com

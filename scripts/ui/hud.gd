@@ -53,6 +53,13 @@ var _end_score: Label
 var _big_tween: Tween
 var _meu_time := 0
 var _score := [0, 0]
+## Painel da escolha do caminho (Ciclo 2.22): dois botões, abre com [F] no
+## bairro de uma casa no Nv2. Quem confirma é o clique (ou 1/2 no teclado).
+var _escolha: PanelContainer
+var _escolha_titulo: Label
+var _escolha_botoes: Array[Button] = []
+var _escolha_of: Oficina
+var _escolha_cb: Callable
 
 
 func _ready() -> void:
@@ -143,6 +150,7 @@ func _ready() -> void:
 	_flash.color = Color(1, 1, 1, 0)
 	root.add_child(_flash)
 
+	_build_escolha(root)
 	_build_fim(root)
 
 
@@ -369,6 +377,122 @@ func _build_dica(root: Control) -> void:
 	_hint_box.grow_vertical = Control.GROW_DIRECTION_BEGIN
 
 
+func _build_escolha(root: Control) -> void:
+	_escolha = PanelContainer.new()
+	_escolha.add_theme_stylebox_override("panel", Estilo.placa(Color(Estilo.LACA, 0.96), Estilo.OURO, 14))
+	_escolha.visible = false
+	root.add_child(_escolha)
+	var m := MarginContainer.new()
+	for lado in ["left", "right", "top", "bottom"]:
+		m.add_theme_constant_override("margin_" + lado, 14)
+	_escolha.add_child(m)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	m.add_child(v)
+	_escolha_titulo = Estilo.rotulo("", Estilo.T_GRANDE, Estilo.OURO, Estilo.TITULO)
+	_escolha_titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_escolha_titulo)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 14)
+	h.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(h)
+	for i in 2:
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(330, 176)
+		b.focus_mode = Control.FOCUS_NONE
+		b.pressed.connect(_escolheu.bind(i))
+		h.add_child(b)
+		_escolha_botoes.append(b)
+	var rodape := HBoxContainer.new()
+	rodape.alignment = BoxContainer.ALIGNMENT_CENTER
+	rodape.add_theme_constant_override("separation", 8)
+	rodape.add_child(Estilo.rotulo("Clique num caminho (ou 1 / 2). O outro fica selado até o fim.", Estilo.T_PEQUENO, Estilo.TEXTO_FRACO, Estilo.CORPO))
+	rodape.add_child(Estilo.tecla("F", Estilo.T_PEQUENO))
+	rodape.add_child(Estilo.rotulo("fecha", Estilo.T_PEQUENO, Estilo.TEXTO, Estilo.CORPO))
+	v.add_child(rodape)
+	_escolha.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 96)
+	_escolha.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_escolha.grow_vertical = Control.GROW_DIRECTION_BEGIN
+
+
+## Abre o painel com os dois caminhos da casa `of`; `cb(i)` recebe o escolhido.
+func abrir_escolha(of: Oficina, cb: Callable) -> void:
+	_escolha_of = of
+	_escolha_cb = cb
+	var cs := of.caminhos()
+	_escolha_titulo.text = "Casa de %s: escolha o caminho" % of.base.display_name
+	for i in 2:
+		var b := _escolha_botoes[i]
+		for c in b.get_children():
+			c.queue_free()
+		var cls: ClassStats = cs[i]
+		var cor := cls.hat_color.lightened(0.15)
+		b.add_theme_stylebox_override("normal", Estilo.placa(Color(Estilo.LACA, 0.95), cor.darkened(0.25), 12))
+		b.add_theme_stylebox_override("hover", Estilo.placa(Color(cor.darkened(0.7), 0.97), cor, 12))
+		b.add_theme_stylebox_override("pressed", Estilo.placa(Color(cor.darkened(0.55), 0.97), Estilo.OURO, 12))
+		var mc := MarginContainer.new()
+		mc.set_anchors_preset(Control.PRESET_FULL_RECT)
+		mc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		for lado in ["left", "right", "top", "bottom"]:
+			mc.add_theme_constant_override("margin_" + lado, 12)
+		b.add_child(mc)
+		var col := VBoxContainer.new()
+		col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		col.add_theme_constant_override("separation", 4)
+		mc.add_child(col)
+		var topo := HBoxContainer.new()
+		topo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		topo.add_theme_constant_override("separation", 8)
+		topo.add_child(Estilo.tecla(str(i + 1), Estilo.T_PEQUENO))
+		var nome := Estilo.rotulo(cls.display_name, Estilo.T_GRANDE, cor, Estilo.TITULO)
+		topo.add_child(nome)
+		col.add_child(topo)
+		var linhas := [cls.caminho_nome.to_upper() if cls.caminho_nome != "" else "", cls.epiteto,
+				"Q: %s" % cls.skill_name if cls.skill_name != "" else "",
+				"E: %s" % cls.power_name if cls.power_name != "" else ""]
+		for k in linhas.size():
+			if linhas[k] == "":
+				continue
+			var l := Estilo.rotulo(linhas[k], Estilo.T_PEQUENO if k > 0 else Estilo.T_MIN, Estilo.TEXTO if k > 0 else cor, Estilo.CORPO)
+			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			l.custom_minimum_size.x = 300
+			col.add_child(l)
+		for n in [mc, col, topo] + col.get_children() + topo.get_children():
+			if n is Control:
+				(n as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_escolha.visible = true
+
+
+func fechar_escolha() -> void:
+	_escolha.visible = false
+	_escolha_of = null
+
+
+func escolha_aberta() -> Oficina:
+	return _escolha_of if _escolha.visible else null
+
+
+func _escolheu(i: int) -> void:
+	if not _escolha.visible:
+		return
+	var cb := _escolha_cb
+	fechar_escolha()
+	if cb.is_valid():
+		cb.call(i)
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not _escolha.visible or not (event is InputEventKey) or not event.pressed or event.echo:
+		return
+	var k := (event as InputEventKey).keycode
+	if k == KEY_1 or k == KEY_KP_1:
+		_escolheu(0)
+		get_viewport().set_input_as_handled()
+	elif k == KEY_2 or k == KEY_KP_2:
+		_escolheu(1)
+		get_viewport().set_input_as_handled()
+
+
 func _build_fim(root: Control) -> void:
 	_end_panel = ColorRect.new()
 	_end_panel.color = Color(Estilo.TINTA, 0.78)
@@ -487,8 +611,13 @@ func update_state(game: Game) -> void:
 	else:
 		_super_bar.modulate = Color(1, 1, 1, 0.85)
 		_super_key.modulate = Color(1, 1, 1, 0.4)
-		_super_label.text = "Super %d%%" % int(u.super_carga)
-		_cor_texto(_super_label, Estilo.TEXTO)
+		if u.super_travado():
+			# Ciclo 2.22: casa da classe no Nv1 = R travado (a barra enche igual).
+			_super_label.text = "Super travado: casa no Nv1"
+			_cor_texto(_super_label, Estilo.TEXTO_FRACO)
+		else:
+			_super_label.text = "Super %d%%" % int(u.super_carga)
+			_cor_texto(_super_label, Estilo.TEXTO)
 	_quick_row.visible = u.tem_rapida()
 	if _quick_row.visible:
 		_quick_bar.value = u.quick_ratio() * 100.0
@@ -504,7 +633,7 @@ func update_state(game: Game) -> void:
 			_madeira_label.scale = Vector2.ONE * 1.3
 			_madeira_label.create_tween().tween_property(_madeira_label, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK)
 		_madeira_visto = mad
-		_madeira_label.text = "Madeira do time: %d" % mad
+		_madeira_label.text = "Madeira do time: ∞ (modo teste)" if game.sandbox else "Madeira do time: %d" % mad
 	var com_tora := u.carried_tora != null
 	if com_tora != _carregando_label.visible:
 		_carregando_label.visible = com_tora

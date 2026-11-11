@@ -33,6 +33,8 @@ func _ready() -> void:
 	_ferradura()
 	_lote_2_7()
 	_super()
+	_super_uma_vez()
+	_super_nivel1()
 	_torretas()
 	_catapulta()
 	_equilibrio_2_10()
@@ -103,6 +105,8 @@ func _super() -> void:
 			inimigo = x
 			break
 	var classes: Array = cfg.todas_classes()
+	var poderes0: bool = game._poderes
+	game._poderes = true  # sem a trava do nível 1 (testada em _super_nivel1)
 	for c in classes:
 		u.set_class(c)
 		u.super_carga = 0.0
@@ -144,6 +148,81 @@ func _super() -> void:
 			u._tick_super(999.0)
 			_check(u.stats == c, "super %s: stats deveria voltar ao normal" % c.id)
 		u.reset_physics_interpolation()
+	game._poderes = poderes0
+
+
+## Ciclo 2.22: o Selo (Kitsune Sombria) e a Fúria (Ronin Oni) ferem no mesmo
+## quadro em que saem e o dano devolve Chi; antes o Super lia isso como "não
+## saiu", devolvia a barra e saía de novo a cada quadro (5 a 20 seguidos).
+func _super_uma_vez() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var u = _alvo()
+	var inimigo = null
+	for x in game.units:
+		if x.alive and x.team != u.team and not x.is_player:
+			inimigo = x
+			break
+	if u == null or inimigo == null:
+		_check(false, "super uma vez: faltou boneco")
+		return
+	var antes = u.stats
+	var p_ini: Vector3 = inimigo.global_position
+	var poderes0: bool = game._poderes
+	game._poderes = true
+	for id in ["kitsune_sombria", "ronin_oni"]:
+		u.set_class(load("res://config/classes/%s.tres" % id))
+		inimigo.global_position = u.global_position + Vector3(2.0, 0, 0)
+		inimigo.hp = inimigo.max_hp()
+		inimigo._shield = 0.0
+		u.aim_point = inimigo.global_position
+		u.aim_dir = Vector3.RIGHT
+		u.power = 0.0
+		u.super_carga = 100.0
+		u._dodge_t = 0.0
+		u._equip_t = 0.0
+		u._spin_t = 0.0
+		u._ciranda_t = 0.0
+		u._silence_t = 0.0
+		var hp0: float = inimigo.hp
+		u._use_super()
+		_check(inimigo.hp < hp0, "super %s: deveria ferir o inimigo colado" % id)
+		_check(u.super_carga == 0.0 and u._super_t > 0.0 and u._stats_normal != null,
+			"super %s: ferir no mesmo quadro não pode devolver a barra (barra %.0f)" % [id, u.super_carga])
+		_check(not u.super_ready(), "super %s: não deveria poder sair de novo no quadro seguinte" % id)
+		u._tick_super(999.0)
+		inimigo.hp = inimigo.max_hp()
+	game._poderes = poderes0
+	inimigo.global_position = p_ini
+	inimigo.reset_physics_interpolation()
+	u.set_class(antes)
+
+
+## Ciclo 2.22: com a casa da classe no nível 1 o Super (R) fica travado (a barra
+## enche igual); no nível 2 ele libera. Classe sem casa no pátio não trava.
+func _super_nivel1() -> void:
+	var of = null
+	for o in game.oficinas:
+		of = o
+		break
+	var u = null
+	for x in game.units:
+		if x.alive and not x.is_player and x.team == of.team:
+			u = x
+			break
+	if of == null or u == null:
+		_check(false, "super nível 1: faltou casa ou boneco")
+		return
+	var antes = u.stats
+	var n0: int = of.nivel
+	u.set_class(of.base)
+	u.super_carga = 100.0
+	of.nivel = 1
+	_check(u.super_travado() and not u.super_ready(), "super nível 1: %s deveria ficar travado com a casa no Nv1" % of.base.id)
+	of.nivel = 2
+	_check(not u.super_travado() and u.super_ready(), "super nível 1: no Nv2 o R de %s deveria liberar" % of.base.id)
+	of.nivel = n0
+	u.set_class(antes)
+	u.super_carga = 0.0
 
 
 ## Torretas: dano do virote, escudo segura torreta_bloqueio, escudo na hora
@@ -1220,6 +1299,11 @@ func _obra() -> void:
 	if of == null:
 		return
 	var team: int = of.team
+	game.madeira[team] = 5
+	_check(of.nivel == 1 and not of.escolher(1) and of.caminho == -1 and game.madeira[team] == 5,
+		"Ciclo 2.22: no nível 1 a casa não escolhe o caminho")
+	of.nivel = 2
+	of.pad_base.subir_nivel()
 	game.madeira[team] = 0
 	_check(not of.escolher(1) and of.caminho == -1, "sem madeira o tapete não escolhe o caminho")
 	game.madeira[team] = 2
@@ -1258,36 +1342,42 @@ func _nivel2() -> void:
 	var e0: int = pad.estoque + 1
 	of.madeira_entregue = of.custo()
 	of.add_progress(1.0, null)
-	_check(of.estado == 2 and of.nivel == 2 and of.pad != null and of.pad.stats == of.caminhos()[of.caminho] and of.pad.nivel == 2,
-		"casa pronta: deveria virar a maquininha de %s no nível 2" % of.caminhos()[of.caminho].id)
+	_check(of.estado == 2 and of.nivel == 3 and of.pad != null and of.pad.stats == of.caminhos()[of.caminho] and of.pad.nivel == 3,
+		"casa pronta: deveria virar a maquininha de %s no nível 3" % of.caminhos()[of.caminho].id)
 	_check(game.hat_pads.has(of.pad), "casa pronta: chapéu da casa deveria estar disponível")
-	_check(pad.nivel == 2 and pad.estoque_max == cfg.maquina_n2_estoque and _perto(pad.intervalo, cfg.maquina_n2_intervalo * pad.stats.chapeu_tempo_mult, 1e-4),
-		"nível 2: barraquinha de %s não subiu (nivel %d, max %d)" % [pad.stats.id, pad.nivel, pad.estoque_max])
-	_check(pad.estoque == e0, "nível 2: deveria ganhar 1 chapéu na hora (%d -> %d)" % [e0, pad.estoque])
+	_check(pad.nivel == 3 and pad.estoque_max == cfg.maquina_n2_estoque + 1 \
+			and _perto(pad.intervalo, cfg.maquina_n2_intervalo * cfg.mago_pad_intervalo_mult * pad.stats.chapeu_tempo_mult, 1e-4),
+		"nível 3: barraquinha de %s deveria subir junto (nivel %d, max %d)" % [pad.stats.id, pad.nivel, pad.estoque_max])
+	_check(pad.estoque == e0, "nível 3: barraquinha deveria ganhar 1 chapéu na hora (%d -> %d)" % [e0, pad.estoque])
 	_check(not pad.subir_nivel() and not of.pad.subir_nivel(), "nível 2: não sobe duas vezes")
 	_nivel2_madeira(of.team)
 
 
-## Nível 2 com madeira: maquina_n2_custo madeiras do estoque sobem a máquina.
+## Nível 2 com madeira (Ciclo 2.22): casa_nv2_custo madeiras sobem a
+## barraquinha do bairro sozinha, sem caminho; sem estoque não sobe.
 func _nivel2_madeira(team: int) -> void:
 	var cfg = get_node("/root/Config").cfg
-	var pad = null
-	for p in game.hat_pads:
-		if p.team == team and p.nivel == 1:
-			pad = p
+	var of = null
+	for o in game.oficinas:
+		if o.team == team and o.nivel == 1 and o.base.id != &"kitsune":
+			of = o
 			break
-	if pad == null:
-		_check(false, "nível 2 (madeira): nenhuma máquina nível 1")
+	if of == null:
+		_check(false, "nível 2 (madeira): nenhuma casa no nível 1")
 		return
-	game.madeira[team] = cfg.maquina_n2_custo - 1
+	_check(of.pode_subir() and of.custo_nivel() == cfg.casa_nv2_custo, "nível 2 (madeira): barraquinha no Nv1 deveria aceitar madeira")
+	game.madeira[team] = cfg.casa_nv2_custo - 1
 	var ok := 0
-	for i in cfg.maquina_n2_custo:
-		if pad.puxar_madeira_n2(game):
+	for i in cfg.casa_nv2_custo:
+		if of.puxar_madeira_nivel():
 			ok += 1
-	_check(ok == cfg.maquina_n2_custo - 1 and pad.nivel == 1 and game.madeira[team] == 0,
-		"nível 2 (madeira): sem estoque não deveria subir (puxou %d, nível %d)" % [ok, pad.nivel])
+	_check(ok == cfg.casa_nv2_custo - 1 and of.nivel == 1 and game.madeira[team] == 0,
+		"nível 2 (madeira): sem estoque não deveria subir (puxou %d, nível %d)" % [ok, of.nivel])
 	game.madeira[team] = 1
-	_check(pad.puxar_madeira_n2(game) and pad.nivel == 2, "nível 2 (madeira): a última madeira deveria subir a máquina")
+	_check(of.puxar_madeira_nivel() and of.nivel == 2 and of.pad_base.nivel == 2 and of.estado == 0 and of.caminho == -1,
+		"nível 2 (madeira): a última madeira deveria subir só a barraquinha")
+	_check(of.pede_escolha() and not of.pode_subir(), "nível 2: a casa espera a escolha do caminho (sem madeira de nível)")
+	_check(game.obra_do_time(team, of.global_position) != null, "nível 2: Construtor deveria ter uma escolha para fazer")
 
 
 ## Caminhos (Ciclo 2.21): um Construtor de pé no tapete, com madeira, escolhe
@@ -1318,6 +1408,13 @@ func _caminho_magos() -> void:
 		u.global_position = a.tapete_pos(1)
 		u.velocity = Vector3.ZERO
 		u.drop_tora()
+		if a.nivel < 2:
+			game.madeira[t] = 3
+			a._physics_process(a.ESCOLHA_T + 0.1)
+			_check(a.caminho == -1, "caminho: no nível 1 o tapete não escolhe")
+			a.madeira_nivel = 0
+			a.nivel = 2
+			a.pad_base.subir_nivel()
 		game.madeira[t] = 0
 		a._escolha(a.ESCOLHA_T + 0.1)
 		_check(a.caminho == -1, "caminho: sem madeira pisar no tapete não escolhe")
@@ -1329,9 +1426,10 @@ func _caminho_magos() -> void:
 		u.reset_physics_interpolation()
 		a.madeira_entregue = a.custo()
 		a.add_progress(1.0, null)
-		_check(a.estado == 2 and a.nivel == 2 and a.pad != null, "caminho: casa pronta deveria estar no nível 2 com maquininha")
+		_check(a.estado == 2 and a.nivel == 3 and a.pad != null and a.pad_base.nivel == 3, "caminho: casa pronta deveria nascer no nível 3 junto com a barraquinha")
 		var id: StringName = a.opcao().id
-		_check(game.bonus_mago(t, id) == 0, "caminho: nível 2 ainda sem bônus")
+		_check(game.bonus_mago(t, id) == 1 and game.bonus_mago(t, a.base.id) == 1, "caminho: nível 3 dá 1 degrau de bônus para o caminho e para a base")
+		var maxb: int = a.pad_base.estoque_max
 		var max0: int = a.pad.estoque_max
 		# Personagens 2.0: a Kitsune Luz/Sombria do time ganha caudas por nível.
 		var vis = null
@@ -1343,7 +1441,7 @@ func _caminho_magos() -> void:
 				break
 		if vis:
 			vis.set_class(a.opcao())
-			_check(vis._nivel_pecas == 2, "caudas: casa recém-pronta deveria dar o nível visual 2 (está %d)" % vis._nivel_pecas)
+			_check(vis._nivel_pecas == 3, "caudas: casa recém-pronta deveria dar o nível visual 3 (está %d)" % vis._nivel_pecas)
 		var gasto := 0
 		for c in cfg.mago_nivel_custo:
 			gasto += c
@@ -1359,10 +1457,13 @@ func _caminho_magos() -> void:
 			_check(vis._nivel_pecas == 5 and vis._pecas != null and vis._meshes.has(vis._pecas),
 				"caudas: casa no nível máximo deveria dar as 5 caudas (está %d)" % vis._nivel_pecas)
 			vis.set_class(vis_antes)
-		_check(a.pad.estoque_max == max0 + cfg.mago_nivel_max - 2, "caminho: maquininha deveria ganhar estoque por nível")
-		_check(game.bonus_mago(t, a.caminhos()[0].id) == 0 and game.bonus_mago(1 - t, id) == 0, "caminho: bônus só para a classe e o time do caminho")
+		_check(a.pad.estoque_max == max0 + cfg.mago_nivel_max - 3 and a.pad_base.estoque_max == maxb + cfg.mago_nivel_max - 3,
+			"caminho: casa e barraquinha deveriam ganhar estoque juntas por nível")
+		_check(a.pad_base.nivel == cfg.mago_nivel_max, "caminho: a barraquinha deveria subir junto até o %d" % cfg.mago_nivel_max)
+		_check(game.bonus_mago(t, a.base.id) == cfg.mago_nivel_max - 2, "caminho: a classe base ganha o mesmo bônus por nível")
+		_check(game.bonus_mago(t, a.caminhos()[0].id) == 0 and game.bonus_mago(1 - t, id) == 0, "caminho: bônus só para as classes e o time do bairro")
 		for x in game.units:
-			if x.team == t and x.alive and x.stats.id != id:
+			if x.team == t and x.alive and x.stats.id != id and x.stats.id != a.base.id:
 				_check(_perto(x.damage_mult(), 1.0, 1e-4) or x._fury_t > 0.0 or x._dmg_boost_t > 0.0, "caminho: outra classe não ganha dano")
 				break
 		game.madeira[t] = 0
