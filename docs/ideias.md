@@ -5,6 +5,26 @@ Lista viva. Qualquer frente anota aqui; o Julio escolhe o que sobe de nível.
 a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 
 ## A — próxima
+- **Personagens novos** (2026-11-11; painel + quiz em
+  `castelo-de-bolo/quiz/quiz-personagens-novos.html` na pasta do projeto; **nada
+  implementado, espera as respostas do Julio**). Seis famílias em par claro × sombrio,
+  cada uma com um jeito de jogar que falta:
+  - **Peso pesado** (bairro do Samurai): Sumotori (agarra e arremessa, arena de sal)
+    × Kappa do Rio (casco nas costas, rasteira pela poça, enchente).
+  - **Filhos do Vento** (bairro do Ninja): Yamabushi do Leque (vento que empurra e
+    devolve projéteis) × Karasu Tengu (mergulho de cima, revoada que atrapalha a mira).
+  - **Mestres de Bonecos** (bairro do Construtor): Onmyoji de Papel (shikigami que
+    orbitam e absorvem golpe) × Kugutsu, o Titereiro (marionete que bate à frente,
+    troca de lugar, levanta os caídos).
+  - **Tambores do Festival** (bairro da Kitsune): Taiko do Trovão (batida no compasso)
+    × Komusō (sono, hipnose, silêncio).
+  - **Trapaceiros** (Ninja ou Construtor): Tanuki (vira objeto do cenário) × Mujina,
+    a Sem Rosto (copia cor e classe do inimigo).
+  - **Lendários da Máscara** (só pelo Santuário): Tennin do Manto × Rei Oni.
+  Jeitos de entrar: (1) **baralho de caminhos** (vários por bairro, a partida mostra
+  um claro + um sombrio; recomendado), (2) terceiro caminho fixo, (3) quinto bairro,
+  (4) **Santuário dos Espíritos** neutro no meio do mapa (chapéu lendário, um por time).
+  Estimativa: par ~1,2-1,6 M tokens; baralho +0,4 M; Santuário +0,7 M; 5º bairro +1,0 M.
 - **Casinhas 2.0, sobras** (Ciclo 2.21): planta do pátio no placar [Tab] (quiz 5D,
   ficou só o minimapa), regravar o clipe "oficinas" do Como jogar com o bairro
   novo (`tools/clipes_tutorial.sh oficinas`), e ajustar Sohei/Kusarigama depois
