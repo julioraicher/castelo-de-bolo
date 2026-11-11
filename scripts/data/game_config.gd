@@ -12,6 +12,13 @@ extends Resource
 ## No modo teste não cresce (lá a espera só atrapalha).
 @export var respawn_cresce := 0.75
 @export var respawn_max := 13.0
+## Ciclo 2.23: relógio regressivo no topo da tela (s; 0 = sem relógio). No
+## zero, vence quem tem mais pontos de máscara; igual = empate. Se alguma
+## máscara está nas mãos de alguém no zero, a partida segue ("Última corrida")
+## até ela ser entregue, cair ou voltar, por no máximo prorrogacao_max s.
+## Modo teste não tem relógio.
+@export var tempo_limite := 600.0
+@export var prorrogacao_max := 30.0
 
 @export_group("Princesa e bolo")
 ## Quanto cada bolo engorda a princesa (0 = magra, 1 = gordíssima).

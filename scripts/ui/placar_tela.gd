@@ -27,6 +27,7 @@ var _total_time: Array[Label] = []
 var _linhas := [[], []]
 var _fim := false
 var _venceu := false
+var _empate := false
 var _atualizar_t := 0.0
 
 
@@ -146,9 +147,10 @@ func _montar_linha() -> Dictionary:
 # --- Atualização ------------------------------------------------------------------
 
 ## Fim da partida: o placar fica aberto com o resultado em cima.
-func fim(venceu: bool) -> void:
+func fim(venceu: bool, empate := false) -> void:
 	_fim = true
 	_venceu = venceu
+	_empate = empate
 	_abrir()
 
 
@@ -183,13 +185,14 @@ func _preencher() -> void:
 	var cfg := Config.cfg
 	var placar := game.placar
 	if _fim:
-		_titulo.text = "Vitória!" if _venceu else "Derrota..."
-		_titulo.label_settings.font_color = Estilo.OURO if _venceu else Estilo.PERIGO
+		_titulo.text = "Empate" if _empate else ("Vitória!" if _venceu else "Derrota...")
+		_titulo.label_settings.font_color = Estilo.TEXTO if _empate else (Estilo.OURO if _venceu else Estilo.PERIGO)
 	else:
 		_titulo.text = "PLACAR"
 		_titulo.label_settings.font_color = Estilo.OURO
 	var seg := int(game.tempo_partida)
-	_sub.text = "AZUL  %d  ×  %d  VERMELHO      %d:%02d de partida" % [game.score[0], game.score[1], seg / 60, seg % 60]
+	var corrida := "  (última corrida)" if game.prorrogacao >= 0.0 else ""
+	_sub.text = "AZUL  %d  ×  %d  VERMELHO      %d:%02d de partida%s" % [game.score[0], game.score[1], seg / 60, seg % 60, corrida]
 	for t in 2:
 		var linhas := placar.time(t)
 		var total := 0

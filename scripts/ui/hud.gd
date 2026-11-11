@@ -7,6 +7,9 @@ extends CanvasLayer
 ## é da briga e dos efeitos: nada fica lá, nem o aviso grande (vai para cima).
 
 var _placar: Array[Label] = []
+## Ciclo 2.23: relógio regressivo no meio do placar (no lugar do "VS").
+var _relogio: Label
+var _relogio_meta: Label
 var _pips: Array = [[], []]  # Icone losango por time
 var _chips: Array[PanelContainer] = []
 var _chip_estado: Array[Label] = []
@@ -182,10 +185,13 @@ func _build_placar(root: Control) -> void:
 			meio.add_theme_constant_override("separation", -4)
 			var vs := Estilo.rotulo("VS", 30, Estilo.OURO, Estilo.NUMERO)
 			vs.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			vs.custom_minimum_size = Vector2(86, 0)
 			meio.add_child(vs)
+			_relogio = vs
 			var meta := Estilo.rotulo("até %d" % Config.cfg.score_to_win, Estilo.T_MIN, Estilo.TEXTO_FRACO, Estilo.CORPO)
 			meta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			meio.add_child(meta)
+			_relogio_meta = meta
 			row.add_child(meio)
 		row.add_child(_placa(team))
 	row.add_child(chips[1])
@@ -528,10 +534,36 @@ func _process(_delta: float) -> void:
 		_fps.text = "%d FPS · %.1f ms" % [Engine.get_frames_per_second(), 1000.0 / maxf(Engine.get_frames_per_second(), 1.0)]
 
 
+## Relógio regressivo (Ciclo 2.23): "9:59"; no último minuto fica vermelho e
+## pulsa; na última corrida mostra "+0:12". Sem relógio (modo teste) = "VS".
+func _atualizar_relogio(game: Game, pulso: float) -> void:
+	if _relogio == null:
+		return
+	var resta := game.tempo_restante()
+	if resta == INF:
+		_relogio.text = "VS"
+		_relogio_meta.text = "até %d" % Config.cfg.score_to_win
+		return
+	var cor := Estilo.OURO
+	if game.prorrogacao >= 0.0:
+		var p := int(game.prorrogacao)
+		_relogio.text = "+%d:%02d" % [p / 60, p % 60]
+		_relogio_meta.text = "última corrida"
+		cor = Estilo.PERIGO.lerp(Estilo.OURO_CLARO, pulso)
+	else:
+		var s := int(ceil(resta))
+		_relogio.text = "%d:%02d" % [s / 60, s % 60]
+		_relogio_meta.text = "até %d pontos" % Config.cfg.score_to_win
+		if resta <= 60.0:
+			cor = Estilo.PERIGO.lerp(Estilo.OURO_CLARO, pulso * 0.6)
+	_cor_texto(_relogio, cor)
+
+
 func update_state(game: Game) -> void:
 	var u := game.player
 	_meu_time = u.team
 	var pulso := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.012)
+	_atualizar_relogio(game, pulso)
 	for team in 2:
 		_score[team] = game.score[team]
 		_placar[team].text = str(game.score[team])

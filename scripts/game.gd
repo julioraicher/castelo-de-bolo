@@ -42,6 +42,11 @@ var placar_tela: PlacarTela
 var placar_print := false
 ## Tempo de partida mostrado no placar (para no fim; `_time` segue para efeitos).
 var tempo_partida := 0.0
+## Ciclo 2.23: "Última corrida" (s já passados de prorrogação; -1 = não começou)
+## e o resultado do fim (time vencedor; -1 = empate).
+var prorrogacao := -1.0
+var vencedor := -1
+var _tique_s := -1
 ## Cursor de mira do jogador (ponta de hardware + enfeites + marcas no chão).
 var mira: Mira
 var game_over := false
@@ -599,6 +604,7 @@ func _physics_process(delta: float) -> void:
 			perf_secoes[k] = 0
 	if not game_over:
 		tempo_partida += delta  # relógio do placar: para no fim da partida
+		_relogio(delta)
 	if _shots_dir != "" and not _shot_times.is_empty() and _time >= _shot_times[0]:
 		_take_shot()
 	if _filme_dir != "" and _time >= 3.0:
@@ -1216,17 +1222,84 @@ func _score_point(u: Unit) -> void:
 	var mine := u.team == player.team
 	hud.show_big("PONTO DO %s!" % Config.TEAM_NAMES[u.team].to_upper(), Config.team_color(u.team).lightened(0.4))
 	if score[u.team] >= Config.cfg.score_to_win:
-		game_over = true
-		_slowmo_id += 1
-		Engine.time_scale = 1.0
+		encerrar(u.team)
+
+
+## Fim da partida: time vencedor (0/1) ou -1 = empate. O placar de todos
+## abre com Vitória/Derrota/Empate em cima e os bonecos param.
+func encerrar(time_vencedor: int) -> void:
+	if game_over:
+		return
+	game_over = true
+	vencedor = time_vencedor
+	_slowmo_id += 1
+	Engine.time_scale = 1.0
+	_log("fim: %s (%d x %d, t=%.0fs)" % ["empate" if time_vencedor < 0 else Config.TEAM_NAMES[time_vencedor], score[0], score[1], tempo_partida])
+	if hud and player:
 		hud.update_state(self)
-		placar_tela.fim(mine)  # placar de todos com Vitória/Derrota em cima
-		Sfx.play_ui("win" if mine else "lose")
-		for other in units:
-			if other.alive and other.team == u.team:
-				other.play_cheer()
-			other.move_intent = Vector3.ZERO
-			other.set_physics_process(false)
+	var mine := player != null and time_vencedor == player.team
+	if placar_tela:
+		placar_tela.fim(mine, time_vencedor < 0)
+	Sfx.play_ui("score" if time_vencedor < 0 else ("win" if mine else "lose"))
+	for other in units:
+		if other.alive and other.team == time_vencedor:
+			other.play_cheer()
+		other.move_intent = Vector3.ZERO
+		other.set_physics_process(false)
+
+
+## Segundos que faltam no relógio (INF = partida sem relógio).
+func tempo_restante() -> float:
+	if not relogio_ligado():
+		return INF
+	return maxf(Config.cfg.tempo_limite - tempo_partida, 0.0)
+
+
+func relogio_ligado() -> bool:
+	return Config.cfg.tempo_limite > 0.0 and not sandbox and _vitrine_dir == "" and _clipe_dir == "" and _filme_dir == ""
+
+
+func _mascara_em_maos() -> bool:
+	for p in princesses:
+		if p.state == Princess.State.CARRIED:
+			return true
+	return false
+
+
+## Relógio de 10 min (Ciclo 2.23): tique nos últimos 10 s; no zero, "Última
+## corrida" se há máscara na mão (até prorrogacao_max s), senão o placar decide.
+func _relogio(delta: float) -> void:
+	if not relogio_ligado():
+		return
+	var resta := Config.cfg.tempo_limite - tempo_partida
+	if resta > 0.0:
+		var s := int(ceil(resta))
+		if s <= 10 and s != _tique_s:
+			_tique_s = s
+			Sfx.play_ui("tinido")
+		return
+	if prorrogacao < 0.0:
+		if _mascara_em_maos():
+			prorrogacao = 0.0
+			_log("ultima corrida (t=%.0fs)" % tempo_partida)
+			if hud:
+				hud.show_big("ÚLTIMA CORRIDA!\nA máscara está em jogo", Estilo.OURO, 2.4)
+			Sfx.play_ui("alarm")
+			return
+		_fim_por_tempo()
+		return
+	prorrogacao += delta
+	if not _mascara_em_maos() or prorrogacao >= Config.cfg.prorrogacao_max:
+		_fim_por_tempo()
+
+
+func _fim_por_tempo() -> void:
+	var v := -1
+	if score[0] != score[1]:
+		v = 0 if score[0] > score[1] else 1
+	if hud:
+		hud.show_big("TEMPO!" if v >= 0 else "TEMPO! EMPATE", Estilo.OURO, 2.4)
+	encerrar(v)
 
 
 func _spawn_cakes(delta: float) -> void:

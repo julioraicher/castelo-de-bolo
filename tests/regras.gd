@@ -45,6 +45,7 @@ func _ready() -> void:
 	_reanimar()
 	_alta_dinamica()
 	await _magia()
+	_relogio()  # por último: encerra a partida
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -1564,3 +1565,39 @@ func _magia() -> void:
 		var pal: String = FxPoder.ELEMENTO[poder][0]
 		_check(pal == "" or Magia.PALETAS.has(pal), "magia: paleta '%s' do poder %s existe" % [pal, poder])
 	caixa.queue_free()
+
+
+## Ciclo 2.23: relógio de 10 min. No zero, mais pontos vence e igual empata;
+## máscara na mão estende a partida ("Última corrida") até prorrogacao_max.
+func _relogio() -> void:
+	var cfg = get_node("/root/Config").cfg
+	_check(cfg.tempo_limite > 0.0 and game.relogio_ligado(), "relógio: deveria estar ligado na partida normal")
+	game.tempo_partida = cfg.tempo_limite - 30.0
+	_check(_perto(game.tempo_restante(), 30.0, 0.01), "relógio: tempo restante errado")
+	# Máscara na mão no zero: última corrida, sem fim.
+	var p = game.princesses[0]
+	var ladrao = null
+	for u in game.units:
+		if u.alive and u.team == 1 and not u.carried_princess:
+			ladrao = u
+			break
+	game.score[0] = 1
+	game.score[1] = 1
+	game.tempo_partida = cfg.tempo_limite + 0.01
+	if ladrao and p.state == p.State.HOME:
+		ladrao.pick_up_princess(p)
+		game._relogio(0.016)
+		_check(not game.game_over and game.prorrogacao >= 0.0, "relógio: máscara na mão no zero deveria abrir a última corrida")
+		game._relogio(cfg.prorrogacao_max + 0.1)
+		_check(game.game_over and game.vencedor == -1, "relógio: última corrida estourada com placar igual deveria empatar")
+	else:
+		_check(false, "relógio: não deu para pôr a máscara na mão")
+		game._relogio(0.016)
+	_check(game.game_over, "relógio: no zero a partida deveria acabar")
+	# A decisão em si (sem encerrar de novo).
+	game.score[0] = 2
+	game.score[1] = 1
+	game.game_over = false
+	game.vencedor = -9
+	game._fim_por_tempo()
+	_check(game.vencedor == 0, "relógio: mais pontos no zero deveria vencer")
