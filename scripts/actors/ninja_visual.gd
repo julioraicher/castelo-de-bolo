@@ -905,8 +905,8 @@ func _karasu(time: Color) -> void:
 		_peca("lowerarm" + lado, _cilindro(0.14, 0.16, 0.26), Vector3(0.15 * (1 if lado == ".l" else -1), 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(pena))
 	# Ninjatō reto com fio aceso no time
 	var mao := "handslot.r"
-	_peca(mao, _caixa(Vector3(0.05, 0.55, 0.1)), Vector3(0, 0.46, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.7, 0.74, 0.8)))
-	_peca(mao, _caixa(Vector3(0.025, 0.5, 0.04)), Vector3(0, 0.46, 0.05), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.3), 2.0))
+	_peca(mao, _caixa(Vector3(0.05, 0.38, 0.1)), Vector3(0, 0.38, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.7, 0.74, 0.8)))
+	_peca(mao, _caixa(Vector3(0.025, 0.34, 0.04)), Vector3(0, 0.38, 0.05), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.3), 2.0))
 	_peca(mao, _caixa(Vector3(0.2, 0.04, 0.16)), Vector3(0, 0.18, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.12, 0.1, 0.1)))
 	_peca(mao, _cilindro(0.045, 0.045, 0.3), Vector3(0, 0.0, 0), Vector3.ZERO, Vector3.ONE, _plano(pena))
 
@@ -944,7 +944,7 @@ func _mujina(time: Color) -> void:
 				{"cor": quimono.lightened(0.06), "neon": false, "balanco": Vector3(0.35, 0.8 * sx, 0.0)})
 	# Tantō escondido na mão
 	var mao := "handslot.r"
-	_peca(mao, _caixa(Vector3(0.04, 0.42, 0.08)), Vector3(0, 0.38, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.7, 0.72, 0.78)))
+	_peca(mao, _caixa(Vector3(0.04, 0.28, 0.08)), Vector3(0, 0.3, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.7, 0.72, 0.78)))
 	_peca(mao, _cilindro(0.04, 0.04, 0.22), Vector3(0, 0.06, 0), Vector3.ZERO, Vector3.ONE, _plano(cabelo))
 
 

@@ -5,10 +5,11 @@ Lista viva. Qualquer frente anota aqui; o Julio escolhe o que sobe de nível.
 a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 
 ## A — próxima
-- **Heróis raros no nível 6 + relógio de 10 min** (2026-11-11): plano completo em
-  `docs/direcao-ciclo-2.23-herois.md`, esperando o ok do Julio para executar. Oito
-  heróis: Sumotori e Kappa (Samurai); Yamabushi, Karasu Tengu e Mujina (Ninja);
-  Onmyoji, Tennin e Komusō (Kitsune). O Construtor não ganha herói.
+- **Heróis raros, sobras** (Ciclo 2.23 entrou na main): clipes das fichas dos 8
+  heróis e da aba "Herói raro" (`tools/clipes_tutorial.sh classe:sumotori ...`
+  precisa de roteiro para Agarrão, Mergulho etc.), ícone ★ por cima do herói em
+  campo, contador de shikigami no HUD, e reequilibrar depois do playtest
+  (`HEROIS=1 tools/sonda_equilibrio.sh`).
 - **Casinhas 2.0, sobras** (Ciclo 2.21): planta do pátio no placar [Tab] (quiz 5D,
   ficou só o minimapa), regravar o clipe "oficinas" do Como jogar com o bairro
   novo (`tools/clipes_tutorial.sh oficinas`), e ajustar Sohei/Kusarigama depois

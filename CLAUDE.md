@@ -151,6 +151,14 @@ repo: `.claude/skills/`.
   Modelos em `tools/gerar_casas.gd` (estende `gerar_economia.gd`; rode depois de
   mudar; peças N3_/N4_/N5_ por nível), prancha em `tools/prancha_casas.gd`.
   Caminhos = `caminhos` no .tres da base.
+- Heróis raros (Ciclo 2.23): Nv5→6 = segunda escolha, um herói de `herois` no .tres
+  da base (Construtor não tem). Pavilhão dourado no tapete do caminho, 1 chapéu só,
+  volta `heroi_retorno` s depois que o herói sai de campo. Regras em
+  `scripts/actors/herois.gd` (ganchos de Unit), voo em `voo_heroi.gd`, bots em
+  `scripts/ai/bot_herois.gd`, efeitos em `fx_herois.gd`. Gerar: `tools/gerar_herois.gd`
+  (.tres), `tools/gerar_pavilhao.gd` (pavilhão, adornos, emblemas); prancha
+  `tools/prancha_herois.gd`; sonda `HEROIS=1 tools/sonda_equilibrio.sh`. Relógio de
+  10 min com empate (`tempo_limite`).
 - Efeitos de poder: kit `Magia` (`scripts/fx/magia.gd`, shader `magia_energia`):
   energia com ruído que se rasga (`corroi`) + filete de tinta; nunca primitiva de
   cor chapada. Receita e orçamento em docs/direcao-efeitos.md §8; conferir com

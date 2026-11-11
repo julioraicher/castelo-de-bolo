@@ -259,7 +259,7 @@ extends Resource
 
 @export_group("Heróis raros (Ciclo 2.23)")
 ## Madeira do Pavilhão do Herói (Nv5 → Nv6; a 1ª entra na escolha).
-@export var heroi_custo := 10
+@export var heroi_custo := 8
 ## Segundos para o chapéu do herói voltar ao altar depois que ele sai de campo
 ## (renasce como aldeão ou troca de chapéu; caído esperando reanimar não conta).
 @export var heroi_retorno := 20.0

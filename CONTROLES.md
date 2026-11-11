@@ -39,6 +39,21 @@ e Configurações.
 | Construtor | Estrepes no chão (até 3; 4 s) | Mutirão: adianta a obra perto |
 | Recruta | (nada) | (nada) |
 
+### Heróis raros do nível 6 (Ciclo 2.23)
+
+Um chapéu só por time, no pavilhão dourado do bairro. R próprio de cada um.
+
+| Herói (bairro) | Q (rápido) | E (Chi) | R (Super) |
+|---|---|---|---|
+| Sumotori (Samurai) | Agarrão: agarra e arremessa (7 s) | Pisão do Santuário | Dohyō: ringue de sal, ninguém entra nem sai |
+| Kappa do Rio (Samurai) | Rasteira do Rio: some na poça e derruba (6 s) | Jato d'Água em linha | Enchente (jato gigante) |
+| Yamabushi do Leque (Shuriken) | Rajada: devolve flechas e empurra (6 s) | Redemoinho onde mira | Tufão (redemoinho gigante) |
+| Karasu Tengu (Shuriken) | Mergulho no atirador isolado (7 s) | Revoada: cega na área | Noite de Corvos: 3 mergulhos |
+| Mujina (Shuriken) | Roubar Rosto: vira o inimigo até o 1º golpe (12 s) | Susto: quem está perto foge | Passo sem Rosto (some) |
+| Onmyoji de Papel (Kitsune) | Dobrar Shikigami: até 3 escudos, depois talismãs que caçam (3,5 s) | Grou de Papel: fere e cura em linha | Mil Grous em leque |
+| Tennin do Manto (Kitsune) | Laço do Manto: puxa o aliado caído e levanta (10 s) | Dança Celeste: cura em volta | Véu Celeste: aliados não morrem por 3 s |
+| Komusō (Kitsune) | Canção de Ninar: dormem até levar golpe (8 s) | Hipnose: puxa para perto | Réquiem: inimigos sem Q, E e R por 4 s |
+
 ## Configurações (Esc > Configurações)
 
 Em três grupos: Som, Vídeo e Partida.
@@ -76,6 +91,9 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
    - Caminho dos magos: Kitsune da Luz (Bênção: cura + escudo) **ou** Kitsune
      Sombria (Selo: inimigos sem atacar). Construir um sela o outro; o escolhido
      sobe até o nível 5 com mais madeira.
+   - **Nível 6** (bairro no 5): o Construtor escolhe um **herói raro** da classe
+     (8 madeiras), que sobe num pavilhão dourado com um chapéu só. Ele volta 20 s
+     depois que o herói sai de campo. O Construtor não tem herói.
    - Recruta (sem chapéu): rápido, socos em combo, sem poder.
    - O medidor de **Chi** enche batendo, apanhando, abatendo, entregando
      espírito e capturando a máscara. Cheio, aperte E.
@@ -87,6 +105,9 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
 7. **Itens no chão** aparecem de vez em quando no meio do mapa: poção, escudo,
    velocidade, kunai (dano 2x por 6 s) e chama de chi (enche o medidor).
 8. Morreu? Volta em alguns segundos como recruta no seu castelo.
+9. **Relógio de 10 minutos** no topo: no zero vence quem tem mais pontos; igual é
+   empate. Com uma máscara sendo levada no zero, a partida segue até ela chegar,
+   cair ou voltar (Última corrida, no máximo 30 s).
 
 Para mudar teclas ou números, veja o [GUIA.md](GUIA.md).
 

@@ -60,6 +60,7 @@ var _time := 0.0
 #   --shots=<pasta>     salva prints em alguns momentos e fecha o jogo
 #   --variacoes         bots começam com todas as variações (teste visual/poderes)
 #   --variacoes=N       idem, girando as classes N posições (cada classe pega outro papel)
+#   --com-herois        com --variacoes: os heróis raros também começam em campo
 #   --equilibrio        imprime "ABATE <vítima> <matador>" (ids de classe) a cada morte;
 #                       tools/sonda_equilibrio.sh soma isso em 8 partidas
 #   --poderes           medidor de todo mundo enche a cada 4 s (vitrine de poderes)
@@ -104,6 +105,9 @@ var sandbox := false
 var _montando_sandbox := false
 var _variacoes := false
 var _variacoes_giro := 0
+## --com-herois (com --variacoes): os 8 heróis raros entram na lista de partida
+## (sonda de equilíbrio do Ciclo 2.23), espalhados pelos dois times.
+var _com_herois := false
 var _equilibrio := false
 ## --equilibrio: por classe, dano causado, cura dada e segundos vivo (RESUMO a cada 60 s).
 var _eq: Dictionary = {}
@@ -169,6 +173,8 @@ func _ready() -> void:
 			_variacoes_giro = int(arg.trim_prefix("--variacoes="))
 		elif arg == "--equilibrio":
 			_equilibrio = true
+		elif arg == "--com-herois":
+			_com_herois = true
 		elif arg == "--poderes":
 			_poderes = true
 		elif arg.begins_with("--perf="):
@@ -282,6 +288,11 @@ func _ready() -> void:
 	var start_classes: Array[ClassStats] = cfg.bot_start_classes if not cfg.bot_start_classes.is_empty() else [cfg.villager]
 	if _variacoes:
 		start_classes = cfg.todas_classes()
+		if _com_herois:
+			for b in cfg.hat_classes():
+				for h in b.herois:
+					if h not in start_classes:
+						start_classes.append(h)
 	placar = Placar.new(cfg)
 	reanimar = Reanimar.new(self)
 	for team in 2:
@@ -292,7 +303,10 @@ func _ready() -> void:
 			var u := Unit.new()
 			u.name = "%s_%d" % [Config.TEAM_NAMES[team], i]
 			add_child(u)
-			var cls: ClassStats = cfg.villager if is_player else start_classes[(i + _variacoes_giro) % start_classes.size()]
+			var k := i + _variacoes_giro
+			if _com_herois:  # 20 classes, 8 por time: cada partida pega outra fatia
+				k = i + _variacoes_giro * cfg.units_per_team + team * 4
+			var cls: ClassStats = cfg.villager if is_player else start_classes[k % start_classes.size()]
 			if is_player and _classe_jogador != "":
 				cls = load("res://config/classes/%s.tres" % _classe_jogador)
 			u.setup(self, team, is_player, cls)
