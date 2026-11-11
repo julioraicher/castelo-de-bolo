@@ -25,6 +25,14 @@ const LETREIRO := LILITA  # Label3D no mundo
 const FORTE := NUNITO
 const CORPO := NUNITO
 
+
+## A Lilita não tem letra com mácron (Komusō, Dohyō): sem isto o "ō" caía na
+## fonte do sistema, fina e fora da linha. A Nunito Black tem e pesa parecido.
+static func _static_init() -> void:
+	var f: Font = LILITA  # const não aceita atribuição direta no parser
+	if f.fallbacks.is_empty():
+		f.fallbacks = [NUNITO]
+
 const T_GIGANTE := 110  # fim de partida
 const T_GRANDE := 28    # nome da classe, placar secundário
 const T_MEDIO := 22     # botões, dicas, cabeçalhos de cartão

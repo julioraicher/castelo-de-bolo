@@ -29,6 +29,7 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3
   --rendering-method gl_compatibility --audio-driver Dummy -- --autoplay --shots=DIR
 # Prints de cada seção do menu e aba do Como jogar: --tutorial=DIR (com xvfb, como acima)
 # Regravar os clipes dos menus (xvfb): tools/clipes_tutorial.sh [cena|classe:id ...]
+#   (classe nova = id em CLASSES do script; quadros importam com perda, ~12 KB cada)
 # QA do mapa (passagem, escondidos da câmera, bots presos): qa_mapa.txt (+ .jpg com tela)
 godot --headless --path . --fixed-fps 60 -- --qa-mapa=DIR
 # Chão/objeto piscando ao andar (z-fighting, desenho fino): pisca.jpg com o que muda em vermelho

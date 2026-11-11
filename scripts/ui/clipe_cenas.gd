@@ -7,7 +7,7 @@ extends Node
 ## PASSO quadros de física (60/PASSO por segundo), até N quadros.
 ##
 ## Cenas: objetivo, controles, madeira, oficinas, torreta, catapulta,
-## luz_sombra e classe:<id> (3 golpes, Q, E e R da classe, como a vitrine).
+## luz_sombra, heroi e classe:<id> (3 golpes, Q, E e R da classe, como a vitrine).
 ## Uso: tools/clipes_tutorial.sh (grava todas e troca assets/tutorial).
 
 const PASSO := 8          # 7,5 quadros por s
@@ -24,6 +24,8 @@ var _p0 := Vector3.ZERO
 var _foco := Vector3.ZERO
 var _cam_off := Vector3(0, 6.2, 8.0)
 var _cam_alvo_y := 0.8
+var _cam_vies := Vector3.ZERO   # a câmera mira um pouco à frente do boneco
+var _alvos_pos: Array[Vector3] = []  # onde os alvos da vitrine de classe ficam
 var _extras: Array[Unit] = []   # bonecos que a cena usa (parados)
 var _teclado: PlayerBrain       # só para interact_pressed (F)
 var _alvo_planta: Planta
@@ -86,16 +88,18 @@ func _preparar() -> void:
 	_p0.y = game.arena.ground_y(_p0.x, _p0.z, 10.0)
 	_foco = p.global_position
 	call("_prep_" + ("classe" if cena.begins_with("classe:") else cena), p)
-	_foco = p.global_position
+	_foco = p.global_position + _cam_vies
 	game.camera.global_position = _foco + _cam_off
 
 
 ## Boneco parado que a cena usa: um bot congelado do time pedido ou, no modo
 ## teste (sem bots), um novo. Fica em pos, virado para dir, com hp_frac de vida.
-func _extra(team: int, pos: Vector3, dir: Vector3, hp_frac := 0.6, classe := "guerreiro") -> Unit:
+## caido = pega o aliado de treino caído do modo teste (o Laço da Tennin
+## levanta); senão só bonecos de pé (o caído aparecia como "CAÍDO" no clipe).
+func _extra(team: int, pos: Vector3, dir: Vector3, hp_frac := 0.6, classe := "guerreiro", caido := false) -> Unit:
 	var u: Unit = null
 	for c in game.units:
-		if c != game.player and c.team == team and c not in _extras:
+		if c != game.player and c.team == team and c not in _extras and c.alive != caido:
 			u = c
 			break
 	if u == null:
@@ -111,7 +115,8 @@ func _extra(team: int, pos: Vector3, dir: Vector3, hp_frac := 0.6, classe := "gu
 	u.reset_physics_interpolation()
 	u.aim_dir = dir
 	u.move_intent = Vector3.ZERO
-	u.hp = u.max_hp() * hp_frac
+	if u.alive:
+		u.hp = u.max_hp() * hp_frac
 	_extras.append(u)
 	return u
 
@@ -133,9 +138,9 @@ func _classe(p: Unit, id: String) -> void:
 ## de frente e um pouco de cima, como a vitrine dos poderes.
 func _camera() -> void:
 	var p := game.player
-	var alvo := p.global_position
+	var alvo := p.global_position + _cam_vies
 	if not p.em_voo:
-		alvo.y = game.arena.ground_y(alvo.x, alvo.z, alvo.y + 5.0)
+		alvo.y = game.arena.ground_y(alvo.x, alvo.z, p.global_position.y + 5.0)
 	_foco = _foco.lerp(alvo, 0.18)
 	game.camera.global_position = _foco + _cam_off
 	game.camera.look_at(_foco + Vector3(0, _cam_alvo_y, 0))
@@ -251,13 +256,25 @@ func _cena_madeira(p: Unit) -> void:
 		_andar(p, game.pilhas[p.team].global_position)
 
 
-## Recruta chega na maquininha e veste o chapéu com F.
+## Recruta chega na barraquinha do Samurai e veste o chapéu com F. Desde as
+## casinhas 2.0 a maquininha "mais longe da catapulta" caía atrás de um
+## telhado; agora a cena é no miolo do bairro, com a câmera de cima.
+var _pad_cena: HatPad
+
+
 func _prep_oficinas(p: Unit) -> void:
 	_classe(p, "recruta")
-	var pad := _pad_longe_da_catapulta(p.team)
-	var fr := game.arena.forward(p.team)
-	_teleportar(p, pad.global_position - fr * 4.5 + Vector3(0, 0, 1.0), fr)
-	_cam_off = Vector3(0, 7.5, 8.5)
+	for of in game.oficinas:
+		if of.team == p.team and of.base.id == &"guerreiro" and of.pad_base:
+			_pad_cena = of.pad_base
+			# Chega pela frente da barraquinha (lado da câmera).
+			_teleportar(p, of.global_position + Vector3(1.8, 0, 8.5), Vector3(0, 0, -1))
+			_cam_vies = Vector3(0, 0, -2.0)
+	if _pad_cena == null:
+		_pad_cena = _pad_longe_da_catapulta(p.team)
+		var fr := game.arena.forward(p.team)
+		_teleportar(p, _pad_cena.global_position - fr * 4.5 + Vector3(0, 0, 1.0), fr)
+	_cam_off = Vector3(0, 11.0, 5.5)
 
 
 ## Maquininha do time mais longe da catapulta (perto dela, o F sobe na catapulta).
@@ -273,11 +290,20 @@ func _pad_longe_da_catapulta(team: int) -> HatPad:
 
 
 func _cena_oficinas(p: Unit) -> void:
-	var pad := _pad_longe_da_catapulta(p.team)
+	var pad := _pad_cena
 	if _f < 200 and p.is_villager():
 		_andar(p, pad.global_position)
 		if p.global_position.distance_to(pad.global_position) < 1.9 and _f % 10 == 0:
 			_teclado.interact_pressed = true
+	elif _pad_cena != _pad_longe_da_catapulta(p.team):
+		# Samurai novo: sai da barraquinha em direção à câmera e golpeia.
+		if _virou_f < 0:
+			_virou_f = _f
+		var t := _f - _virou_f
+		p.move_intent = Vector3(0, 0, 1) if t < 30 else Vector3.ZERO
+		p.aim_dir = Vector3(0, 0, 1)
+		p.aim_point = p.global_position + Vector3(0, 0, 4)
+		p.wants_attack = t > 34 and t % 40 < 4
 	else:
 		p.move_intent = Vector3.ZERO
 		var fr := game.arena.forward(p.team)
@@ -361,28 +387,117 @@ func _cena_luz_sombra(p: Unit) -> void:
 			p.wants_power = true
 
 
+## Herói raro (aba do "Como jogar"): o pavilhão dourado do bairro do Samurai
+## fica pronto, o Recruta pega o chapéu único e vira o herói, que já usa o Q.
+var _of_heroi: Oficina
+var _virou_f := -1
+
+
+func _prep_heroi(p: Unit) -> void:
+	_classe(p, "recruta")
+	for of in game.oficinas:
+		if of.team == p.team and of.base.id == &"guerreiro":
+			_of_heroi = of
+	_of_heroi.concluir_ja(0)
+	while _of_heroi.nivel < Config.cfg.mago_nivel_max and _of_heroi.pode_subir():
+		_of_heroi.subir_nivel()  # as peças do Nv4/Nv5 nas duas casas
+	_of_heroi.nivel = Config.cfg.mago_nivel_max
+	game.madeira[p.team] = maxi(game.madeira[p.team], Config.cfg.heroi_custo)
+	_of_heroi.escolher_heroi(0, true)
+	# Bairro: casa em z-2,6, barraquinha em z+3, tapetes em x±3,7. Fora dele há
+	# telhados do castelo, então tudo acontece no miolo do bairro (entre a casa
+	# e a barraquinha), com a câmera bem de cima para nada tampar.
+	var meio := _of_heroi.global_position + Vector3(0, 0, 0.3)
+	var lado := signf(_of_heroi.pavilhao_pos().x - meio.x)
+	_teleportar(p, meio + Vector3(0.6 * lado, 0, 0), Vector3(lado, 0, 0))
+	_extra(1 - p.team, meio + Vector3(-1.8 * lado, 0, 0), Vector3(lado, 0, 0))
+	_cam_off = Vector3(0, 11.0, 5.5)
+	_cam_vies = Vector3(-0.6 * lado, 0, 0)  # do lado de fora do pavilhão há o muro do castelo
+
+
+func _cena_heroi(p: Unit) -> void:
+	if _f == 10:
+		_of_heroi._finish_heroi(true)
+	var pad := _of_heroi.pad_heroi
+	if p.is_villager():
+		if _f > 40 and pad:
+			_andar(p, pad.global_position)
+			if p.global_position.distance_to(pad.global_position) < 1.9 and _f % 10 == 0:
+				_teclado.interact_pressed = true
+		else:
+			p.move_intent = Vector3.ZERO
+		return
+	if _virou_f < 0:
+		_virou_f = _f
+	var alvo := _extras[0]
+	var d := alvo.global_position - p.global_position
+	d.y = 0.0
+	if d.length() > 1.8 and _f - _virou_f < 40:
+		_andar(p, alvo.global_position)
+	else:
+		p.move_intent = Vector3.ZERO
+		p.aim_dir = d.normalized()
+		p.aim_point = alvo.global_position
+	if _f - _virou_f == 44:
+		p.wants_quick = true
+	elif _f - _virou_f == 110:
+		p.fill_power()
+		p.wants_power = true
+
+
 ## Uma classe: 3 golpes, Q, E e R, contra alvos parados (como a vitrine).
 func _prep_classe(p: Unit) -> void:
 	_classe(p, cena.trim_prefix("classe:"))
 	_teleportar(p, _p0)
 	var corpo := p.stats.attack_kind == "melee"
-	var perto := 2.2 if corpo else 7.0
-	_extra(1 - p.team, _p0 + Vector3(perto, 0, -0.9), -FRENTE)
-	_extra(1 - p.team, _p0 + Vector3(perto + 0.6, 0, 1.0), -FRENTE)
-	_extra(1 - p.team, _p0 + Vector3(perto + 2.0, 0, 0.1), -FRENTE)
-	_extra(p.team, _p0 + Vector3(-1.6, 0, 1.8), FRENTE, 0.4)
-	_cam_off = Vector3(0, 6.2, 8.0) if corpo else Vector3(0, 7.5, 9.5)
+	# De longe: alvos a 5 m (a 7 m ficavam na beira do quadro e o E puxava/
+	# empurrava gente que nem aparecia).
+	var perto := 2.2 if corpo else 5.0
+	for off in [Vector3(perto, 0, -0.9), Vector3(perto + 0.6, 0, 1.0), Vector3(perto + 2.0, 0, 0.1)]:
+		_alvos_pos.append(_extra(1 - p.team, _p0 + off, -FRENTE).global_position)
+	# Tennin: o Laço puxa o aliado caído (levanta na hora), então ele fica longe e caído.
+	var laco := p.stats.skill == "laco"
+	var ferido := Vector3(-4.2, 0, 2.6) if laco else Vector3(-1.6, 0, 1.8)
+	_extra(p.team, _p0 + ferido, FRENTE, 0.4, "guerreiro", laco and game.sandbox)
+	_cam_off = Vector3(0, 6.2, 8.0) if corpo else Vector3(0, 7.0, 9.0)
+	_cam_vies = FRENTE * (1.2 if corpo else 2.6)
+
+
+func _alvos_no_lugar() -> void:
+	for i in _alvos_pos.size():
+		var u := _extras[i]
+		if u.alive and not u.em_voo and u.global_position.distance_to(_alvos_pos[i]) > 1.0:
+			u.global_position = _alvos_pos[i]
+			u.reset_physics_interpolation()
+			u._knock = Vector3.ZERO
 
 
 func _cena_classe(p: Unit) -> void:
 	p.move_intent = Vector3.ZERO
-	p.aim_dir = FRENTE
-	p.aim_point = _p0 + FRENTE * (3.0 if p.stats.attack_kind == "melee" else 8.0)
-	_foco = _foco.lerp(_p0 + FRENTE * (1.4 if p.stats.attack_kind == "melee" else 3.5), 0.2)
+	# Mira no meio dos alvos: quem se teleporta (Rasteira, Mergulho) vira para
+	# eles de novo, e o E/R cai em cima deles.
+	var meio := Vector3.ZERO
+	var n := 0
+	for i in _alvos_pos.size():
+		if _extras[i].alive and not _extras[i].em_voo:
+			meio += _extras[i].global_position
+			n += 1
+	var alvo := meio / n if n > 0 else p.global_position + FRENTE * 4.0
+	var d := alvo - p.global_position
+	d.y = 0.0
+	p.aim_dir = d.normalized() if d.length() > 0.5 else FRENTE
+	p.aim_point = alvo
+	# Antes de cada poder os alvos voltam ao lugar (o combo e o E anterior
+	# empurram, e o Q/E/R seguinte acertava o vazio).
+	if _f in [154, 234, 374]:
+		_alvos_no_lugar()
+		# Quem se teleportou no Q (Rasteira, Mergulho) volta para a marca.
+		if not p.em_voo and p.global_position.distance_to(_p0) > 1.5:
+			_teleportar(p, _p0)
 	if _f < 150:
 		_extras[3].hp = minf(_extras[3].hp, _extras[3].max_hp() * 0.4)
 	p.wants_attack = (_f >= 20 and _f < 24) or (_f >= 70 and _f < 74) or (_f >= 120 and _f < 124) \
-			or (_f >= 470 and _f < 474 and p.stats.super_tipo == "sombra")  # golpe saindo da sombra
+			or (_f >= 425 and _f < 429 and p.stats.super_tipo == "sombra")  # golpe saindo da sombra (o clipe acaba no 448)
 	match _f:
 		160:
 			p.wants_quick = true

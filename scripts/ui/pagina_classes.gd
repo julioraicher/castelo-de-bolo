@@ -24,6 +24,8 @@ const RAPIDA := {
 	"armadilha": "Estrepes no chão: dano e lentidão em quem pisa.",
 	"bloqueio": "Bloqueio reforçado por alguns segundos.",
 	"corrida": "Arrancada curta.",
+	"varrida": "Giro largo da naginata: fere e empurra quem está na frente e dos lados, e dá escudo aos aliados perto.",
+	"gancho": "Lança o peso na mira: o primeiro inimigo na linha apanha, fica preso e é puxado para perto.",
 	# Heróis raros (Ciclo 2.23)
 	"agarrao": "Agarra quem está na frente e arremessa longe; quem cai em cima também apanha.",
 	"rasteira": "Some numa poça e reaparece no pé do inimigo, derrubando.",
@@ -46,6 +48,8 @@ const PODER := {
 	"mutirao": "Adianta a obra perto de você.",
 	"campo_minado": "Minas em volta.",
 	"bombardeio": "Bombas caem numa área.",
+	"muralha": "Anel de fé no chão: aliados dentro ganham escudo e pressa; inimigos são empurrados para fora.",
+	"ciranda": "Gira a corrente em volta: o peso fere quem está na borda do anel (colado no corpo não corta).",
 	"pisao_grande": "Pisão do santuário: dano e arremesso em volta.",
 	"jato": "Jato d'água em linha: empurra todos de uma vez.",
 	"redemoinho_longe": "Redemoinho onde você mira: puxa para o meio e arremessa no fim.",
