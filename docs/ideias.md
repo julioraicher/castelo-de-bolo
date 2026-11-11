@@ -5,26 +5,10 @@ Lista viva. Qualquer frente anota aqui; o Julio escolhe o que sobe de nível.
 a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 
 ## A — próxima
-- **Personagens novos** (2026-11-11; painel + quiz em
-  `castelo-de-bolo/quiz/quiz-personagens-novos.html` na pasta do projeto; **nada
-  implementado, espera as respostas do Julio**). Seis famílias em par claro × sombrio,
-  cada uma com um jeito de jogar que falta:
-  - **Peso pesado** (bairro do Samurai): Sumotori (agarra e arremessa, arena de sal)
-    × Kappa do Rio (casco nas costas, rasteira pela poça, enchente).
-  - **Filhos do Vento** (bairro do Ninja): Yamabushi do Leque (vento que empurra e
-    devolve projéteis) × Karasu Tengu (mergulho de cima, revoada que atrapalha a mira).
-  - **Mestres de Bonecos** (bairro do Construtor): Onmyoji de Papel (shikigami que
-    orbitam e absorvem golpe) × Kugutsu, o Titereiro (marionete que bate à frente,
-    troca de lugar, levanta os caídos).
-  - **Tambores do Festival** (bairro da Kitsune): Taiko do Trovão (batida no compasso)
-    × Komusō (sono, hipnose, silêncio).
-  - **Trapaceiros** (Ninja ou Construtor): Tanuki (vira objeto do cenário) × Mujina,
-    a Sem Rosto (copia cor e classe do inimigo).
-  - **Lendários da Máscara** (só pelo Santuário): Tennin do Manto × Rei Oni.
-  Jeitos de entrar: (1) **baralho de caminhos** (vários por bairro, a partida mostra
-  um claro + um sombrio; recomendado), (2) terceiro caminho fixo, (3) quinto bairro,
-  (4) **Santuário dos Espíritos** neutro no meio do mapa (chapéu lendário, um por time).
-  Estimativa: par ~1,2-1,6 M tokens; baralho +0,4 M; Santuário +0,7 M; 5º bairro +1,0 M.
+- **Heróis raros no nível 6 + relógio de 10 min** (2026-11-11): plano completo em
+  `docs/direcao-ciclo-2.23-herois.md`, esperando o ok do Julio para executar. Oito
+  heróis: Sumotori e Kappa (Samurai); Yamabushi, Karasu Tengu e Mujina (Ninja);
+  Onmyoji, Tennin e Komusō (Kitsune). O Construtor não ganha herói.
 - **Casinhas 2.0, sobras** (Ciclo 2.21): planta do pátio no placar [Tab] (quiz 5D,
   ficou só o minimapa), regravar o clipe "oficinas" do Como jogar com o bairro
   novo (`tools/clipes_tutorial.sh oficinas`), e ajustar Sohei/Kusarigama depois
@@ -110,6 +94,12 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 - Efeito de chão por clima: poças que refletem o neon, pétalas caindo, névoa baixa.
 - Animação de vitória do time (todos comemoram em volta da máscara).
 - Sons próprios por poder (shuriken, talismã, fogo-raposa, explosão de pólvora).
+
+- **Personagens que ficaram de fora do Ciclo 2.23** (painel de 2026-11-11, o Julio
+  não escolheu): Taiko do Trovão (batida no compasso), Kugutsu, o Titereiro
+  (marionete que bate à frente), Tanuki (vira objeto do cenário), Rei Oni. Entram
+  como herói futuro pondo o .tres em `herois` da classe base. Também de fora:
+  baralho de caminhos, 5º bairro e Santuário dos Espíritos.
 
 ## C — talvez
 - **Spotar inimigos no minimapa, estilo Battlefield** (Julio, 2026-10-31): marcar um
