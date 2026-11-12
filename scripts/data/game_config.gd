@@ -31,7 +31,8 @@ extends Resource
 ## Quanto cada bolo engorda a princesa (0 = magra, 1 = gordíssima).
 @export_range(0.0, 1.0) var fat_per_cake := 0.1
 ## Fração da velocidade perdida pelo carregador quando a princesa está no peso máximo.
-@export_range(0.0, 0.95) var fat_slowdown := 0.45
+## Ciclo 2.25: 0,45 → 0,38 (os espíritos entregues ainda enchem a máscara até 1).
+@export_range(0.0, 0.95) var fat_slowdown := 0.38
 ## Segundos até a princesa largada no chão voltar sozinha para casa.
 @export var princess_return_time := 15.0
 ## Segundos ao lado da máscara caída para devolvê-la (parado se tiver inimigo
