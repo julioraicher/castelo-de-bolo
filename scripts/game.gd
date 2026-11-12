@@ -45,6 +45,10 @@ var tempo_partida := 0.0
 ## Ciclo 2.23: prorrogação (s já passados; -1 = não começou)
 ## e o resultado do fim (time vencedor; -1 = empate).
 var prorrogacao := -1.0
+## Ciclo 2.25: morte súbita (s já passados; -1 = não começou) e se o fim saiu
+## pelos pontos do placar do Tab (ninguém pontuou nem na morte súbita).
+var morte_subita := -1.0
+var decidido_no_placar := false
 var vencedor := -1
 var _tique_s := -1
 ## Cursor de mira do jogador (ponta de hardware + enfeites + marcas no chão).
@@ -1142,6 +1146,14 @@ func respawn_atual() -> float:
 func _regras_sandbox(hint: String) -> String:
 	for pad in hat_pads:
 		pad.intervalo = minf(pad.intervalo, 1.0)
+	# Morte súbita sob demanda (Ciclo 2.25): o modo teste não tem relógio.
+	if morte_subita < 0.0 and not game_over:
+		if Input.is_action_just_pressed("teste_morte_subita"):
+			abrir_morte_subita()
+		elif hint == "" and player and player.alive:
+			for p in princesses:
+				if player.global_position.distance_to(p.home) < 9.0:
+					hint = "Modo teste: [M] chama a morte súbita"
 	return hint
 
 
@@ -1285,7 +1297,7 @@ func _score_point(u: Unit) -> void:
 	Sfx.play("captura", arena.princess_spot[u.team], 0.0, 1.0, 4.0)
 	var mine := u.team == player.team
 	hud.show_big("PONTO DO %s!" % Config.TEAM_NAMES[u.team].to_upper(), Config.team_color(u.team).lightened(0.4))
-	if score[u.team] >= Config.cfg.score_to_win:
+	if score[u.team] >= Config.cfg.score_to_win or morte_subita >= 0.0:
 		encerrar(u.team)
 
 
@@ -1347,15 +1359,16 @@ func _mascara_caida() -> bool:
 
 ## Relógio (Ciclo 2.23, 15 min no 2.24): tique nos últimos 10 s; no zero,
 ## prorrogação enquanto alguma máscara estiver fora do castelo, senão o placar decide.
+## Ciclo 2.25: placar igual abre a morte súbita em vez do empate.
 func _relogio(delta: float) -> void:
+	if morte_subita >= 0.0:  # antes do relogio_ligado: o modo teste a chama com [M]
+		_relogio_morte_subita(delta)
+		return
 	if not relogio_ligado():
 		return
 	var resta := Config.cfg.tempo_limite - tempo_partida
 	if resta > 0.0:
-		var s := int(ceil(resta))
-		if s <= 10 and s != _tique_s:
-			_tique_s = s
-			Sfx.play_ui("tinido")
+		_tique(resta)
 		return
 	if prorrogacao < 0.0:
 		if _mascara_fora():
@@ -1373,12 +1386,73 @@ func _relogio(delta: float) -> void:
 		_fim_por_tempo()
 
 
+func _tique(resta: float) -> void:
+	var s := int(ceil(resta))
+	if s <= 10 and s != _tique_s:
+		_tique_s = s
+		Sfx.play_ui("tinido")
+
+
 func _fim_por_tempo() -> void:
-	var v := -1
 	if score[0] != score[1]:
-		v = 0 if score[0] > score[1] else 1
+		if hud:
+			hud.show_big("TEMPO!", Estilo.OURO, 2.4)
+		encerrar(0 if score[0] > score[1] else 1)
+	elif morte_subita < 0.0 and Config.cfg.morte_subita_tempo > 0.0:
+		abrir_morte_subita()
+	else:
+		_fim_no_placar()
+
+
+## Morte súbita (Ciclo 2.25): máscaras leves, o primeiro ponto vence
+## (_score_point). Quem está com a máscara na mão segue com ela.
+func abrir_morte_subita() -> void:
+	if morte_subita >= 0.0 or game_over:
+		return
+	morte_subita = 0.0
+	prorrogacao = -1.0
+	_tique_s = -1
+	for p in princesses:
+		p.zerar_peso()
+	_log("morte subita (t=%.0fs)" % tempo_partida)
 	if hud:
-		hud.show_big("TEMPO!" if v >= 0 else "TEMPO! EMPATE", Estilo.OURO, 2.4)
+		hud.show_big("MORTE SÚBITA!\nO primeiro ponto vence", Estilo.PERIGO, 3.2)
+	Sfx.play_ui("alarm")
+	Sfx.musica_tensa(true)
+	if camera:
+		camera.add_trauma(0.35)
+
+
+## Segundos que faltam na morte súbita (INF = não está nela).
+func morte_subita_resta() -> float:
+	if morte_subita < 0.0:
+		return INF
+	return maxf(Config.cfg.morte_subita_tempo - morte_subita, 0.0)
+
+
+## No zero da morte súbita vale a mesma espera da prorrogação: máscara fora do
+## castelo segura o fim (na mão, até prorrogacao_max; caída, até voltar).
+func _relogio_morte_subita(delta: float) -> void:
+	morte_subita += delta
+	var resta := Config.cfg.morte_subita_tempo - morte_subita
+	if resta > 0.0:
+		_tique(resta)
+		return
+	if _mascara_fora() and (-resta < Config.cfg.prorrogacao_max or _mascara_caida()):
+		return
+	_fim_no_placar()
+
+
+## Ninguém pontuou nem na morte súbita: vence o time com mais pontos no placar
+## do Tab (abates, obras, roubos...). Igual até nisso = empate.
+func _fim_no_placar() -> void:
+	var a := placar.total(0)
+	var b := placar.total(1)
+	var v := -1 if a == b else (0 if a > b else 1)
+	decidido_no_placar = v >= 0
+	_log("desempate no placar: %d x %d" % [a, b])
+	if hud:
+		hud.show_big("TEMPO! EMPATE" if v < 0 else "TEMPO!\n%s vence nos pontos" % Config.TEAM_NAMES[v], Estilo.OURO, 2.6)
 	encerrar(v)
 
 

@@ -48,6 +48,7 @@ func _ready() -> void:
 	_assinaturas()
 	_heroi_nv6()
 	await _herois_regras()
+	_menos_empate()
 	_relogio()  # por último: encerra a partida
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
@@ -1623,6 +1624,7 @@ func _relogio() -> void:
 	# Ciclo 2.24: máscara caída no zero = prorrogação que espera ela voltar,
 	# mesmo passando de prorrogacao_max; de volta ao pedestal, acaba.
 	if p.state == p.State.HOME:
+		game.score[0] = 2  # placar desigual: o fim da prorrogação encerra direto
 		p.state = p.State.DROPPED
 		game._relogio(0.016)
 		_check(not game.game_over and game.prorrogacao >= 0.0, "relógio: máscara caída no zero deveria abrir a prorrogação")
@@ -1631,26 +1633,130 @@ func _relogio() -> void:
 		p.state = p.State.HOME
 		game._relogio(0.016)
 		_check(game.game_over, "relógio: máscara de volta no pedestal encerra a prorrogação")
+		_check(game.vencedor == 0 and game.morte_subita < 0.0, "relógio: placar desigual não abre morte súbita")
 		game.game_over = false
 		game.vencedor = -9
 		game.prorrogacao = -1.0
+		game.score[0] = 1
 	if ladrao and p.state == p.State.HOME:
 		ladrao.pick_up_princess(p)
 		game._relogio(0.016)
 		_check(not game.game_over and game.prorrogacao >= 0.0, "relógio: máscara na mão no zero deveria abrir a última corrida")
+		# Ciclo 2.25: última corrida estourada com placar igual = morte súbita,
+		# com as duas máscaras leves e as almas sem pesar.
+		for m in game.princesses:
+			m.fatness = 0.6
 		game._relogio(cfg.prorrogacao_max + 0.1)
-		_check(game.game_over and game.vencedor == -1, "relógio: última corrida estourada com placar igual deveria empatar")
+		_check(not game.game_over and game.morte_subita >= 0.0, "relógio: placar igual no fim deveria abrir a morte súbita")
+		_check(game.prorrogacao < 0.0, "morte súbita: a prorrogação deveria ter fechado")
+		_check(game.princesses[0].fatness == 0.0 and game.princesses[1].fatness == 0.0, "morte súbita: as máscaras deveriam ficar leves")
+		game.princesses[0].pesar_alma(1.0)
+		_check(game.princesses[0].fatness == 0.0, "morte súbita: alma não deveria pesar")
+		_check(_perto(game.morte_subita_resta(), cfg.morte_subita_tempo, 0.5), "morte súbita: relógio próprio errado")
+		# Tempo dela estourado com a máscara na mão: espera, como a prorrogação.
+		game._relogio(cfg.morte_subita_tempo + 0.1)
+		_check(not game.game_over, "morte súbita: máscara na mão deveria segurar o fim")
+		# Ninguém pontuou: vence quem tem mais pontos no placar do Tab.
+		game.placar.somar(game.units[0], "abates", 50.0)
+		var lider: int = game.units[0].team
+		game._relogio(cfg.prorrogacao_max + 0.1)
+		_check(game.game_over and game.vencedor == lider and game.decidido_no_placar,
+			"morte súbita: sem ponto, deveria vencer o time com mais pontos no placar (deu %d)" % game.vencedor)
+		# O primeiro ponto na morte súbita encerra, mesmo longe de score_to_win.
+		game.game_over = false
+		game.vencedor = -9
+		game.decidido_no_placar = false
+		game.score[0] = 0
+		game.score[1] = 0
+		if ladrao.carried_princess == null:
+			ladrao.pick_up_princess(p)
+		game._score_point(ladrao)
+		_check(game.game_over and game.vencedor == ladrao.team and not game.decidido_no_placar,
+			"morte súbita: o primeiro ponto deveria vencer")
 	else:
 		_check(false, "relógio: não deu para pôr a máscara na mão")
 		game._relogio(0.016)
 	_check(game.game_over, "relógio: no zero a partida deveria acabar")
-	# A decisão em si (sem encerrar de novo).
+	# A decisão em si (sem encerrar de novo): placar diferente no zero vence direto.
 	game.score[0] = 2
 	game.score[1] = 1
 	game.game_over = false
 	game.vencedor = -9
+	game.morte_subita = -1.0
 	game._fim_por_tempo()
-	_check(game.vencedor == 0, "relógio: mais pontos no zero deveria vencer")
+	_check(game.vencedor == 0 and game.morte_subita < 0.0, "relógio: mais pontos no zero deveria vencer sem morte súbita")
+
+
+## Ciclo 2.25 (menos empate): teto das almas, carregar mais rápido, escolta
+## que soma por aliado e devolução mais demorada.
+func _menos_empate() -> void:
+	var cfg = get_node("/root/Config").cfg
+	_check(cfg.alma_por_abate <= 0.08, "alma de abate deveria pesar bem menos que os 0,15 de antes")
+	_check(cfg.alma_teto > 0.0 and cfg.alma_teto < 1.0, "alma_teto fora de (0, 1)")
+	var m = game.princesses[0]
+	var guardado: float = m.fatness
+	m.fatness = cfg.alma_teto - 0.001
+	m.pesar_alma(1.0)
+	_check(_perto(m.fatness, cfg.alma_teto, 1e-4), "alma: não deveria passar do teto (%.2f), foi a %.3f" % [cfg.alma_teto, m.fatness])
+	m.pesar_alma(1.0)
+	_check(_perto(m.fatness, cfg.alma_teto, 1e-4), "alma: no teto não pesa mais")
+	if m.state == m.State.HOME:
+		_check(m.feed() and m.fatness > cfg.alma_teto, "espírito entregue deveria passar do teto das almas")
+	m.fatness = guardado
+	m._apply_fatness()
+	_check(cfg.princess_rescue_time >= 3.5, "devolver a máscara deveria demorar mais que os 3 s de antes")
+	# Carregar e escolta: um ladrão do time 1 com 0, 1 e 3 aliados colados.
+	var ladrao = null
+	var aliados := []
+	for u in game.units:
+		if u.alive and not u.is_player and u.team == 1 and not u.carried_princess:
+			if ladrao == null:
+				ladrao = u
+			elif aliados.size() < 3:
+				aliados.append(u)
+	if ladrao == null or aliados.size() < 3 or m.state != m.State.HOME:
+		_check(false, "menos empate: faltou boneco ou máscara em casa para a escolta")
+		return
+	var pos: Array = [ladrao.global_position]
+	for a in aliados:
+		pos.append(a.global_position)
+	var longe := Vector3(0, 0, 40)
+	for u in game.units:
+		if u.team == 1 and u != ladrao:
+			u.set_meta("pos_teste", u.global_position)
+			u.global_position = ladrao.global_position + longe + Vector3(randf() * 4.0, 0, 0)
+	ladrao._boost_t = 0.0
+	ladrao._slow_t = 0.0
+	ladrao._sombra_t = 0.0
+	ladrao._tiro_lento_t = 0.0
+	var base: float = ladrao.current_speed()
+	m.fatness = 0.5
+	ladrao.pick_up_princess(m)
+	ladrao._boost_t = 0.0
+	var k: float = minf(ladrao.stats.carry_speed_mult + cfg.carregar_bonus, 1.0) * (1.0 - 0.5 * cfg.fat_slowdown)
+	var mult_base := 1.0
+	if ladrao.lenhador():
+		mult_base = 1.0  # o bônus das casas já está em `base`
+	_check(ladrao.escolta() == 0 and _perto(ladrao.current_speed(), base * k * mult_base, 0.02),
+		"carregar sozinho: esperado %.2f, deu %.2f" % [base * k, ladrao.current_speed()])
+	aliados[0].global_position = ladrao.global_position + Vector3(2, 0, 0)
+	_check(ladrao.escolta() == 1 and _perto(ladrao.current_speed(), base * k * (1.0 + cfg.escolta_vel), 0.02),
+		"escolta com 1 aliado: deveria dar +%.0f%%" % (cfg.escolta_vel * 100.0))
+	aliados[1].global_position = ladrao.global_position + Vector3(-2, 0, 0)
+	aliados[2].global_position = ladrao.global_position + Vector3(0, 0, 2)
+	var tres: float = cfg.escolta_vel + cfg.escolta_vel_extra * 2.0
+	_check(ladrao.escolta() == 3 and _perto(ladrao.current_speed(), base * k * (1.0 + tres), 0.02),
+		"escolta com 3 aliados: deveria dar +%.0f%%, deu ×%.2f" % [tres * 100.0, ladrao.current_speed() / (base * k)])
+	_check(aliados[0]._em_escolta(), "quem escolta também deveria andar mais rápido")
+	ladrao.carried_princess = null
+	m.return_home()
+	m.fatness = guardado
+	m._apply_fatness()
+	for u in game.units:
+		if u.has_meta("pos_teste"):
+			u.global_position = u.get_meta("pos_teste")
+			u.remove_meta("pos_teste")
+			u.reset_physics_interpolation()
 
 
 ## Ciclo 2.23: escada do Nv6 (herói raro). Usa a casa da Kitsune que o

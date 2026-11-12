@@ -208,6 +208,10 @@ func _preencher() -> void:
 		_titulo.label_settings.font_color = Estilo.OURO
 	var seg := int(game.tempo_partida)
 	var corrida := "  (última corrida)" if game.prorrogacao >= 0.0 else ""
+	if game.decidido_no_placar:
+		corrida = "  ·  decidido pelos pontos do placar"
+	elif game.morte_subita >= 0.0:
+		corrida = "  (morte súbita)"
 	_sub.text = "AZUL  %d  ×  %d  VERMELHO      %d:%02d de partida%s" % [game.score[0], game.score[1], seg / 60, seg % 60, corrida]
 	for t in 2:
 		var linhas := placar.time(t)

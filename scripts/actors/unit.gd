@@ -573,10 +573,30 @@ func _nivel_mago() -> int:
 	return game.bonus_mago(team, stats.id) if game and stats else 0
 
 
+## Aliados vivos colados em quem carrega a máscara (até escolta_max).
+func escolta() -> int:
+	if carried_princess == null or game == null:
+		return 0
+	var n := 0
+	var r2 := Config.cfg.escolta_raio * Config.cfg.escolta_raio
+	for o in game.units:
+		if o != self and o.alive and o.team == team and o.global_position.distance_squared_to(global_position) <= r2:
+			n += 1
+	return mini(n, Config.cfg.escolta_max)
+
+
+## Fração de velocidade que a escolta dá a quem carrega: o primeiro aliado
+## vale escolta_vel, cada um a mais soma escolta_vel_extra (Ciclo 2.25).
+func escolta_bonus() -> float:
+	var n := escolta()
+	return 0.0 if n == 0 else Config.cfg.escolta_vel + Config.cfg.escolta_vel_extra * (n - 1)
+
+
 func current_speed() -> float:
 	var s := stats.move_speed
 	if carried_princess:
-		s *= stats.carry_speed_mult * (1.0 - carried_princess.fatness * Config.cfg.fat_slowdown)
+		var cfg := Config.cfg
+		s *= minf(stats.carry_speed_mult + cfg.carregar_bonus, 1.0) * (1.0 - carried_princess.fatness * cfg.fat_slowdown)
 	if lenhador():
 		# Cada casinha erguida pelo time deixa a linha do Construtor mais rápida.
 		s *= 1.0 + Config.cfg.construtor_vel_por_oficina * game.oficinas_prontas(team)
@@ -596,8 +616,11 @@ func current_speed() -> float:
 		s *= Config.cfg.ciranda_vel_mult
 	if _tiro_lento_t > 0.0:
 		s *= Config.cfg.atirador_lento_mult
-	if game and _em_escolta():
-		s *= 1.0 + Config.cfg.escolta_vel
+	if game:
+		if carried_princess:
+			s *= 1.0 + escolta_bonus()
+		elif _em_escolta():
+			s *= 1.0 + Config.cfg.escolta_vel
 	return s
 
 
@@ -613,12 +636,9 @@ func mult_costas(other: Unit, to: Vector3) -> float:
 ## Escolta: carregando a máscara com um aliado perto, ou perto do aliado que
 ## carrega. Junta o time em volta do carregador (o ponto vem de grupo).
 func _em_escolta() -> bool:
-	var r2 := Config.cfg.escolta_raio * Config.cfg.escolta_raio
 	if carried_princess:
-		for u in game.units:
-			if u != self and u.alive and u.team == team and u.global_position.distance_squared_to(global_position) < r2:
-				return true
-		return false
+		return escolta() > 0
+	var r2 := Config.cfg.escolta_raio * Config.cfg.escolta_raio
 	var p: Princess = game.princesses[1 - team] if game.princesses.size() == 2 else null
 	return p != null and p.carrier != null and p.carrier != self and p.carrier.team == team \
 			and p.carrier.global_position.distance_squared_to(global_position) < r2

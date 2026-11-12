@@ -552,17 +552,23 @@ func _process(_delta: float) -> void:
 
 
 ## Relógio regressivo (Ciclo 2.23): "9:59"; no último minuto fica vermelho e
-## pulsa; na prorrogação mostra "+0:12" e "PRORROGAÇÃO". Sem relógio (modo teste) = "VS".
+## pulsa; na prorrogação mostra "+0:12" e "PRORROGAÇÃO"; na morte súbita, o tempo
+## dela e "MORTE SÚBITA". Sem relógio (modo teste) = "VS".
 func _atualizar_relogio(game: Game, pulso: float) -> void:
 	if _relogio == null:
 		return
 	var resta := game.tempo_restante()
-	if resta == INF:
+	if resta == INF and game.morte_subita < 0.0:
 		_relogio.text = "VS"
 		_relogio_meta.text = "até %d" % Config.cfg.score_to_win
 		return
 	var cor := Estilo.OURO
-	if game.prorrogacao >= 0.0:
+	if game.morte_subita >= 0.0:
+		var m := int(ceil(game.morte_subita_resta()))
+		_relogio.text = "%d:%02d" % [m / 60, m % 60]
+		_relogio_meta.text = "MORTE SÚBITA"
+		cor = Estilo.PERIGO.lerp(Estilo.OURO_CLARO, pulso)
+	elif game.prorrogacao >= 0.0:
 		var p := int(game.prorrogacao)
 		_relogio.text = "+%d:%02d" % [p / 60, p % 60]
 		_relogio_meta.text = "PRORROGAÇÃO"
@@ -694,7 +700,9 @@ func update_state(game: Game) -> void:
 		_status_label.text = "LEVE A TORA AO DEPÓSITO"
 		_cor_texto(_status_label, Estilo.OURO)
 	elif u.carried_princess:
-		_status_label.text = "LEVE A MÁSCARA PARA CASA"
+		var esc := u.escolta_bonus()
+		_status_label.text = "LEVE A MÁSCARA PARA CASA" if esc <= 0.0 \
+				else "LEVE A MÁSCARA PARA CASA  ·  ESCOLTA +%d%%" % int(round(esc * 100.0))
 		_cor_texto(_status_label, Estilo.OURO)
 	elif u.has_cake:
 		_status_label.text = "LEVE O ESPÍRITO À SUA MÁSCARA"

@@ -20,6 +20,12 @@ extends Resource
 ## sozinha (princess_return_time). Modo teste não tem relógio.
 @export var tempo_limite := 900.0
 @export var prorrogacao_max := 60.0
+## Ciclo 2.25 (Julio: "muito empate"): relógio (e prorrogação) acabando
+## empatado abre a MORTE SÚBITA: as duas máscaras ficam leves (peso 0, e as
+## almas param de pesar), o primeiro ponto vence. Passados estes segundos sem
+## ponto (mais a espera de uma máscara fora, como na prorrogação), vence o time
+## com mais pontos no placar do Tab. 0 = sem morte súbita (empate direto).
+@export var morte_subita_tempo := 120.0
 
 @export_group("Princesa e bolo")
 ## Quanto cada bolo engorda a princesa (0 = magra, 1 = gordíssima).
@@ -30,18 +36,24 @@ extends Resource
 @export var princess_return_time := 15.0
 ## Segundos ao lado da máscara caída para devolvê-la (parado se tiver inimigo
 ## a até princess_contest_radius m: dá tempo de um aliado do ladrão retomá-la).
-@export var princess_rescue_time := 3.0
+@export var princess_rescue_time := 4.0
 @export var princess_contest_radius := 4.0
 ## Dano que quem carrega a máscara inimiga leva (a máscara protege). Sem isso,
 ## o ladrão morria a ~15 m do pedestal, cercado por quem renasce ali.
-@export var carrier_damage_mult := 0.5
+@export var carrier_damage_mult := 0.37
 ## Arrancada ao pegar a máscara (velocidade x mult por time segundos).
 @export var steal_boost_mult := 1.35
 @export var steal_boost_time := 3.0
 ## Alma de abate: cada inimigo eliminado manda esta fração de um espírito
-## (fat_per_cake) direto para a máscara do time de quem matou. 0,15 ≈ 7 abates
-## valem um espírito entregue. 0 desliga.
-@export_range(0.0, 1.0) var alma_por_abate := 0.15
+## (fat_per_cake) direto para a máscara do time de quem matou. 0 desliga.
+## Ciclo 2.25: era 0,15 e, com ~85 abates por time, as duas máscaras batiam no
+## peso máximo aos 10 min sem ninguém querer. Agora 0,05 (20 abates = um
+## espírito) e as almas só enchem até alma_teto; dali para cima, só espírito
+## entregue de propósito.
+@export_range(0.0, 1.0) var alma_por_abate := 0.05
+@export_range(0.0, 1.0) var alma_teto := 0.75
+## Ciclo 2.25: soma no "carregar" (ClassStats.carry_speed_mult) de toda classe.
+@export var carregar_bonus := 0.10
 @export var cake_spawn_interval := 5.0
 @export var max_cakes := 6
 
@@ -393,9 +405,13 @@ extends Resource
 @export var atirador_lento_mult := 0.8
 @export var atirador_lento_t := 0.4
 ## Escolta da máscara: quem carrega com um aliado a até escolta_raio m, e os
-## aliados perto dele, andam (1 + escolta_vel) mais rápido.
+## aliados perto dele, andam (1 + escolta_vel) mais rápido. Ciclo 2.25: para
+## quem carrega, cada aliado além do primeiro soma escolta_vel_extra, até
+## escolta_max aliados (0,15 + 0,06 + 0,06 = +27% com três).
 @export var escolta_raio := 6.0
 @export var escolta_vel := 0.15
+@export var escolta_vel_extra := 0.06
+@export var escolta_max := 3
 ## Chance de um bot esquivar (dash) de um projétil que vai acertá-lo
 ## (a cada 0,2 s; bots inimigos: dividida pelo tempo de reação da dificuldade).
 @export var bot_esquiva_projetil := 0.35
@@ -439,7 +455,7 @@ extends Resource
 ## Pontos do placar estilo Battlefield (Tab, e no fim da partida): cada
 ## estatística do boneco vezes o peso daqui. O nome é sempre "pts_" + o campo
 ## de Placar.CAMPOS; mudar um número muda a conta e a legenda do placar.
-@export var pts_abates := 100.0
+@export var pts_abates := 120.0
 ## Assistência: deu dano no abatido nos últimos assistencia_janela s e não
 ## foi quem matou.
 @export var pts_assist := 50.0

@@ -97,7 +97,9 @@ func calcular() -> void:
 	alvo = Vector3.INF
 	verbo = ""
 	var u := game.player
-	if u == null or not u.alive or not u.lenhador() or u.carried_princess or u.is_equipping():
+	if u == null or not u.alive or u.is_equipping():
+		return
+	if _mascara(u) or not u.lenhador():
 		return
 	var pos := u.global_position
 	if u.carried_tora:
@@ -142,6 +144,34 @@ func calcular() -> void:
 			verbo = "CORTE"
 
 
+## Ciclo 2.25: a mesma seta mostra onde está a máscara quando ela sai do
+## pedestal. Quem carrega vê o caminho de casa; os outros veem a mais perto
+## entre retomar/escoltar a inimiga e devolver/recuperar a própria. O
+## Construtor só perde a guia da madeira enquanto carrega a máscara.
+func _mascara(u: Unit) -> bool:
+	if u.carried_princess:
+		alvo = game.arena.princess_spot[u.team]
+		verbo = "ENTREGUE"
+		return true
+	if u.lenhador():
+		return false
+	var pos := u.global_position
+	var melhor := INF
+	for p in game.princesses:
+		if p.state == Princess.State.HOME:
+			continue
+		var d := pos.distance_to(p.global_position)
+		if d >= melhor:
+			continue
+		melhor = d
+		alvo = p.carrier.global_position if p.state == Princess.State.CARRIED and p.carrier else p.global_position
+		if p.team == u.team:
+			verbo = "DEVOLVA" if p.state == Princess.State.DROPPED else "RECUPERE"
+		else:
+			verbo = "RETOME" if p.state == Princess.State.DROPPED else "ESCOLTE"
+	return melhor < INF
+
+
 func _process(delta: float) -> void:
 	if game == null:
 		return
@@ -164,6 +194,8 @@ func _process(delta: float) -> void:
 		_seta.transparency = vai * 0.5
 	# Marcador quicando em cima do alvo (mais alto em árvore e casa).
 	var alt := 4.2 if verbo == "CORTE" or verbo == "CONSTRUA" else (4.8 if verbo == "★ HERÓI" else 2.6)
+	if verbo in ["RETOME", "ESCOLTE", "DEVOLVA", "RECUPERE"]:
+		alt = 3.6
 	_marca.global_position = alvo + Vector3(0, alt + absf(sin(_t * 4.0)) * 0.5, 0)
 	_cone.rotation.y = _t * 2.0
 	_texto.text = verbo

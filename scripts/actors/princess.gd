@@ -185,12 +185,25 @@ func feed() -> bool:
 ## Alma de abate (ideia do Julio, Ciclo 2.3): cada inimigo eliminado manda
 ## uma fração de espírito direto para a máscara do time de quem matou. Quem só
 ## briga também deixa a máscara mais pesada para o inimigo carregar.
+## Ciclo 2.25: a alma só enche até GameConfig.alma_teto; acima disso a máscara
+## só engorda com espírito entregue (feed). Na morte súbita não pesa.
 func pesar_alma(fracao_espirito: float) -> void:
-	if fracao_espirito <= 0.0 or fatness >= 1.0:
+	var teto := Config.cfg.alma_teto
+	if fracao_espirito <= 0.0 or fatness >= teto or _game.morte_subita >= 0.0:
 		return
-	fatness = minf(fatness + Config.cfg.fat_per_cake * fracao_espirito, 1.0)
+	fatness = minf(fatness + Config.cfg.fat_per_cake * fracao_espirito, teto)
 	_apply_fatness()
 	Fx.burst(_game, global_position + Vector3(0, 1.6, 0), Color(0.5, 1.0, 0.6), 6, 3.0)
+
+
+## Morte súbita: a máscara solta todos os espíritos e fica leve.
+func zerar_peso() -> void:
+	if fatness <= 0.0:
+		return
+	fatness = 0.0
+	_apply_fatness()
+	Fx.burst(_game, global_position + Vector3(0, 1.6, 0), Color(0.5, 1.0, 0.6), 24, 7.0)
+	state_changed.emit(self)
 
 
 ## Peso visível: um espírito orbitando por "carga" e a máscara crescendo.
