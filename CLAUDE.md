@@ -159,11 +159,16 @@ repo: `.claude/skills/`.
   `scripts/ai/bot_herois.gd`, efeitos em `fx_herois.gd`. Gerar: `tools/gerar_herois.gd`
   (.tres), `tools/gerar_pavilhao.gd` (pavilhão, adornos, emblemas); prancha
   `tools/prancha_herois.gd`; sonda `HEROIS=1 tools/sonda_equilibrio.sh`. Relógio de
-  10 min com empate (`tempo_limite`).
+  15 min com empate e prorrogação enquanto houver máscara fora (`tempo_limite`).
 - Efeitos de poder: kit `Magia` (`scripts/fx/magia.gd`, shader `magia_energia`):
   energia com ruído que se rasga (`corroi`) + filete de tinta; nunca primitiva de
   cor chapada. Receita e orçamento em docs/direcao-efeitos.md §8; conferir com
   `tools/bancada_magia.gd` e `tools/vitrine.sh SAIDA [classes]`.
+- Assinatura por personagem (Ciclo 2.24): kit `Assinatura` (`scripts/fx/assinatura.gd`).
+  Selo com silhueta e verbo próprios, figura em pé no R, partícula com forma, hanko.
+  Desenhos em `tools/assinaturas/desenhos.js` (gerar: `node tools/assinaturas/gerar.js`
+  + `cinza.py`). Personagem novo ganha desenho + linha em `DADOS`; nunca reutilizar
+  o selo de outro. Tabela dos 20 em docs/direcao-efeitos.md §9.
 - Visual: peças por código no esqueleto KayKit (`NinjaVisual`) + shader toon;
   pitaco por prancha (`tools/prancha_personagens.gd`). Ver docs/arte-personagens.md.
 

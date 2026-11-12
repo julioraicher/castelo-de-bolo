@@ -4,6 +4,64 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.24 (2026-11-12), Diretor Visual + Jogabilidade: assinatura de cada personagem e relógio de 15 min
+Pedido do Julio: relógio de 15 min (dar tempo de construir e chegar nos heróis) e
+"muitos símbolos iguais nos poderes: cada personagem com um efeito de acordo com
+a personalidade, bem completo e complexo". Quiz: selo próprio "e também não selo",
+abertura do R própria ("inove!"), partículas próprias, o Q também, tudo maior e
+"o R mais ainda"; prorrogação enquanto houver máscara fora do castelo.
+- **O que repetia**: todo E escrevia o mesmo círculo com estrela e todo R abria com
+  o mesmo pilar e selo dourados. Agora os 20 personagens têm **assinatura própria**
+  (kit `Assinatura`, tabela completa em docs/direcao-efeitos.md §9):
+  - **Selo com silhueta própria** (nem todo selo é um círculo): ensō com katanas
+    (Samurai), chifres e chão rachando (Ronin), rosário e sino (Sohei), shuriken
+    (Ninja), alvo com olho (Yumi), corrente de elos (Kusarigama), pata (Kitsune),
+    lótus (Luz), coroa com olhos (Sombria), planta quadrada (Construtor), mandíbula
+    (Armadilheiro), pavio em espiral (Bombardeiro), corda shimenawa (Sumotori),
+    ondas (Kappa), folhas de bordo (Yamabushi), cata-vento de penas (Tengu), rosto
+    oval rachando (Mujina), estrela de Seimei (Onmyoji, o único com 5 pontas),
+    fitas (Tennin), cesto e ondas de som (Komusō).
+  - **Verbo próprio**: cada selo aparece de um jeito (pincel dando a volta, carimbo
+    que bate, ondas do meio para fora, mordida de fora para dentro, queima, espiral,
+    névoa, risco). A frente da escrita acende.
+  - **Partícula com forma**: penas, folhas, sal, talismãs, notas, contas, gotas,
+    cacos, elos, estrepes, pétalas, chamas (tombam no ar ou sobem, conforme a peça).
+  - **R de cada um, maior que tudo**: máscara oni queimando atrás do Ronin, sino
+    gigante do Sohei, olho de luz no céu do Yumi, 3 sombras do Ninja, asas do
+    Tengu, rosto liso da Mujina, talismãs que viram grous do Onmyoji, andaimes de
+    luz do Construtor, pavio que queima e estoura do Bombardeiro, mandíbula do
+    Armadilheiro, gêiser do Kappa, leque do Yamabushi, halo da Luz, olhos no chão
+    da Sombria, fogos-fátuos da Kitsune, sal e papéis shide do Sumotori, véu da
+    Tennin, anéis de som parados do Komusō, risco de tinta do Samurai. O letreiro
+    e o clarão do R saem na cor do personagem (antes sempre dourado).
+  - **Q**: o emblema bate pequeno sob os pés com algumas peças.
+  - **Hanko**: carimbo vermelho com o emblema ao lado do nome do golpe.
+  - **Cor do time no brilho do selo**: dá para ver de quem é o selo na briga.
+  - Tamanho: selo do E 15% maior (até 6,4 m de raio); selo do R com 7 m.
+- **Relógio de 15 min** (`tempo_limite` 600 → 900). **Prorrogação nova**: no zero,
+  se uma máscara estiver fora do castelo (na mão ou caída), a partida segue com
+  "PRORROGAÇÃO" na tela até ela ser entregue ou voltar ao pedestal. Máscara caída
+  sempre espera a volta (15 s parada); na mão, no máximo 60 s (`prorrogacao_max`,
+  antes 30) para a partida não ficar sem fim.
+- **Custo**: cada selo, figura e sistema de partículas é 1 chamada de desenho e some
+  sozinho; os dois atlas somam ~360 KB. Na qualidade Mínima as peças desligam.
+- **Modo teste**: nada a ligar, todos os personagens já estão lá com Q/E/R
+  recarregando rápido (o relógio não corre no modo teste).
+- Teste novo: todo personagem com poder precisa ter selo, verbo e peça próprios
+  (`_assinaturas`), e a prorrogação com máscara caída (`_relogio`).
+- Arquivos: `scripts/fx/assinatura.gd` (novo), `assets/shaders/assinatura_selo.gdshader`
+  e `assinatura_peca.gdshader` (novos), `assets/fx/assinaturas/`, `tools/assinaturas/`
+  (desenhos e gerador), `fx_poder.gd`, `fx_herois.gd`, `unit.gd` (ganchos do Q e do
+  R), `game.gd`/`hud.gd`/`game_config.gd` (relógio), `tests/regras.gd`.
+
+### O que testar
+- **Modo teste**: troque de personagem e solte Q, E e R de cada um. Algum selo
+  ainda parece o de outro? Algum R ficou fraco perto dos demais? Tamanho bom?
+- O **carimbo vermelho** ao lado do nome do golpe: atrapalha ou fica?
+- Numa briga cheia: dá para ver de que time é cada selo pelo brilho em volta?
+- **Partida**: o relógio começa em 15:00. No zero com máscara fora do castelo
+  aparece "PRORROGAÇÃO" e a partida só acaba quando ela é entregue ou volta.
+
 ## Ciclo 2.23b (2026-11-11), Diretor Visual + Interface: clipes e fichas de todos os personagens
 Pedido do Julio: conferir a tela que explica cada personagem (Menu > Classes),
 pôr o clipe de quem não tinha, ver se o clipe pega o poder mesmo e completar o

@@ -30,7 +30,7 @@ func _ready() -> void:
 		["recruta", Estilo.TEXTO_FRACO, "Caiu? Recomeça",
 			"Quem morre volta como Recruta no castelo. Pegue um chapéu no pátio para virar uma classe de novo."],
 		["losango", Estilo.OURO, "Relógio de %d minutos" % roundi(cfg.tempo_limite / 60.0),
-			"No zero, vence quem tem mais pontos; igual é empate. Se uma máscara estiver sendo levada, a partida segue até ela chegar, cair ou voltar (Última corrida, até %d s)." % roundi(cfg.prorrogacao_max)],
+			"No zero, vence quem tem mais pontos; igual é empate. Se uma máscara estiver fora do castelo, a partida segue em PRORROGAÇÃO até ela ser entregue ou voltar (na mão, até %d s)." % roundi(cfg.prorrogacao_max)],
 	])
 	_aba("Madeira", "madeira", [
 		["martelo", Estilo.OURO, "Só o Construtor corta",

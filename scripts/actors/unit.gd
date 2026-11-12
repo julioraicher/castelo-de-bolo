@@ -1241,6 +1241,7 @@ func _update_skill(delta: float, free_hands: bool) -> void:
 		wants_quick = false
 		if quick_ready() and free_hands and not _blocking and _mudo_t <= 0.0:
 			if _usar_rapida():
+				Assinatura.toque_q(self)
 				_quick_cd = quick_cooldown()
 
 
@@ -1312,7 +1313,7 @@ func _usar_rapida() -> bool:
 		"corrida":
 			_play_upper("Cheer", 1.6)
 			Fx.ring(game, global_position, Color(1, 0.8, 0.3, 0.9), stats.skill_radius)
-			Magia.selo(game, global_position, "vento", minf(stats.skill_radius, 5.0), 0.8, {"pontas": 0, "escrita": 0.15, "giro": 0.6})
+			Assinatura.selo(game, global_position, self, minf(stats.skill_radius, 5.0), 0.8, {"escrita": 0.15, "giro": 0.6})
 			for other in game.units:
 				if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.skill_radius:
 					other.give_boost(stats.skill_value, stats.skill_duration)
@@ -1947,17 +1948,16 @@ func _use_super() -> void:
 	var cfg := Config.cfg
 	super_carga = 0.0
 	_agito = 1.0
-	# Abertura do super: mais forte que a do E (tela dourada, tempo quase para).
+	# Abertura do super: mais forte que a do E (tela na cor do personagem, tempo
+	# quase para) e diferente para cada um (Assinatura.abrir_r, Ciclo 2.24).
 	if is_player:
 		game.camera.add_trauma(0.6)
 		game.camera.punch_fov(7.0)
-		game.hud.flash(Color(1.0, 0.8, 0.3, 0.35), 0.45)
+		game.hud.flash(Color(Assinatura.cor_flash(self), 0.35), 0.45)
 		game.slowmo(0.18, 0.3)
-		game.hud.show_big(super_nome() + "!", Color(1.0, 0.82, 0.3), 1.2)
+		game.hud.show_big(super_nome() + "!", Assinatura.cor(self).lightened(0.25), 1.2)
 	else:
 		game.camera.shake_at(global_position, 0.35)
-	Fx.pillar(game, global_position, Color(1.0, 0.8, 0.3), 2.2)
-	Fx.ring(game, global_position, Color(1.0, 0.8, 0.3, 0.9), 4.5)
 	FxPoder.abrir_super(self)
 	Sfx.play("magia_estouro", global_position, 0.03, 0.85)
 	if Sfx.has(stats.som_super):

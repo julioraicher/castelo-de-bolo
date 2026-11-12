@@ -105,9 +105,9 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
 7. **Itens no chão** aparecem de vez em quando no meio do mapa: poção, escudo,
    velocidade, kunai (dano 2x por 6 s) e chama de chi (enche o medidor).
 8. Morreu? Volta em alguns segundos como recruta no seu castelo.
-9. **Relógio de 10 minutos** no topo: no zero vence quem tem mais pontos; igual é
-   empate. Com uma máscara sendo levada no zero, a partida segue até ela chegar,
-   cair ou voltar (Última corrida, no máximo 30 s).
+9. **Relógio de 15 minutos** no topo: no zero vence quem tem mais pontos; igual é
+   empate. Com alguma máscara fora do castelo no zero (na mão ou caída), a partida
+   segue em **PRORROGAÇÃO** até ela ser entregue ou voltar (na mão, no máximo 60 s).
 
 Para mudar teclas ou números, veja o [GUIA.md](GUIA.md).
 
