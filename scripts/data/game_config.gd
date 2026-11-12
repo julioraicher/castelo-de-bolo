@@ -172,6 +172,7 @@ extends Resource
 
 @export_group("Oficinas")
 ## Segundos de obra de um Construtor com velocidade_obra = 1 (com madeira).
+## Ciclo 2.25: 10 → 8,5 no game_config.tres (martelo 15% mais rápido).
 @export var oficina_build_time := 10.0
 ## Madeira que uma casinha consome (Ciclo 2.21: a evolução da casa de uma classe). O Construtor perto da obra puxa 1 do
 ## estoque do time a cada oficina_puxar_intervalo s (dividido pela velocidade_obra);
@@ -272,7 +273,7 @@ extends Resource
 
 @export_group("Heróis raros (Ciclo 2.23)")
 ## Madeira do Pavilhão do Herói (Nv5 → Nv6; a 1ª entra na escolha).
-@export var heroi_custo := 8
+@export var heroi_custo := 7
 ## Segundos para o chapéu do herói voltar ao altar depois que ele sai de campo
 ## (renasce como aldeão ou troca de chapéu; caído esperando reanimar não conta).
 @export var heroi_retorno := 20.0
@@ -282,6 +283,12 @@ extends Resource
 @export var heroi_vida_mult := 1.10
 @export var heroi_dano_mult := 1.10
 @export var heroi_recarga_mult := 0.85
+## Nota do Komusō teleguiada (Ciclo 2.25): procura alvo neste cone (graus),
+## vira nota_vira rad/s atrás dele (o talismã do Onmyoji vira 7) e balança de
+## lado nota_balanco rad/s.
+@export var nota_cone := 40.0
+@export var nota_vira := 2.6
+@export var nota_balanco := 2.2
 @export var sandbox_heroi_retorno := 3.0
 ## Bots não pegam o chapéu do herói nos primeiros s em que ele está no altar,
 ## para o jogador do time ter a vez.
@@ -462,6 +469,13 @@ extends Resource
 ## estatística do boneco vezes o peso daqui. O nome é sempre "pts_" + o campo
 ## de Placar.CAMPOS; mudar um número muda a conta e a legenda do placar.
 @export var pts_abates := 120.0
+## Multikill (Ciclo 2.25, quiz do Julio): abate até multikill_janela s depois do
+## anterior continua a corrente. O 2º soma multikill_bonus[0] (duplo), o 3º
+## [1] (triplo) e do 4º em diante o último valor a cada abate (multi). O campo
+## "multi" do placar já guarda pontos, por isso o peso dele é 1.
+@export var multikill_janela := 5.0
+@export var multikill_bonus := PackedFloat32Array([50.0, 100.0, 150.0])
+@export var pts_multi := 1.0
 ## Assistência: deu dano no abatido nos últimos assistencia_janela s e não
 ## foi quem matou.
 @export var pts_assist := 50.0

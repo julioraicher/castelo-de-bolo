@@ -9,7 +9,7 @@ extends RefCounted
 
 ## Ordem das colunas e das contas. Campo novo = entrada aqui + `pts_<campo>`
 ## no GameConfig + chamada de somar() onde a coisa acontece.
-const CAMPOS := ["abates", "assist", "mortes", "dano", "cura", "almas", "madeira", "obra_s", "capturas", "roubos", "resgates", "reanimar"]
+const CAMPOS := ["abates", "assist", "mortes", "dano", "cura", "almas", "madeira", "obra_s", "capturas", "roubos", "resgates", "reanimar", "multi"]
 
 ## Nomes dos bots (o jogador é "Você"). Curtos para caber na coluna.
 const NOMES := ["Hayato", "Kenji", "Sora", "Rin", "Daichi", "Yuki", "Haru", "Kaito",
@@ -20,6 +20,11 @@ var cfg: GameConfig
 var _linhas := {}
 ## Vítima -> {atacante: instante do último dano} (para as assistências)
 var _danos := {}
+## Matador -> {n: abates na corrente, t: instante do último} (multikill)
+var _corrente := {}
+## Último degrau de corrente feito por quem matou (1 = abate comum), e o bônus.
+var ultimo_degrau := 1
+var ultimo_bonus := 0.0
 
 
 func _init(config: GameConfig) -> void:
@@ -59,8 +64,12 @@ func dano(alvo: Object, atacante: Object, v: float, agora: float) -> void:
 func abate(morto: Object, killer: Object, agora: float) -> Array:
 	somar(morto, "mortes")
 	var assist := []
+	ultimo_degrau = 1
+	ultimo_bonus = 0.0
 	if killer and killer != morto:
 		somar(killer, "abates")
+		_somar_corrente(killer, agora)
+	_corrente.erase(morto)  # morreu: a corrente dele acaba
 	var recentes: Dictionary = _danos.get(morto, {})
 	for a in recentes:
 		if a != killer and is_instance_valid(a) and agora - float(recentes[a]) <= cfg.assistencia_janela:
@@ -68,6 +77,38 @@ func abate(morto: Object, killer: Object, agora: float) -> Array:
 			assist.append(a)
 	_danos.erase(morto)
 	return assist
+
+
+## Multikill: 2º abate dentro da janela = duplo, 3º = triplo, 4º em diante =
+## multi. Cada degrau soma o bônus dele no campo "multi" (já em pontos).
+func _somar_corrente(killer: Object, agora: float) -> void:
+	var c: Dictionary = _corrente.get(killer, {"n": 0, "t": -INF})
+	if agora - float(c.t) > cfg.multikill_janela:
+		c.n = 0
+	c.n += 1
+	c.t = agora
+	_corrente[killer] = c
+	ultimo_degrau = c.n
+	ultimo_bonus = Placar.bonus_degrau(c.n, cfg)
+	if ultimo_bonus > 0.0:
+		somar(killer, "multi", ultimo_bonus)
+
+
+## Bônus do n-ésimo abate da corrente (0 no primeiro). Separado para os testes.
+static func bonus_degrau(n: int, c: GameConfig) -> float:
+	if n < 2 or c.multikill_bonus.is_empty():
+		return 0.0
+	return c.multikill_bonus[mini(n - 2, c.multikill_bonus.size() - 1)]
+
+
+## Nome do degrau no letreiro.
+static func nome_degrau(n: int) -> String:
+	match n:
+		2:
+			return "ABATE DUPLO"
+		3:
+			return "ABATE TRIPLO"
+	return "MULTI ×%d" % n
 
 
 func pontos(l: Dictionary) -> int:

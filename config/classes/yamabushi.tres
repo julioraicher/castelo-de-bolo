@@ -30,7 +30,6 @@ combo_finisher_mult = 1.0
 skill = "rajada"
 skill_name = "Rajada do Leque"
 skill_cooldown = 6.0
-skill_value = 8.0
 skill_radius = 7.0
 block_reduction = 0.5
 classe_base = &"arqueiro"

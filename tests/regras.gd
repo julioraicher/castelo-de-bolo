@@ -1705,6 +1705,34 @@ func _menos_empate() -> void:
 	m.fatness = guardado
 	m._apply_fatness()
 	_check(cfg.princess_rescue_time >= 3.5, "devolver a máscara deveria demorar mais que os 3 s de antes")
+	# Multikill em escadinha: 120 por abate, +50, +100, +150, +150...
+	var pl = game.placar
+	var esperado_b := [0.0, 0.0, 50.0, 100.0, 150.0, 150.0]
+	for n in range(1, 6):
+		_check(_perto(pl.bonus_degrau(n, cfg), esperado_b[n], 1e-4), "multikill: degrau %d deveria valer +%d" % [n, int(esperado_b[n])])
+	var mk := RefCounted.new()
+	var vitimas := []
+	for i in 5:
+		vitimas.append(RefCounted.new())
+	var t0 := 5000.0
+	pl.abate(vitimas[0], mk, t0)
+	_check(pl.ultimo_degrau == 1, "multikill: primeiro abate é comum")
+	pl.abate(vitimas[1], mk, t0 + cfg.multikill_janela - 0.5)
+	_check(pl.ultimo_degrau == 2 and _perto(pl.ultimo_bonus, 50.0, 1e-4), "multikill: segundo abate na janela = duplo +50")
+	pl.abate(vitimas[2], mk, t0 + 2.0 * cfg.multikill_janela - 1.0)
+	_check(pl.ultimo_degrau == 3, "multikill: a janela conta a partir do último abate")
+	pl.abate(vitimas[3], mk, t0 + 3.0 * cfg.multikill_janela + 1.0)
+	_check(pl.ultimo_degrau == 1, "multikill: passou da janela, a corrente recomeça")
+	pl.abate(mk, vitimas[4], t0 + 3.0 * cfg.multikill_janela + 1.5)
+	pl.abate(vitimas[4], mk, t0 + 3.0 * cfg.multikill_janela + 2.0)
+	_check(pl.ultimo_degrau == 1, "multikill: quem morre perde a corrente")
+	_check(pl.nome_degrau(2) == "ABATE DUPLO" and pl.nome_degrau(3) == "ABATE TRIPLO" and pl.nome_degrau(5) == "MULTI ×5", "multikill: nomes dos degraus")
+	_check(_perto(cfg.pts_abates, 120.0, 0.01), "abate deveria valer 120 no placar")
+	# Heróis um pouco mais fortes, igual para todos.
+	_check(cfg.heroi_vida_mult > 1.0 and cfg.heroi_dano_mult > 1.0 and cfg.heroi_recarga_mult < 1.0, "heróis: multiplicadores do Ciclo 2.25")
+	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso"]:
+		_check(load("res://config/classes/%s.tres" % id).heroi, "%s deveria estar marcado como herói" % id)
+	_check(not load("res://config/classes/guerreiro.tres").heroi, "Samurai não é herói")
 	# Carregar e escolta: um ladrão do time 1 com 0, 1 e 3 aliados colados.
 	var ladrao = null
 	var aliados := []

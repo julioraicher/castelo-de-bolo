@@ -226,8 +226,10 @@ func _preencher() -> void:
 			total += int(l.pontos)
 			_linha(ln, l, i, t)
 		_total_time[t].text = "%s pts" % _milhar(total)
-	_rodape.text = ("Pontos:  abate %s · assistência %s · alma %s · tora %s · obra %s/s · dano %s/pv · cura %s/pv · roubo %s · resgate %s · reanimar %s · captura %s" % [
-		_n(cfg.pts_abates), _n(cfg.pts_assist), _n(cfg.pts_almas), _n(cfg.pts_madeira), _n(cfg.pts_obra_s),
+	var mb := cfg.multikill_bonus
+	var multi := " · duplo +%s, triplo +%s, multi +%s" % [_n(mb[0]), _n(mb[1]), _n(mb[2])] if mb.size() >= 3 else ""
+	_rodape.text = ("Pontos:  abate %s%s · assistência %s · alma %s · tora %s · obra %s/s · dano %s/pv · cura %s/pv · roubo %s · resgate %s · reanimar %s · captura %s" % [
+		_n(cfg.pts_abates), multi, _n(cfg.pts_assist), _n(cfg.pts_almas), _n(cfg.pts_madeira), _n(cfg.pts_obra_s),
 		_n(cfg.pts_dano), _n(cfg.pts_cura), _n(cfg.pts_roubos), _n(cfg.pts_resgates), _n(cfg.pts_reanimar), _n(cfg.pts_capturas)]) \
 		+ ("      ·      F5 jogar de novo" if _fim else "      ·      solte o Tab para voltar")
 

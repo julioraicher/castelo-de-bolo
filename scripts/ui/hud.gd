@@ -39,6 +39,9 @@ var _hint_a: Label
 var _hint_key: PanelContainer
 var _hint_b: Label
 var _big: Label
+var _multi: Label
+var _multi_pts: Label
+var _multi_tw: Tween
 var _cat_box: VBoxContainer
 var _cat_bar: ProgressBar
 var _rean_box: VBoxContainer
@@ -123,6 +126,26 @@ func _ready() -> void:
 	_big.pivot_offset = Vector2(550, 70)
 	_big.modulate.a = 0.0
 	root.add_child(_big)
+	# Letreiro do multikill (Ciclo 2.25, quiz: "letreiro dourado"): embaixo do
+	# relógio, só para quem fez. Brilho = sombra dourada larga atrás da letra.
+	_multi = Estilo.aviso("", 54, Estilo.OURO_CLARO)
+	_multi.label_settings.shadow_color = Color(Estilo.OURO, 0.55)
+	_multi.label_settings.shadow_size = 18
+	_multi.label_settings.shadow_offset = Vector2.ZERO
+	_multi.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_multi.custom_minimum_size = Vector2(800, 70)
+	_multi.position = Vector2(-400, 236)
+	_multi.pivot_offset = Vector2(400, 35)
+	_multi.modulate.a = 0.0
+	_multi.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_multi)
+	_multi_pts = Estilo.aviso("", 26, Estilo.TEXTO)
+	_multi_pts.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_multi_pts.custom_minimum_size = Vector2(400, 34)
+	_multi_pts.position = Vector2(-200, 302)
+	_multi_pts.modulate.a = 0.0
+	_multi_pts.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_multi_pts)
 
 	# Borda "machucado": gradiente radial (centro limpo, cantos vermelho-escuro).
 	# Uma textura 256² esticada na tela: custo ~zero, até no navegador.
@@ -787,6 +810,25 @@ func reanimar_barra(frac: float, texto: String, cor: Color) -> void:
 		_rean_cor = cor
 		Estilo.cor_barra(_rean_bar, cor)
 		_cor_texto(_rean_txt, cor)
+
+
+## Multikill do jogador: o letreiro bate grande e assenta; cada degrau sai um
+## pouco maior. Some em ~1,5 s.
+func multikill(nome: String, bonus: int, degrau: int) -> void:
+	_multi.text = nome + "!"
+	_multi_pts.text = "+%d pts" % bonus
+	if _multi_tw:
+		_multi_tw.kill()
+	var alvo := Vector2.ONE * (1.0 + 0.08 * mini(degrau - 2, 3))
+	_multi.scale = alvo * 1.8
+	_multi.modulate.a = 1.0
+	_multi_pts.modulate.a = 0.0
+	_multi_tw = create_tween()
+	_multi_tw.tween_property(_multi, "scale", alvo, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_multi_tw.parallel().tween_property(_multi_pts, "modulate:a", 1.0, 0.18).set_delay(0.08)
+	_multi_tw.tween_interval(1.1)
+	_multi_tw.tween_property(_multi, "modulate:a", 0.0, 0.35)
+	_multi_tw.parallel().tween_property(_multi_pts, "modulate:a", 0.0, 0.35)
 
 
 func show_big(text: String, color := Color.WHITE, duration := 2.2) -> void:

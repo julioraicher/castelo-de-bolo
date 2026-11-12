@@ -1145,6 +1145,35 @@ func _assisted_dir(dir: Vector3, alvo: Unit) -> Vector3:
 	return dir.rotated(Vector3.UP, ang * AIM_ASSIST_PULL).normalized()
 
 
+## Ciclo 2.25 (Julio: "algo que segue mais o inimigo mas pode errar ainda,
+## tipo um míssil teleguiado que faz curva torto e depois se desfaz"): a nota
+## do Komusō é lenta e fácil de desviar; agora curva devagar atrás do alvo,
+## balançando de lado, e some no fim do alcance. Dano por nota não muda.
+func _nota_teleguiada(p: Projectile, alvo: Unit) -> void:
+	p.torto = Config.cfg.nota_balanco
+	if alvo:
+		p.segue = alvo
+		p.vira = Config.cfg.nota_vira
+
+
+## Inimigo vivo mais alinhado com `dir`, dentro de `graus` e do alcance.
+func _alvo_no_cone(dir: Vector3, graus: float) -> Unit:
+	var best: Unit = null
+	var best_ang := deg_to_rad(graus * 0.5)
+	for o in game.units:
+		if not o.alive or o.team == team or o.em_voo:
+			continue
+		var to := o.global_position - global_position
+		to.y = 0
+		if to.length() > stats.attack_range * 1.2 or to.length() < 0.5:
+			continue
+		var ang := dir.angle_to(to.normalized())
+		if ang < best_ang:
+			best_ang = ang
+			best = o
+	return best
+
+
 ## Projéteis que voam retos (sem parábola).
 const RETOS := ["shuriken", "vento", "nota", "talisma", "grou"]
 
@@ -1162,6 +1191,8 @@ func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZE
 		dir = to.normalized() if (clicado and to.length() > 0.2) else _assisted_dir(dir, mirado)
 	var p := game.spawn_projectile(self, global_position + Vector3(0, 1.4, 0) + dir * 0.9, dir, stats.projetil)
 	p.damage *= dmg_mult
+	if stats.projetil == "nota":
+		_nota_teleguiada(p, mirado if mirado else _alvo_no_cone(dir, Config.cfg.nota_cone))
 	_tiro_lento_t = Config.cfg.atirador_lento_t
 	p.velocity *= speed_mult
 	var dist := clampf(to.length(), 6.0 if stats.projetil != "bomba" else 3.0, stats.attack_range * 1.4 * speed_mult)

@@ -20,6 +20,7 @@ e Configurações.
 | **F** | pegar um chapéu (perto do pedestal); pegar ou soltar a máscara; perto de um terreno vazio, trocar qual oficina construir; **perto da catapulta da base, subir** (F de novo lança: a barra de força vai e volta e o minimapa mostra onde cai) |
 | **F** (segure) | **reanimar** o aliado caído colado em você (chama na cor do time): 3 s, arrastando o corpo se andar; a Kitsune reanima parada e mais rápido. **Caído**, segure F para desistir e renascer no castelo |
 | **Tab** (segure) | **placar** estilo Battlefield: pontos, abates, assistências, mortes, dano, almas, toras e obra de cada um (bots e você), com o jogo borrado ao fundo. Abre sozinho no fim da partida |
+| **M** / **N** (modo teste) | chama a morte súbita na hora / mostra o letreiro do multikill |
 | **Esc** ou **P** | pausar e abrir o menu (Como jogar, Classes, Controles, Configurações) |
 | **F5** | reiniciar a partida |
 | **F11** | tela cheia (liga/desliga) |
@@ -79,10 +80,12 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
 1. Cada time tem uma **Máscara Oni** no pedestal do seu castelo.
 2. **Ponto:** leve a máscara **inimiga** até o pedestal do **seu** castelo.
    Primeiro a 3 vence.
-3. Quem carrega a máscara anda mais devagar, não ataca e leva menos dano. Com
-   um aliado a até 6 m, os dois andam 15% mais rápido (escolta). Se morrer, ela cai
-   no chão. Um inimigo dela pode pegar de novo; um aliado dela fica perto por
-   1,5 s para devolvê-la. Se ninguém mexer, ela volta sozinha depois de 15 s.
+3. Quem carrega a máscara anda mais devagar, não ataca e leva 37% do dano. Com
+   um aliado a até 6 m, os dois andam 15% mais rápido (escolta); o 2º e o 3º
+   aliados colados somam +6% cada para quem carrega (até +27%). Se morrer, ela cai
+   no chão. Um inimigo dela pode pegar de novo; um aliado dela fica ao lado por
+   4 s para devolvê-la (mais gente não acelera). Se ninguém mexer, ela volta
+   sozinha depois de 25 s. A seta dourada mostra onde está a máscara fora do pedestal.
 4. **Chapéus** saem das maquininhas do pátio: chegue perto e aperte **F**.
    - No começo: Samurai (Redemoinho), Ninja de Shuriken (Leque), Kitsune
      (Colunas de fogo-raposa; cura) e Construtor (corta madeira e constrói; Mutirão).
@@ -101,13 +104,21 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
    erguem as casinhas do pátio; pronta, ela libera a maquininha da classe. Perto
    de um terreno vazio, **F** troca qual classe construir.
 6. **Espíritos** (chamas verdes) aparecem no meio do mapa. Levar um até a
-   **sua** máscara a deixa mais pesada: quem a carrega fica mais lento.
+   **sua** máscara a deixa mais pesada: quem a carrega fica mais lento. Cada abate
+   também manda uma alma pequena para a máscara de quem matou (20 abates = um
+   espírito), mas as almas só enchem até 75% do peso: dali para cima, só espírito.
 7. **Itens no chão** aparecem de vez em quando no meio do mapa: poção, escudo,
    velocidade, kunai (dano 2x por 6 s) e chama de chi (enche o medidor).
 8. Morreu? Volta em alguns segundos como recruta no seu castelo.
-9. **Relógio de 15 minutos** no topo: no zero vence quem tem mais pontos; igual é
-   empate. Com alguma máscara fora do castelo no zero (na mão ou caída), a partida
-   segue em **PRORROGAÇÃO** até ela ser entregue ou voltar (na mão, no máximo 60 s).
+9. **Relógio de 15 minutos** no topo: no zero vence quem tem mais pontos. Com
+   alguma máscara fora do castelo no zero (na mão ou caída), a partida segue em
+   **PRORROGAÇÃO** até ela ser entregue ou voltar (na mão, no máximo 60 s).
+   Placar igual no fim abre a **MORTE SÚBITA**: 2 min com as duas máscaras leves
+   (peso 0) e o primeiro ponto vence. Ninguém pontuou nem assim: vence o time com
+   mais pontos no placar do Tab. No modo teste, **M** perto de uma máscara chama
+   a morte súbita na hora.
+10. **Multikill**: abate até 5 s depois do anterior continua a corrente. Abate vale
+   120 no placar; duplo +50, triplo +100 e do 4º em diante +150 cada.
 
 Para mudar teclas ou números, veja o [GUIA.md](GUIA.md).
 
