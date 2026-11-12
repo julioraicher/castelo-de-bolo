@@ -154,6 +154,9 @@ extends Resource
 ## regen_rate da vida máxima por segundo. Briga perdida não "vaza" para a próxima.
 @export var regen_delay := 4.0
 @export var regen_rate := 0.06
+## O Q de cura vale esta fração quando cura o próprio curandeiro (2.25b):
+## curandeiro cercado de aliados virava bola de vida difícil de derrubar.
+@export var cura_propria_mult := 0.9
 @export var pickup_interval := 9.0
 @export var max_pickups := 5
 ## Chance de o item nascer perto de onde a briga está mais cheia (em vez de

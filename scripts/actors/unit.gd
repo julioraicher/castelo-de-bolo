@@ -1606,7 +1606,10 @@ func _heal() -> void:
 	var healed := 0.0
 	for other in game.units:
 		if other.alive and other.team == team and other.global_position.distance_to(global_position) <= stats.heal_radius:
-			var ganho := other.heal(stats.heal_amount * Config.cfg.vida_mult, self)
+			var quanto := stats.heal_amount * Config.cfg.vida_mult
+			if other == self:
+				quanto *= Config.cfg.cura_propria_mult
+			var ganho := other.heal(quanto, self)
 			healed += ganho
 			if ganho > 0.0 and other != self:
 				FxPoder.fio_cura(self, other)

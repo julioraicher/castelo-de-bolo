@@ -4,6 +4,16 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.25b (2026-11-12), Diretor de Jogabilidade: cura do mago mais fraca
+Pedido do Julio: o mago que cura fica "muito apelão" quando 2-3 bots andam
+juntos com ele. Só números:
+- **Cura em aliados** (Q): Kitsune 15 → 13, Kitsune Luz 22 → 19,5, herói
+  Onmyōji (grou) 25 → 22 (≈ −12%).
+- **Autocura**: o Q agora cura o próprio curandeiro com 90% do valor
+  (`cura_propria_mult`), total ≈ −20% contra antes. Teste de regra novo cobre isso.
+- **O que testar**: grudar em uma Kitsune Luz com 2-3 bots e ver se o bolinho
+  ainda é imortal; jogar de Kitsune e sentir se a autocura ficou justa.
+
 ## Ciclo 2.25 (2026-11-12), Diretor de Jogabilidade: menos empate e heróis mais fortes
 Pedido do Julio depois do 2.24: "a borda ainda corta", "tá dando muito empate:
 um pouquinho mais fácil de fazer ponto" e heróis "um pouquinho mais apelões, sem

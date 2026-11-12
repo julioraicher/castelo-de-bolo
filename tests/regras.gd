@@ -830,6 +830,20 @@ func _dano() -> void:
 	u.heal(50.0)
 	_check(_perto(u.hp, u.max_hp(), 0.01), "cura passou do máximo")
 
+	# Autocura do Q vale cura_propria_mult da cura em aliado (2.25b).
+	var stats_antigos = u.stats
+	var stats_cura = u.stats.duplicate()
+	stats_cura.heal_amount = 10.0
+	stats_cura.heal_radius = 0.1  # pequeno para só pegar ele mesmo
+	u.stats = stats_cura
+	u.hp = u.max_hp() - 50.0
+	var hp_antes: float = u.hp
+	u._heal()
+	u.stats = stats_antigos
+	var esperado: float = 10.0 * cfg.vida_mult * cfg.cura_propria_mult
+	_check(_perto(u.hp - hp_antes, esperado, 0.01),
+		"autocura: esperado %.1f, deu %.2f" % [esperado, u.hp - hp_antes])
+
 
 ## Contra-golpe: bloqueio erguido há ≤ parry_janela s anula o golpe de perto,
 ## atordoa quem bateu e devolve parry_mult × dano; erguido antes disso é só
