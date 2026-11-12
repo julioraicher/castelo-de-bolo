@@ -112,3 +112,69 @@ Como se monta um efeito agora (`scripts/fx/magia.gd`):
   estoura o buffer no Compatibility), luz só na Alta, enfeite desliga na Baixa.
 - Conferir sempre na bancada (`tools/bancada_magia.gd`) e na vitrine
   (`tools/vitrine.sh`) antes de subir.
+
+## 9. Ciclo 2.24: assinatura por personagem (kit `Assinatura`)
+
+Pedido do Julio (2026-11-12): "muitos símbolos iguais nos poderes; cada personagem
+com um efeito de acordo com a personalidade, bem completo e complexo". Quiz: selo
+próprio "e também não selo" (1A), abertura do R própria, "inove!" (2A), selo +
+abertura + partículas + Q (3ABCD), tudo maior e "o R mais ainda" (4C).
+
+**O que repetia**: todo E escrevia o mesmo círculo com estrela de N pontas e todo
+R abria com o mesmo pilar e selo dourados. **Regra nova**: três coisas mudam de um
+personagem para outro, e são as que se leem da câmera da partida (28 m):
+
+1. **Silhueta**: nem todo selo é um círculo. Planta quadrada (Construtor), rosto
+   oval (Mujina), corda grossa (Sumotori), cata-vento de penas (Tengu), pata
+   (Kitsune), ensō aberto (Samurai). Só o Onmyoji tem estrela de 5 pontas (Seimei).
+2. **Verbo**: como o desenho aparece. `pincel` (dá a volta), `carimbo` (bate e
+   assenta), `ondas` (do meio para fora), `morde` (de fora para dentro), `queima`,
+   `espiral`, `nevoa`, `risco` (da esquerda para a direita). A frente da escrita
+   acende (ponta do pincel, faísca do pavio).
+3. **Matéria**: a partícula tem forma (pena, folha de bordo, sal, talismã, nota,
+   conta, gota, caco, elo, estrepe...) e jeito de se mexer (`espirra`, `cai`
+   tombando, `sobe`).
+
+Mais: o **brilho em volta do selo é a cor do time** (amigo ou inimigo na briga), o
+R abre com uma **figura em pé** (de frente para a câmera) e o nome do golpe ganha
+o **hanko** (carimbo vermelho com o emblema).
+
+| Personagem | Selo (silhueta) | Verbo | Peça | Abertura do R |
+|---|---|---|---|---|
+| Samurai | ensō aberto + katanas cruzadas | pincel | lascas de aço | risco de tinta atravessa a tela, fumaça |
+| Ronin Oni | chifres, presas, chão rachando | queima | cacos em brasa | máscara oni queima atrás dele e ruge |
+| Sohei | rosário de contas + sino | ondas | contas de luz | sino gigante cai e bate, 3 anéis de som |
+| Ninja de Shuriken | shuriken com furo + fumaça | carimbo, girando | shuriken | fumaça e 3 sombras dele |
+| Arqueiro Yumi | alvo com olho e miras | morde | lascas | olho de luz se abre no céu, riscos de flecha |
+| Kusarigama | corrente de elos + foice | pincel, girando | elos | corrente em redemoinho, espiral de faíscas |
+| Kitsune | pata + fogos-fátuos | carimbo | chamas rosa | fogos-fátuos brotam em roda, a raposa pisca |
+| Kitsune da Luz | lótus em anel liso | ondas | pétalas | halo dourado desce, chuva de pétalas |
+| Kitsune Sombria | coroa em ziguezague + olhos | morde | chamas roxas | olhos se abrem no chão, caudas de sombra |
+| Construtor | planta quadrada (esquadro, compasso) | risco | lascas e pregos | andaimes de luz sobem dos lados |
+| Armadilheiro | mandíbula com dentes | morde | estrepes | a mandíbula fecha e os dentes sobem |
+| Bombardeiro | pavio em espiral + bomba | morde (queima até o meio) | estrelas | pavio queima e estoura |
+| Sumotori | corda shimenawa + shide + sal | carimbo | grãos de sal | nuvem de sal, papéis shide caindo |
+| Kappa | ondas quebradas + prato | ondas, pulsando | gotas | gêiser do prato e chuva |
+| Yamabushi | folhas de bordo em espiral | espiral, girando | folhas | o leque varre, redemoinho de folhas |
+| Karasu Tengu | cata-vento de penas | espiral, girando | penas | asas se abrem, penas explodem |
+| Mujina | rosto oval rachando | névoa | cacos de máscara | rosto liso aparece, racha, cacos caem |
+| Onmyoji | Seimei (5 pontas) + talismãs | pincel | talismãs | talismãs em leque viram grous |
+| Tennin | fitas em espiral + nuvens | espiral, girando | pétalas | véu de fitas, anéis subindo |
+| Komusō | cesto trançado + ondas de som | ondas, pulsando | notas | nota no ar, anéis de som que param |
+
+**Como é feito** (barato: cada peça é 1 chamada de desenho):
+- `tools/assinaturas/desenhos.js`: os 20 selos, 16 figuras e 16 peças em SVG
+  (branco = tinta, preto = corte). `node tools/assinaturas/gerar.js [--prancha x.png]`
+  e depois `python3 tools/assinaturas/cinza.py` geram dois atlas de **campo de
+  distância** (`assets/fx/assinaturas/selos.png` 6x6, `pecas.png` 4x4). Do campo de
+  distância o shader tira traço, filete de tinta e brilho, nítidos de 1 a 14 m.
+- `assets/shaders/assinatura_selo.gdshader` (selo, figura em pé, hanko) e
+  `assinatura_peca.gdshader` (partícula que tomba no ar).
+- `scripts/fx/assinatura.gd`: tabela `DADOS` (paleta, verbo, peça, giro) e as
+  coreografias `abrir_e`, `abrir_r`, `toque_q`. Personagem novo = um desenho no
+  `desenhos.js` (no fim da lista, para não mexer nos índices), uma linha em
+  `SELOS`/`DADOS` e, se quiser, um ramo em `abrir_r`.
+- Tamanho: selo do E 15% maior que antes (até 6,4 m de raio), selo do R com 7 m.
+- Qualidade Mínima: as peças desligam (`Magia.enfeite()`); selo e figura ficam.
+- Conferir: `VITRINE_LONGE=1 tools/vitrine.sh SAIDA [classes]` usa a câmera da
+  partida (sem a variável, câmera de perto).

@@ -552,7 +552,7 @@ func _process(_delta: float) -> void:
 
 
 ## Relógio regressivo (Ciclo 2.23): "9:59"; no último minuto fica vermelho e
-## pulsa; na última corrida mostra "+0:12". Sem relógio (modo teste) = "VS".
+## pulsa; na prorrogação mostra "+0:12" e "PRORROGAÇÃO". Sem relógio (modo teste) = "VS".
 func _atualizar_relogio(game: Game, pulso: float) -> void:
 	if _relogio == null:
 		return
@@ -565,7 +565,7 @@ func _atualizar_relogio(game: Game, pulso: float) -> void:
 	if game.prorrogacao >= 0.0:
 		var p := int(game.prorrogacao)
 		_relogio.text = "+%d:%02d" % [p / 60, p % 60]
-		_relogio_meta.text = "última corrida"
+		_relogio_meta.text = "PRORROGAÇÃO"
 		cor = Estilo.PERIGO.lerp(Estilo.OURO_CLARO, pulso)
 	else:
 		var s := int(ceil(resta))

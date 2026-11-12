@@ -42,7 +42,7 @@ var placar_tela: PlacarTela
 var placar_print := false
 ## Tempo de partida mostrado no placar (para no fim; `_time` segue para efeitos).
 var tempo_partida := 0.0
-## Ciclo 2.23: "Última corrida" (s já passados de prorrogação; -1 = não começou)
+## Ciclo 2.23: prorrogação (s já passados; -1 = não começou)
 ## e o resultado do fim (time vencedor; -1 = empate).
 var prorrogacao := -1.0
 var vencedor := -1
@@ -916,7 +916,8 @@ func _vitrine() -> void:
 			u.move_intent = Vector3.ZERO
 			u.aim_dir = -frente if i < 3 else frente
 	var foco := _vitrine_p0 + frente * (1.6 if corpo else 4.6)
-	camera.global_position = foco + Vector3(0, 6.2, 8.0)
+	# VITRINE_LONGE=1: a câmera da partida (confere tamanho e leitura de longe).
+	camera.global_position = foco + (Config.cfg.camera_offset if OS.get_environment("VITRINE_LONGE") != "" else Vector3(0, 6.2, 8.0))
 	camera.look_at(foco + Vector3(0, 0.8, 0))
 	p.move_intent = Vector3.ZERO
 	p.aim_dir = frente
@@ -1329,8 +1330,23 @@ func _mascara_em_maos() -> bool:
 	return false
 
 
-## Relógio de 10 min (Ciclo 2.23): tique nos últimos 10 s; no zero, "Última
-## corrida" se há máscara na mão (até prorrogacao_max s), senão o placar decide.
+## Alguma máscara fora do pedestal (na mão ou caída esperando voltar)?
+func _mascara_fora() -> bool:
+	for p in princesses:
+		if p.state != Princess.State.HOME:
+			return true
+	return false
+
+
+func _mascara_caida() -> bool:
+	for p in princesses:
+		if p.state == Princess.State.DROPPED:
+			return true
+	return false
+
+
+## Relógio (Ciclo 2.23, 15 min no 2.24): tique nos últimos 10 s; no zero,
+## prorrogação enquanto alguma máscara estiver fora do castelo, senão o placar decide.
 func _relogio(delta: float) -> void:
 	if not relogio_ligado():
 		return
@@ -1342,17 +1358,18 @@ func _relogio(delta: float) -> void:
 			Sfx.play_ui("tinido")
 		return
 	if prorrogacao < 0.0:
-		if _mascara_em_maos():
+		if _mascara_fora():
 			prorrogacao = 0.0
-			_log("ultima corrida (t=%.0fs)" % tempo_partida)
+			_log("prorrogacao (t=%.0fs)" % tempo_partida)
 			if hud:
-				hud.show_big("ÚLTIMA CORRIDA!\nA máscara está em jogo", Estilo.OURO, 2.4)
+				hud.show_big("PRORROGAÇÃO!\nUma máscara está fora do castelo", Estilo.OURO, 2.6)
 			Sfx.play_ui("alarm")
 			return
 		_fim_por_tempo()
 		return
 	prorrogacao += delta
-	if not _mascara_em_maos() or prorrogacao >= Config.cfg.prorrogacao_max:
+	# Caída: espera voltar sozinha (é curto). Na mão: até prorrogacao_max.
+	if not _mascara_fora() or (prorrogacao >= Config.cfg.prorrogacao_max and not _mascara_caida()):
 		_fim_por_tempo()
 
 

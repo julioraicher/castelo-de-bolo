@@ -9,8 +9,9 @@ extends RefCounted
 
 # --- Comum a todos ---------------------------------------------------------------
 
-## Elemento de cada poder: paleta do kit e desenho do selo (pontas da estrela
-## ou pétalas). Poder sem linha aqui usa a cor do chapéu.
+## Elemento de cada poder: a paleta do kit decide o som (`som_elemento`). Os
+## dois números eram o desenho do selo genérico (pontas, pétalas); desde o Ciclo
+## 2.24 o selo é o do personagem (`Assinatura`) e eles não são mais lidos.
 const ELEMENTO := {
 	"redemoinho": ["vento", 4, 0],
 	"furia": ["brasa", 3, 0],
@@ -28,25 +29,16 @@ const ELEMENTO := {
 }
 
 
-static func pal_de(u: Unit) -> Array:
-	var e: Array = ELEMENTO.get(u.stats.power, ["", 5, 0])
-	if e[0] == "":
-		return Magia.paleta_de(Config.team_color(u.team) if u.stats.power == "chuva_de_flechas" else u.stats.hat_color)
-	return Magia.paleta(e[0])
-
-
 ## Chamado no começo de qualquer poder: ato 1 (tudo é sugado para o corpo), o
-## nome do golpe e o selo do elemento se escrevendo sob os pés.
+## nome do golpe com o carimbo e a assinatura do personagem sob os pés (selo
+## próprio, peças e gesto: `Assinatura.abrir_e`, Ciclo 2.24).
 static func lancar(u: Unit) -> void:
-	var cor := u.stats.hat_color.lightened(0.35)
-	_nome(u, cor)
-	var pal := pal_de(u)
-	var e: Array = ELEMENTO.get(u.stats.power, ["", 5, 0])
+	_nome(u, Assinatura.cor(u).lightened(0.3))
+	var pal := Assinatura.paleta(u)
 	var raio := maxf(u.stats.power_radius, 2.5) if u.stats.power != "leque" else 3.0
-	if u.stats.power != "selo":  # o Selo Sombrio escreve o próprio, no alvo
-		Magia.selo(u.game, u.global_position, pal, minf(raio, 7.0), 1.1, {"pontas": e[1], "petalas": e[2], "escrita": 0.16, "giro": 0.12})
-	Magia.carga(u.game, u.global_position + Vector3(0, 1.1, 0), pal[1], 2.2, 0.18, 12)
-	Magia.clarao(u.game, u.global_position, pal[1], raio * 1.5 + 3.0, 0.3, 2.2)
+	Assinatura.abrir_e(u)
+	Magia.carga(u.game, u.global_position + Vector3(0, 1.1, 0), pal[1], 2.6, 0.18, 12)
+	Magia.clarao(u.game, u.global_position, pal[1], minf(raio, 8.0) * 1.5 + 3.0, 0.3, 2.2)
 
 
 ## Nome do golpe na fonte de pincel, sobe e some (estilo anime).
@@ -66,6 +58,7 @@ static func _nome(u: Unit, cor: Color) -> void:
 	u.game.add_child(l)
 	l.global_position = u.global_position + Vector3(0, 3.3, 0)
 	l.scale = Vector3.ONE * 0.4
+	Assinatura.hanko(l, u)
 	var tw := l.create_tween()
 	tw.tween_property(l, "scale", Vector3.ONE * 1.15, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(l, "scale", Vector3.ONE, 0.08)
@@ -243,7 +236,7 @@ static func chuva(u: Unit, alvo: Vector3, r: float) -> void:
 		var off := Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6))
 		Magia.lanca(g, p + off * 0.3, p + off + Vector3(0, 14.0, 0), "luz", 0.28, 0.45, {"cresce": 0.12, "corre": 5.0})
 	FxProjetil.faiscas(g, p, Color(1.0, 0.9, 0.5), 8, 7.0, Vector3.UP, 25.0)
-	var mira := Magia.selo(g, alvo, pal, r, ArrowRain.WARN + 0.35, {"pontas": 4, "escrita": 0.25, "giro": 0.5})
+	var mira := Assinatura.selo(g, alvo, u, r, ArrowRain.WARN + 0.35, {"verbo": "ondas", "escrita": 0.25, "giro": 0.5})
 	var tw := mira.create_tween()
 	tw.tween_property(mira, "scale", Vector3(r * 0.72, 1, r * 0.72), ArrowRain.WARN).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
@@ -325,7 +318,7 @@ static func nuvem(g: Node, centro: Vector3, r: float) -> void:
 ## ziguezague; no miolo, um estouro que se rasga e brasas roxas que ficam.
 static func selo(g: Node, centro: Vector3, r: float) -> void:
 	var pal: Array = Magia.paleta("sombra")
-	Magia.selo(g, centro, pal, r * 1.02, 1.7, {"pontas": 5, "escrita": 0.2, "giro": 0.05})
+	Assinatura.selo(g, centro, &"kitsune_sombria", r * 1.25, 1.9, {"escrita": 0.2})
 	Magia.carga(g, centro + Vector3(0, 1.0, 0), pal[1], r * 0.9, 0.2, 12)
 	var n := _no(g, centro)
 	var tw := n.create_tween()
@@ -492,7 +485,7 @@ static func muralha(u: Unit, r: float, dur: float) -> void:
 	var no := _no(g, p)
 	Magia.vortice(no, pal, r, 2.6, dur, {"r_topo": 1.0, "gira": 0.5, "sobe": -0.6, "forca": 1.2, "base": 0.35, "topo": 0.0, "alfa": 0.85})
 	Magia.vortice(no, "luz", r * 0.98, 1.2, dur, {"r_topo": 1.0, "gira": -0.8, "forca": 0.8, "base": 0.6, "topo": 0.0, "alfa": 0.6})
-	Magia.selo(g, p, pal, r, dur, {"pontas": 8, "escrita": 0.3, "giro": 0.05})
+	Assinatura.selo(g, p, u, r, dur, {"escrita": 0.3})
 	Magia.onda(g, p, pal, r * 1.2, 0.45, {"banda": 0.1})
 	FxProjetil.marca_chao(g, p, Color(0.06, 0.08, 0.07, 0.45), 1.0, dur)
 	var tw := no.create_tween()
@@ -560,7 +553,7 @@ static func q_tiro(u: Unit, dir: Vector3) -> void:
 static func q_cura(u: Unit) -> void:
 	var g := u.game
 	var pal: Variant = "luz" if u.stats.power == "bencao" else "cura"
-	Magia.selo(g, u.global_position, pal, minf(u.stats.heal_radius, 5.5), 0.9, {"pontas": 0, "petalas": 6, "escrita": 0.2, "giro": 0.1})
+	Assinatura.selo(g, u.global_position, u, minf(u.stats.heal_radius, 5.5), 0.9, {"escrita": 0.2})
 	Magia.anel_sobe(g, u.global_position + Vector3(0, 0.2, 0), pal, 1.0, 2.2, 0.7)
 
 
@@ -577,14 +570,10 @@ static func q_armadilha(u: Unit, at: Vector3) -> void:
 	Fx.burst(u.game, at + Vector3(0, 0.2, 0), Color(0.62, 0.55, 0.45), 6, 2.5)
 
 
-## Abertura do super (R): o selo grande de ouro, tudo é sugado e a cúpula estoura.
+## Abertura do super (R): a de cada personagem (`Assinatura.abrir_r`, Ciclo
+## 2.24). Antes era o mesmo selo dourado de 8 pontas para todo mundo.
 static func abrir_super(u: Unit) -> void:
-	var g := u.game
-	var p := u.global_position
-	Magia.selo(g, p, "luz", 4.5, 1.4, {"pontas": 8, "escrita": 0.2, "giro": 0.25})
-	Magia.carga(g, p + Vector3(0, 1.2, 0), Color(1.0, 0.85, 0.4), 3.5, 0.22, 18)
-	Magia.estouro(g, p, "luz", 3.2, 0.4)
-	Magia.brasas(g, p, Color(1.0, 0.85, 0.4), 14, 2.2, 1.4)
+	Assinatura.abrir_r(u)
 
 
 # --- Economia e placar ------------------------------------------------------------

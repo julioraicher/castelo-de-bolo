@@ -55,7 +55,7 @@ static func pisao_grande(u: Unit, r: float) -> void:
 static func dohyo(u: Unit, r: float, dur: float) -> void:
 	var g := _g(u)
 	var at := u.global_position
-	Magia.selo(g, at, "sal", r, dur, {"pontas": 0, "petalas": 0, "escrita": 0.3, "giro": 0.0})
+	Assinatura.selo(g, at, u, r * 1.18, dur, {"escrita": 0.08})  # a corda fica na borda do ringue
 	Magia.onda(g, at, "sal", r, 0.5, {"r0": 0.2, "banda": 0.06})
 	var n := Node3D.new()
 	n.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
@@ -275,7 +275,7 @@ static func laco(u: Unit, alvo: Unit) -> void:
 
 static func danca(u: Unit, r: float, dur: float) -> void:
 	var g := _g(u)
-	Magia.selo(g, u.global_position, "celeste", r, dur, {"pontas": 0, "petalas": 6, "escrita": 0.3, "giro": 0.3})
+	Assinatura.selo(g, u.global_position, u, r, dur, {"escrita": 0.3, "giro": 0.3})
 	Magia.vortice(u, "celeste", r * 0.35, 2.0, dur, {"r_topo": 2.4, "gira": 1.4, "alfa": 0.7})
 	Magia.aura_brasas(u, CELESTE, dur, 10, 1.2)
 	Sfx.play("magia_luz", u.global_position, 0.05)
@@ -316,7 +316,7 @@ static func sono_em(o: Unit) -> void:
 
 static func hipnose(u: Unit, r: float) -> void:
 	var g := _g(u)
-	Magia.selo(g, u.global_position, "som", r, 1.2, {"pontas": 0, "petalas": 0, "escrita": 0.2, "giro": -0.5})
+	Assinatura.selo(g, u.global_position, u, r, 1.2, {"escrita": 0.2})
 	Magia.onda(g, u.global_position, "som", r, 0.6, {"gira": 1.0, "banda": 0.08})
 	Magia.onda(g, u.global_position, "som", r * 0.3, 0.6, {"r0": 3.3, "gira": -1.5, "banda": 0.08})
 	_notas(g, u.global_position + Vector3(0, 1.6, 0), Vector3.FORWARD, 10, 180.0)

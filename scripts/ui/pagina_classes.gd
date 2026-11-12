@@ -73,6 +73,7 @@ var _clipe: TutorialClipe
 var _clipe_moldura: PanelContainer
 var _nome: Label
 var _epiteto: Label
+var _emblema: ColorRect  # carimbo com o emblema do personagem (Ciclo 2.24)
 var _descricao: Label
 var _papel: Label
 var _barras: Dictionary = {}   # "vida" -> ProgressBar
@@ -198,8 +199,16 @@ func _ready() -> void:
 	lado.add_theme_constant_override("separation", 4)
 	lado.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	topo.add_child(lado)
+	var linha_nome := HBoxContainer.new()
+	linha_nome.add_theme_constant_override("separation", 10)
+	lado.add_child(linha_nome)
 	_nome = Estilo.rotulo("", Estilo.T_GRANDE, Estilo.OURO, Estilo.TITULO)
-	lado.add_child(_nome)
+	linha_nome.add_child(_nome)
+	_emblema = ColorRect.new()
+	_emblema.custom_minimum_size = Vector2(44, 44)
+	_emblema.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_emblema.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	linha_nome.add_child(_emblema)
 	_epiteto = Estilo.rotulo("", Estilo.T_PEQUENO, Estilo.OURO_CLARO, Estilo.CORPO)
 	lado.add_child(_epiteto)
 	_papel = Estilo.rotulo("", Estilo.T_MIN, Estilo.TEXTO_FRACO)
@@ -254,6 +263,8 @@ func _mostrar(s: ClassStats) -> void:
 	_atual = s
 	_nome.text = s.display_name
 	_nome.label_settings.font_color = s.hat_color.lightened(0.25)
+	_emblema.material = Assinatura.mat_emblema(s.id)
+	_emblema.visible = _emblema.material != null
 	_epiteto.text = s.epiteto
 	_epiteto.visible = s.epiteto != ""
 	_papel.text = "%s. Chapéu: %s." % [papel(s), origem(s)]

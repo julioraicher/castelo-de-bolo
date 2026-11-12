@@ -24,6 +24,7 @@ static func prewarm(parent: Node, pos: Vector3) -> void:
 	var p := pos + Vector3(0, -6.0, 0)
 	FxProjetil.prewarm(parent, p)
 	Magia.prewarm(parent, p)
+	Assinatura.prewarm(parent, p)
 	burst(parent, p, Color(1, 0.85, 0.5), 2, 1.0)
 	ring(parent, p, Color(1, 1, 1, 0.5), 1.0)
 	slash(parent, p, Vector3.FORWARD, 2.0, 120.0, Color.WHITE)

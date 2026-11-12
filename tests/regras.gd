@@ -45,6 +45,7 @@ func _ready() -> void:
 	_reanimar()
 	_alta_dinamica()
 	await _magia()
+	_assinaturas()
 	_heroi_nv6()
 	await _herois_regras()
 	_relogio()  # por último: encerra a partida
@@ -1528,6 +1529,39 @@ func _ferradura() -> void:
 
 ## Ciclo 2.20: toda peça do kit de magia nasce, anima e se libera sozinha
 ## (efeito que não some vaza nó e chamada de desenho a cada poder).
+## Ciclo 2.24: todo personagem com poder tem assinatura PRÓPRIA (selo, verbo e
+## peça); ninguém cai no selo genérico nem divide o desenho com outro.
+func _assinaturas() -> void:
+	var todos: Array[ClassStats] = []
+	for c in Config.cfg.todas_classes():
+		todos.append(c)
+		for h in c.herois:
+			if not todos.has(h):
+				todos.append(h)
+	var usados := {}
+	for c in todos:
+		if c.power == "nenhum":
+			continue
+		var d := Assinatura.de(c.id)
+		_check(not d.is_empty(), "assinatura: %s não tem linha em Assinatura.DADOS" % c.id)
+		if d.is_empty():
+			continue
+		var i := Assinatura.SELOS.find(c.id)
+		_check(i >= 0 and not usados.has(i), "assinatura: %s sem selo próprio no atlas" % c.id)
+		usados[i] = true
+		_check(Assinatura.VERBO.has(d["verbo"]), "assinatura: verbo de %s não existe" % c.id)
+		_check(Assinatura.PECAS.has(d["peca"]), "assinatura: peça de %s não existe no atlas" % c.id)
+	_check(usados.size() >= 20, "assinatura: esperado 20 personagens com selo, há %d" % usados.size())
+	var caixa := Node3D.new()
+	game.add_child(caixa)
+	caixa.global_position = Vector3(0, -30, 0)
+	var antes := caixa.get_child_count()
+	Assinatura.selo(caixa, caixa.global_position, &"onmyoji", 3.0, 0.4)
+	Assinatura.figura(caixa, caixa.global_position, "oni", "brasa", Vector2(2, 2), 0.4)
+	_check(caixa.get_child_count() == antes + 2, "assinatura: selo e figura deveriam nascer")
+	caixa.queue_free()
+
+
 func _magia() -> void:
 	var caixa := Node3D.new()
 	game.add_child(caixa)
@@ -1569,8 +1603,8 @@ func _magia() -> void:
 	caixa.queue_free()
 
 
-## Ciclo 2.23: relógio de 10 min. No zero, mais pontos vence e igual empata;
-## máscara na mão estende a partida ("Última corrida") até prorrogacao_max.
+## Ciclo 2.23: relógio (15 min no 2.24). No zero, mais pontos vence e igual empata;
+## máscara fora do castelo estende a partida (prorrogação).
 func _relogio() -> void:
 	var cfg = get_node("/root/Config").cfg
 	_check(cfg.tempo_limite > 0.0 and game.relogio_ligado(), "relógio: deveria estar ligado na partida normal")
@@ -1586,6 +1620,20 @@ func _relogio() -> void:
 	game.score[0] = 1
 	game.score[1] = 1
 	game.tempo_partida = cfg.tempo_limite + 0.01
+	# Ciclo 2.24: máscara caída no zero = prorrogação que espera ela voltar,
+	# mesmo passando de prorrogacao_max; de volta ao pedestal, acaba.
+	if p.state == p.State.HOME:
+		p.state = p.State.DROPPED
+		game._relogio(0.016)
+		_check(not game.game_over and game.prorrogacao >= 0.0, "relógio: máscara caída no zero deveria abrir a prorrogação")
+		game._relogio(cfg.prorrogacao_max + 0.1)
+		_check(not game.game_over, "relógio: com a máscara caída a prorrogação espera ela voltar")
+		p.state = p.State.HOME
+		game._relogio(0.016)
+		_check(game.game_over, "relógio: máscara de volta no pedestal encerra a prorrogação")
+		game.game_over = false
+		game.vencedor = -9
+		game.prorrogacao = -1.0
 	if ladrao and p.state == p.State.HOME:
 		ladrao.pick_up_princess(p)
 		game._relogio(0.016)
