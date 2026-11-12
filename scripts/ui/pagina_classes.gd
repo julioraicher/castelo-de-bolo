@@ -275,11 +275,11 @@ func _mostrar(s: ClassStats) -> void:
 	_descricao.visible = s.descricao != ""
 	var cfg := Config.cfg
 	_barras["vida"].value = s.max_hp / _max["vida"] * 100.0
-	_valores["vida"].text = str(roundi(s.max_hp * cfg.vida_mult))
+	_valores["vida"].text = str(roundi(s.max_hp * cfg.vida_mult * (cfg.heroi_vida_mult if s.heroi else 1.0)))
 	_barras["velocidade"].value = s.move_speed / _max["velocidade"] * 100.0
 	_valores["velocidade"].text = "%.1f m/s" % s.move_speed
 	_barras["dano"].value = _dps(s) / _max["dano"] * 100.0
-	_valores["dano"].text = "%d/golpe" % roundi(s.damage)
+	_valores["dano"].text = "%d/golpe" % roundi(s.damage * (cfg.heroi_dano_mult if s.heroi else 1.0))
 	# Clipe da classe.
 	if _clipe:
 		_clipe.queue_free()
@@ -295,7 +295,7 @@ func _mostrar(s: ClassStats) -> void:
 		ch.queue_free()
 	var linhas := []
 	if s.skill != "nenhum":
-		linhas.append(["Q", s.skill_name, RAPIDA.get(s.skill, ""), "recarga %.0f s" % (s.skill_cooldown * cfg.rapida_cooldown_mult) if s.skill != "armadilha" else "recarga %.0f s" % s.trap_cooldown])
+		linhas.append(["Q", s.skill_name, RAPIDA.get(s.skill, ""), "recarga %.0f s" % (s.skill_cooldown * cfg.rapida_cooldown_mult * (cfg.heroi_recarga_mult if s.heroi else 1.0)) if s.skill != "armadilha" else "recarga %.0f s" % s.trap_cooldown])
 	if s.power != "nenhum":
 		linhas.append(["E", s.power_name, PODER.get(s.power, ""), "quando o Chi enche"])
 		var super_txt := ""

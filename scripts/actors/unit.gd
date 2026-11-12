@@ -565,7 +565,8 @@ func dash_pronto() -> bool:
 
 ## Vida máxima de verdade: a da classe vezes GameConfig.vida_mult.
 func max_hp() -> float:
-	return stats.max_hp * Config.cfg.vida_mult * (1.0 + Config.cfg.mago_bonus_vida * _nivel_mago())
+	return stats.max_hp * Config.cfg.vida_mult * (1.0 + Config.cfg.mago_bonus_vida * _nivel_mago()) \
+			* (Config.cfg.heroi_vida_mult if stats.heroi else 1.0)
 
 
 ## Níveis acima do 2 do caminho dos magos, se este soldado é o mago escolhido.
@@ -659,6 +660,8 @@ func add_power(amount: float) -> void:
 	if amount <= 0.0 or _power_active_t > 0.0 or not alive:
 		return
 	var was_ready := power >= POWER_MAX
+	if stats.heroi:
+		amount /= maxf(Config.cfg.heroi_recarga_mult, 0.1)
 	power = minf(power + amount * (1.0 + Config.cfg.mago_bonus_chi * _nivel_mago()), POWER_MAX)
 	_power_idle = 0.0
 	if is_player and not was_ready and power >= POWER_MAX and stats.power != "nenhum":
@@ -1202,6 +1205,8 @@ func damage_mult() -> float:
 		m *= Config.cfg.pickup_damage_mult
 	if _dohyo_t > 0.0 and global_position.distance_to(_dohyo_pos) <= Config.cfg.dohyo_raio:
 		m *= 1.0 + Config.cfg.dohyo_dano
+	if stats.heroi:
+		m *= Config.cfg.heroi_dano_mult
 	return m * (1.0 + Config.cfg.mago_bonus_dano * _nivel_mago())
 
 
@@ -1272,6 +1277,8 @@ func tem_rapida() -> bool:
 
 func quick_cooldown() -> float:
 	var m := Config.cfg.rapida_cooldown_mult
+	if stats.heroi:
+		m *= Config.cfg.heroi_recarga_mult
 	if game and game.sandbox:
 		m *= Config.cfg.sandbox_q_mult  # modo teste: Q toda hora
 	match stats.skill:

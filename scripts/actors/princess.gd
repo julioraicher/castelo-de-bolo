@@ -21,6 +21,7 @@ var _visual: Node3D
 var _drop_t := 0.0
 ## Progresso do resgate (0..GameConfig.princess_rescue_time) quando um aliado fica ao lado dela caída.
 var rescue_progress := 0.0
+var _rescue_quadro := -1
 var _beacon: MeshInstance3D
 
 
@@ -150,7 +151,15 @@ func drop(at: Vector3) -> void:
 	state_changed.emit(self)
 
 
+## Ciclo 2.25: conta uma vez por quadro, com um aliado ou com cinco. Antes
+## cada aliado ao lado somava de novo e três defensores devolviam a máscara em
+## menos de 1 s, sem dar tempo de o time do ladrão retomá-la (medido: 1,8 s em
+## média nas partidas de bots, com princess_rescue_time = 3).
 func rescue(delta: float) -> void:
+	var quadro := Engine.get_physics_frames()
+	if quadro == _rescue_quadro:
+		return
+	_rescue_quadro = quadro
 	rescue_progress += delta * 1.5  # compensa o decaimento em _physics_process
 	if rescue_progress >= Config.cfg.princess_rescue_time:
 		return_home()

@@ -41,4 +41,5 @@ power_value = 6.0
 power_duration = 1.5
 super_tipo = "sombra"
 super_nome = "Passo sem Rosto"
+heroi = true
 anim_attack = "1H_Melee_Attack_Stab"

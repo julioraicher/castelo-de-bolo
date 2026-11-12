@@ -43,4 +43,5 @@ power_value = 0.0
 super_tipo = "proprio"
 super_poder = "requiem"
 super_nome = "Réquiem"
+heroi = true
 anim_attack = "1H_Ranged_Shoot"

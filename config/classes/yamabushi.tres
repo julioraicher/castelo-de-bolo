@@ -41,4 +41,5 @@ power_radius = 3.5
 power_value = 7.0
 power_duration = 3.0
 super_nome = "Tufão"
+heroi = true
 anim_attack = "1H_Melee_Attack_Slice_Horizontal"

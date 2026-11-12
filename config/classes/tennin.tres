@@ -45,4 +45,5 @@ power_duration = 4.0
 super_tipo = "proprio"
 super_poder = "veu"
 super_nome = "Véu Celeste"
+heroi = true
 anim_attack = "2H_Melee_Attack_Spin"

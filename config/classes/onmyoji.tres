@@ -44,4 +44,5 @@ super_tipo = "proprio"
 super_poder = "mil_grous"
 super_nome = "Mil Grous"
 heal_amount = 25.0
+heroi = true
 anim_attack = "Spellcast_Shoot"

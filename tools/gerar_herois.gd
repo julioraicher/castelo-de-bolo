@@ -157,6 +157,7 @@ func _init() -> void:
 		c.escala_cabeca = 0.58
 		c.escala_extremidades = 1.3
 		c.chapeu_tempo_mult = 1.0
+		c.heroi = true
 		for k in d:
 			if k == "modelo":
 				continue

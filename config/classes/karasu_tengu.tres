@@ -44,4 +44,5 @@ power_duration = 4.0
 super_tipo = "proprio"
 super_poder = "mergulho3"
 super_nome = "Noite de Corvos"
+heroi = true
 anim_attack = "Dualwield_Melee_Attack_Slice"

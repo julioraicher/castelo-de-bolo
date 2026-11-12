@@ -276,6 +276,12 @@ extends Resource
 ## Segundos para o chapéu do herói voltar ao altar depois que ele sai de campo
 ## (renasce como aldeão ou troca de chapéu; caído esperando reanimar não conta).
 @export var heroi_retorno := 20.0
+## Ciclo 2.25 (Julio: "um pouquinho mais apelões, sem exagero"): vida e dano
+## de todo herói vezes isto, e Q e Chi do E recarregando em heroi_recarga_mult
+## do tempo (0,85 = 15% mais rápido). Soma com heroi_bonus_niveis.
+@export var heroi_vida_mult := 1.10
+@export var heroi_dano_mult := 1.10
+@export var heroi_recarga_mult := 0.85
 @export var sandbox_heroi_retorno := 3.0
 ## Bots não pegam o chapéu do herói nos primeiros s em que ele está no altar,
 ## para o jogador do time ter a vez.
