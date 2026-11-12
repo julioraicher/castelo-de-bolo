@@ -4,6 +4,77 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.25 (2026-11-12), Diretor de Jogabilidade: menos empate e heróis mais fortes
+Pedido do Julio depois do 2.24: "a borda ainda corta", "tá dando muito empate:
+um pouquinho mais fácil de fazer ponto" e heróis "um pouquinho mais apelões, sem
+exagero, igualmente fortes entre eles". Dois quizzes (mente aberta, depois os
+números); o alvo escolhido foi ~4 pontos somados por partida.
+- **Por que empatava** (3 partidas de bots de 15 min): cada abate pesava a máscara
+  de quem matou e as duas batiam no peso máximo aos 10 min; o ladrão andava a ~39%
+  da velocidade e 9 de cada 10 roubos morriam no caminho. 1 a 3 pontos somados.
+- **Peso**: alma do abate 0,15 → 0,05 e só enche até **75%** (`alma_teto`); dali
+  para cima, só espírito entregue. Peso máximo freia 38% (antes 45%).
+- **Carregar**: +0,10 em toda classe (`carregar_bonus`). **Escolta** soma: o 1º
+  aliado colado dá +15% (como antes), o 2º e o 3º +6% cada para quem carrega
+  (até +27%). O HUD mostra "ESCOLTA +N%".
+- **Defesa**: ladrão leva 37% do dano (antes 40%); devolver a máscara caída leva
+  4 s (antes 3) e **não soma mais por defensor**: três defensores juntos
+  devolviam em menos de 1 s (média medida 1,8 s), sem chance de retomada.
+- **Bots do ladrão**: atacantes escoltam e correm para retomar a máscara caída de
+  qualquer lugar do mapa; defensores e Construtores seguem no que estavam.
+- **Seta dourada** (a mesma do Construtor) mostra onde está a máscara fora do
+  pedestal: ESCOLTE, RETOME, DEVOLVA, RECUPERE ou ENTREGUE.
+- **Morte súbita**: placar igual no fim (depois da prorrogação) abre 2 min com
+  as duas máscaras leves (peso 0, almas param de pesar), música mais rápida e o
+  relógio "MORTE SÚBITA"; o primeiro ponto vence. Sem ponto, vence quem tem mais
+  pontos no placar do Tab ("decidido pelos pontos do placar"); igual até nisso,
+  empate.
+- **Placar**: abate 100 → 120. **Multikill** em escadinha: abate até 5 s depois
+  do anterior continua a corrente; duplo +50, triplo +100, do 4º em diante +150
+  cada. Quem fez vê o **letreiro dourado** embaixo do relógio (cresce a cada
+  degrau); os outros veem o nome do degrau subindo em cima de quem fez.
+- **Obra**: 1 madeira a menos (casas 5/7/9/11, níveis 4 e 6, herói 7) e martelo
+  15% mais rápido (obra 8,5 s, puxa madeira a cada 1,3 s).
+- **Heróis**: +10% de vida e dano e Q e Chi do E 15% mais rápidos, para os 8
+  (`heroi_vida_mult`, `heroi_dano_mult`, `heroi_recarga_mult`; `ClassStats.heroi`).
+  Empurrão nos de baixo da sonda, pensando em quem acerta fácil e quem acerta
+  difícil (pitaco do Julio): Karasu Tengu (mergulho no cursor, difícil: 32 → 40;
+  vida 105; Revoada 5), Mujina (pelas costas: vida 100, golpe 14, Susto 9),
+  Tennin (giro de 360° acerta fácil, dano igual; vida 110, Laço cura 28),
+  Yamabushi (Rajada 10), Komusō (sono 1,9 s e a **nota teleguiada**: curva
+  devagar atrás do alvo, balançando, e some no fim do alcance; dá para desviar).
+- **Placar do fim/Tab** encolhe para caber na janela (a borda cortava a última
+  coluna).
+- **Medido depois** (10 partidas de bots, 15 min): **nenhum empate** (antes quase
+  todas). 2 foram para a morte súbita e saíram pelos pontos do placar; 3 acabaram
+  em 3 × 1 lá pelos 9-12 min; as outras no relógio com alguém na frente. Média de
+  2,3 pontos somados (o alvo era ~4; a variação entre partidas é grande, de 0 a 4).
+  A máscara carregada vive ~7 s em média (antes 8) e a devolvida leva 4-5 s
+  (antes 1-2). Sonda dos heróis (dano por minuto vivo): Komusō 105 → 214, Mujina
+  219 → 273, Karasu 119 → 140 (abates/min 0,48 → 0,99), Tennin cura 162 → 256,
+  Yamabushi 268 → 302; Kappa 422 e Onmyoji 362 no topo. Do pior ao melhor caiu de
+  ~3,8× para ~3×.
+- **Modo teste**: perto de uma máscara, **M** chama a morte súbita e **N** mostra
+  o letreiro do multikill (duplo, triplo, multi). O resto (escolta, seta, peso,
+  heróis, obra) já vale lá.
+- Testes novos: teto das almas, carregar, escolta por aliado, devolver sem somar,
+  morte súbita (abre, zera o peso, espera a máscara, decide no placar, primeiro
+  ponto vence), escadinha do multikill, heróis marcados.
+- Arquivos: `game_config.gd`/`.tres`, `class_stats.gd`, `princess.gd`, `unit.gd`,
+  `game.gd`, `placar.gd`, `hud.gd`, `placar_tela.gd`, `pagina_classes.gd`,
+  `tutorial.gd`, `bot_brain.gd`, `guia_construtor.gd`, `projectile.gd`, `sfx.gd`,
+  `config.gd`, `tools/gerar_herois.gd` + os 8 heróis, `tests/regras.gd`,
+  CONTROLES.md.
+
+### O que testar
+- Jogue uma partida inteira: ainda empata? Pontuar ficou "um pouquinho" mais
+  fácil ou passou do ponto?
+- Roube a máscara com aliados colados: dá para sentir a escolta? A seta dourada
+  ajuda a achar a máscara caída?
+- Faça um duplo/triplo: o letreiro dourado embaixo do relógio fica bom?
+- **Modo teste**: M (morte súbita) e N (letreiro) perto de uma máscara.
+- Heróis: algum ainda fraco ou algum passou do ponto? A nota do Komusō curvando.
+
 ## Ciclo 2.24 (2026-11-12), Diretor Visual + Jogabilidade: assinatura de cada personagem e relógio de 15 min
 Pedido do Julio: relógio de 15 min (dar tempo de construir e chegar nos heróis) e
 "muitos símbolos iguais nos poderes: cada personagem com um efeito de acordo com

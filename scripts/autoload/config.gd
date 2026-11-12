@@ -72,6 +72,8 @@ func _setup_input() -> void:
 	_bind_keys("pause", [KEY_ESCAPE, KEY_P])
 	_bind_keys("fullscreen", [KEY_F11])
 	_bind_keys("placar", [KEY_TAB])
+	_bind_keys("teste_morte_subita", [KEY_M])  # só no modo teste
+	_bind_keys("teste_multikill", [KEY_N])  # só no modo teste
 	_bind_mouse("attack", MOUSE_BUTTON_LEFT)
 	_bind_mouse("block", MOUSE_BUTTON_RIGHT)
 

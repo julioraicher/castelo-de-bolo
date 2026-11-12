@@ -26,11 +26,13 @@ func _ready() -> void:
 		["mascara", Estilo.cor_time(0), "Roube a máscara",
 			"A Máscara Oni inimiga fica no pedestal do castelo deles. Chegue perto, aperte F e leve até o SEU pedestal. Primeiro a %d pontos vence." % cfg.score_to_win],
 		["espirito", Estilo.FANTASMA, "Espíritos pesam",
-			"Chamas verdes nascem no meio do mapa. Leve até a sua máscara: cheia, ela pesa e o ladrão anda devagar."],
+			"Chamas verdes nascem no meio do mapa. Leve até a sua máscara: cheia, ela pesa e o ladrão anda devagar. Abates também mandam almas, mas elas só enchem até %d%%." % roundi(cfg.alma_teto * 100.0)],
+		["mascara", Estilo.CIANO, "Escolte quem carrega",
+			"Aliados colados em quem leva a máscara o deixam mais rápido (até +%d%% com %d). A seta dourada mostra onde está a máscara fora do pedestal." % [roundi((cfg.escolta_vel + cfg.escolta_vel_extra * (cfg.escolta_max - 1)) * 100.0), cfg.escolta_max]],
 		["recruta", Estilo.TEXTO_FRACO, "Caiu? Recomeça",
 			"Quem morre volta como Recruta no castelo. Pegue um chapéu no pátio para virar uma classe de novo."],
 		["losango", Estilo.OURO, "Relógio de %d minutos" % roundi(cfg.tempo_limite / 60.0),
-			"No zero, vence quem tem mais pontos; igual é empate. Se uma máscara estiver fora do castelo, a partida segue em PRORROGAÇÃO até ela ser entregue ou voltar (na mão, até %d s)." % roundi(cfg.prorrogacao_max)],
+			"No zero, vence quem tem mais pontos. Máscara fora do castelo: PRORROGAÇÃO até ela ser entregue ou voltar (na mão, até %d s). Placar igual: MORTE SÚBITA de %d min com as máscaras leves; o primeiro ponto vence, e sem ponto decidem os pontos do Tab." % [roundi(cfg.prorrogacao_max), roundi(cfg.morte_subita_tempo / 60.0)]],
 	])
 	_aba("Madeira", "madeira", [
 		["martelo", Estilo.OURO, "Só o Construtor corta",

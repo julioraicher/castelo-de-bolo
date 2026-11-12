@@ -45,6 +45,11 @@ var tempo_partida := 0.0
 ## Ciclo 2.23: prorrogação (s já passados; -1 = não começou)
 ## e o resultado do fim (time vencedor; -1 = empate).
 var prorrogacao := -1.0
+## Ciclo 2.25: morte súbita (s já passados; -1 = não começou) e se o fim saiu
+## pelos pontos do placar do Tab (ninguém pontuou nem na morte súbita).
+var morte_subita := -1.0
+var _teste_degrau := 1  # modo teste: último degrau de multikill mostrado com [N]
+var decidido_no_placar := false
 var vencedor := -1
 var _tique_s := -1
 ## Cursor de mira do jogador (ponta de hardware + enfeites + marcas no chão).
@@ -632,6 +637,13 @@ func _physics_process(delta: float) -> void:
 	if not game_over:
 		tempo_partida += delta  # relógio do placar: para no fim da partida
 		_relogio(delta)
+	# Print do HUD novo (Ciclo 2.25): HUD_TESTE=1 com --sandbox --shots=DIR abre
+	# a morte súbita aos 2 s e mostra um triplo aos 14,6 s (print dos 15 s).
+	if _shots_dir != "" and sandbox and OS.get_environment("HUD_TESTE") != "":
+		if _time >= 2.0 and _time - delta < 2.0:
+			abrir_morte_subita()
+		if _time >= 14.6 and _time - delta < 14.6:
+			_multikill(player, 3, Placar.bonus_degrau(3, Config.cfg))
 	if _shots_dir != "" and not _shot_times.is_empty() and _time >= _shot_times[0]:
 		_take_shot()
 	if _filme_dir != "" and _time >= 3.0:
@@ -1142,6 +1154,18 @@ func respawn_atual() -> float:
 func _regras_sandbox(hint: String) -> String:
 	for pad in hat_pads:
 		pad.intervalo = minf(pad.intervalo, 1.0)
+	# Ciclo 2.25: o modo teste não tem relógio nem inimigos. [M] chama a morte
+	# súbita e [N] mostra o letreiro do multikill (duplo, triplo, multi ×4...).
+	if Input.is_action_just_pressed("teste_multikill") and player:
+		_teste_degrau = 2 if _teste_degrau >= 5 else _teste_degrau + 1
+		_multikill(player, _teste_degrau, Placar.bonus_degrau(_teste_degrau, Config.cfg))
+	if morte_subita < 0.0 and not game_over:
+		if Input.is_action_just_pressed("teste_morte_subita"):
+			abrir_morte_subita()
+		elif hint == "" and player and player.alive:
+			for p in princesses:
+				if player.global_position.distance_to(p.home) < 9.0:
+					hint = "Modo teste: [M] morte súbita  ·  [N] letreiro do multikill"
 	return hint
 
 
@@ -1285,7 +1309,7 @@ func _score_point(u: Unit) -> void:
 	Sfx.play("captura", arena.princess_spot[u.team], 0.0, 1.0, 4.0)
 	var mine := u.team == player.team
 	hud.show_big("PONTO DO %s!" % Config.TEAM_NAMES[u.team].to_upper(), Config.team_color(u.team).lightened(0.4))
-	if score[u.team] >= Config.cfg.score_to_win:
+	if score[u.team] >= Config.cfg.score_to_win or morte_subita >= 0.0:
 		encerrar(u.team)
 
 
@@ -1347,15 +1371,16 @@ func _mascara_caida() -> bool:
 
 ## Relógio (Ciclo 2.23, 15 min no 2.24): tique nos últimos 10 s; no zero,
 ## prorrogação enquanto alguma máscara estiver fora do castelo, senão o placar decide.
+## Ciclo 2.25: placar igual abre a morte súbita em vez do empate.
 func _relogio(delta: float) -> void:
+	if morte_subita >= 0.0:  # antes do relogio_ligado: o modo teste a chama com [M]
+		_relogio_morte_subita(delta)
+		return
 	if not relogio_ligado():
 		return
 	var resta := Config.cfg.tempo_limite - tempo_partida
 	if resta > 0.0:
-		var s := int(ceil(resta))
-		if s <= 10 and s != _tique_s:
-			_tique_s = s
-			Sfx.play_ui("tinido")
+		_tique(resta)
 		return
 	if prorrogacao < 0.0:
 		if _mascara_fora():
@@ -1373,12 +1398,73 @@ func _relogio(delta: float) -> void:
 		_fim_por_tempo()
 
 
+func _tique(resta: float) -> void:
+	var s := int(ceil(resta))
+	if s <= 10 and s != _tique_s:
+		_tique_s = s
+		Sfx.play_ui("tinido")
+
+
 func _fim_por_tempo() -> void:
-	var v := -1
 	if score[0] != score[1]:
-		v = 0 if score[0] > score[1] else 1
+		if hud:
+			hud.show_big("TEMPO!", Estilo.OURO, 2.4)
+		encerrar(0 if score[0] > score[1] else 1)
+	elif morte_subita < 0.0 and Config.cfg.morte_subita_tempo > 0.0:
+		abrir_morte_subita()
+	else:
+		_fim_no_placar()
+
+
+## Morte súbita (Ciclo 2.25): máscaras leves, o primeiro ponto vence
+## (_score_point). Quem está com a máscara na mão segue com ela.
+func abrir_morte_subita() -> void:
+	if morte_subita >= 0.0 or game_over:
+		return
+	morte_subita = 0.0
+	prorrogacao = -1.0
+	_tique_s = -1
+	for p in princesses:
+		p.zerar_peso()
+	_log("morte subita (t=%.0fs)" % tempo_partida)
 	if hud:
-		hud.show_big("TEMPO!" if v >= 0 else "TEMPO! EMPATE", Estilo.OURO, 2.4)
+		hud.show_big("MORTE SÚBITA!\nO primeiro ponto vence", Estilo.PERIGO, 3.2)
+	Sfx.play_ui("alarm")
+	Sfx.musica_tensa(true)
+	if camera:
+		camera.add_trauma(0.35)
+
+
+## Segundos que faltam na morte súbita (INF = não está nela).
+func morte_subita_resta() -> float:
+	if morte_subita < 0.0:
+		return INF
+	return maxf(Config.cfg.morte_subita_tempo - morte_subita, 0.0)
+
+
+## No zero da morte súbita vale a mesma espera da prorrogação: máscara fora do
+## castelo segura o fim (na mão, até prorrogacao_max; caída, até voltar).
+func _relogio_morte_subita(delta: float) -> void:
+	morte_subita += delta
+	var resta := Config.cfg.morte_subita_tempo - morte_subita
+	if resta > 0.0:
+		_tique(resta)
+		return
+	if _mascara_fora() and (-resta < Config.cfg.prorrogacao_max or _mascara_caida()):
+		return
+	_fim_no_placar()
+
+
+## Ninguém pontuou nem na morte súbita: vence o time com mais pontos no placar
+## do Tab (abates, obras, roubos...). Igual até nisso = empate.
+func _fim_no_placar() -> void:
+	var a := placar.total(0)
+	var b := placar.total(1)
+	var v := -1 if a == b else (0 if a > b else 1)
+	decidido_no_placar = v >= 0
+	_log("desempate no placar: %d x %d" % [a, b])
+	if hud:
+		hud.show_big("TEMPO! EMPATE" if v < 0 else "TEMPO!\n%s vence nos pontos" % Config.TEAM_NAMES[v], Estilo.OURO, 2.6)
 	encerrar(v)
 
 
@@ -2063,6 +2149,8 @@ func _on_unit_died(u: Unit, killer: Unit) -> void:
 	var assist := placar.abate(u, killer if killer and killer.team != u.team else null, _time)
 	if player in assist:
 		Fx.damage_number(self, player.global_position + Vector3(0, 0.6, 0), "ASSISTÊNCIA +%d" % int(Config.cfg.pts_assist), Color(0.6, 0.9, 1.0))
+	if placar.ultimo_degrau >= 2 and killer and killer.team != u.team:
+		_multikill(killer, placar.ultimo_degrau, placar.ultimo_bonus)
 	if u == player:
 		quedas_jogador += 1
 	elif killer == player and u.team != player.team:
@@ -2076,6 +2164,19 @@ func _on_unit_died(u: Unit, killer: Unit) -> void:
 		camera.add_trauma(0.3)
 		camera.punch_fov(3.0)
 		slowmo(0.35, 0.12)
+
+
+## Multikill (Ciclo 2.25): quem fez vê o letreiro dourado embaixo do relógio;
+## os outros veem o nome do degrau subindo em cima de quem fez.
+func _multikill(killer: Unit, degrau: int, bonus: float) -> void:
+	var nome := Placar.nome_degrau(degrau)
+	_log("multikill %s %s +%d (t=%.0fs)" % [Config.TEAM_NAMES[killer.team], nome, int(bonus), _time])
+	if killer == player and hud:
+		hud.multikill(nome, int(bonus), degrau)
+		Sfx.play_ui("corte_critico")
+	else:
+		var cor := Estilo.OURO_CLARO if player and killer.team == player.team else Config.team_color(killer.team).lightened(0.35)
+		Fx.damage_number(self, killer.global_position + Vector3(0, 2.4, 0), nome, cor, 1.3)
 
 
 ## A alma do abatido voa até a máscara do time de quem matou e a deixa mais
@@ -2121,7 +2222,7 @@ func slowmo(scale: float, real_time: float) -> void:
 
 
 func _on_princess_changed(p: Princess) -> void:
-	_log("mascara %s -> %s [%d] (t=%.0fs)" % [Config.TEAM_NAMES[p.team], p.state_text(), p.state, _time])
+	_log("mascara %s -> %s [%d] (t=%.0fs, peso=%.2f)" % [Config.TEAM_NAMES[p.team], p.state_text(), p.state, _time, p.fatness])
 	arena.torre_alarme(p.team, p.state != Princess.State.HOME)
 	if game_over:
 		return

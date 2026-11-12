@@ -94,7 +94,14 @@ func play_ui(sound: String) -> void:
 		_ui.play()
 
 
+## Morte súbita: a mesma música, um pouco mais rápida e aguda.
+func musica_tensa(liga: bool) -> void:
+	if _music:
+		_music.pitch_scale = 1.12 if liga else 1.0
+
+
 func start_music() -> void:
+	musica_tensa(false)
 	var path := "res://assets/audio/music.wav"
 	if ResourceLoader.exists(path) and not _music.playing:
 		# O loop vem da importação (music.wav.import: loop_mode=2, "Forward"), que funciona

@@ -28,6 +28,10 @@ var _origem := Vector3.ZERO
 ## Heróis raros (Ciclo 2.23): talismã que segue o alvo (Onmyoji), grou que
 ## cura aliados que atravessa e tiro devolvido pela Rajada do Yamabushi.
 var segue: Unit = null
+## Quanto o projétil vira atrás de `segue` (rad/s) e o zigue-zague dele (rad/s
+## de oscilação lateral; 0 = reto). Ciclo 2.25: a nota do Komusō segue torto.
+var vira := VIRA_SEGUE
+var torto := 0.0
 var cura := 0.0
 var _curados: Array[Unit] = []
 const VIRA_SEGUE := 7.0  # rad/s que o talismã consegue virar atrás do alvo
@@ -77,6 +81,7 @@ func rebater(novo_dono: Unit, dir: Vector3) -> void:
 	velocity = dir.normalized() * v
 	gravity = 0.0
 	segue = null
+	torto = 0.0
 	_acertados.clear()
 	_origem = global_position
 	_life = maxf(_life, 1.0)
@@ -131,9 +136,13 @@ func _physics_process(delta: float) -> void:
 		var atual := velocity / maxf(v, 0.01)
 		var ang := atual.angle_to(quer)
 		if ang > 0.001:
-			velocity = atual.slerp(quer, minf(VIRA_SEGUE * delta / ang, 1.0)) * v
+			velocity = atual.slerp(quer, minf(vira * delta / ang, 1.0)) * v
 			if velocity.length_squared() > 1e-6:
 				look_at(from + velocity, Vector3.UP)
+	if torto > 0.0:
+		# Balanço de nota musical: a direção oscila de lado; com `segue` a curva
+		# fecha no alvo assim mesmo, mas tarde e torta (dá para desviar).
+		velocity = velocity.rotated(Vector3.UP, sin(_life * 9.0) * torto * delta)
 	velocity.y -= gravity * delta
 	var to := from + velocity * delta
 	if _spin:

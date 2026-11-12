@@ -44,5 +44,6 @@ power_duration = 0.9
 super_tipo = "proprio"
 super_poder = "dohyo"
 super_nome = "Dohyō"
+heroi = true
 anim_idle = "Unarmed_Idle"
 anim_attack = "Unarmed_Melee_Attack_Punch_A"

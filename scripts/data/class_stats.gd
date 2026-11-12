@@ -192,6 +192,11 @@ extends Resource
 ## Multiplicador de velocidade ao carregar a princesa (antes do peso do bolo).
 @export var carry_speed_mult := 0.75
 
+@export_group("Herói raro")
+## Herói do Nv6 (tools/gerar_herois.gd marca). Vale os multiplicadores
+## GameConfig.heroi_vida_mult, heroi_dano_mult e heroi_recarga_mult.
+@export var heroi := false
+
 @export_group("Animações")
 @export var anim_idle := "Idle"
 @export var anim_run := "Running_A"

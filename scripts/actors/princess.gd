@@ -21,6 +21,7 @@ var _visual: Node3D
 var _drop_t := 0.0
 ## Progresso do resgate (0..GameConfig.princess_rescue_time) quando um aliado fica ao lado dela caída.
 var rescue_progress := 0.0
+var _rescue_quadro := -1
 var _beacon: MeshInstance3D
 
 
@@ -150,7 +151,15 @@ func drop(at: Vector3) -> void:
 	state_changed.emit(self)
 
 
+## Ciclo 2.25: conta uma vez por quadro, com um aliado ou com cinco. Antes
+## cada aliado ao lado somava de novo e três defensores devolviam a máscara em
+## menos de 1 s, sem dar tempo de o time do ladrão retomá-la (medido: 1,8 s em
+## média nas partidas de bots, com princess_rescue_time = 3).
 func rescue(delta: float) -> void:
+	var quadro := Engine.get_physics_frames()
+	if quadro == _rescue_quadro:
+		return
+	_rescue_quadro = quadro
 	rescue_progress += delta * 1.5  # compensa o decaimento em _physics_process
 	if rescue_progress >= Config.cfg.princess_rescue_time:
 		return_home()
@@ -185,12 +194,25 @@ func feed() -> bool:
 ## Alma de abate (ideia do Julio, Ciclo 2.3): cada inimigo eliminado manda
 ## uma fração de espírito direto para a máscara do time de quem matou. Quem só
 ## briga também deixa a máscara mais pesada para o inimigo carregar.
+## Ciclo 2.25: a alma só enche até GameConfig.alma_teto; acima disso a máscara
+## só engorda com espírito entregue (feed). Na morte súbita não pesa.
 func pesar_alma(fracao_espirito: float) -> void:
-	if fracao_espirito <= 0.0 or fatness >= 1.0:
+	var teto := Config.cfg.alma_teto
+	if fracao_espirito <= 0.0 or fatness >= teto or _game.morte_subita >= 0.0:
 		return
-	fatness = minf(fatness + Config.cfg.fat_per_cake * fracao_espirito, 1.0)
+	fatness = minf(fatness + Config.cfg.fat_per_cake * fracao_espirito, teto)
 	_apply_fatness()
 	Fx.burst(_game, global_position + Vector3(0, 1.6, 0), Color(0.5, 1.0, 0.6), 6, 3.0)
+
+
+## Morte súbita: a máscara solta todos os espíritos e fica leve.
+func zerar_peso() -> void:
+	if fatness <= 0.0:
+		return
+	fatness = 0.0
+	_apply_fatness()
+	Fx.burst(_game, global_position + Vector3(0, 1.6, 0), Color(0.5, 1.0, 0.6), 24, 7.0)
+	state_changed.emit(self)
 
 
 ## Peso visível: um espírito orbitando por "carga" e a máscara crescendo.

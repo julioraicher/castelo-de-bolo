@@ -263,9 +263,11 @@ func _think() -> void:
 		_torreta = tor
 		return
 
-	# Máscara inimiga caída por perto: retomar antes que a devolvam (revezamento).
+	# Máscara inimiga caída: retomar antes que a devolvam (revezamento). Ciclo
+	# 2.25: o atacante vai de mais longe (45 m); os outros, só de perto. De
+	# qualquer lugar do mapa tirava gente demais do ataque (medido: menos roubos).
 	if their_princess.state == Princess.State.DROPPED and role != Role.DEFEND \
-			and me.distance_to(their_princess.global_position) < 30.0:
+			and me.distance_to(their_princess.global_position) < (45.0 if role == Role.ATTACK else 30.0):
 		_goal = their_princess.global_position
 		_target = _nearest_enemy(3.0)
 		return
@@ -275,7 +277,9 @@ func _think() -> void:
 	if their_princess.state == Princess.State.CARRIED and their_princess.carrier.team == unit.team \
 			and role != Role.DEFEND and their_princess.carrier != unit:
 		var c := their_princess.carrier
-		if me.distance_to(c.global_position) < 45.0:
+		# Ciclo 2.25: atacante escolta de mais longe (70 m; cada aliado colado
+		# no ladrão o deixa mais rápido); confeiteiro, só se estiver perto.
+		if me.distance_to(c.global_position) < (70.0 if role == Role.ATTACK else 45.0):
 			_target = _nearest_enemy_to(c.global_position, 8.0)
 			if _target:
 				_goal = _target.global_position

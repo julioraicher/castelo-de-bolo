@@ -10,7 +10,7 @@ const FUNDO := preload("res://assets/shaders/placar_fundo.gdshader")
 ## Colunas: [título, largura, campo]. Campo "pontos" vem da conta; "_masc"
 ## soma capturas + roubos + resgates (o que se fez com as máscaras).
 const COLUNAS := [
-	["#", 28, "_pos"], ["Nome", 84, "nome"], ["Classe", 130, "_classe"], ["Pontos", 64, "pontos"],
+	["#", 28, "_pos"], ["Nome", 78, "nome"], ["Classe", 120, "_classe"], ["Pontos", 64, "pontos"],
 	["Abates", 58, "abates"], ["Assist.", 58, "assist"], ["Reanim.", 56, "reanimar"], ["Mortes", 58, "mortes"], ["Dano", 50, "dano"],
 	["Almas", 50, "almas"], ["Toras", 46, "madeira"], ["Obra", 46, "obra_s"], ["Másc.", 46, "_masc"],
 ]
@@ -29,6 +29,7 @@ var _fim := false
 var _venceu := false
 var _empate := false
 var _atualizar_t := 0.0
+var _corpo: Control  # tudo do placar: encolhe se não couber na janela
 
 
 func setup(g: Game) -> void:
@@ -53,6 +54,7 @@ func _montar() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 10)
 	centro.add_child(v)
+	_corpo = v
 	_titulo = Estilo.titulo("PLACAR", 54, Estilo.OURO)
 	_titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_titulo)
@@ -164,10 +166,24 @@ func _process(delta: float) -> void:
 		visible = false
 	if not visible:
 		return
+	_caber()
 	_atualizar_t -= delta
 	if _atualizar_t <= 0.0:
 		_atualizar_t = 0.25
 		_preencher()
+
+
+## Os dois times lado a lado passam de 1.600 px; numa janela mais estreita (ou
+## com outra proporção) a borda cortava a última coluna. Encolhe por igual,
+## pelo centro, até caber com uma margem.
+func _caber() -> void:
+	var tam := _corpo.size
+	if tam.x <= 0.0 or tam.y <= 0.0:
+		return
+	var vp := get_viewport().get_visible_rect().size
+	var s := minf(1.0, minf((vp.x - 40.0) / tam.x, (vp.y - 24.0) / tam.y))
+	_corpo.pivot_offset = tam * 0.5
+	_corpo.scale = Vector2(s, s)
 
 
 func _abrir() -> void:
@@ -192,6 +208,10 @@ func _preencher() -> void:
 		_titulo.label_settings.font_color = Estilo.OURO
 	var seg := int(game.tempo_partida)
 	var corrida := "  (última corrida)" if game.prorrogacao >= 0.0 else ""
+	if game.decidido_no_placar:
+		corrida = "  ·  decidido pelos pontos do placar"
+	elif game.morte_subita >= 0.0:
+		corrida = "  (morte súbita)"
 	_sub.text = "AZUL  %d  ×  %d  VERMELHO      %d:%02d de partida%s" % [game.score[0], game.score[1], seg / 60, seg % 60, corrida]
 	for t in 2:
 		var linhas := placar.time(t)
@@ -206,8 +226,10 @@ func _preencher() -> void:
 			total += int(l.pontos)
 			_linha(ln, l, i, t)
 		_total_time[t].text = "%s pts" % _milhar(total)
-	_rodape.text = ("Pontos:  abate %s · assistência %s · alma %s · tora %s · obra %s/s · dano %s/pv · cura %s/pv · roubo %s · resgate %s · reanimar %s · captura %s" % [
-		_n(cfg.pts_abates), _n(cfg.pts_assist), _n(cfg.pts_almas), _n(cfg.pts_madeira), _n(cfg.pts_obra_s),
+	var mb := cfg.multikill_bonus
+	var multi := " · duplo +%s, triplo +%s, multi +%s" % [_n(mb[0]), _n(mb[1]), _n(mb[2])] if mb.size() >= 3 else ""
+	_rodape.text = ("Pontos:  abate %s%s · assistência %s · alma %s · tora %s · obra %s/s · dano %s/pv · cura %s/pv · roubo %s · resgate %s · reanimar %s · captura %s" % [
+		_n(cfg.pts_abates), multi, _n(cfg.pts_assist), _n(cfg.pts_almas), _n(cfg.pts_madeira), _n(cfg.pts_obra_s),
 		_n(cfg.pts_dano), _n(cfg.pts_cura), _n(cfg.pts_roubos), _n(cfg.pts_resgates), _n(cfg.pts_reanimar), _n(cfg.pts_capturas)]) \
 		+ ("      ·      F5 jogar de novo" if _fim else "      ·      solte o Tab para voltar")
 

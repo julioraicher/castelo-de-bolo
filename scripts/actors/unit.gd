@@ -565,7 +565,8 @@ func dash_pronto() -> bool:
 
 ## Vida máxima de verdade: a da classe vezes GameConfig.vida_mult.
 func max_hp() -> float:
-	return stats.max_hp * Config.cfg.vida_mult * (1.0 + Config.cfg.mago_bonus_vida * _nivel_mago())
+	return stats.max_hp * Config.cfg.vida_mult * (1.0 + Config.cfg.mago_bonus_vida * _nivel_mago()) \
+			* (Config.cfg.heroi_vida_mult if stats.heroi else 1.0)
 
 
 ## Níveis acima do 2 do caminho dos magos, se este soldado é o mago escolhido.
@@ -573,10 +574,30 @@ func _nivel_mago() -> int:
 	return game.bonus_mago(team, stats.id) if game and stats else 0
 
 
+## Aliados vivos colados em quem carrega a máscara (até escolta_max).
+func escolta() -> int:
+	if carried_princess == null or game == null:
+		return 0
+	var n := 0
+	var r2 := Config.cfg.escolta_raio * Config.cfg.escolta_raio
+	for o in game.units:
+		if o != self and o.alive and o.team == team and o.global_position.distance_squared_to(global_position) <= r2:
+			n += 1
+	return mini(n, Config.cfg.escolta_max)
+
+
+## Fração de velocidade que a escolta dá a quem carrega: o primeiro aliado
+## vale escolta_vel, cada um a mais soma escolta_vel_extra (Ciclo 2.25).
+func escolta_bonus() -> float:
+	var n := escolta()
+	return 0.0 if n == 0 else Config.cfg.escolta_vel + Config.cfg.escolta_vel_extra * (n - 1)
+
+
 func current_speed() -> float:
 	var s := stats.move_speed
 	if carried_princess:
-		s *= stats.carry_speed_mult * (1.0 - carried_princess.fatness * Config.cfg.fat_slowdown)
+		var cfg := Config.cfg
+		s *= minf(stats.carry_speed_mult + cfg.carregar_bonus, 1.0) * (1.0 - carried_princess.fatness * cfg.fat_slowdown)
 	if lenhador():
 		# Cada casinha erguida pelo time deixa a linha do Construtor mais rápida.
 		s *= 1.0 + Config.cfg.construtor_vel_por_oficina * game.oficinas_prontas(team)
@@ -596,8 +617,11 @@ func current_speed() -> float:
 		s *= Config.cfg.ciranda_vel_mult
 	if _tiro_lento_t > 0.0:
 		s *= Config.cfg.atirador_lento_mult
-	if game and _em_escolta():
-		s *= 1.0 + Config.cfg.escolta_vel
+	if game:
+		if carried_princess:
+			s *= 1.0 + escolta_bonus()
+		elif _em_escolta():
+			s *= 1.0 + Config.cfg.escolta_vel
 	return s
 
 
@@ -613,12 +637,9 @@ func mult_costas(other: Unit, to: Vector3) -> float:
 ## Escolta: carregando a máscara com um aliado perto, ou perto do aliado que
 ## carrega. Junta o time em volta do carregador (o ponto vem de grupo).
 func _em_escolta() -> bool:
-	var r2 := Config.cfg.escolta_raio * Config.cfg.escolta_raio
 	if carried_princess:
-		for u in game.units:
-			if u != self and u.alive and u.team == team and u.global_position.distance_squared_to(global_position) < r2:
-				return true
-		return false
+		return escolta() > 0
+	var r2 := Config.cfg.escolta_raio * Config.cfg.escolta_raio
 	var p: Princess = game.princesses[1 - team] if game.princesses.size() == 2 else null
 	return p != null and p.carrier != null and p.carrier != self and p.carrier.team == team \
 			and p.carrier.global_position.distance_squared_to(global_position) < r2
@@ -639,6 +660,8 @@ func add_power(amount: float) -> void:
 	if amount <= 0.0 or _power_active_t > 0.0 or not alive:
 		return
 	var was_ready := power >= POWER_MAX
+	if stats.heroi:
+		amount /= maxf(Config.cfg.heroi_recarga_mult, 0.1)
 	power = minf(power + amount * (1.0 + Config.cfg.mago_bonus_chi * _nivel_mago()), POWER_MAX)
 	_power_idle = 0.0
 	if is_player and not was_ready and power >= POWER_MAX and stats.power != "nenhum":
@@ -1122,6 +1145,35 @@ func _assisted_dir(dir: Vector3, alvo: Unit) -> Vector3:
 	return dir.rotated(Vector3.UP, ang * AIM_ASSIST_PULL).normalized()
 
 
+## Ciclo 2.25 (Julio: "algo que segue mais o inimigo mas pode errar ainda,
+## tipo um míssil teleguiado que faz curva torto e depois se desfaz"): a nota
+## do Komusō é lenta e fácil de desviar; agora curva devagar atrás do alvo,
+## balançando de lado, e some no fim do alcance. Dano por nota não muda.
+func _nota_teleguiada(p: Projectile, alvo: Unit) -> void:
+	p.torto = Config.cfg.nota_balanco
+	if alvo:
+		p.segue = alvo
+		p.vira = Config.cfg.nota_vira
+
+
+## Inimigo vivo mais alinhado com `dir`, dentro de `graus` e do alcance.
+func _alvo_no_cone(dir: Vector3, graus: float) -> Unit:
+	var best: Unit = null
+	var best_ang := deg_to_rad(graus * 0.5)
+	for o in game.units:
+		if not o.alive or o.team == team or o.em_voo:
+			continue
+		var to := o.global_position - global_position
+		to.y = 0
+		if to.length() > stats.attack_range * 1.2 or to.length() < 0.5:
+			continue
+		var ang := dir.angle_to(to.normalized())
+		if ang < best_ang:
+			best_ang = ang
+			best = o
+	return best
+
+
 ## Projéteis que voam retos (sem parábola).
 const RETOS := ["shuriken", "vento", "nota", "talisma", "grou"]
 
@@ -1139,6 +1191,8 @@ func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZE
 		dir = to.normalized() if (clicado and to.length() > 0.2) else _assisted_dir(dir, mirado)
 	var p := game.spawn_projectile(self, global_position + Vector3(0, 1.4, 0) + dir * 0.9, dir, stats.projetil)
 	p.damage *= dmg_mult
+	if stats.projetil == "nota":
+		_nota_teleguiada(p, mirado if mirado else _alvo_no_cone(dir, Config.cfg.nota_cone))
 	_tiro_lento_t = Config.cfg.atirador_lento_t
 	p.velocity *= speed_mult
 	var dist := clampf(to.length(), 6.0 if stats.projetil != "bomba" else 3.0, stats.attack_range * 1.4 * speed_mult)
@@ -1182,6 +1236,8 @@ func damage_mult() -> float:
 		m *= Config.cfg.pickup_damage_mult
 	if _dohyo_t > 0.0 and global_position.distance_to(_dohyo_pos) <= Config.cfg.dohyo_raio:
 		m *= 1.0 + Config.cfg.dohyo_dano
+	if stats.heroi:
+		m *= Config.cfg.heroi_dano_mult
 	return m * (1.0 + Config.cfg.mago_bonus_dano * _nivel_mago())
 
 
@@ -1252,6 +1308,8 @@ func tem_rapida() -> bool:
 
 func quick_cooldown() -> float:
 	var m := Config.cfg.rapida_cooldown_mult
+	if stats.heroi:
+		m *= Config.cfg.heroi_recarga_mult
 	if game and game.sandbox:
 		m *= Config.cfg.sandbox_q_mult  # modo teste: Q toda hora
 	match stats.skill:
