@@ -134,7 +134,7 @@ func _ready() -> void:
 	_multi.label_settings.shadow_offset = Vector2.ZERO
 	_multi.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	_multi.custom_minimum_size = Vector2(800, 70)
-	_multi.position = Vector2(-400, 236)
+	_multi.position = Vector2(-400, 250)
 	_multi.pivot_offset = Vector2(400, 35)
 	_multi.modulate.a = 0.0
 	_multi.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -142,7 +142,7 @@ func _ready() -> void:
 	_multi_pts = Estilo.aviso("", 26, Estilo.TEXTO)
 	_multi_pts.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	_multi_pts.custom_minimum_size = Vector2(400, 34)
-	_multi_pts.position = Vector2(-200, 302)
+	_multi_pts.position = Vector2(-200, 316)
 	_multi_pts.modulate.a = 0.0
 	_multi_pts.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_multi_pts)

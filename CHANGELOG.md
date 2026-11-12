@@ -45,7 +45,15 @@ números); o alvo escolhido foi ~4 pontos somados por partida.
   devagar atrás do alvo, balançando, e some no fim do alcance; dá para desviar).
 - **Placar do fim/Tab** encolhe para caber na janela (a borda cortava a última
   coluna).
-- **Medido depois** (bots, 15 min): @@MEDIDO@@
+- **Medido depois** (10 partidas de bots, 15 min): **nenhum empate** (antes quase
+  todas). 2 foram para a morte súbita e saíram pelos pontos do placar; 3 acabaram
+  em 3 × 1 lá pelos 9-12 min; as outras no relógio com alguém na frente. Média de
+  2,3 pontos somados (o alvo era ~4; a variação entre partidas é grande, de 0 a 4).
+  A máscara carregada vive ~7 s em média (antes 8) e a devolvida leva 4-5 s
+  (antes 1-2). Sonda dos heróis (dano por minuto vivo): Komusō 105 → 214, Mujina
+  219 → 273, Karasu 119 → 140 (abates/min 0,48 → 0,99), Tennin cura 162 → 256,
+  Yamabushi 268 → 302; Kappa 422 e Onmyoji 362 no topo. Do pior ao melhor caiu de
+  ~3,8× para ~3×.
 - **Modo teste**: perto de uma máscara, **M** chama a morte súbita e **N** mostra
   o letreiro do multikill (duplo, triplo, multi). O resto (escolta, seta, peso,
   heróis, obra) já vale lá.
