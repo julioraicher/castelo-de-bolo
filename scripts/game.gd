@@ -249,6 +249,12 @@ func _ready() -> void:
 			sandbox_pedido = true
 		if busca.contains("time=vermelho"):
 			time_pedido = Config.TEAM_RED
+	online = Rede.em_partida
+	if online:
+		semente = int(Rede.sala.semente)
+		lockstep = true
+		sandbox_pedido = false
+		time_pedido = int(Rede.eu().get("time", 0))
 	sandbox = sandbox_pedido
 	time_jogador = time_pedido
 	Sorte.semear(semente)
@@ -310,8 +316,15 @@ func _ready() -> void:
 	placar = Placar.new(cfg)
 	reanimar = Reanimar.new(self)
 	for team in 2:
+		humanos_time[team] = Rede.humanos_no_time(team) if online else (1 if team == time_jogador else 0)
+	var bots_no_time := [0, 0]
+	for team in 2:
 		for i in cfg.units_per_team:
-			var is_player := team == time_jogador and i == 0
+			var peer := Rede.peer_na_vaga(team, i) if online else -1
+			if online and peer >= 0:
+				_spawn_humano_online(team, i, peer, cfg)
+				continue
+			var is_player := team == time_jogador and i == 0 and not online
 			if sandbox and not is_player:
 				continue  # modo teste: sem bots
 			var u := Unit.new()
@@ -342,11 +355,21 @@ func _ready() -> void:
 				var bot := BotBrain.new()
 				bot.unit = u
 				bot.game = self
-				bot.role = BOT_ROLES[i % BOT_ROLES.size()]
+				# Online (Ciclo 2.28): os papéis vão para os bots que sobraram, na
+				# ordem; assim todo time mantém ataque, defesa e quem busca bolo.
+				bot.role = BOT_ROLES[(bots_no_time[team] if online else i) % BOT_ROLES.size()]
+				bots_no_time[team] += 1
 				u.add_child(bot)
 				u.brain = bot
 			units.append(u)
 
+	if online:
+		player_brain = PlayerBrain.new()
+		player_brain.unit = player
+		player_brain.game = self
+		add_child(player_brain)
+		Rede.iniciar_partida(self)
+		print("REDE partida: %d humanos, atraso %d quadros, eu = %d" % [Rede.jogadores().size(), Rede.atraso, Rede.id()])
 	camera = CameraRig.new()
 	add_child(camera)
 	camera.target = player
@@ -451,6 +474,21 @@ func _prints_tutorial(menus: Menus) -> void:
 			await get_tree().process_frame
 		get_viewport().get_texture().get_image().save_jpg("%s/menu_%d_%s.jpg" % [_tutorial_dir, n, secao], 0.85)
 		n += 1
+	# Com amigos: a entrada e uma sala cheia (amigos de mentira, só para o print).
+	menus._mostrar("amigos")
+	for f in 20:
+		await get_tree().process_frame
+	get_viewport().get_texture().get_image().save_jpg("%s/amigos_entrada.jpg" % _tutorial_dir, 0.85)
+	if Rede.hospedar("Julio", false):
+		for i in 4:
+			Rede._adicionar(100 + i, ["Pedro", "Ana", "Lucas", "Bia"][i])
+		Rede.jogadores()[100].pronto = true
+		Rede.jogadores()[102].pronto = true
+		Rede.sala_mudou.emit()
+		for f in 20:
+			await get_tree().process_frame
+		get_viewport().get_texture().get_image().save_jpg("%s/amigos_sala.jpg" % _tutorial_dir, 0.85)
+		Rede.sair()
 	# Uma ficha por classe (barras, textos e quadros de cada uma).
 	menus._mostrar("classes")
 	for s in PaginaClasses.lista():
@@ -665,6 +703,13 @@ func perigo(pos: Vector3, raio: float, dur: float, time: int) -> void:
 
 
 var _sinc := false
+## Partida online (Ciclo 2.28): Rede.em_partida na hora de montar.
+var online := false
+## Quantos humanos em cada time (regras: dificuldade, bots que esperam o herói).
+var humanos_time := [0, 0]
+## Online: id de rede -> RedeBrain do humano (o cérebro troca de boneco ao
+## trocar de time, então o mapa é pelo cérebro, não pelo boneco).
+var cerebros := {}
 ## Partida em lockstep (online ou --sinc): nada que dependa do relógio de
 ## parede ou do ritmo de quadros pode mexer nas regras (câmera lenta desligada).
 var lockstep := false
@@ -674,12 +719,9 @@ func _physics_process(delta: float) -> void:
 	_time += delta
 	_tick += 1
 	Sorte.tick = _tick
-	if _sinc:
-		var h := 0
-		for u in units:
-			h = hash([h, u.global_position, u.hp, u.alive])
-			print("U %d %s %s %s %s %s" % [_tick, u.name, var_to_str(u.global_position), u.hp, u.stats.id, u.power])
-		print("SINC %d %d %d" % [_tick, h, hash([score, madeira])])
+	if _sinc and (_tick - 1) % 60 == 0:
+		# Estado depois do quadro anterior (o mesmo instante que a Rede compara).
+		print("SINC %d %d" % [_tick - 1, hash_estado()])
 	if _perf:
 		for k in perf_secoes:
 			_perf_acc["us_" + k] = _perf_acc.get("us_" + k, 0.0) + perf_secoes[k]
@@ -705,7 +747,7 @@ func _physics_process(delta: float) -> void:
 		_pisca()
 	if _vitrine_dir != "" and _time >= 1.0:
 		_vitrine()
-	if Input.is_action_just_pressed("restart"):
+	if Input.is_action_just_pressed("restart") and not online:
 		get_tree().reload_current_scene()
 		return
 	if game_over:
@@ -1061,22 +1103,22 @@ func _take_shot() -> void:
 func _rules() -> void:
 	var hint := ""
 	# Jogador na mão da catapulta: F lança (o corpo é da catapulta até cair).
-	if player and player.em_voo and player_brain != null and player_brain.interact_pressed:
-		for cat in catapultas:
-			if cat.passageiro == player:
-				cat.lancar()
+	for cat in catapultas:
+		var pas: Unit = cat.passageiro
+		if pas and is_instance_valid(pas) and pas.em_voo and pas.humano and pas.wants_interact:
+			cat.lancar()
 	for u in units:
 		if not u.alive or u.em_voo:
 			continue
 		var pos := u.global_position
-		var wants_interact := u.is_player and player_brain != null and player_brain.interact_pressed \
-				and not reanimar.segura_f(u)
+		var wants_interact := u.humano and u.wants_interact and not reanimar.segura_f(u)
 
 		# Catapulta do time: o jogador sobe com F; o bot que a reservou sobe e lança.
 		var cat := catapulta_do_time(u.team)
 		if cat and cat.pronta() and not u.carried_princess and pos.distance_to(cat.global_position) < Catapulta.ALCANCE_EMBARQUE:
-			if u.is_player and not (u.brain is BotBrain):
-				hint = "[F] subir na catapulta"
+			if u.humano and not (u.brain is BotBrain):
+				if u.is_player:
+					hint = "[F] subir na catapulta"
 				if wants_interact:
 					cat.embarcar(u)
 					continue
@@ -1102,7 +1144,7 @@ func _rules() -> void:
 		if not u.carried_princess and enemy_p.can_be_taken() and pos.distance_to(enemy_p.global_position) < 2.8:
 			if u.is_player:
 				hint = "[F] pegar a máscara!"
-			if not u.is_player or wants_interact:
+			if not u.humano or wants_interact:
 				u.pick_up_princess(enemy_p)
 				placar.somar(u, "roubos")
 				u.has_cake = false
@@ -1270,7 +1312,7 @@ func _dica_casa() -> String:
 	var pos := player.global_position
 	var construtor := player.lenhador()
 	var precisa := "fique aqui para construir" if construtor else "precisa de um Construtor"
-	var aperta := player_brain != null and player_brain.interact_pressed
+	var aperta := player.wants_interact and (player_brain != null)
 	var aberta := hud.escolha_aberta() if hud else null
 	for of in oficinas:
 		if of.team != player.team or pos.distance_to(of.global_position) > Oficina.RAIO + 0.5:
@@ -1336,8 +1378,12 @@ func _dica_casa() -> String:
 	return ""
 
 
-## Painel da escolha: o jogador clicou num caminho.
+## Painel da escolha: o jogador clicou num caminho. Online, o clique vira
+## ação no próximo comando (vale em todos os PCs no mesmo quadro).
 func _confirmar_escolha(i: int, of: Oficina) -> void:
+	if online:
+		Rede.pedir_acao(Comando.Acao.CAMINHO, oficinas.find(of), i)
+		return
 	if not is_instance_valid(of) or not of.pede_escolha():
 		return
 	if not of.escolher(i):
@@ -1346,6 +1392,9 @@ func _confirmar_escolha(i: int, of: Oficina) -> void:
 
 ## Painel dos heróis (Nv6): o jogador clicou num herói.
 func _confirmar_heroi(i: int, of: Oficina) -> void:
+	if online:
+		Rede.pedir_acao(Comando.Acao.HEROI, oficinas.find(of), i)
+		return
 	if not is_instance_valid(of) or not of.pede_heroi():
 		return
 	if not of.escolher_heroi(i):
@@ -1410,12 +1459,23 @@ func encerrar(time_vencedor: int) -> void:
 	var mine := player != null and time_vencedor == player.team
 	if placar_tela:
 		placar_tela.fim(mine, time_vencedor < 0)
+	if online and hud:
+		hud.dica_rede(dica_fim())
 	Sfx.play_ui("score" if time_vencedor < 0 else ("win" if mine else "lose"))
 	for other in units:
 		if other.alive and other.team == time_vencedor:
 			other.play_cheer()
 		other.move_intent = Vector3.ZERO
 		other.set_physics_process(false)
+
+
+## Online, depois do fim: como voltar para a sala (revanche).
+func dica_fim() -> String:
+	if not online or not game_over:
+		return ""
+	if Rede.anfitriao:
+		return "Revanche: Esc → Voltar à sala (todos)"
+	return "Esperando o anfitrião voltar para a sala (Esc → Sair da partida)"
 
 
 ## Segundos que faltam no relógio (INF = partida sem relógio).
@@ -2023,7 +2083,7 @@ func on_heroi_vestido(u: Unit, cls: ClassStats) -> void:
 
 ## Bots esperam o jogador pegar o chapéu do herói nos primeiros s no altar.
 func heroi_reservado(pad: HatPad, quem: Unit) -> bool:
-	return pad.raro and quem != null and not quem.is_player and player != null and player.team == pad.team \
+	return pad.raro and quem != null and not quem.humano and time_tem_humano(pad.team) \
 			and not _autoplay and pad._livre_t < Config.cfg.heroi_espera_jogador
 
 
@@ -2309,3 +2369,166 @@ func _on_princess_changed(p: Princess) -> void:
 			Sfx.play_ui("alarm")
 		elif p.carrier != player:
 			hud.show_big("Um aliado pegou a máscara inimiga!", Color(0.6, 0.85, 1.0), 1.6)
+
+
+
+# --- Multiplayer (Ciclo 2.28) -----------------------------------------------------
+
+func time_tem_humano(team: int) -> bool:
+	return humanos_time[team] > 0
+
+
+## Resumo do estado para conferir que os PCs estão iguais (lockstep).
+func hash_estado() -> int:
+	var h := hash([score, madeira, Sorte.rng.state, units.size()])
+	for u in units:
+		h = hash([h, u.global_position, u.hp, u.alive, u.power, u.team])
+	return h
+
+
+func _spawn_humano_online(team: int, i: int, peer: int, cfg: GameConfig) -> void:
+	var meu := peer == Rede.id()
+	var nome := str(Rede.jogadores()[peer].nome)
+	var u := Unit.new()
+	u.name = "%s_%d" % [Config.TEAM_NAMES[team], i]
+	add_child(u)
+	u.setup(self, team, meu, cfg.villager)
+	u.humano = true
+	u.global_position = arena.random_spawn(team, units)
+	u.reset_physics_interpolation()
+	u.died.connect(_on_unit_died)
+	placar.registrar(u, team, i, meu)
+	placar.renomear(u, "Você" if meu else nome, meu)
+	var rb := RedeBrain.new()
+	rb.unit = u
+	rb.game = self
+	rb.peer = peer
+	rb.nome = nome
+	u.add_child(rb)
+	u.brain = rb
+	cerebros[peer] = rb
+	if meu:
+		player = u
+		u.class_changed.connect(_on_player_class_changed)
+	else:
+		u.set_nome_tag(nome)
+	units.append(u)
+
+
+## A Rede entrega o comando do quadro de cada humano (todos os PCs, mesma ordem).
+func comando_humano(peer: int, c: Comando) -> void:
+	var rb: RedeBrain = cerebros.get(peer)
+	if rb == null or not is_instance_valid(rb):
+		return
+	rb.receber(c)
+	var u := rb.unit
+	# F e segurar F valem mesmo caído ou no voo (o cérebro não roda nesses quadros).
+	u.wants_interact = c.tem(Comando.INTERAGE)
+	u.wants_reanimar = c.tem(Comando.SEGURA_F)
+	match c.acao:
+		Comando.Acao.CAMINHO, Comando.Acao.HEROI:
+			_acao_painel(u, c)
+		Comando.Acao.TROCAR_TIME:
+			trocar_time(rb)
+
+
+func _acao_painel(u: Unit, c: Comando) -> void:
+	if c.acao_a >= oficinas.size():
+		return
+	var of := oficinas[c.acao_a]
+	if of.team != u.team or not u.alive or not u.lenhador() \
+			or u.global_position.distance_to(of.global_position) > Oficina.RAIO + 1.5:
+		return
+	var ok := true
+	if c.acao == Comando.Acao.CAMINHO and of.pede_escolha():
+		ok = of.escolher(c.acao_b)
+	elif c.acao == Comando.Acao.HEROI and of.pede_heroi():
+		ok = of.escolher_heroi(c.acao_b)
+	if not ok and u == player:
+		hud.show_big("Falta madeira no depósito", Color(1, 0.6, 0.55), 1.4)
+	if u == player and hud.escolha_aberta() == of:
+		hud.fechar_escolha()
+
+
+## Trocar de time no meio da partida (pedido do Julio): o humano assume um bot
+## do outro lado e o boneco antigo vira bot. Sempre 8 contra 8.
+func trocar_time(rb: RedeBrain) -> void:
+	var velho := rb.unit
+	var novo: Unit = null
+	for u in units:  # o primeiro bot do outro time, de pé de preferência
+		if u.team != velho.team and not u.humano and u.brain is BotBrain:
+			if novo == null or (u.alive and not novo.alive):
+				novo = u
+	if novo == null:
+		return
+	var role: int = (novo.brain as BotBrain).role
+	# Boneco antigo: vira bot com o papel que o outro tinha.
+	velho.humano = false
+	velho.remove_child(rb)
+	var bot := BotBrain.new()
+	bot.unit = velho
+	bot.game = self
+	bot.role = role
+	velho.add_child(bot)
+	velho.brain = bot
+	velho.set_nome_tag("")
+	placar.renomear(velho, "", false)
+	# Boneco novo: recebe o cérebro de rede.
+	var antigo := novo.brain
+	novo.remove_child(antigo)
+	antigo.queue_free()
+	novo.humano = true
+	rb.unit = novo
+	novo.add_child(rb)
+	novo.brain = rb
+	humanos_time[velho.team] -= 1
+	humanos_time[novo.team] += 1
+	var meu := rb.peer == Rede.id()
+	placar.renomear(novo, "Você" if meu else rb.nome, meu)
+	_log("troca de time: %s %s -> %s" % [rb.nome, velho.name, novo.name])
+	if meu:
+		if velho.class_changed.is_connected(_on_player_class_changed):
+			velho.class_changed.disconnect(_on_player_class_changed)
+		velho.set_jogador_local(false)
+		novo.set_jogador_local(true)
+		novo.class_changed.connect(_on_player_class_changed)
+		player = novo
+		player_brain.unit = novo
+		time_jogador = novo.team
+		camera.target = novo
+		camera.snap()
+		if hud:
+			hud.fechar_escolha()
+			hud.show_big("Agora você é do time %s!" % Config.TEAM_NAMES[novo.team], Config.team_color(novo.team).lightened(0.4), 2.0)
+	else:
+		novo.set_nome_tag(rb.nome)
+		if hud:
+			hud.show_big("%s foi para o time %s" % [rb.nome, Config.TEAM_NAMES[novo.team]], Config.team_color(novo.team).lightened(0.4), 1.6)
+
+
+## Alguém caiu da partida: o boneco dele vira bot (no mesmo quadro em todos).
+func humano_saiu(peer: int) -> void:
+	var rb: RedeBrain = cerebros.get(peer)
+	if rb == null or not is_instance_valid(rb):
+		return
+	cerebros.erase(peer)
+	var u := rb.unit
+	u.humano = false
+	u.remove_child(rb)
+	rb.queue_free()
+	var bot := BotBrain.new()
+	bot.unit = u
+	bot.game = self
+	bot.role = BotBrain.Role.ATTACK
+	u.add_child(bot)
+	u.brain = bot
+	u.set_nome_tag("")
+	humanos_time[u.team] -= 1
+	placar.renomear(u, "", false)
+	if hud:
+		hud.show_big("%s saiu; um bot assumiu" % rb.nome, Color(1, 0.8, 0.5), 2.0)
+
+
+## O mouse está num painel (escolha do caminho): o clique não é golpe.
+func hud_bloqueia_mouse() -> bool:
+	return false

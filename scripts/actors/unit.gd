@@ -35,6 +35,10 @@ const LOOPING_ANIMS := ["Idle", "Running_A", "Running_B", "Walking_A", "Walking_
 var game: Game
 var team := 0
 var is_player := false
+## Controlado por uma pessoa (Ciclo 2.28): o jogador local E, na partida
+## online, os amigos. Regras usam humano; o que é só da sua tela (HUD,
+## câmera, números) usa is_player. Fora do online, humano == is_player.
+var humano := false
 var brain: Node
 
 var stats: ClassStats
@@ -60,6 +64,8 @@ var wants_super := false  # R: super (barra dourada cheia)
 var wants_dodge := false
 ## [F] segurado: reanimar o aliado caído colado (Reanimar, Ciclo 2.18).
 var wants_reanimar := false
+## F apertado neste quadro (pegar máscara/chapéu, catapulta, painel).
+var wants_interact := false
 
 # Reanimar (estado; a regra mora em Reanimar).
 var reanimar_prog := 0.0     # caído: 0..1 do anel de reanimação (fica guardado)
@@ -240,6 +246,7 @@ func setup(p_game: Game, p_team: int, p_is_player: bool, start_class: ClassStats
 	game = p_game
 	team = p_team
 	is_player = p_is_player
+	humano = p_is_player
 	collision_layer = Config.LAYER_UNITS
 	collision_mask = Config.LAYER_WORLD | Config.LAYER_PASSAGEM
 	var shape := CollisionShape3D.new()
@@ -883,7 +890,7 @@ func _face(delta: float) -> void:
 	elif reanimando and is_instance_valid(reanimando):
 		look = reanimando.global_position - global_position
 		look.y = 0.0
-	elif is_player or _anim_lock > 0.0 or _attack_t > 0.0 or _blocking or _charge_t > 0.0 or wants_attack:
+	elif humano or _anim_lock > 0.0 or _attack_t > 0.0 or _blocking or _charge_t > 0.0 or wants_attack:
 		look = aim_dir
 	elif move_intent.length() > 0.1:
 		look = move_intent
@@ -1029,7 +1036,7 @@ func _attack() -> void:
 		_combo_t = _attack_cd + COMBO_WINDOW
 	_attack_t = minf(_attack_cd, 0.45)
 	_play_upper(anim, 1.35)
-	if _cego_t > 0.0 and not is_player:
+	if _cego_t > 0.0 and not humano:
 		aim_dir = aim_dir.rotated(Vector3.UP, deg_to_rad(Sorte.r(-35.0, 35.0)))
 	if _disfarce_t > 0.0:
 		mult *= Config.cfg.mujina_golpe_mult  # golpe saindo do rosto roubado
@@ -1203,7 +1210,7 @@ const AIM_ASSIST_DEG := 7.0
 const AIM_ASSIST_PULL := 0.6
 
 func _aim_assist(dir: Vector3) -> Unit:
-	if not is_player:
+	if not humano:
 		return null
 	var best: Unit = null
 	var best_ang := deg_to_rad(AIM_ASSIST_DEG)
@@ -1301,7 +1308,7 @@ func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZE
 
 ## O inimigo clicado, se ainda vale como alvo (vivo e dentro do alcance longo).
 func _mira_valida() -> Unit:
-	if not is_player or aim_unit == null or not is_instance_valid(aim_unit) or not aim_unit.alive:
+	if not humano or aim_unit == null or not is_instance_valid(aim_unit) or not aim_unit.alive:
 		return null
 	var to := aim_unit.global_position - global_position
 	to.y = 0
@@ -1757,7 +1764,7 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		return  # boneco de papel engoliu o golpe
 	if stats.knock_imune:
 		knock_mult = 0.0
-	if attacker and attacker.team != game.time_jogador:
+	if attacker and not attacker.humano and not game.time_tem_humano(attacker.team):
 		amount *= Settings.bot_damage_mult()
 	if carried_princess:
 		amount *= Config.cfg.carrier_damage_mult
@@ -3004,3 +3011,46 @@ func _build_player_marker() -> void:
 	var tw := _player_marker.create_tween().set_loops()
 	tw.tween_property(_player_marker, "position:y", 3.6, 0.5).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(_player_marker, "position:y", 3.35, 0.5).set_trans(Tween.TRANS_SINE)
+
+
+# --- Multiplayer (Ciclo 2.28) -----------------------------------------------------
+
+var _nome_tag: Label3D
+
+## Nome do amigo em cima da cabeça (vazio = tira). Letreiro do mundo na cor
+## do time, com contorno de tinta, acima da barra de vida; atravessa parede
+## (no_depth_test) para achar o amigo atrás do telhado.
+func set_nome_tag(nome: String) -> void:
+	if nome == "":
+		if _nome_tag:
+			_nome_tag.queue_free()
+			_nome_tag = null
+		return
+	if _nome_tag == null:
+		_nome_tag = Label3D.new()
+		_nome_tag.font = Estilo.LETREIRO
+		_nome_tag.font_size = 40
+		_nome_tag.outline_size = 14
+		_nome_tag.pixel_size = 0.0065
+		_nome_tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_nome_tag.no_depth_test = true
+		_nome_tag.render_priority = 2
+		_nome_tag.outline_modulate = Color(0.05, 0.04, 0.08, 0.92)
+		_nome_tag.position = Vector3(0, 3.2, 0)
+		add_child(_nome_tag)
+	_nome_tag.text = nome
+	_nome_tag.modulate = Config.team_color(team).lightened(0.45)
+
+
+## Este boneco passou a ser (ou deixou de ser) o seu: anel dourado e a setinha.
+func set_jogador_local(b: bool) -> void:
+	is_player = b
+	if _ring:
+		_ring.queue_free()
+		_ring = null
+	_build_team_ring()
+	if b and _player_marker == null:
+		_build_player_marker()
+	elif not b and _player_marker:
+		_player_marker.queue_free()
+		_player_marker = null

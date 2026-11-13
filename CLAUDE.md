@@ -37,6 +37,9 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3
   --rendering-method gl_compatibility --audio-driver Dummy -- --autoplay --sandbox --pisca=DIR
 # Sons: trocar/ouvir/gerar efeitos = skill .claude/skills/efeitos-sonoros (tools/sons/)
 # Equilíbrio por classe (8 partidas, mortes/abates por classe): tools/sonda_equilibrio.sh
+# Multiplayer: mesma semente em 60 x 23 FPS tem de dar o mesmo SINC; e rede real local
+tools/teste_sincronia.sh 90 7      # [segundos] [semente] [godot] [--variacoes ...]
+tools/teste_rede.sh 5000           # anfitrião + amigo (127.0.0.1), compara SINC
 # Exportar só os dados, sem templates, e inspecionar como no jogo publicado:
 godot --headless --path . --export-pack "Linux" x.pck
 godot --headless --main-pack x.pck -s diag.gd
@@ -67,6 +70,13 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
 - UI feita por código: `scripts/ui/hud.gd`, `scripts/ui/menus.gd` (navegação lateral:
   Começo, Como jogar = `tutorial.gd`, Classes = `pagina_classes.gd`, Controles,
   Configurações). Clipes dos menus: `tools/clipes_tutorial.sh` (cenas em `clipe_cenas.gd`).
+- **Multiplayer (Ciclo 2.28)**: lockstep determinístico. Autoload `Rede`
+  (`scripts/rede/rede.gd`: sala, ENet, UPnP, lista LAN, quadros, resumo a cada
+  120 quadros); `Comando` (17 bytes de intenção) → `RedeBrain` no boneco do
+  amigo; o humano local amostra com `PlayerBrain.amostrar` e também espera o
+  quadro. Lobby = `scripts/ui/lobby.gd`. `Unit.humano` (regra: humano ou não)
+  ≠ `is_player`/`game.player` (só o deste PC: câmera, HUD, som). Bots usam
+  `game.time_tem_humano(t)`, nunca `time_jogador`, para regras de time.
 
 ## Armadilhas já pagas (não repetir)
 
@@ -84,6 +94,13 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
 - Interpolação de física está ligada: teleporte chama `reset_physics_interpolation()`;
   nós animados em `_process`/tween usam `PHYSICS_INTERPOLATION_MODE_OFF`.
 - Música: loop vem do `.import` (`loop_mode=2`); canais em `default_bus_layout.tres`.
+- **Determinismo (multiplayer)**: toda regra roda igual em qualquer PC/FPS.
+  Sorteio de regra = `Sorte.f()/r()/i()` (nunca `randf`/`pick_random`/`shuffle`
+  global; esses só no visual); tempo de regra = `Sorte.ms()`/`tempo_partida`
+  (nunca `Time.get_ticks_*`); tween/timer que muda regra roda na física
+  (`create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)`,
+  `create_timer(t, false, true)`); regra não lê transform de nó visual; nada de
+  regra em `_process`. Conferir com `tools/teste_sincronia.sh` (está no CI).
 - Inferência `:=` falha com valores sem tipo (ex.: `surface_get_format`): tipar.
 - Script de diagnóstico `-s`: não citar `Unit`/classes do jogo nem autoloads
   (`Config`) por nome: compila antes dos autoloads e quebra o `Unit`. Use

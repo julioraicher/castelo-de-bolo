@@ -53,6 +53,7 @@ func _ready() -> void:
 	await _herois_2_27()
 	await _herois_2_27b()
 	_menos_empate()
+	_multiplayer()
 	_sons_proprios()
 	_relogio()  # por último: encerra a partida
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
@@ -2680,3 +2681,77 @@ func _sons_proprios() -> void:
 				_check(sfx.has(c.som_golpe_final), "%s: som_golpe_final '%s' não carregou" % [c.display_name, c.som_golpe_final])
 			if c != b:
 				_check(sfx.has(c.som_super), "%s: som_super '%s' não carregou" % [c.display_name, c.som_super])
+
+
+## Ciclo 2.28: multiplayer em lockstep (comando, código da sala, sorteio com
+## semente, trocar de time, quem sai vira bot).
+func _multiplayer() -> void:
+	var c = Comando.new()
+	c.botoes = Comando.ATAQUE | Comando.ESQUIVA | Comando.SEGURA_F
+	c.move = Vector2(0.7071, -0.7071)
+	c.mira = Vector2(-0.6, 0.8)
+	c.ponto = Vector3(-61.234, 1.5, 33.21)
+	c.alvo = 9
+	c.acao = Comando.Acao.TROCAR_TIME
+	var b: PackedByteArray = c.para_bytes()
+	var q = Comando.de_bytes(b)
+	_check(b.size() == 17, "rede: comando tem 17 bytes (tem %d)" % b.size())
+	_check(q.para_bytes() == b, "rede: comando ida e volta pelos bytes é idêntico")
+	_check(q.botoes == c.botoes and q.alvo == 9 and q.acao == Comando.Acao.TROCAR_TIME, "rede: botões, alvo e ação chegam iguais")
+	_check(q.ponto.distance_to(c.ponto) < 0.01 and q.move.distance_to(c.move) < 0.01 and q.mira.distance_to(c.mira) < 0.001, "rede: movimento e mira chegam com erro < 1 cm")
+
+	var cod: String = CodigoSala.gerar("189.45.201.7")
+	_check(cod.length() == 9 and cod[4] == "-", "rede: código da sala no formato XXXX-XXXX (%s)" % cod)
+	_check(CodigoSala.ler(cod, 24680).get("ip", "") == "189.45.201.7", "rede: o código volta para o IP")
+	_check(CodigoSala.ler(cod.to_lower().replace("-", " "), 24680).get("ip", "") == "189.45.201.7", "rede: código aceita minúscula e espaço")
+	_check(CodigoSala.ler("26.10.0.5:1234", 24680) == {"ip": "26.10.0.5", "porta": 1234}, "rede: aceita o IP do Radmin com porta")
+	var errado := cod.substr(0, 8) + ("0" if cod[8] != "0" else "1")
+	_check(CodigoSala.ler(errado, 24680).is_empty(), "rede: código com uma letra errada é recusado")
+	_check(CodigoSala.ip_privado("100.70.1.2") and CodigoSala.ip_privado("192.168.0.9") and not CodigoSala.ip_privado("189.45.201.7"), "rede: reconhece CGNAT e rede local")
+
+	var estado = Sorte.rng.state
+	Sorte.semear(42)
+	var s1 := [Sorte.f(), Sorte.i(), Sorte.r(-3, 3)]
+	Sorte.semear(42)
+	var s2 := [Sorte.f(), Sorte.i(), Sorte.r(-3, 3)]
+	Sorte.rng.state = estado
+	_check(s1 == s2, "rede: mesma semente, mesmo sorteio das regras")
+
+	# Um bot do azul vira "amigo" de mentira (peer 99) e troca de time.
+	var u = null
+	for x in game.units:
+		if x.team == 0 and not x.is_player and x.alive and x.brain is BotBrain:
+			u = x
+			break
+	if u == null:
+		_check(false, "rede: sem bot azul para o teste de trocar de time")
+		return
+	var h0: Array = game.humanos_time.duplicate()
+	var bot_velho = u.brain
+	u.remove_child(bot_velho)
+	bot_velho.queue_free()
+	var rb = RedeBrain.new()
+	rb.unit = u
+	rb.game = game
+	rb.peer = 99
+	rb.nome = "Teste"
+	u.add_child(rb)
+	u.brain = rb
+	u.humano = true
+	game.humanos_time[0] += 1
+	game.cerebros[99] = rb
+	var cmd = Comando.new()
+	cmd.move = Vector2(1, 0)
+	cmd.botoes = Comando.ESQUIVA
+	rb.receber(cmd)
+	rb.tick(0.016)
+	_check(u.wants_dodge and u.move_intent.x > 0.99, "rede: o cérebro de rede aplica o comando (dash e andar)")
+	game.trocar_time(rb)
+	var novo = rb.unit
+	_check(novo != u and novo.team == 1 and novo.humano and novo.brain == rb, "rede: trocar de time assume um bot do vermelho")
+	_check(not u.humano and u.brain is BotBrain, "rede: o boneco antigo vira bot")
+	_check(game.humanos_time[0] == h0[0] and game.humanos_time[1] == h0[1] + 1, "rede: contagem de humanos por time acompanha a troca")
+	_check(game.units.size() == 16 or game.sandbox, "rede: continua 8 contra 8 depois da troca")
+	game.humano_saiu(99)
+	_check(not novo.humano and novo.brain is BotBrain and not game.cerebros.has(99), "rede: quem sai vira bot")
+	_check(game.humanos_time == h0, "rede: humanos por time voltam ao normal")

@@ -53,6 +53,12 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 
 ## B — depois
 
+- **Multiplayer, próximos passos** (Ciclo 2.28, 2026-11-13): (1) **rollback**
+  (prever o próprio comando e corrigir depois, tira o atraso do dash online;
+  exige salvar/restaurar o estado inteiro, caro); (2) **retransmissão pela Steam**
+  (Steam Networking: conecta sem abrir porta nem Radmin, junto com o lançamento
+  na Steam); (3) anfitrião que cai passa a sala para outro em vez de acabar;
+  (4) entrar no meio de uma partida já começada.
 - **Assinaturas, próximos passos** (revisão do Ciclo 2.24, 2026-11-12): (1) o selo do R
   seguir o personagem enquanto o super dura, para todo mundo ver quem está em super;
   (2) o emblema (hanko) também ao lado das teclas Q/E/R no HUD e no placar do Tab;

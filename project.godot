@@ -16,6 +16,7 @@ config/icon="res://icon.svg"
 Config="*res://scripts/autoload/config.gd"
 Settings="*res://scripts/autoload/settings.gd"
 Sfx="*res://scripts/autoload/sfx.gd"
+Rede="*res://scripts/rede/rede.gd"
 
 [display]
 

@@ -867,3 +867,22 @@ func show_big(text: String, color := Color.WHITE, duration := 2.2) -> void:
 	_big_tween.tween_interval(duration)
 	_big_tween.tween_property(_big, "modulate:a", 0.0, 0.5)
 
+
+
+# --- Online (Ciclo 2.28) ----------------------------------------------------------
+
+var _rede_lbl: Label
+
+## Aviso fino no topo quando a partida segura esperando um amigo (vazio = some).
+func dica_rede(texto: String) -> void:
+	if _rede_lbl == null:
+		if texto == "":
+			return
+		_rede_lbl = Estilo.rotulo("", Estilo.T_MEDIO, Estilo.OURO_CLARO)
+		_rede_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_rede_lbl.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+		_rede_lbl.position.y = 96
+		_rede_lbl.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		add_child(_rede_lbl)
+	_rede_lbl.text = texto
+	_rede_lbl.visible = texto != ""
