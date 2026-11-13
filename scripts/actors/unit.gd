@@ -696,7 +696,15 @@ func _physics_process(delta: float) -> void:
 		return
 
 	if em_voo:
-		return  # a catapulta move o corpo (Catapulta._physics_process)
+		# A catapulta move o corpo (Catapulta._physics_process); as recargas
+		# seguem correndo no ar (antes congelavam os 2,4 s do voo).
+		_attack_cd = maxf(_attack_cd - delta, 0.0)
+		_heal_cd = maxf(_heal_cd - delta, 0.0)
+		_dodge_cd = maxf(_dodge_cd - delta, 0.0)
+		_quick_cd = maxf(_quick_cd - delta, 0.0)
+		_tick_power(delta)
+		_tick_guarda(delta)
+		return
 	_tick_rastro(delta)
 	_tick_guarda(delta)
 

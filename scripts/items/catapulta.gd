@@ -175,6 +175,9 @@ func _physics_process(delta: float) -> void:
 	if _game.game_over:
 		if passageiro:
 			desembarcar()
+		for v in _voo:  # quem estava no ar desce no ponto de queda, sem meteoro
+			_pousar_quieto(v)
+		_voo.clear()
 		return
 	if passageiro:
 		if not passageiro.alive:
@@ -216,6 +219,20 @@ func _physics_process(delta: float) -> void:
 				_aterrissar(u, v.p1, v.brilho)
 				_voo.remove_at(i)
 		i -= 1
+
+
+## Fim de jogo com alguém no ar: põe no chão sem dano nem efeito.
+func _pousar_quieto(v: Voo) -> void:
+	if is_instance_valid(v.brilho):
+		v.brilho.queue_free()
+	var u := v.unit
+	if not is_instance_valid(u):
+		return
+	u.em_voo = false
+	u.pose_voo(false)
+	u.global_position = v.p1
+	u.velocity = Vector3.ZERO
+	u.reset_physics_interpolation()
 
 
 ## Meteoro de Chi: pilar, rachaduras, tranco e dano + empurrão em volta.

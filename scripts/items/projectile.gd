@@ -182,7 +182,7 @@ func _physics_process(delta: float) -> void:
 				u.heal(cura, owner_unit)
 				FxProjetil.brilho(_game, u.global_position + Vector3(0, 1.2, 0), Color(0.6, 1.0, 0.7), 1.0, 0.25)
 	for u in _game.units:
-		if u.alive and u.team != owner_unit.team:
+		if u.alive and u.team != owner_unit.team and not u.em_voo:  # quem voa na catapulta: o tiro passa
 			# Cápsula do boneco (0,7 m de raio somando o projétil, dos pés até 2,1 m).
 			# Antes era uma esfera de 1,25 m no peito: um corredor de 2,5 m de
 			# largura, por isso flecha "na sorte" acertava tanto.

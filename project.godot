@@ -32,8 +32,6 @@ theme/custom_font="res://assets/fonts/Nunito-Black.ttf"
 
 3d_physics/layer_1="mundo"
 3d_physics/layer_2="unidades"
-3d_physics/layer_3="itens"
-3d_physics/layer_4="projeteis"
 
 [physics]
 

@@ -4,6 +4,23 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Revisão 2.26s (2026-11-13), Diretor de Jogabilidade: achados da revisão autorizados
+O Julio autorizou os achados que mudavam comportamento (lista em project-files
+`castelo-de-bolo/revisao/revisao-codigo-2026-11-13.md`).
+- **Torreta não mira quem voa na catapulta** (antes gastava a cadência de 1,2 s
+  num virote que não fazia nada); agora atira em quem está no chão.
+- **Projétil atravessa quem está no ar** da catapulta (antes sumia sem dano) e
+  segue até acertar alguém atrás.
+- **Recargas correm durante o voo** (2,4 s): ataque, esquiva, cura, Q, Chi e a
+  guarda. Antes tudo congelava no ar.
+- **Fim de jogo com alguém no ar**: ele desce no ponto de queda, sem meteoro
+  (antes ficava parado no céu até reiniciar).
+- Obra da oficina e da torreta usam a mesma regra (`Unit.lenhador()`); nada muda hoje.
+- Nomes das camadas de física sem uso ("itens", "projeteis") saíram do `project.godot`.
+- Testes de regra 750/750 e 5 min simulados sem erro (21 lançamentos de catapulta).
+- **O que testar**: no Modo teste, lance-se pela catapulta perto de uma torreta
+  inimiga (ela deve ignorar você no ar) e use a esquiva logo ao pousar (deve estar pronta).
+
 ## Revisão 2.26r (2026-11-13), Diretor de Jogabilidade: limpeza sem mudar o jogo
 Pedido do Julio: revisar, otimizar e tirar o que não serve antes do próximo lote
 de feedback. Nada muda na jogabilidade nem no visual.
