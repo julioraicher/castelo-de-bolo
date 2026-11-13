@@ -375,6 +375,171 @@ def magia():
                               noise(0.5, cutoff=lambda x: 0.2 * (1 - x) + 0.02, release_pow=1.6)), 0.7)
 
 
+def assinaturas_2():
+    """Assinatura sonora das classes que estavam no som genérico (auditoria
+    2026-11-12): 8 heróis raros, Armadilheiro, Yumi, Bombardeiro, Ronin Oni, Sohei e Kusarigama.
+    Cada uma ganha <id>_poder, <id>_super e <id>_final (ClassStats.som_*).
+    O som segue o elemento (sons/direcao-sonora.md). Semente própria.
+    Rode: gerar_sons.py assinaturas2"""
+    random.seed(212)
+
+    def save(name, track, gain=0.8):
+        k = len(track)
+        ini = int(k * 0.7)
+        globals()["save"](name, [v * (1.0 if i < ini else (1 - (i - ini) / (k - ini)) ** 2) for i, v in enumerate(track)], gain)
+
+    def super_de(poder, extra=()):
+        # Super = a assinatura do poder por cima de dois taikos e um gongo grave.
+        base = mix(ganho(membrana(58, 0.9), 1.1), atraso(ganho(membrana(52, 0.9), 0.8), 0.24),
+                   atraso(ganho(sino(98, 1.6, ((1.0, 1.0, 1.6), (2.1, 0.6, 2.3), (3.3, 0.4, 3.2))), 0.6), 0.3))
+        return mix(base, atraso(ganho(poder, 1.1), 0.12), *extra)
+
+    aco = lambda f, s: sino(f, s, ((1.0, 1.0, 9), (2.41, 0.6, 12), (3.9, 0.4, 16), (6.3, 0.2, 22)))
+    tin = lambda f: sino(f, 0.25, ((1.0, 1.0, 20), (2.4, 0.6, 28), (4.1, 0.3, 38)))
+    estalos = lambda sec, p=0.06: noise(sec, cutoff=lambda x: 0.9 if random.random() < p else 0.04, release_pow=1.2)
+    whoosh = lambda sec, pico=0.5: noise(sec, cutoff=lambda x: 0.04 + pico * math.sin(math.pi * x) ** 2, release_pow=1.0)
+
+    # Armadilheiro: catraca e mola de metal; a armadilha fecha com estalo seco.
+    catraca = mix(*(atraso(ganho(suave(sino(3200 + 150 * k, 0.05, ((1.0, 1.0, 60), (2.2, 0.5, 80))), 0.001), 0.5), k * 0.05) for k in range(8)))
+    mola = tone(lambda x: 240 + 160 * math.sin(40 * x) * (1 - x), 0.5, vib=0.0, release_pow=1.6)
+    p = mix(catraca, atraso(ganho(mola, 0.45), 0.38), atraso(ganho(aco(900, 0.6), 0.45), 0.4), atraso(estalos(0.4), 0.42))
+    save("armadilheiro_poder", p, 0.7)
+    save("armadilheiro_super", super_de(p, (atraso(ganho(catraca, 0.6), 0.6),)), 0.85)
+    save("armadilheiro_final", mix(noise(0.05, cutoff=lambda x: 0.95), ganho(aco(1200, 0.35), 0.6), ganho(membrana(160, 0.2, 0.2), 0.8)), 0.7)
+
+    # Yumi: corda de arco longa (grave) e a chuva de flechas assobiando.
+    corda = mix(pluck(98, 0.6, 0.994), ganho(pluck(147, 0.5, 0.993), 0.5), noise(0.03, cutoff=lambda x: 0.6))
+    flechas = mix(*(atraso(ganho(tone(lambda x, f=random.uniform(1700, 2600): f - 1100 * x, 0.35, release_pow=0.9), 0.25), random.uniform(0.25, 0.75)) for _ in range(9)))
+    p = mix(corda, flechas, atraso(estalos(0.5, 0.08), 0.7))
+    save("arqueiro_yumi_poder", p, 0.7)
+    save("arqueiro_yumi_super", super_de(p, (atraso(ganho(flechas, 0.8), 0.45),)), 0.85)
+    save("arqueiro_yumi_final", mix(corda, atraso(ganho(tin(2000), 0.35), 0.05)), 0.7)
+
+    # Bombardeiro: pavios chiando e estouros em cascata.
+    pavio = noise(0.45, cutoff=lambda x: 0.85 if random.random() < 0.35 else 0.2, release_pow=0.6)
+    estouro = lambda: mix(noise(0.03, cutoff=lambda x: 0.95), ganho(tone(lambda x: 110 - 70 * x, 0.35, release_pow=2.2), 1.2),
+                          noise(0.4, cutoff=lambda x: 0.15 * (1 - x) + 0.02, release_pow=1.8))
+    p = mix(ganho(pavio, 0.6), *(atraso(ganho(estouro(), 0.9 - 0.15 * k), 0.4 + 0.17 * k) for k in range(4)))
+    save("bombardeiro_poder", p, 0.8)
+    save("bombardeiro_super", super_de(p, (atraso(ganho(estouro(), 1.2), 1.1),)), 0.9)
+    save("bombardeiro_final", mix(ganho(noise(0.15, cutoff=lambda x: 0.8 if random.random() < 0.4 else 0.2), 0.5), atraso(estouro(), 0.12)), 0.75)
+
+    # Ronin Oni: rosnado grave (dente de serra com tremor) + ferro pesado.
+    def rosnado(sec, f0=70):
+        out, ph = [], 0.0
+        for i in range(n(sec)):
+            x = i / n(sec)
+            f = f0 * (1 + 0.25 * math.sin(math.pi * x)) * (1 + 0.06 * math.sin(2 * math.pi * 23 * i / SR))
+            ph += f / SR
+            out.append(((ph % 1.0) * 2 - 1) * min(1.0, x * 6) * (1 - x) ** 1.2)
+        return mix(ganho(noise(sec, cutoff=lambda x: 0.05, release_pow=1.2), 0.8), [v * 0.6 for v in out])
+    p = mix(rosnado(1.0), ganho(membrana(50, 0.8, 0.3), 1.4), atraso(ganho(aco(600, 0.7), 0.35), 0.15))
+    save("ronin_oni_poder", p, 0.8)
+    save("ronin_oni_super", super_de(p, (atraso(rosnado(1.3, 55), 0.4),)), 0.9)
+    save("ronin_oni_final", mix(ganho(membrana(62, 0.6, 0.4), 1.5), noise(0.12, cutoff=lambda x: 0.6 - 0.5 * x, release_pow=2.0), ganho(aco(800, 0.5), 0.4)), 0.85)
+
+    # Sumotori: pisão shiko que treme o chão + punhado de sal.
+    sal = noise(0.6, cutoff=lambda x: 0.95 if random.random() < 0.25 else 0.5, release_pow=1.5)
+    pisao = mix(ganho(membrana(38, 1.0, 0.5), 1.6), noise(0.9, cutoff=lambda x: 0.025, release_pow=1.3))
+    p = mix(ganho(sal, 0.25), atraso(pisao, 0.2))
+    save("sumotori_poder", p, 0.85)
+    save("sumotori_super", super_de(p, (atraso(ganho(pisao, 0.9), 0.75),)), 0.9)
+    save("sumotori_final", mix(noise(0.04, cutoff=lambda x: 0.9), ganho(membrana(90, 0.35, 0.3), 1.3)), 0.8)
+
+    # Kappa: jato d'água (chiado sustentado que borbulha) + respingo.
+    def bolhas(sec, k=10):
+        out = [0.0] * n(sec)
+        for _ in range(k):
+            t0, f0, d = n(random.uniform(0, sec * 0.8)), random.uniform(450, 1100), random.uniform(0.03, 0.07)
+            for j in range(n(d)):
+                tt = j / SR
+                if t0 + j < len(out):
+                    out[t0 + j] += 0.4 * math.sin(2 * math.pi * (f0 * tt + 3 * f0 * tt * tt)) * math.exp(-tt * 40)
+        return out
+    jato = noise(0.8, cutoff=lambda x: 0.45 + 0.2 * math.sin(30 * x), release_pow=0.7)
+    respingo = mix(noise(0.4, cutoff=lambda x: 0.6 * (1 - x) + 0.05, release_pow=1.6), bolhas(0.4, 6))
+    p = mix(ganho(jato, 0.6), bolhas(0.8, 12), atraso(respingo, 0.5))
+    save("kappa_poder", p, 0.7)
+    onda = noise(1.6, cutoff=lambda x: 0.02 + 0.15 * math.sin(math.pi * x), release_pow=0.8)
+    save("kappa_super", super_de(p, (onda, atraso(bolhas(1.2, 18), 0.3))), 0.85)
+    save("kappa_final", respingo, 0.7)
+
+    # Yamabushi: horagai (trompa de concha) + vento que gira.
+    def horagai(f0, sec):
+        out, ph = [], 0.0
+        for i in range(n(sec)):
+            x = i / n(sec)
+            ph += f0 * (1 + 0.04 * x) * (1 + 0.006 * math.sin(2 * math.pi * 5 * i / SR)) / SR
+            s = sum(math.sin(2 * math.pi * h * ph) / h * (1.5 if h in (3, 4) else 1.0) for h in range(1, 7))
+            out.append(s * min(1.0, x * 5) * (1 - x) ** 0.8)
+        return out
+    giro = noise(1.0, cutoff=lambda x: 0.08 + 0.3 * abs(math.sin(10 * x)), release_pow=1.0)
+    p = mix(ganho(horagai(147, 0.9), 0.4), giro)
+    save("yamabushi_poder", p, 0.7)
+    save("yamabushi_super", super_de(p, (atraso(ganho(horagai(110, 1.4), 0.5), 0.2), noise(1.6, cutoff=lambda x: 0.05 + 0.35 * abs(math.sin(14 * x)), release_pow=0.9))), 0.85)
+    save("yamabushi_final", whoosh(0.3, 0.7), 0.6)
+
+    # Karasu Tengu: bater de asas (rajadas de ar) + crocito grave.
+    asa = lambda: noise(0.12, cutoff=lambda x: 0.05 + 0.35 * math.sin(math.pi * x), release_pow=1.5)
+    asas = lambda k, passo=0.11: mix(*(atraso(ganho(asa(), random.uniform(0.6, 1.0)), j * passo + random.uniform(0, 0.03)) for j in range(k)))
+    crocito = mix(*(atraso(ganho(tone(lambda x: 520 - 120 * x, 0.18, square, 1.2), 0.15), t) for t in (0.0, 0.24)))
+    p = mix(asas(7), atraso(crocito, 0.25))
+    save("karasu_tengu_poder", p, 0.7)
+    save("karasu_tengu_super", super_de(p, (atraso(asas(14, 0.07), 0.3),)), 0.85)
+    save("karasu_tengu_final", mix(asa(), atraso(noise(0.1, cutoff=lambda x: 0.2 + 0.7 * x, release_pow=1.5), 0.05)), 0.65)
+
+    # Onmyoji de Papel: papel dobrando (estalinhos) + talismã + sininho.
+    papel = lambda sec: noise(sec, cutoff=lambda x: 0.95 if random.random() < 0.12 else 0.3, release_pow=1.4)
+    p = mix(ganho(papel(0.5), 0.5), atraso(whoosh(0.5, 0.35), 0.2), atraso(ganho(tigela(1046, 0.8), 0.35), 0.3))
+    save("onmyoji_poder", p, 0.65)
+    voo = mix(*(atraso(ganho(papel(0.25), 0.3), random.uniform(0, 1.1)) for _ in range(14)))
+    save("onmyoji_super", super_de(p, (voo, atraso(ganho(coro((261.6, 392), 1.3), 0.4), 0.3))), 0.85)
+    save("onmyoji_final", mix(noise(0.04, cutoff=lambda x: 0.8), atraso(ganho(tin(2600), 0.35), 0.02)), 0.6)
+
+    # Komusō: shakuhachi que oscila (hipnose) + tigela.
+    p = mix(ganho(sopro(440, 1.1, -0.06), 1.1), atraso(ganho(tigela(220, 1.4), 0.4), 0.2))
+    save("komuso_poder", p, 0.65)
+    save("komuso_super", super_de(p, (atraso(ganho(sopro(293.7, 1.6, -0.1), 0.9), 0.3), ganho(coro((110, 146.8), 1.8, ataque=0.5), 0.5))), 0.85)
+    save("komuso_final", ganho(sopro(587, 0.28, 0.08), 1.0), 0.55)
+
+    # Mujina: ar puxado ao contrário + estalo dissonante (o rosto liso assusta).
+    susto = mix(*(ganho(tone(f, 0.35, square, 2.0), 0.15) for f in (622, 659, 880)))
+    p = ao_contrario(noise(0.5, cutoff=lambda x: 0.05 + 0.4 * x, release_pow=2.5)) + mix(susto, noise(0.05, cutoff=lambda x: 0.9))
+    save("mujina_poder", p, 0.65)
+    drone = tone(lambda x: 55 + 10 * math.sin(3 * x), 1.6, vib=0.03, release_pow=1.0)
+    save("mujina_super", super_de(p, (ganho(drone, 0.5), atraso(ganho(ao_contrario(noise(0.8, cutoff=lambda x: 0.06)), 0.6), 0.5))), 0.85)
+    save("mujina_final", mix(noise(0.08, cutoff=lambda x: 0.9 - 0.6 * x, release_pow=2.0), ganho(susto[: n(0.15)], 0.8)), 0.6)
+
+    # Tennin do Manto: manto que esvoaça + harpa subindo + coro agudo.
+    harpa = lambda notas, passo: mix(*(atraso(ganho(pluck(midi(m), 0.6, 0.997), 0.5), k * passo) for k, m in enumerate(notas)))
+    p = mix(whoosh(0.7, 0.25), harpa((72, 76, 79, 84), 0.08), atraso(ganho(coro((523, 659), 0.9), 0.35), 0.15), ganho(guizos(0.6, 25), 0.6))
+    save("tennin_poder", p, 0.65)
+    save("tennin_super", super_de(p, (atraso(harpa((60, 64, 67, 72, 76, 79, 84, 88), 0.06), 0.3), ganho(coro((392, 523, 659), 1.6, ataque=0.4), 0.45))), 0.85)
+    save("tennin_final", mix(harpa((79, 84), 0.05), ganho(guizos(0.3, 30), 0.6)), 0.55)
+
+    # Sohei: sino grande do templo + naginata cortando o ar (Muralha de Fé).
+    p = mix(ganho(sino(196, 1.4, ((1.0, 1.0, 1.8), (2.0, 0.5, 2.6), (2.76, 0.4, 3.5), (5.4, 0.2, 6))), 0.8),
+            whoosh(0.35, 0.6), atraso(ganho(membrana(70, 0.5), 0.9), 0.05))
+    save("sohei_poder", p, 0.75)
+    save("sohei_super", super_de(p, (atraso(ganho(sino(147, 1.6, ((1.0, 1.0, 1.4), (2.0, 0.5, 2.2), (2.76, 0.4, 3.0))), 0.7), 0.5),
+                                     atraso(ganho(sino(147, 1.2, ((1.0, 1.0, 1.4), (2.76, 0.4, 3.0))), 0.5), 0.9))), 0.85)
+    save("sohei_final", mix(whoosh(0.25, 0.7), atraso(ganho(aco(1400, 0.5), 0.5), 0.12), atraso(ganho(membrana(85, 0.3), 0.8), 0.12)), 0.7)
+
+    # Kusarigama: corrente chacoalhando (elos de metal) + foice que assobia.
+    elos = lambda sec, k: mix(*(atraso(ganho(suave(sino(random.uniform(2200, 3600), 0.06, ((1.0, 1.0, 50), (2.7, 0.5, 70))), 0.001),
+                                             random.uniform(0.2, 0.45)), random.uniform(0, sec * 0.9)) for _ in range(k)))
+    foice = tone(lambda x: 1500 + 600 * math.sin(2 * math.pi * 3 * x), 0.7, release_pow=1.2)
+    p = mix(elos(0.8, 26), ganho(foice, 0.18), noise(0.7, cutoff=lambda x: 0.08 + 0.3 * abs(math.sin(9 * x)), release_pow=1.0))
+    save("kusarigama_poder", p, 0.65)
+    save("kusarigama_super", super_de(p, (atraso(elos(1.2, 40), 0.3),)), 0.85)
+    save("kusarigama_final", mix(elos(0.25, 10), atraso(ganho(tin(1900), 0.5), 0.1)), 0.6)
+
+    # 3º tiro das Kitsunes (bola que explode): fogo-raposa estalando + tigela.
+    chama = lambda: noise(0.4, cutoff=lambda x: 0.05 + 0.3 * math.sin(math.pi * x), release_pow=1.3)
+    save("kitsune_final", mix(chama(), ganho(tigela(523, 0.6), 0.4), estalos(0.3, 0.1)), 0.6)
+    save("kitsune_luz_final", mix(chama(), ganho(tigela(784, 0.7), 0.5), ganho(guizos(0.4, 30), 0.5)), 0.6)
+    save("kitsune_sombria_final", mix(ao_contrario(chama()), ganho(membrana(55, 0.4, 0.2), 1.0), ganho(tigela(311, 0.6), 0.35)), 0.65)
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1:] == ["efeitos"]:
@@ -385,9 +550,12 @@ if __name__ == "__main__":
         elementos()
     elif sys.argv[1:] == ["magia"]:
         magia()
+    elif sys.argv[1:] == ["assinaturas2"]:
+        assinaturas_2()
     else:
         main()
         efeitos()
         torretas()
         elementos()
         magia()
+        assinaturas_2()

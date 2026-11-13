@@ -4,6 +4,32 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.25c (2026-11-13), Diretor de Jogabilidade: som próprio em toda classe
+Pedido do Julio: "o que eu pulei de etapa nas classes novas?". A auditoria
+(project-files `castelo-de-bolo/revisao/auditoria-classes-novas-2026-11-12.md`)
+achou só uma etapa pulada: **som**. Os 8 heróis, Armadilheiro, Yumi, Bombardeiro
+e Ronin Oni tocavam o "power + poder_boom" genérico no E e o `super_maior` no R;
+Sohei e Kusarigama emprestavam sons de outros (`magia_luz`, `samurai_final`...).
+- **45 sons novos** sintetizados (`tools/gerar_sons.py assinaturas2`, sem fonte
+  externa): `<id>_poder`, `<id>_super` e `<id>_final` para as 14 classes (+3 das Kitsunes), ligados
+  nos `som_*` dos `.tres`. O som segue o elemento: catraca e mola (Armadilheiro),
+  corda grave + chuva de flechas (Yumi), pavios em cascata (Bombardeiro), rosnado de
+  oni (Ronin), pisão shiko + sal (Sumotori), jato e bolhas (Kappa), trompa de concha
+  + vento (Yamabushi), asas e crocito (Karasu), papel e talismã (Onmyoji),
+  shakuhachi (Komusō), ar ao contrário + estalo dissonante (Mujina), harpa e coro
+  (Tennin), sino do templo + naginata (Sohei), corrente de elos (Kusarigama). O R de
+  cada um = o som do E por cima de dois taikos e um gongo.
+- **3º tiro com som**: o golpe final de quem atira flecha/bola (Yumi, Bombardeiro,
+  Yamabushi, Onmyoji, Komusō) e das Kitsunes não tocava `som_golpe_final`; agora
+  toca (`unit.gd`, 2 linhas). Kitsune, Luz e Sombria ganharam o seu.
+- Teste novo `_sons_proprios`: toda classe tem som de poder carregado e nenhum
+  repetido; caminhos e heróis têm super e golpe final próprios.
+- Modo teste: nada a ligar, os sons vêm com a classe (chapéus todos disponíveis).
+- Para ouvir sem jogar: `project-files castelo-de-bolo/sons/sons-classes-2.25c.mp4`.
+- **O que testar**: no Modo teste, pegue cada herói e o Armadilheiro/Yumi/
+  Bombardeiro/Ronin e aperte E, R e faça o 3º golpe. Algum som estranho, alto ou
+  baixo demais? Diga "troca o som do X" que eu refaço só ele.
+
 ## Ciclo 2.25b (2026-11-12), Diretor de Jogabilidade: cura do mago mais fraca
 Pedido do Julio: o mago que cura fica "muito apelão" quando 2-3 bots andam
 juntos com ele. Só números:
