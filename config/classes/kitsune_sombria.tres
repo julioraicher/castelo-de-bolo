@@ -41,4 +41,5 @@ power_value = 6.0
 power_duration = 3.0
 som_poder = "sombra_poder"
 som_super = "kitsune_super"
+som_golpe_final = "kitsune_sombria_final"
 anim_attack = "Spellcast_Shoot"

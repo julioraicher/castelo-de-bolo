@@ -1071,6 +1071,8 @@ func _attack_hit() -> void:
 				var p := _shoot_arrow(mult, 1.0)
 				if finisher and p:
 					_poder_visual(p)
+					if Sfx.has(stats.som_golpe_final):
+						Sfx.play(stats.som_golpe_final, global_position, 0.05)
 		"healer":
 			var clicado := _mira_valida()
 			var alvo := clicado if clicado else _aim_assist(dir)
@@ -1090,6 +1092,8 @@ func _attack_hit() -> void:
 				p.explode_final = true
 				_poder_visual(p)
 				_mola(3.0, 9.0)
+				if Sfx.has(stats.som_golpe_final):
+					Sfx.play(stats.som_golpe_final, global_position, 0.05)
 
 
 ## 3º tiro do Ninja: leque de shurikens (cada uma com o dano do golpe final).

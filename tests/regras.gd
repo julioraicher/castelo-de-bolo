@@ -49,6 +49,7 @@ func _ready() -> void:
 	_heroi_nv6()
 	await _herois_regras()
 	_menos_empate()
+	_sons_proprios()
 	_relogio()  # por último: encerra a partida
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
@@ -2113,3 +2114,23 @@ func _herois_regras() -> void:
 		if is_instance_valid(u):
 			u.global_position = guardados[u]
 			u.reset_physics_interpolation()
+
+
+## 2.25c: toda classe jogável tem som de poder próprio (nenhum repetido);
+## caminhos e heróis têm super próprio; todos têm som de golpe final, exceto o
+## Construtor (base corpo a corpo de martelo).
+func _sons_proprios() -> void:
+	var sfx := get_node("/root/Sfx")
+	var vistos := {}
+	for b: ClassStats in Config.cfg.hat_class_list:
+		var lista: Array = [b]
+		lista.append_array(b.caminhos)
+		lista.append_array(b.herois)
+		for c: ClassStats in lista:
+			_check(sfx.has(c.som_poder), "%s: som_poder '%s' não carregou" % [c.display_name, c.som_poder])
+			_check(not vistos.has(c.som_poder), "%s repete o som de poder de %s" % [c.display_name, vistos.get(c.som_poder, "")])
+			vistos[c.som_poder] = c.display_name
+			if c.attack_kind != "melee" or c != b:
+				_check(sfx.has(c.som_golpe_final), "%s: som_golpe_final '%s' não carregou" % [c.display_name, c.som_golpe_final])
+			if c != b:
+				_check(sfx.has(c.som_super), "%s: som_super '%s' não carregou" % [c.display_name, c.som_super])

@@ -17,7 +17,11 @@ const SOUNDS := ["swing", "hit", "shoot", "magic", "heal", "pickup", "hat", "eat
 	# Camada do kit de magia (Ciclo 2.20): um som curto por elemento.
 	"magia_selo", "magia_fogo", "magia_vento", "magia_luz", "magia_estouro",
 	# Heróis raros (Ciclo 2.23): tools/sons/sintetizar_herois.py + Kenney.
-	"papel", "agua", "grasnido", "flauta"]
+	"papel", "agua", "grasnido", "flauta",
+	# Assinatura das 14 classes que estavam no som genérico (2.25c): gerar_sons.py assinaturas2.
+	"armadilheiro_poder", "armadilheiro_super", "armadilheiro_final", "arqueiro_yumi_poder", "arqueiro_yumi_super", "arqueiro_yumi_final", "bombardeiro_poder", "bombardeiro_super", "bombardeiro_final", "ronin_oni_poder", "ronin_oni_super", "ronin_oni_final", "sumotori_poder", "sumotori_super", "sumotori_final", "kappa_poder", "kappa_super", "kappa_final", "yamabushi_poder", "yamabushi_super", "yamabushi_final", "karasu_tengu_poder", "karasu_tengu_super", "karasu_tengu_final", "onmyoji_poder", "onmyoji_super", "onmyoji_final", "komuso_poder", "komuso_super", "komuso_final", "mujina_poder", "mujina_super", "mujina_final", "tennin_poder", "tennin_super", "tennin_final",
+	"sohei_poder", "sohei_super", "sohei_final", "kusarigama_poder", "kusarigama_super", "kusarigama_final",
+	"kitsune_final", "kitsune_luz_final", "kitsune_sombria_final"]
 const POOL_SIZE := 32
 
 const MAX_VARIACOES := 8
