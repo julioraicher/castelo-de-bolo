@@ -35,6 +35,10 @@ const PALETAS := {
 	"pena": [Color(0.85, 0.8, 1.0), Color(0.45, 0.35, 0.75), Color(0.14, 0.1, 0.25)],
 	"som": [Color(0.94, 1.0, 1.0), Color(0.5, 0.95, 0.86), Color(0.12, 0.5, 0.55)],
 	"celeste": [Color(1.0, 0.98, 0.95), Color(1.0, 0.76, 0.84), Color(0.85, 0.55, 0.3)],
+	# Heróis 2.27
+	"fantasma": [Color(0.92, 0.98, 1.0), Color(0.55, 0.78, 1.0), Color(0.16, 0.28, 0.66)],
+	"festa": [Color(1.0, 0.98, 0.88), Color(1.0, 0.78, 0.3), Color(0.86, 0.16, 0.18)],
+	"seda": [Color(1.0, 1.0, 1.0), Color(0.9, 0.88, 0.97), Color(0.55, 0.47, 0.68)],
 }
 
 static var _cache := {}

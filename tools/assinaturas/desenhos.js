@@ -96,6 +96,39 @@ SELOS.komuso = `<circle cx="60" cy="60" r="19" ${S(4)}/><path d="M46 50 H74 M43 
   + espelho(`<path d="M34 42 A31 31 0 0 0 34 78" ${S(4.2)}/><path d="M24 34 A44 44 0 0 0 24 86" ${S(3.8)}/><path d="M13 27 A56 56 0 0 0 13 93" ${S(3.4)}/>`)
   + `<ellipse cx="54" cy="16" rx="5.5" ry="4.2" transform="rotate(-20 54 16)" ${W}/><path d="M59 15 V2 Q66 4 66 10" ${S(2.6)}/><ellipse cx="62" cy="108" rx="5.5" ry="4.2" transform="rotate(-20 62 108)" ${W}/><path d="M67 107 V94 Q74 96 74 102" ${S(2.6)}/>`;
 
+// --- Heróis 2.27 ---
+// Flecha (haste + penas) cravada: ponta em (x,y), entrando no ângulo `a` (graus).
+const flechaCravada = (x, y, a, comp = 34) => `<g transform="translate(${x} ${y}) rotate(${a})"><line x1="0" y1="0" x2="${comp}" y2="0" ${S(3.2)}/>`
+  + `<polygon points="${comp - 9},0 ${comp + 2},-7 ${comp + 4},-2" ${W}/><polygon points="${comp - 9},0 ${comp + 2},7 ${comp + 4},2" ${W}/></g>`;
+// Ochimusha: ensō partido (o círculo de pincel rachado e com um pedaço solto)
+// com três flechas cravadas.
+SELOS.ochimusha = `<path d="M70 21 A40 40 0 1 1 26 38" ${S(8)}/><path d="M84 28 A40 40 0 0 1 99 52" ${S(8)}/>`
+  + `<path d="M22 70 L31 66 L28 75 L37 73" ${SK(3.2)}/><path d="M64 99 L60 92 L68 89 L64 82" ${SK(3.2)}/>`
+  + [-150, -20, 75, 140].map((a, k) => { const r = a * Math.PI / 180; return flechaCravada((60 + Math.cos(r) * 37).toFixed(1), (60 + Math.sin(r) * 37).toFixed(1), a, k % 2 ? 22 : 18); }).join('')
+  + `<g ${W}><circle cx="60" cy="60" r="6"/><circle cx="49" cy="69" r="3.2"/><circle cx="71" cy="70" r="2.6"/><circle cx="64" cy="47" r="2"/></g>`;
+// Shishimai: cabeça de leão de frente, juba em chamas (estrela de 14 pontas) e nuvens.
+SELOS.shishimai = `<polygon points="${star(14, 56, 43)}" ${W}/><circle cx="60" cy="60" r="41" ${K}/>`
+  + `<path d="M31 52 Q31 28 60 28 Q89 28 89 52 Q90 80 60 90 Q30 80 31 52Z" ${S(4.5)}/>`
+  + espelho(`<circle cx="47" cy="50" r="7" ${W}/><circle cx="48" cy="51" r="3" ${K}/><path d="M36 40 Q44 33 55 38" ${S(4)}/>`)
+  + `<path d="M52 60 Q60 55 68 60 Q66 68 60 68 Q54 68 52 60Z" ${W}/><path d="M40 73 Q60 86 80 73" ${S(4)}/>`
+  + `<g ${W}>${[45, 53, 61, 69].map(x => `<polygon points="${x},76 ${x + 6},76 ${x + 3},83"/>`).join('')}<circle cx="60" cy="18" r="4"/></g>`;
+// Jorogumo: teia de oito raios com espiral que cede entre eles e a aranha no meio.
+SELOS.jorogumo = around(8, () => `<line x1="60" y1="60" x2="60" y2="3" ${S(2.4)}/>`)
+  + [17, 29, 41, 53].map(r => `<path d="${Array.from({ length: 8 }, (_, i) => { const a0 = (i * 45 - 90) * Math.PI / 180, a1 = ((i + 1) * 45 - 90) * Math.PI / 180, am = (a0 + a1) / 2;
+    return `${i ? '' : `M${(60 + Math.cos(a0) * r).toFixed(1)} ${(60 + Math.sin(a0) * r).toFixed(1)} `}Q${(60 + Math.cos(am) * r * 0.82).toFixed(1)} ${(60 + Math.sin(am) * r * 0.82).toFixed(1)} ${(60 + Math.cos(a1) * r).toFixed(1)} ${(60 + Math.sin(a1) * r).toFixed(1)}`; }).join(' ')}" ${S(2.2)}/>`).join('')
+  + `<circle cx="60" cy="62" r="17" ${K}/>`
+  + espelho(`<path d="M54 56 Q40 44 36 50 M53 61 Q38 58 34 66 M54 66 Q42 72 40 80 M56 70 Q48 80 50 88" ${S(3)}/>`)
+  + `<ellipse cx="60" cy="68" rx="8" ry="10" ${W}/><circle cx="60" cy="54" r="5.5" ${W}/><path d="M57 64 L63 64 L60 69 L63 74 L57 74 L60 69Z" ${K}/>`;
+// Kodama do Shinboku: anéis de tronco cortado (tortos) com a rachadura e a folha brotando.
+SELOS.kodama = [50, 40, 31, 22, 13].map((r, i) => `<path d="${Array.from({ length: 33 }, (_, k) => { const a = k / 32 * 2 * Math.PI, rr = r + Math.sin(a * 3 + i) * 1.8 + Math.sin(a * 5 + i * 2) * 1.2;
+    return `${k ? 'L' : 'M'}${(60 + Math.cos(a) * rr).toFixed(1)} ${(62 + Math.sin(a) * rr * 0.92).toFixed(1)}`; }).join(' ')}Z" ${S(i === 0 ? 5 : 2.6)}/>`).join('')
+  + `<path d="M60 62 L72 74 L70 86 L82 100" ${SK(3)}/><circle cx="60" cy="62" r="4" ${W}/>`
+  + `<path d="M58 14 Q46 2 30 6 Q36 20 58 16Z" ${W}/><path d="M62 14 Q76 0 92 6 Q84 20 62 16Z" ${W}/><path d="M60 16 V6" ${S(3)}/>`;
+// Kaminari-kozō: anel de oito tambores (cada um com o redemoinho tomoe) e o raio no meio.
+SELOS.kaminari_kozo = around(8, () => `<circle cx="60" cy="13" r="9.5" ${W}/><path d="M60 7 Q66 10 62 14 Q58 17 60 20" ${SK(2.2)}/><circle cx="60" cy="13" r="9.5" ${SK(1.6)}/>`)
+  + `<path d="M60 22 L60 31 M60 98 L60 89" ${S(2.4)}/>`
+  + `<polygon points="66,26 44,64 58,64 50,96 78,52 63,52 72,26" ${W}/>`;
+
 const FIGURAS = {};
 FIGURAS.pincelada = `<path d="M3 64 Q30 42 70 52 Q100 58 117 48 L111 57 L118 61 Q90 74 60 69 Q30 66 9 77 L14 67Z" ${W}/><circle cx="8" cy="50" r="2.5" ${W}/><circle cx="104" cy="74" r="3" ${W}/><circle cx="114" cy="70" r="1.8" ${W}/><path d="M24 62 Q60 54 100 60" ${SK(1.4)}/>`;
 FIGURAS.oni = `<path d="M30 40 Q30 22 60 22 Q90 22 90 40 L93 70 Q90 100 60 108 Q30 100 27 70Z" ${W}/>`
@@ -125,6 +158,29 @@ FIGURAS.nota = `<ellipse cx="34" cy="94" rx="14" ry="10.5" transform="rotate(-20
 FIGURAS.halo = ring(38, 6) + ring(27, 2.6) + around(16, i => `<line x1="60" y1="${i % 2 ? 9 : 3}" x2="60" y2="15" ${S(3.6)}/>`);
 FIGURAS.shide = `<polygon points="42,4 82,4 64,34 90,34 68,68 94,68 58,116 68,80 44,80 62,46 38,46 56,16 42,16" ${W}/><path d="M56 16 L72 16 M62 46 L80 46 M68 80 L84 80" ${SK(1.6)}/>`;
 
+// --- Heróis 2.27 ---
+FIGURAS.caidos = `<path d="M34 6 Q60 34 86 6 Q80 28 60 31 Q40 28 34 6Z" ${W}/><path d="M41 42 Q41 25 60 25 Q79 25 79 42Z" ${W}/><rect x="34" y="40" width="52" height="6" ${W}/>`
+  + `<path d="M46 46 L74 46 L72 58 L48 58Z" ${W}/>` + espelho(`<path d="M50 49 L57 51 L51 54Z" ${K}/>`)
+  + `<path d="M22 60 L98 60 L90 73 L30 73Z" ${W}/><path d="M36 73 L84 73 Q88 94 78 110 Q72 100 67 114 Q60 102 53 114 Q48 100 42 110 Q32 94 36 73Z" ${W}/>`
+  + `<path d="M40 82 H80 M42 92 H78" ${SK(2.6)}/><path d="M30 66 H90" ${SK(1.8)}/>`
+  + `<line x1="92" y1="70" x2="116" y2="10" ${S(4.5)}/><line x1="86" y1="74" x2="99" y2="66" ${S(4.5)}/>`;
+FIGURAS.leao = `<polygon points="${star(16, 58, 44)}" ${W}/><circle cx="60" cy="60" r="42" ${K}/>`
+  + `<path d="M28 50 Q28 24 60 24 Q92 24 92 50 L90 70 Q86 98 60 104 Q34 98 30 70Z" ${W}/>`
+  + espelho(`<circle cx="45" cy="48" r="9" ${K}/><circle cx="46" cy="49" r="4" ${W}/><path d="M32 36 Q42 28 54 34" ${SK(4)}/>`)
+  + `<path d="M50 60 Q60 54 70 60 Q68 70 60 70 Q52 70 50 60Z" ${K}/><path d="M36 76 Q60 70 84 76 Q78 96 60 98 Q42 96 36 76Z" ${K}/>`
+  + `<g ${W}>${[40, 50, 60, 70].map(x => `<polygon points="${x},76 ${x + 9},76 ${x + 4.5},86"/>`).join('')}</g>`;
+FIGURAS.aranha = espelho(`<path d="M52 54 Q30 30 12 34 L8 44 Q28 40 50 60Z" ${W}/><path d="M52 62 Q26 54 6 66 L8 74 Q28 64 52 68Z" ${W}/><path d="M52 70 Q30 76 16 96 L22 102 Q34 84 54 76Z" ${W}/><path d="M54 76 Q40 92 36 114 L44 116 Q46 96 58 80Z" ${W}/>`)
+  + `<ellipse cx="60" cy="80" rx="15" ry="20" ${W}/><circle cx="60" cy="52" r="11" ${W}/>`
+  + `<path d="M55 74 L65 74 L60 81 L65 88 L55 88 L60 81Z" ${K}/>` + espelho(`<circle cx="55" cy="48" r="2.4" ${K}/><circle cx="52" cy="54" r="1.6" ${K}/>`)
+  + `<line x1="60" y1="41" x2="60" y2="2" ${S(2)}/>`;
+FIGURAS.arvore = `<g ${W}><circle cx="60" cy="30" r="24"/><circle cx="34" cy="42" r="18"/><circle cx="86" cy="42" r="18"/><circle cx="46" cy="22" r="14"/><circle cx="76" cy="22" r="14"/></g>`
+  + `<path d="M50 54 Q52 80 42 112 L78 112 Q68 80 70 54Z" ${W}/><path d="M42 112 Q30 114 22 116 M78 112 Q90 114 98 116" ${S(4)}/>`
+  + `<path d="M48 70 Q60 76 72 70" ${SK(4)}/>` + [52, 60, 68].map(x => `<polygon points="${x - 3},73 ${x + 3},73 ${x + 1},84 ${x + 4},84 ${x - 1},94" ${K}/>`).join('')
+  + `<path d="M58 60 Q56 66 60 72" ${SK(2)}/>`;
+FIGURAS.tambores = `<path d="M10 70 A52 52 0 0 1 110 70" ${S(4)}/>`
+  + [-60, -30, 0, 30, 60].map(a => `<g transform="rotate(${a} 60 112)"><circle cx="60" cy="38" r="12" ${W}/><path d="M60 31 Q67 35 62 39 Q57 42 60 46" ${SK(2.4)}/></g>`).join('')
+  + `<polygon points="64,52 46,86 58,86 50,118 76,76 63,76 70,52" ${W}/>`;
+
 const PECAS = {};
 PECAS.pena = `<path d="M20 2 Q31 13 27 25 L23 23 L25 31 L20 38 Q8 17 20 2Z" ${W}/><path d="M20 6 Q19 22 21 36" ${SK(1.2)}/>`;
 PECAS.folha = `<g transform="translate(20 19)"><polygon points="${FOLHA}" ${W}/></g><line x1="20" y1="32" x2="20" y2="39" ${S(2.4)}/>`;
@@ -142,5 +198,13 @@ PECAS.shuriken = `<polygon points="${star(4, 18.5, 6, -90, 20, 20)}" ${W}/><circ
 PECAS.chama = `<path d="M20 2 Q33 16 31 27 A11 11 0 1 1 9 27 Q9 20 14 15 Q15 22 19 20 Q16 10 20 2Z" ${W}/><path d="M20 22 Q25 27 20 33 Q15 29 20 22Z" ${K}/>`;
 PECAS.lasca = `<polygon points="9,7 19,3 31,33 21,37" ${W}/><path d="M15 8 L25 33" ${SK(1.4)}/>`;
 PECAS.grou = `<g transform="scale(0.333)">${GROU}</g>`;
+
+// --- Heróis 2.27 ---
+PECAS.cinza = `<polygon points="8,12 20,5 33,10 35,24 26,35 11,32 5,22" ${W}/><g ${K}><circle cx="17" cy="16" r="2.4"/><circle cx="25" cy="25" r="1.8"/><circle cx="14" cy="26" r="1.4"/></g>`;
+PECAS.confete = `<path d="M6 14 Q20 4 34 14 L32 26 Q20 16 8 26Z" ${W}/><path d="M12 16 Q20 11 28 16" ${SK(1.4)}/>`;
+PECAS.fio = `<path d="M6 6 Q30 14 18 22 Q6 30 34 36" ${S(2.6)}/><circle cx="18" cy="22" r="4" ${W}/>`;
+PECAS.nuvem = `<g ${W}><circle cx="14" cy="18" r="8"/><circle cx="24" cy="14" r="9"/><circle cx="31" cy="21" r="6"/><rect x="10" y="18" width="22" height="8"/></g><polygon points="20,26 15,34 19,34 16,39 25,30 21,30 24,26" ${W}/>`;
+PECAS.semente = `<path d="M20 38 Q8 30 12 20 Q16 12 20 10 Q24 12 28 20 Q32 30 20 38Z" ${W}/><path d="M20 10 Q14 2 6 4 Q10 12 20 10Z" ${W}/><path d="M20 14 V34" ${SK(1.4)}/>`;
+PECAS.faisca = `<polygon points="24,2 8,22 18,22 12,38 32,16 21,16 28,2" ${W}/>`;
 
 module.exports = { SELOS, FIGURAS, PECAS };

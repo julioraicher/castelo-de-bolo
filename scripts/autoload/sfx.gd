@@ -21,7 +21,11 @@ const SOUNDS := ["swing", "hit", "shoot", "magic", "heal", "pickup", "hat", "eat
 	# Assinatura das 14 classes que estavam no som genérico (2.25c): gerar_sons.py assinaturas2.
 	"armadilheiro_poder", "armadilheiro_super", "armadilheiro_final", "arqueiro_yumi_poder", "arqueiro_yumi_super", "arqueiro_yumi_final", "bombardeiro_poder", "bombardeiro_super", "bombardeiro_final", "ronin_oni_poder", "ronin_oni_super", "ronin_oni_final", "sumotori_poder", "sumotori_super", "sumotori_final", "kappa_poder", "kappa_super", "kappa_final", "yamabushi_poder", "yamabushi_super", "yamabushi_final", "karasu_tengu_poder", "karasu_tengu_super", "karasu_tengu_final", "onmyoji_poder", "onmyoji_super", "onmyoji_final", "komuso_poder", "komuso_super", "komuso_final", "mujina_poder", "mujina_super", "mujina_final", "tennin_poder", "tennin_super", "tennin_final",
 	"sohei_poder", "sohei_super", "sohei_final", "kusarigama_poder", "kusarigama_super", "kusarigama_final",
-	"kitsune_final", "kitsune_luz_final", "kitsune_sombria_final"]
+	"kitsune_final", "kitsune_luz_final", "kitsune_sombria_final",
+	# Heróis 2.27 (Ochimusha, Shishimai, Jorogumo): gerar_sons.py herois227.
+	"ochimusha_poder", "ochimusha_super", "ochimusha_final", "ochimusha_fantasma", "ochimusha_flecha", "ochimusha_onibi", "ochimusha_caidos",
+	"shishimai_poder", "shishimai_super", "shishimai_final", "shishimai_mordida", "shishimai_sino", "shishimai_taiko", "shishimai_festa",
+	"jorogumo_poder", "jorogumo_super", "jorogumo_final", "jorogumo_teia", "jorogumo_fios", "jorogumo_casulo", "seda", "seda_gruda"]
 const POOL_SIZE := 32
 
 const MAX_VARIACOES := 8

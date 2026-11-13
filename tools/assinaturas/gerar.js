@@ -1,6 +1,6 @@
 // Gera os atlas de campo de distância (SDF) das assinaturas:
-//   assets/fx/assinaturas/selos.png (6x6 células de 256: 20 selos + 16 figuras)
-//   assets/fx/assinaturas/pecas.png (4x4 células de 96: partículas)
+//   assets/fx/assinaturas/selos.png (7x7 células de 256: 25 selos + 21 figuras)
+//   assets/fx/assinaturas/pecas.png (5x5 células de 96: partículas)
 // Uso: node tools/assinaturas/gerar.js [--prancha arquivo.png]
 // Cada desenho (desenhos.js) é pintado grande num canvas, vira máscara e a
 // distância até a borda (EDT de Felzenszwalb) é guardada em cinza: 0,5 = borda,
@@ -68,8 +68,8 @@ async function main() {
 
   const grava = (nome, url) => fs.writeFileSync(path.join(SAIDA, nome), Buffer.from(url.split(',')[1], 'base64'));
   const selos = [...Object.values(SELOS), ...Object.values(FIGURAS)];
-  grava('selos.png', await atlas(selos, 120, 10, 256, 6, 6, 14));
-  grava('pecas.png', await atlas(Object.values(PECAS), 40, 5, 96, 4, 4, 9));
+  grava('selos.png', await atlas(selos, 120, 10, 256, 7, 7, 14));
+  grava('pecas.png', await atlas(Object.values(PECAS), 40, 5, 96, 5, 5, 9));
   console.log('selos:', Object.keys(SELOS).join(' '));
   console.log('figuras:', Object.keys(FIGURAS).join(' '));
   console.log('pecas:', Object.keys(PECAS).join(' '));

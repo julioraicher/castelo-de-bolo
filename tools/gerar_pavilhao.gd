@@ -13,7 +13,8 @@ extends "res://tools/gerar_casas.gd"
 ##   godot --headless --path . -s tools/gerar_pavilhao.gd
 ## Tudo de frente para +z (a câmera do jogo olha de +z).
 
-const HEROIS := ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso"]
+const HEROIS := ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso",
+	"ochimusha", "shishimai", "jorogumo"]
 const PW := 1.7    # vão entre as colunas (x)
 const PD := 1.4    # (z)
 const YB := 0.36   # topo da base
@@ -192,3 +193,41 @@ func _adorno_heroi(h: String, e: float, fundo: float) -> void:
 			for y in [0.06, 0.18, 0.3]:
 				_cil(0.2 * e - y * 0.2 * e, 0.21 * e - y * 0.2 * e, 0.02 * e, 10, Vector3(0, y * e, 0), Vector3.ZERO, palha.darkened(0.3), false, Vector3(1, 1, fundo + 0.1))
 			_blocod(Vector3(0.14, 0.04, 0.02) * e, Vector3(0, 0.2 * e, 0.19 * e * (fundo + 0.1)), Vector3.ZERO, Color(0.1, 0.07, 0.05), 0.0)
+		"ochimusha":  # kabuto rachado com um chifre quebrado e a flecha cravada
+			var ferro := Color(0.2, 0.2, 0.24)
+			_esfera(0.2 * e, Vector3(0, 0.14 * e, 0), Vector3(1.1, 0.75, 1.0 * fundo), ferro, false, 10, 4)
+			_cil(0.24 * e, 0.26 * e, 0.03 * e, 10, Vector3(0, 0.07 * e, 0), Vector3(-6, 0, 5), Color(0.08, 0.08, 0.1), false, Vector3(1, 1, fundo))
+			_cil(0.0, 0.035 * e, 0.28 * e, 5, Vector3(-0.1, 0.32, 0.02) * e, Vector3(0, 0, 32), Color(0.62, 0.5, 0.25))
+			_cil(0.02 * e, 0.035 * e, 0.1 * e, 5, Vector3(0.09, 0.25, 0.02) * e, Vector3(0, 0, -32), Color(0.62, 0.5, 0.25))
+			for k in 3:
+				_blocod(Vector3(0.018, 0.07, 0.02) * e, Vector3(0.04 + k * 0.03, 0.2 - k * 0.04, 0.17 * fundo + 0.01) * e, Vector3(0, 0, 30 - k * 30), Color(0.55, 0.78, 1.0), 0.0)
+			_viga(Vector3(-0.2, 0.0, 0) * e, Vector3(0.18, 0.42, 0) * e, 0.014 * e, P.madeira2)
+			_tri(Vector3(0.16, 0.4, 0) * e, Vector3(0.26, 0.48, 0) * e, Vector3(0.2, 0.36, 0) * e, Color(0.55, 0.78, 1.0), Vector3(0, 0, 1))
+		"shishimai":  # cabeça de leão vermelha com olhos dourados e juba branca
+			var laca := Color(0.78, 0.12, 0.1)
+			for k in 7:
+				var a := deg_to_rad(lerpf(-110.0, 110.0, k / 6.0))
+				_esfera(0.07 * e, Vector3(sin(a) * 0.2, 0.18 + cos(a) * 0.14, -0.04) * e, Vector3(0.8, 1.4, 0.4 * fundo + 0.1), branco, false, 6, 3)
+			_esfera(0.17 * e, Vector3(0, 0.18 * e, 0), Vector3(1.15, 0.95, 0.9 * fundo), laca, false, 10, 4)
+			_blocod(Vector3(0.24, 0.08, 0.12 * fundo + 0.02) * e, Vector3(0, 0.08, 0.1 * fundo) * e, Vector3(8, 0, 0), laca.darkened(0.1), 0.01)
+			for s2 in [-1.0, 1.0]:
+				_esfera(0.045 * e, Vector3(s2 * 0.08, 0.24, 0.14 * fundo + 0.01) * e, Vector3.ONE, ouro, true, 6, 3)
+			for k in 4:
+				_blocod(Vector3(0.03, 0.035, 0.02) * e, Vector3((k - 1.5) * 0.05, 0.05, 0.16 * fundo + 0.02) * e, Vector3.ZERO, branco, 0.0)
+		"jorogumo":  # aranha de ouro com o corpo escuro e teia atrás
+			for k in 4:
+				_viga(Vector3(0, 0.2, -0.02) * e, Vector3(cos(TAU * k / 8.0) * 0.26, 0.2 + sin(TAU * k / 8.0) * 0.26, -0.02) * e, 0.008 * e, branco.darkened(0.15))
+				_viga(Vector3(0, 0.2, -0.02) * e, Vector3(-cos(TAU * k / 8.0) * 0.26, 0.2 - sin(TAU * k / 8.0) * 0.26, -0.02) * e, 0.008 * e, branco.darkened(0.15))
+			for r in [0.1, 0.18]:  # espiral da teia: dois octógonos no plano da frente
+				for k in 8:
+					var a0 := TAU * k / 8.0
+					var a1 := TAU * (k + 1) / 8.0
+					_viga(Vector3(cos(a0) * r, 0.2 + sin(a0) * r, -0.02) * e, Vector3(cos(a1) * r, 0.2 + sin(a1) * r, -0.02) * e, 0.007 * e, branco.darkened(0.15))
+			_esfera(0.09 * e, Vector3(0, 0.16 * e, 0.02 * e), Vector3(0.9, 1.25, 0.7 * fundo + 0.2), Color(0.12, 0.07, 0.14), false, 8, 4)
+			_esfera(0.06 * e, Vector3(0, 0.29 * e, 0.02 * e), Vector3(1, 0.9, 0.7 * fundo + 0.2), Color(0.12, 0.07, 0.14), false, 6, 3)
+			_blocod(Vector3(0.05, 0.05, 0.02) * e, Vector3(0, 0.15, 0.07 * fundo + 0.02) * e, Vector3(0, 0, 45), Color(0.85, 0.16, 0.3), 0.0)
+			for s2 in [-1.0, 1.0]:
+				for k in 3:
+					var y0 := 0.22 - k * 0.06
+					_viga(Vector3(s2 * 0.05, y0, 0.02) * e, Vector3(s2 * 0.2, y0 + 0.08 - k * 0.05, 0.02) * e, 0.012 * e, ouro.darkened(0.1))
+

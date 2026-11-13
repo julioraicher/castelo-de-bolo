@@ -52,7 +52,7 @@ func _ready() -> void:
 	])
 	_aba("Herói raro", "heroi", [
 		["losango", Estilo.OURO_CLARO, "Nível 6: o herói do bairro",
-			"Com o bairro no nível 5, o Construtor aperta F e escolhe um herói raro da classe (Samurai: Sumotori ou Kappa; Shuriken: Yamabushi, Karasu Tengu ou Mujina; Kitsune: Onmyoji, Tennin ou Komusō). O Construtor não tem herói."],
+			"Com o bairro no nível 5, o Construtor aperta F e escolhe um herói raro da classe (Samurai: Sumotori, Kappa, Ochimusha ou Shishimai; Shuriken: Yamabushi, Karasu Tengu, Mujina ou Jorogumo; Kitsune: Onmyoji, Tennin ou Komusō). O Construtor não tem herói."],
 		["martelo", Estilo.OURO, "Pavilhão dourado (%d madeiras)" % cfg.heroi_custo,
 			"Sobe no tapete do caminho, ao lado da casa. Com madeira no depósito, o tapete brilha e a estrela pisca no minimapa. Pronto, dá +1 nível de bônus para o bairro."],
 		["katana", Estilo.OURO_CLARO, "Um chapéu só",

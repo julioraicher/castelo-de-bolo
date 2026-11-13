@@ -1045,6 +1045,221 @@ func _komuso(time: Color) -> void:
 	_peca(mao, _esfera(0.08, 0.07), Vector3(0, -0.22, 0.05), Vector3.ZERO, Vector3.ONE, _plano(Color(0.5, 0.38, 0.18)))
 
 
+# --- Heróis 2.27 --------------------------------------------------------------
+
+const AZUL_FANTASMA := Color(0.55, 0.78, 1.0)
+
+
+## Ochimusha: o samurai que caiu e levantou. Kabuto rachado com um chifre
+## quebrado, cabelo solto, menpō de presas, dō de laca desbotada com rachadura
+## acesa em azul-fantasma, flechas cravadas nas costas (penas na cor do time),
+## sashimono rasgado e a katana partida com o fio no time.
+func _ochimusha(time: Color) -> void:
+	var cab := "head"
+	var ferro := Color(0.3, 0.33, 0.42)
+	var laca := Color(0.38, 0.13, 0.11)
+	var cabelo := Color(0.12, 0.12, 0.15)
+	var madeira := Color(0.42, 0.3, 0.18)
+	# Kabuto amassado: cúpula baixa, aba torta e a rachadura acesa
+	_peca(cab, _esfera(0.7, 0.5), Vector3(0, 0.8, -0.06), Vector3(0, 0, -6), Vector3(1, 0.85, 1), _plano(ferro))
+	_peca(cab, _cilindro(0.66, 0.8, 0.12), Vector3(0, 0.62, -0.12), Vector3(-10, 0, 5), Vector3(1, 1, 0.92), _plano(laca.darkened(0.2)))
+	_peca(cab, _cilindro(0.81, 0.81, 0.03), Vector3(0, 0.56, -0.12), Vector3(-10, 0, 5), Vector3(1, 1, 0.92), _plano(Color(0.62, 0.5, 0.25)))
+	# Fukigaeshi: as abas viradas dos lados (a esquerda entortada)
+	for s in [-1, 1]:
+		_peca(cab, _caixa(Vector3(0.12, 0.26, 0.3)), Vector3(0.66 * s, 0.68, 0.2), Vector3(0, -30 * s, 15 * s + (12 if s < 0 else 0)), Vector3.ONE, _plano(laca))
+	for i in 4:
+		_peca(cab, _caixa(Vector3(0.05, 0.16, 0.04)), Vector3(0.12 + i * 0.07, 1.02 - i * 0.1, 0.4 - i * 0.05), Vector3(-20, 0, 30 - i * 25), Vector3.ONE, _neon(AZUL_FANTASMA))
+	# Kuwagata: um chifre inteiro, o outro quebrado no meio
+	_peca(cab, _cone(0.09, 0.66), Vector3(-0.28, 1.02, 0.26), Vector3(-25, 0, 35), Vector3.ONE, _plano(Color(0.62, 0.5, 0.25)))
+	_peca(cab, _cilindro(0.04, 0.09, 0.26), Vector3(0.24, 0.86, 0.3), Vector3(-25, 0, -35), Vector3.ONE, _plano(Color(0.62, 0.5, 0.25)))
+	# Menpō: meia-máscara de ferro com presas e olhos acesos no azul do além
+	_peca(cab, _esfera(0.3, 0.2), Vector3(0, 0.22, 0.44), Vector3(10, 0, 0), Vector3(1.15, 0.75, 0.6), _plano(laca.darkened(0.25)))
+	for s in [-1, 1]:
+		_peca(cab, _cone(0.035, 0.1), Vector3(0.08 * s, 0.13, 0.6), Vector3(180, 0, 0), Vector3.ONE, _plano(Color(0.95, 0.92, 0.82)))
+		_peca(cab, _esfera(0.06, 0.04), Vector3(0.16 * s, 0.44, 0.56), Vector3(0, 0, -15 * s), Vector3(1.4, 0.7, 0.6), _neon(AZUL_FANTASMA, 2.2))
+	# Cabelo solto escapando do elmo, em fitas que balançam
+	for i in 4:
+		_peca(cab, _fita(1.0, 0.24, cabelo, cabelo.lightened(0.25), 5), Vector3((i - 1.5) * 0.24, 0.62, -0.62), Vector3(170, 0, (i - 1.5) * 10), Vector3.ONE,
+				_bal(Vector3(0.5, i * 1.2, 0.0)))
+	# Sode: ombreira esquerda inteira, a direita pendurada por um cordão
+	_peca("upperarm.l", _caixa(Vector3(0.44, 0.1, 0.52)), Vector3(0, 0.2, 0), Vector3(0, 0, 0), Vector3.ONE, _plano(laca))
+	_peca("upperarm.l", _caixa(Vector3(0.45, 0.025, 0.53)), Vector3(0, 0.26, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.62, 0.5, 0.25)))
+	_peca("upperarm.r", _caixa(Vector3(0.42, 0.1, 0.48)), Vector3(-0.05, 0.05, 0.1), Vector3(25, 0, -40), Vector3.ONE, _plano(laca.darkened(0.15)))
+	# Dō lamelar desbotado, com a rachadura acesa atravessando
+	var peito := "chest"
+	for i in 3:
+		var y := 0.1 - i * 0.18
+		var r := 0.43 + i * 0.025
+		_peca(peito, _cilindro(r, r + 0.025, 0.16), Vector3(0, y, -0.01), Vector3.ZERO, Vector3(1, 1, 0.9), _plano(laca if i != 1 else laca.darkened(0.2)))
+	for i in 4:
+		_peca(peito, _caixa(Vector3(0.035, 0.15, 0.04)), Vector3(-0.2 + i * 0.1, 0.12 - i * 0.12, 0.42), Vector3(0, 0, 35 - (i % 2) * 70), Vector3.ONE, _neon(AZUL_FANTASMA))
+	# Flechas cravadas nas costas: haste de bambu e pena na cor do time
+	for i in 4:
+		var p := Vector3(-0.24 + i * 0.16, 0.25 - (i % 2) * 0.22, -0.4)
+		var rot := Vector3(-35 - i * 6, 0, -20 + i * 14)
+		_peca(peito, _cilindro(0.022, 0.022, 0.95), p + Vector3(0, 0.3, -0.18), rot, Vector3.ONE, _plano(madeira))
+		_peca(peito, _fita(0.24, 0.12, time.lightened(0.15), time.lightened(0.5), 2), p + Vector3(0, 0.62, -0.36), rot + Vector3(180, 0, 0), Vector3.ONE,
+				_bal(Vector3(0.25, i * 0.9, 0.0)))
+	# Sashimono rasgado: haste partida e a bandeira do time em frangalhos
+	_peca(peito, _cilindro(0.025, 0.025, 1.2), Vector3(0.2, 0.5, -0.46), Vector3(8, 0, -10), Vector3.ONE, _plano(madeira.darkened(0.3)))
+	for i in 3:
+		_peca(peito, _fita(0.7 - i * 0.15, 0.15, time.darkened(0.15), time.darkened(0.45), 4), Vector3(0.06 + i * 0.12, 1.0, -0.48), Vector3(180, 0, 6 - i * 5), Vector3.ONE,
+				_bal(Vector3(0.7, i * 1.5, 0.0)))
+	# Kusazuri: placas do saiote, uma faltando
+	var quad := "hips"
+	for i in 5:
+		if i == 3:
+			continue
+		var a := -PI * 0.42 + PI * 0.84 * i / 4.0
+		_peca(quad, _caixa(Vector3(0.26, 0.34, 0.045)), Vector3(sin(a) * 0.42, -0.12, cos(a) * 0.34 - 0.03), Vector3(10 + i * 3, rad_to_deg(a), i * 3), Vector3.ONE, _plano(laca.darkened(0.1)))
+	_peca(quad, _cilindro(0.47, 0.47, 0.1), Vector3(0, 0.08, 0), Vector3.ZERO, Vector3(1, 1, 0.85), _plano(time.darkened(0.5)))
+	for lado in ["lowerarm.l", "lowerarm.r"]:
+		_peca(lado, _cilindro(0.15, 0.17, 0.3), Vector3(0.16 * (1 if lado.ends_with(".l") else -1), 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(ferro))
+	for lado in ["lowerleg.l", "lowerleg.r"]:
+		_peca(lado, _caixa(Vector3(0.2, 0.3, 0.1)), Vector3(0, -0.05, 0.1), Vector3.ZERO, Vector3.ONE, _plano(ferro.lightened(0.05)))
+	# Fogo-fantasma pairando atrás do ombro (o primeiro dos três do Onibi)
+	_peca(peito, _chama(0.13, 0.36), Vector3(-0.55, 0.75, -0.3), Vector3.ZERO, Vector3.ONE, _neon_bal(AZUL_FANTASMA, Vector3(0.9, 0.5, 1.0)))
+	_peca(peito, _chama(0.07, 0.22), Vector3(-0.55, 0.76, -0.3), Vector3.ZERO, Vector3.ONE, _neon_bal(Color(0.9, 0.97, 1.0), Vector3(0.9, 0.5, 1.0)))
+	# Katana partida: meia lâmina com ponta irregular e o fio no time
+	var mao := "handslot.r"
+	_peca(mao, _caixa(Vector3(0.05, 0.75, 0.12)), Vector3(0, 0.58, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.62, 0.66, 0.72)))
+	_peca(mao, _caixa(Vector3(0.025, 0.72, 0.03)), Vector3(0, 0.58, 0.06), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.35), 2.0))
+	_peca(mao, _cone(0.07, 0.18), Vector3(0, 1.0, -0.01), Vector3(0, 0, 25), Vector3(0.4, 1, 1), _plano(Color(0.62, 0.66, 0.72)))
+	_peca(mao, _cilindro(0.13, 0.13, 0.04), Vector3(0, 0.2, 0), Vector3.ZERO, Vector3.ONE, _plano(ferro.darkened(0.2)))
+	_peca(mao, _cilindro(0.05, 0.05, 0.35), Vector3(0, 0.0, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.1, 0.1, 0.12)))
+
+
+## Shishimai: o leão da festa. Cabeça de laca vermelha enorme com olhos
+## dourados, mandíbula de dentes brancos e juba branca; o pano verde da dança
+## cobre as costas com espirais brancas e a barra na cor do time; sininhos
+## no cinto e o suzu (bastão de sinos) na mão esquerda.
+func _shishimai(time: Color) -> void:
+	var cab := "head"
+	var laca := Color(0.78, 0.12, 0.1)
+	var ouro := Color(1.0, 0.78, 0.3)
+	var branco := Color(0.97, 0.96, 0.92)
+	var pano := Color(0.2, 0.42, 0.28)
+	# Cabeça do leão (shishigashira): crânio largo e focinho quadrado
+	_peca(cab, _esfera(0.66, 0.52), Vector3(0, 0.8, 0.08), Vector3.ZERO, Vector3(1.15, 0.92, 1.05), _plano(laca))
+	_peca(cab, _caixa(Vector3(0.82, 0.34, 0.42)), Vector3(0, 0.62, 0.62), Vector3(8, 0, 0), Vector3.ONE, _plano(laca.darkened(0.05)))
+	_peca(cab, _esfera(0.2, 0.15), Vector3(0, 0.72, 0.86), Vector3.ZERO, Vector3(1.6, 1, 1), _plano(Color(0.12, 0.08, 0.06)))
+	# Olhos dourados saltados e sobrancelhas de chama
+	for s in [-1, 1]:
+		_peca(cab, _esfera(0.17, 0.17), Vector3(0.27 * s, 0.98, 0.6), Vector3.ZERO, Vector3.ONE, _plano(ouro))
+		_peca(cab, _esfera(0.08, 0.08), Vector3(0.27 * s, 0.98, 0.75), Vector3.ZERO, Vector3.ONE, _plano(Color(0.06, 0.04, 0.04)))
+		_peca(cab, _cone(0.12, 0.42), Vector3(0.3 * s, 1.2, 0.48), Vector3(-60, 0, -35 * s), Vector3(1, 1, 0.45), _plano(ouro.darkened(0.15)))
+		_peca(cab, _esfera(0.15, 0.2), Vector3(0.58 * s, 1.1, 0.1), Vector3(0, 0, 30 * s), Vector3(0.6, 1, 1), _plano(laca.darkened(0.2)))
+	# Mandíbula de baixo e os dentes (a boca é o golpe)
+	_peca(cab, _caixa(Vector3(0.78, 0.14, 0.4)), Vector3(0, 0.36, 0.6), Vector3(14, 0, 0), Vector3.ONE, _plano(laca.darkened(0.15)))
+	for i in 5:
+		var x := (i - 2) * 0.15
+		_peca(cab, _caixa(Vector3(0.09, 0.12, 0.06)), Vector3(x, 0.5, 0.84), Vector3.ZERO, Vector3.ONE, _plano(branco))
+		_peca(cab, _caixa(Vector3(0.08, 0.1, 0.06)), Vector3(x + 0.07, 0.44, 0.8), Vector3(14, 0, 0), Vector3.ONE, _plano(branco.darkened(0.06)))
+	_peca(cab, _cone(0.1, 0.34), Vector3(0, 1.42, 0.22), Vector3(-15, 0, 0), Vector3.ONE, _plano(ouro))
+	# Juba branca em mechas grossas que balançam
+	for i in 9:
+		var a := lerpf(-130.0, 130.0, i / 8.0)
+		var ar := deg_to_rad(a)
+		_peca(cab, _fita(0.85, 0.3, branco, branco.darkened(0.12), 5), Vector3(sin(ar) * 0.62, 1.1, -cos(ar) * 0.48), Vector3(160, a, 0), Vector3.ONE,
+				_bal(Vector3(0.65, i * 0.7, 0.0)))
+	# Yutan: o pano da dança cobrindo as costas, espirais brancas e barra do time
+	var peito := "chest"
+	_peca(peito, _esfera(0.62, 0.58), Vector3(0, 0.0, -0.18), Vector3(-8, 0, 0), Vector3(1.12, 1.05, 0.9), _plano(pano))
+	for p in [Vector3(0.28, 0.22, -0.62), Vector3(-0.3, 0.05, -0.64), Vector3(0.12, -0.28, -0.66), Vector3(-0.05, 0.45, -0.5)]:
+		_peca(peito, _anel(0.12, 0.022, 12), p, Vector3(80, 0, 0), Vector3.ONE, _plano(branco))
+		_peca(peito, _anel(0.06, 0.018, 10), p + Vector3(0.03, 0.02, 0.0), Vector3(80, 0, 0), Vector3.ONE, _plano(branco))
+	_peca(peito, _fita(1.05, 0.95, pano, time.darkened(0.2), 5), Vector3(0, -0.15, -0.66), Vector3(180, 180, 0), Vector3.ONE, _bal(Vector3(0.55, 0.4, 0.0)))
+	_peca(peito, _caixa(Vector3(1.0, 0.07, 0.05)), Vector3(0, -0.5, -0.68), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.3), 1.6))
+	# Cinto de sininhos dourados e hakama listrada
+	var quad := "hips"
+	_peca(quad, _cilindro(0.52, 0.52, 0.14), Vector3(0, 0.08, 0), Vector3.ZERO, Vector3(1, 1, 0.85), _plano(time.darkened(0.3)))
+	for i in 6:
+		var a := -PI * 0.45 + PI * 0.9 * i / 5.0
+		_peca(quad, _esfera(0.07, 0.07), Vector3(sin(a) * 0.53, -0.04, cos(a) * 0.45), Vector3.ZERO, Vector3.ONE, _plano(ouro))
+	_peca(quad, _cilindro(0.5, 0.6, 0.5), Vector3(0, -0.28, 0), Vector3.ZERO, Vector3(1, 1, 0.85), _plano(pano.darkened(0.3)))
+	for lado in [".l", ".r"]:
+		var sx := 1 if lado == ".l" else -1
+		_peca("upperarm" + lado, _cilindro(0.24, 0.2, 0.4), Vector3(0.1 * sx, 0.05, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(pano))
+		_peca("lowerarm" + lado, _cilindro(0.15, 0.17, 0.2), Vector3(0.2 * sx, 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(branco))
+		_peca("lowerleg" + lado, _cilindro(0.17, 0.19, 0.28), Vector3(0, -0.02, 0.02), Vector3.ZERO, Vector3.ONE, _plano(branco.darkened(0.1)))
+	# Suzu: bastão com o cacho de sinos e fitas do time
+	var mao := "handslot.l"
+	_peca(mao, _cilindro(0.03, 0.035, 0.5), Vector3(0, 0.15, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.35, 0.22, 0.12)))
+	for i in 5:
+		var a := TAU * i / 5.0
+		_peca(mao, _esfera(0.07, 0.07), Vector3(cos(a) * 0.09, 0.44 + (i % 2) * 0.07, sin(a) * 0.09), Vector3.ZERO, Vector3.ONE, _plano(ouro))
+	for i in 3:
+		_peca(mao, _fita(0.45, 0.06, time.lightened(0.2), time.lightened(0.55), 3), Vector3((i - 1) * 0.06, 0.4, 0), Vector3(175, 0, (i - 1) * 20), Vector3.ONE,
+				_bal(Vector3(0.8, i * 1.1, 0.0)))
+
+
+## Jorogumo: a noiva-aranha. Coque alto com kanzashi, rosto pálido e quatro
+## olhinhos de aranha acesos na testa, quimono escuro com teia bordada, obi do
+## time, seis patas de aranha dobradas nas costas (pontas acesas) e o fio de
+## seda saindo dos dedos.
+func _jorogumo(time: Color) -> void:
+	var cab := "head"
+	var cabelo := Color(0.05, 0.04, 0.06)
+	var pele := Color(0.95, 0.9, 0.88)
+	var quimono := Color(0.26, 0.12, 0.3)
+	var seda := Color(0.9, 0.88, 0.96)
+	var pata := Color(0.1, 0.07, 0.1)
+	var ouro := Color(1.0, 0.8, 0.35)
+	_peca(cab, _esfera(0.47, 0.45), Vector3(0, 0.55, 0.27), Vector3.ZERO, Vector3(1, 1.02, 0.72), _plano(pele))
+	_peca(cab, _caixa(Vector3(0.14, 0.03, 0.02)), Vector3(0, 0.36, 0.6), Vector3.ZERO, Vector3.ONE, _plano(Color(0.7, 0.08, 0.15)))
+	for s in [-1, 1]:
+		_peca(cab, _caixa(Vector3(0.14, 0.035, 0.02)), Vector3(0.16 * s, 0.6, 0.61), Vector3(0, 0, 12 * s), Vector3.ONE, _plano(cabelo))
+	# Quatro olhos de aranha na testa
+	for i in 4:
+		var x := (i - 1.5) * 0.11
+		_peca(cab, _esfera(0.035, 0.035), Vector3(x, 0.8 + (0.03 if i in [1, 2] else 0.0), 0.56), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.3), 2.0))
+	# Cabelo: coque alto (mage-gami) com abas e os grampos kanzashi
+	_peca(cab, _esfera(0.6, 0.5), Vector3(0, 0.78, -0.1), Vector3.ZERO, Vector3(1.05, 0.95, 0.95), _plano(cabelo))
+	_peca(cab, _esfera(0.34, 0.26), Vector3(0, 1.28, -0.12), Vector3.ZERO, Vector3(1.5, 1, 1), _plano(cabelo))
+	for s in [-1, 1]:
+		_peca(cab, _esfera(0.22, 0.24), Vector3(0.5 * s, 0.82, -0.15), Vector3.ZERO, Vector3(0.7, 1, 1), _plano(cabelo))
+		_peca(cab, _cilindro(0.02, 0.02, 0.8), Vector3(0.35 * s, 1.32, -0.1), Vector3(0, 0, 70 * s), Vector3.ONE, _plano(ouro))
+		_peca(cab, _fita(0.4, 0.05, time.lightened(0.2), time.lightened(0.6), 3), Vector3(0.7 * s, 1.45, -0.1), Vector3(178, 0, 0), Vector3.ONE, _bal(Vector3(0.7, s * 0.8, 0.0)))
+	_peca(cab, _esfera(0.07, 0.07), Vector3(0, 1.5, 0.0), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.35), 1.8))
+	# Quimono escuro com a teia bordada nas costas e gola branca
+	var peito := "chest"
+	_peca(peito, _cilindro(0.45, 0.5, 0.6), Vector3(0, 0.06, 0), Vector3.ZERO, Vector3(1, 1, 0.82), _plano(quimono))
+	_peca(peito, _cilindro(0.3, 0.34, 0.1), Vector3(0, 0.4, 0.02), Vector3(8, 0, 0), Vector3(1, 1, 0.85), _plano(seda))
+	for k in 3:
+		_peca(peito, _anel(0.12 + k * 0.1, 0.012, 12), Vector3(0, 0.05, -0.42), Vector3(90, 0, 0), Vector3.ONE, _plano(seda.darkened(0.25)))
+	for i in 6:
+		_peca(peito, _caixa(Vector3(0.015, 0.36, 0.015)), Vector3(0, 0.05, -0.43), Vector3(0, 0, i * 30), Vector3.ONE, _plano(seda.darkened(0.25)))
+	# Seis patas de aranha dobradas saindo das costas: fêmur sobe, tíbia desce
+	for s in [-1, 1]:
+		for i in 3:
+			var raiz := Vector3(0.14 * s, 0.25 - i * 0.16, -0.4)
+			var ab := 40.0 + i * 18.0
+			var fe := raiz + Vector3(0.38 * s, 0.32 - i * 0.12, -0.18)
+			var bal := Vector3(0.12 + i * 0.03, i * 1.1 + (0.6 if s > 0 else 0.0), 0.0)
+			_peca(peito, _cilindro(0.035, 0.05, 0.62), (raiz + fe) * 0.5, Vector3(-20, 0, -ab * s), Vector3.ONE, {"cor": pata, "neon": false, "balanco": bal})
+			_peca(peito, _esfera(0.06, 0.06), fe, Vector3.ZERO, Vector3.ONE, {"cor": pata.lightened(0.1), "neon": false, "balanco": bal})
+			var ponta := fe + Vector3(0.18 * s, -0.5, -0.1)
+			_peca(peito, _cilindro(0.015, 0.035, 0.55), (fe + ponta) * 0.5, Vector3(-10, 0, 20 * s), Vector3.ONE, {"cor": pata, "neon": false, "balanco": bal})
+			_peca(peito, _cone(0.03, 0.12), ponta, Vector3(180, 0, 20 * s), Vector3.ONE, _neon_bal(time.lightened(0.3), bal))
+	# Obi largo do time com laço atrás e quimono longo
+	var quad := "hips"
+	_peca(quad, _cilindro(0.5, 0.5, 0.22), Vector3(0, 0.12, 0), Vector3.ZERO, Vector3(1, 1, 0.85), _plano(time.darkened(0.3)))
+	_peca(quad, _cilindro(0.505, 0.505, 0.03), Vector3(0, 0.12, 0), Vector3.ZERO, Vector3(1, 1, 0.85), _neon(time.lightened(0.3), 1.4))
+	_peca(quad, _caixa(Vector3(0.5, 0.3, 0.12)), Vector3(0, 0.14, -0.47), Vector3.ZERO, Vector3.ONE, _plano(time.darkened(0.2)))
+	_peca(quad, _cilindro(0.48, 0.66, 0.75), Vector3(0, -0.34, 0), Vector3.ZERO, Vector3(1, 1, 0.85), _plano(quimono.darkened(0.1)))
+	_peca(quad, _fita(0.6, 0.5, quimono, Color(0.32, 0.12, 0.3), 4), Vector3(0, -0.2, -0.5), Vector3(178, 0, 0), Vector3.ONE, _bal(Vector3(0.5, 0.2, 0.0)))
+	# Mangas longas (furisode) e o fio de seda saindo da mão
+	for lado in [".l", ".r"]:
+		var sx := 1 if lado == ".l" else -1
+		_peca("upperarm" + lado, _cilindro(0.22, 0.2, 0.38), Vector3(0.1 * sx, 0.05, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(quimono))
+		_peca("lowerarm" + lado, _cilindro(0.17, 0.19, 0.3), Vector3(0.15 * sx, 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(quimono))
+		_peca("lowerarm" + lado, _caixa(Vector3(0.32, 0.42, 0.05)), Vector3(0.16 * sx, -0.24, 0), Vector3.ZERO, Vector3.ONE,
+				{"cor": Color(0.32, 0.12, 0.3), "neon": false, "balanco": Vector3(0.35, 0.8 * sx, 0.0)})
+	var mao := "handslot.r"
+	_peca(mao, _cilindro(0.012, 0.012, 0.9), Vector3(0, -0.35, 0.05), Vector3(10, 0, 0), Vector3.ONE, _neon_bal(seda, Vector3(0.4, 0.3, 0.0)))
+	_peca(mao, _esfera(0.06, 0.06), Vector3(0, 0.05, 0.05), Vector3.ZERO, Vector3.ONE, _plano(seda))
+
+
 # --- Formas ------------------------------------------------------------------
 
 func _esfera(r: float, h: float) -> Mesh:

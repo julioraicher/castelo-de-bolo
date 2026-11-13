@@ -19,12 +19,12 @@ const SH_PECA := preload("res://assets/shaders/assinatura_peca.gdshader")
 const SH_EMBLEMA := preload("res://assets/shaders/assinatura_emblema.gdshader")
 const ATLAS := preload("res://assets/fx/assinaturas/selos.png")
 const ATLAS_PECAS := preload("res://assets/fx/assinaturas/pecas.png")
-const COLS := 6   # atlas dos selos e figuras: 6 x 6
-const PCOLS := 4  # atlas das peças: 4 x 4
+const COLS := 7   # atlas dos selos e figuras: 7 x 7 (25 selos + 21 figuras)
+const PCOLS := 5  # atlas das peças: 5 x 5 (22 peças)
 ## Ordem das células: a mesma de tools/assinaturas/desenhos.js.
-const SELOS: Array[StringName] = [&"guerreiro", &"ronin_oni", &"sohei", &"arqueiro", &"arqueiro_yumi", &"kusarigama", &"kitsune", &"kitsune_luz", &"kitsune_sombria", &"construtor", &"armadilheiro", &"bombardeiro", &"sumotori", &"kappa", &"yamabushi", &"karasu_tengu", &"mujina", &"onmyoji", &"tennin", &"komuso"]
-const FIGURAS: Array[String] = ["pincelada", "oni", "sino", "sombra", "olho", "raposa", "olhos", "andaime", "explosao", "leque", "asas", "rosto", "grou", "nota", "halo", "shide"]
-const PECAS: Array[String] = ["pena", "folha", "papel", "nota", "conta", "gota", "sal", "petala", "caco", "estrepe", "estrela", "elo", "shuriken", "chama", "lasca", "grou"]
+const SELOS: Array[StringName] = [&"guerreiro", &"ronin_oni", &"sohei", &"arqueiro", &"arqueiro_yumi", &"kusarigama", &"kitsune", &"kitsune_luz", &"kitsune_sombria", &"construtor", &"armadilheiro", &"bombardeiro", &"sumotori", &"kappa", &"yamabushi", &"karasu_tengu", &"mujina", &"onmyoji", &"tennin", &"komuso", &"ochimusha", &"shishimai", &"jorogumo", &"kodama", &"kaminari_kozo"]
+const FIGURAS: Array[String] = ["pincelada", "oni", "sino", "sombra", "olho", "raposa", "olhos", "andaime", "explosao", "leque", "asas", "rosto", "grou", "nota", "halo", "shide", "caidos", "leao", "aranha", "arvore", "tambores"]
+const PECAS: Array[String] = ["pena", "folha", "papel", "nota", "conta", "gota", "sal", "petala", "caco", "estrepe", "estrela", "elo", "shuriken", "chama", "lasca", "grou", "cinza", "confete", "fio", "nuvem", "semente", "faisca"]
 
 const RAIO_R := 7.0     # selo do super: maior que qualquer selo de E
 const HANKO_COR := Color(0.82, 0.13, 0.1)
@@ -40,6 +40,9 @@ const VERBO := {
 	"espiral": [Vector4(0.45, 1.0, 0.0, 0.0), false, 0.32],
 	"nevoa": [Vector4(0.0, 0.0, 1.0, 0.0), false, 0.35],
 	"risco": [Vector4(0.0, 0.0, 0.1, 1.0), false, 0.22],
+	"racha": [Vector4(0.0, 0.25, 0.85, 0.0), true, 0.14],   # Ochimusha: aparece aos pedaços, de fora para dentro
+	"estala": [Vector4(0.0, 1.0, 0.3, 0.0), false, 0.1],    # Shishimai: estalo do centro para fora
+	"tece": [Vector4(0.7, 0.6, 0.0, 0.0), false, 0.4],      # Jorogumo: girando, como fio enrolando
 }
 
 ## Um por personagem. pal: paleta do kit Magia (nome ou [núcleo, meio, borda]);
@@ -66,6 +69,9 @@ const DADOS := {
 	&"onmyoji": {"pal": "papel", "traco": Color(0.88, 0.26, 0.2), "verbo": "pincel", "peca": "papel", "peca_cor": Color(1.0, 0.97, 0.88), "giro": 0.05},
 	&"tennin": {"pal": "celeste", "verbo": "espiral", "peca": "petala", "peca_cor": Color(1.0, 0.76, 0.86), "giro": 0.2},
 	&"komuso": {"pal": "som", "verbo": "ondas", "peca": "nota", "peca_cor": Color(0.72, 1.0, 0.93), "giro": 0.0, "pulso": 1.0},
+	&"ochimusha": {"pal": "fantasma", "verbo": "racha", "peca": "cinza", "peca_cor": Color(0.62, 0.8, 1.0), "giro": -0.03, "flash": Color(0.04, 0.06, 0.14)},
+	&"shishimai": {"pal": "festa", "traco": Color(0.86, 0.16, 0.18), "verbo": "estala", "peca": "confete", "peca_cor": Color(1.0, 0.82, 0.3), "giro": 0.12},
+	&"jorogumo": {"pal": "seda", "traco": Color(0.62, 0.2, 0.38), "verbo": "tece", "peca": "fio", "peca_cor": Color(0.96, 0.94, 1.0), "giro": 0.08},
 }
 
 ## Jeitos de a peça se mexer (chaves do FxProjetil.ps + gira, vira, tam).
@@ -74,7 +80,7 @@ const MOVS := {
 	"cai": {"spread": 75.0, "v0": 2.2, "v1": 5.5, "g": Vector3(0, -3.4, 0), "amort": 2.4, "s0": 0.85, "s1": 1.4, "vida": 1.7, "gira": 150.0, "vira": 2.5, "esfera": 0.6},
 	"sobe": {"spread": 35.0, "v0": 1.0, "v1": 2.8, "g": Vector3(0, 1.1, 0), "amort": 0.6, "s0": 0.75, "s1": 1.25, "vida": 1.4, "gira": 50.0, "rampa": "nasce", "esfera": 0.7},
 }
-const MOV := {"pena": "cai", "folha": "cai", "papel": "cai", "petala": "cai", "nota": "sobe", "conta": "sobe", "chama": "sobe", "grou": "sobe"}
+const MOV := {"pena": "cai", "folha": "cai", "papel": "cai", "petala": "cai", "nota": "sobe", "conta": "sobe", "chama": "sobe", "grou": "sobe", "cinza": "sobe", "confete": "cai", "fio": "cai", "nuvem": "sobe", "semente": "cai", "faisca": "espirra"}
 
 static var _cache := {}
 static var _sh_frente: Shader  # mesmo selo, sem teste de profundidade (hanko junto do nome)
@@ -352,7 +358,7 @@ static func abrir_e(u: Unit) -> void:
 	var d := de(u)
 	var pal := paleta(u)
 	var raio := clampf(maxf(u.stats.power_radius, 2.5) * 1.15, 3.2, 6.4)
-	if u.stats.power == "leque" or u.stats.power == "grou" or u.stats.power == "jato":
+	if u.stats.power in ["leque", "grou", "jato", "arrastao"]:
 		raio = 3.6  # poder de linha: o raio do .tres é o alcance, não a área
 	var no_super := u._super_t > 0.0
 	# Quem desenha o próprio selo no poder (no alvo ou enquanto dura) não ganha outro.
@@ -415,6 +421,17 @@ static func abrir_e(u: Unit) -> void:
 		&"komuso":
 			Magia.onda(g, p, pal, raio * 1.1, 0.6, {"banda": 0.06, "segura": 0.6})
 			pecas(g, p + Vector3(0, 1.6, 0), peca, pc, 10)
+		&"ochimusha":  # três fogos-fátuos acendem em roda, um por um, e soltam cinza
+			for k in 3:
+				_depois(u, 0.07 * k, func() -> void:
+					Magia.chama(g, p + _roda(k, 3, 1.9, 0.4), pal, 0.32, 1.5, 0.6, {"r_topo": 0.0, "barriga": 0.35}))
+			pecas(g, alto, peca, pc, 12, {"anel": 1.6})
+		&"shishimai":  # o sino do cinto estala e o confete voa para onde ele vai
+			var frente := (Vector3(u.aim_dir.x, 0, u.aim_dir.z).normalized() + Vector3.UP * 0.7).normalized()
+			pecas(g, alto, peca, pc, 16, {"mov": "espirra", "dir": frente, "spread": 35.0, "v0": 5.0, "v1": 9.0, "g": Vector3(0, -6, 0), "vida": 1.1})
+			Magia.onda(g, p, pal, 3.0, 0.3, {"banda": 0.1})
+		&"jorogumo":  # os fios brilham em roda antes do puxão
+			pecas(g, p + Vector3(0, 0.8, 0), peca, pc, 14, {"anel": raio * 0.7, "tang": 10.0, "mov": "espirra", "v0": 0.4, "v1": 1.4, "g": Vector3(0, -1.5, 0), "vida": 1.0})
 		_:
 			pecas(g, alto, peca, pc, 10)
 
@@ -589,6 +606,31 @@ static func abrir_r(u: Unit) -> void:
 				_depois(u, 0.12 * k, func() -> void:
 					Magia.onda(g, p, pal, 4.5 + 2.5 * k, 1.3, {"banda": 0.05, "segura": 0.85}))
 			pecas(g, p + Vector3(0, 1.6, 0), peca, pc, 22, {"esfera": 2.5})
+		&"ochimusha":  # o samurai caído se ergue atrás dele, o chão racha e a cinza sobe
+			var caido := figura(g, p + Vector3(0, -1.6, 0) + _fundo(g, 1.3), "caidos", pal, Vector2(5.6, 7.0), 1.6, {"verbo": "nevoa", "escrita": 0.25, "alfa": 0.9})
+			caido.create_tween().tween_property(caido, "global_position:y", p.y + 3.4, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			Magia.rachaduras(g, p, pal, 7.5, 10, 1.6)
+			_depois(u, 0.4, func() -> void:
+				Magia.onda(g, p, pal, 8.5, 0.5, {"banda": 0.07}))
+			pecas(g, p + Vector3(0, 0.5, 0), peca, pc, 30, {"esfera": 3.5, "vida": 2.0})
+		&"shishimai":  # a cabeça do leão pula na frente, estala a boca, e chove confete
+			var leao := figura(g, p + Vector3(0, 3.2, 0) + _fundo(g, 1.0), "leao", pal, Vector2(6.0, 6.0), 1.4, {"verbo": "estala"})
+			var alvo := leao.scale
+			leao.scale = alvo * 0.3
+			var tw := leao.create_tween()
+			tw.tween_property(leao, "scale", alvo * 1.1, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tw.tween_property(leao, "scale", alvo * 0.94, 0.08)  # a boca fecha: nhac
+			tw.tween_property(leao, "scale", alvo, 0.12)
+			for k in 3:  # três batidas do taiko
+				_depois(u, 0.18 * k, func() -> void:
+					Magia.onda(g, p, pal, 4.0 + 2.4 * k, 0.45, {"banda": 0.08}))
+			pecas(g, p + Vector3(0, 6.0, 0), peca, pc, 34, {"esfera": 4.5, "spread": 180.0, "v0": 0.4, "v1": 1.8, "vida": 2.2})
+		&"jorogumo":  # a aranha desce pelo fio e a teia se fecha em volta
+			var aranha := figura(g, p + Vector3(0, 9.0, 0) + _fundo(g, 1.0), "aranha", pal, Vector2(4.4, 4.4), 1.7, {"verbo": "tece", "escrita": 0.2})
+			aranha.create_tween().tween_property(aranha, "global_position:y", p.y + 3.6, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+			Magia.lanca(g, p + Vector3(0, 9.0, 0) + _fundo(g, 1.0), p + Vector3(0, 4.6, 0) + _fundo(g, 1.0), pal, 0.08, 1.2, {"cresce": 0.4})
+			Magia.onda(g, p, pal, 7.0, 0.7, {"banda": 0.05, "gira": -1.2})
+			pecas(g, p + Vector3(0, 4.0, 0), peca, pc, 24, {"esfera": 3.5, "vida": 1.8})
 		_:
 			pecas(g, alto, peca, pc, 20)
 

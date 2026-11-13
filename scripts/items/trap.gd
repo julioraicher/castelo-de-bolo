@@ -118,6 +118,7 @@ func _explode() -> void:
 	var r := RADIUS * 1.6
 	FxProjetil.explosao(_game, global_position, r)
 	FxProjetil.anel_chao(_game, global_position, Color(1.0, 0.55, 0.15, 0.8), r)
+	Reacoes.em(_game, global_position, r, "bomba", owner_unit.team)
 	Sfx.play("explosao", global_position, 0.1, 1.1)
 	_game.camera.shake_at(global_position, 0.5)
 	for u in _game.units:

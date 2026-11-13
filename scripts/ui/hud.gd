@@ -468,7 +468,7 @@ func _build_escolha(root: Control) -> void:
 	h.add_theme_constant_override("separation", 14)
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(h)
-	for i in 4:  # Ciclo 2.23: até 4 opções (caminhos = 2, heróis = 2 ou 3)
+	for i in 5:  # até 5 opções (caminhos = 2; heróis = 3 a 5, Heróis 2.27)
 		var b := Button.new()
 		b.custom_minimum_size = Vector2(330, 176)
 		b.focus_mode = Control.FOCUS_NONE
@@ -506,7 +506,7 @@ func abrir_escolha(of: Oficina, cb: Callable, heroi := false) -> void:
 		_escolha_botoes[i].visible = i < _escolha_n
 	for i in _escolha_n:
 		var b := _escolha_botoes[i]
-		b.custom_minimum_size = Vector2(300 if _escolha_n >= 3 else 330, 196 if heroi else 176)
+		b.custom_minimum_size = Vector2(_largura_escolha(), 196 if heroi else 176)
 		for c in b.get_children():
 			c.queue_free()
 		var cls: ClassStats = cs[i]
@@ -528,7 +528,7 @@ func abrir_escolha(of: Oficina, cb: Callable, heroi := false) -> void:
 		topo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		topo.add_theme_constant_override("separation", 8)
 		topo.add_child(Estilo.tecla(str(i + 1), Estilo.T_PEQUENO))
-		var nome := Estilo.rotulo(cls.display_name, Estilo.T_GRANDE, cor, Estilo.TITULO)
+		var nome := Estilo.rotulo(cls.display_name, Estilo.T_GRANDE if _escolha_n <= 3 else Estilo.T_MEDIO, cor, Estilo.TITULO)
 		topo.add_child(nome)
 		col.add_child(topo)
 		var linhas := [cls.caminho_nome.to_upper() if cls.caminho_nome != "" else "", cls.epiteto,
@@ -543,12 +543,17 @@ func abrir_escolha(of: Oficina, cb: Callable, heroi := false) -> void:
 				continue
 			var l := Estilo.rotulo(linhas[k], Estilo.T_PEQUENO if k > 0 else Estilo.T_MIN, Estilo.TEXTO if k > 0 else cor, Estilo.CORPO)
 			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			l.custom_minimum_size.x = 270 if _escolha_n >= 3 else 300
+			l.custom_minimum_size.x = _largura_escolha() - 30.0
 			col.add_child(l)
 		for n in [mc, col, topo] + col.get_children() + topo.get_children():
 			if n is Control:
 				(n as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_escolha.visible = true
+
+
+## Largura de cada cartão: 5 cartões ainda cabem em 1280 px.
+func _largura_escolha() -> float:
+	return [330.0, 330.0, 330.0, 300.0, 270.0, 228.0][clampi(_escolha_n, 0, 5)]
 
 
 func fechar_escolha() -> void:

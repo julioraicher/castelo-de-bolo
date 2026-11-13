@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="ClassStats" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="1_5awd0"]
+[ext_resource type="PackedScene" path="res://assets/characters/Knight.glb" id="2_ukcwk"]
+
+[resource]
+script = ExtResource("1_5awd0")
+id = &"ochimusha"
+display_name = "Ochimusha"
+epiteto = "O samurai que não deita"
+descricao = "Caiu numa batalha que ninguém lembra e se levantou mesmo assim, com a armadura rachada e as flechas do inimigo ainda nas costas. O golpe que derrubaria qualquer um só o deixa de pé por mais um instante, e nesse instante ele caça."
+model = ExtResource("2_ukcwk")
+visible_meshes = PackedStringArray("Knight_ArmLeft", "Knight_ArmRight", "Knight_Body", "Knight_Head", "Knight_LegLeft", "Knight_LegRight")
+hat_color = Color(0.55, 0.76, 1, 1)
+hat_style = "kabuto_rachado"
+estilo_ninja = "_ochimusha"
+escala_cabeca = 0.58
+escala_extremidades = 1.3
+dash_estilo = "fantasma"
+max_hp = 135.0
+move_speed = 6.6
+damage = 16.0
+attack_range = 2.6
+attack_arc_deg = 120.0
+attack_cooldown = 0.45
+combo_anims = PackedStringArray("1H_Melee_Attack_Slice_Diagonal", "1H_Melee_Attack_Slice_Horizontal", "1H_Melee_Attack_Chop")
+combo_finisher_mult = 1.6
+skill = "flecha_arrancada"
+skill_name = "Flecha Arrancada"
+skill_cooldown = 8.0
+skill_value = 15.0
+block_reduction = 0.55
+classe_base = &"guerreiro"
+estilo_linha = "Duelista que não cai de primeira: abate no último fôlego e volta."
+nao_cai = true
+eco_corte = 0.6
+cargas_q = 4
+dash_peca = true
+power = "onibi"
+power_name = "Onibi"
+power_radius = 2.0
+power_value = 16.0
+power_duration = 5.0
+super_tipo = "proprio"
+super_poder = "carga_caidos"
+super_nome = "Carga dos Caídos"
+som_poder = "ochimusha_poder"
+som_super = "ochimusha_super"
+som_golpe_final = "ochimusha_final"
+heroi = true
+anim_attack = "1H_Melee_Attack_Slice_Diagonal"

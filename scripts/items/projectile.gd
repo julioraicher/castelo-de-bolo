@@ -59,9 +59,10 @@ func setup(game: Game, shooter: Unit, origin: Vector3, dir: Vector3, p_kind: Str
 
 ## Som ao lançar e ao acertar, por projétil (gerados por tools/gerar_sons.py).
 const SOM_LANCAR := {"flecha": "shoot", "shuriken": "lancar_metal", "bomba": "pavio", "fogo": "fogo", "chi": "luz", "magia": "sombra",
-	"vento": "magia_vento", "nota": "flauta", "talisma": "papel", "grou": "papel"}
+	"vento": "magia_vento", "nota": "flauta", "talisma": "papel", "grou": "papel", "fio": "seda"}
 const SOM_ACERTO := {"flecha": "flecha_chao", "shuriken": "tinido", "bomba": "explosao", "fogo": "brasa", "chi": "sino", "magia": "implosao",
-	"vento": "magia_vento", "nota": "sino", "talisma": "magia_selo", "grou": "magia_selo"}
+	"vento": "magia_vento", "nota": "sino", "talisma": "magia_selo", "grou": "magia_selo",
+	"fio": "seda_gruda", "onibi": "ochimusha_onibi", "mordida": "shishimai_mordida"}
 var nivel := 1  # 2 = tiro carregado (rastro e impacto maiores)
 var kind := "flecha"
 var _spin: Node3D
@@ -182,6 +183,20 @@ func _physics_process(delta: float) -> void:
 				u.heal(cura, owner_unit)
 				FxProjetil.brilho(_game, u.global_position + Vector3(0, 1.2, 0), Color(0.6, 1.0, 0.7), 1.0, 0.25)
 	for u in _game.units:
+		if u._casulo_t > 0.0 and u.alive and u.team == owner_unit.team and u != owner_unit:
+			# Casulo da Jorogumo: tiro de aliado bate no casulo e ajuda a soltar.
+			var dc := u.global_position - global_position
+			var dyc := -dc.y
+			dc.y = 0
+			if dc.length() < HIT_RADIUS and dyc > -0.2 and dyc < 2.1:
+				Herois.bater_casulo(u, owner_unit)
+				if kind == "bomba" or explode_final:
+					_explode(global_position)
+				else:
+					_bateu(global_position)
+				_fim()
+				return
+			continue
 		if u.alive and u.team != owner_unit.team and not u.em_voo:  # quem voa na catapulta: o tiro passa
 			# Cápsula do boneco (0,7 m de raio somando o projétil, dos pés até 2,1 m).
 			# Antes era uma esfera de 1,25 m no peito: um corredor de 2,5 m de
@@ -194,6 +209,7 @@ func _physics_process(delta: float) -> void:
 					_explode(global_position)
 				else:
 					u.take_damage(damage * queda(), owner_unit, velocity.normalized(), 1.0, false, kind, nivel)
+					Reacoes.em(_game, u.global_position, 0.8, kind, owner_unit.team)
 					if perfura > 0:
 						perfura -= 1
 						damage *= 0.8
@@ -222,6 +238,7 @@ func _explode(at: Vector3) -> void:
 	var r := owner_unit.stats.explosao_raio * raio_mult
 	FxProjetil.explosao(_game, at, r)
 	FxProjetil.anel_chao(_game, at, Color(1.0, 0.55, 0.15, 0.8), r)
+	Reacoes.em(_game, at, r, "bomba", owner_unit.team)
 	Sfx.play("explosao", at, 0.1, 1.0 if nivel == 1 else 0.8)
 	_game.camera.shake_at(at, 0.45)
 	for u in _game.units:
@@ -240,6 +257,7 @@ func _explode(at: Vector3) -> void:
 ## Bateu no cenário (parede/chão): impacto do elemento e som.
 func _bateu(at: Vector3) -> void:
 	FxProjetil.impacto_cenario(_game, at, kind, velocity.normalized(), nivel)
+	Reacoes.em(_game, at, 0.8, kind, owner_unit.team)
 	Sfx.play(SOM_ACERTO.get(kind, "hit"), at, 0.1, 1.0, -6.0)
 
 

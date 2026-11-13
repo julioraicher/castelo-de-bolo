@@ -197,6 +197,31 @@ var _danca_t := 0.0         # Tennin: dança em volta dela
 var _danca_tick := 0.0
 var _ring: MeshInstance3D   # anel do time no chão (o disfarce troca a cor)
 
+# --- Heróis 2.27 (Ochimusha, Shishimai, Jorogumo): estados; regras em Herois ----
+var _fantasma_t := 0.0      # Ochimusha não caiu: 1 de vida, intocável, caçando um abate
+var _nao_cai_usado := false # uma vez por vida
+var _fantasma_quem: Unit = null  # quem deu o golpe (leva o abate se o tempo acabar)
+var cargas_q := 0           # Q com cargas (flechas nas costas)
+var _carga_q_t := 0.0
+var _onibi_n := 0           # fogos-fantasma girando em volta
+var _onibi_t := 0.0
+var _onibi_no: Node3D
+var _sorte_t := 0.0         # Shishimai: Sorte (bits em _sorte_partes: 1 golpe, 2 esquiva)
+var _sorte_partes := 0
+var _azar_t := 0.0          # Azar: o próximo golpe erra
+var _festa_t := 0.0         # Festa da Vila: leão gigante
+var _festa_tick := 0.0
+var _fio_n := 0             # Jorogumo: fios grudados (cada um deixa mais lento)
+var _fio_t := 0.0
+var _fio_dono: Unit = null  # quem prendeu/deixou lento (Puxar os Fios só puxa os dela)
+var _casulo_t := 0.0        # enrolado no casulo (aliados quebram batendo)
+var _casulo_vida := 0
+var _casulo_no: Node3D
+var _teia_t := 0.0          # dona em cima da própria teia (corre mais)
+var _arrastao_t := 0.0      # Shishimai avançando com um inimigo na boca
+var _arrastao_dir := Vector3.ZERO
+var _arrastao_alvo: Unit = null
+
 static var _flash_mat: StandardMaterial3D
 static var _merged_body := {}  # caminho do .tres da classe -> ArrayMesh do corpo
 static var _upper_libs := {}  # caminho do modelo -> AnimationLibrary filtrada
@@ -533,7 +558,7 @@ func parar_reanimar() -> void:
 func maos_livres() -> bool:
 	return not carried_princess and not carried_tora and _dodge_t <= 0.0 and _equip_t <= 0.0 \
 			and _spin_t <= 0.0 and _silence_t <= 0.0 and _preso_t <= 0.0 and _ciranda_t <= 0.0 \
-			and _sono_t <= 0.0 and _forcado_t <= 0.0 and _canto_t <= 0.0
+			and _sono_t <= 0.0 and _forcado_t <= 0.0 and _canto_t <= 0.0 and _casulo_t <= 0.0
 
 
 ## Corta madeira (Construtor e variações: quem tem velocidade_obra).
@@ -622,8 +647,10 @@ func current_speed() -> float:
 		s *= Config.cfg.sombra_vel
 	if _preso_t > 0.0:
 		s *= 0.1
-	if _sono_t > 0.0 or _canto_t > 0.0:
+	if _sono_t > 0.0 or _canto_t > 0.0 or _casulo_t > 0.0:
 		s = 0.0
+	if _teia_t > 0.0:
+		s *= Config.cfg.teia_vel
 	if _ciranda_t > 0.0:
 		s *= Config.cfg.ciranda_vel_mult
 	if _tiro_lento_t > 0.0:
@@ -722,7 +749,7 @@ func _physics_process(delta: float) -> void:
 		brain.tick(delta)
 		if game._perf:
 			game.perf_secoes["cerebro"] = game.perf_secoes.get("cerebro", 0) + Time.get_ticks_usec() - t0
-	if _forcado_t > 0.0 or _sono_t > 0.0:
+	if _forcado_t > 0.0 or _sono_t > 0.0 or _casulo_t > 0.0:
 		Herois.corpo_sem_cerebro(self)
 
 	_attack_cd = maxf(_attack_cd - delta, 0.0)
@@ -739,7 +766,7 @@ func _physics_process(delta: float) -> void:
 	_tick_power(delta)
 	_tick_buffs(delta)
 
-	if wants_dodge and _dodge_cd <= 0.0 and not carried_princess and _spin_t <= 0.0 and _ciranda_t <= 0.0 and _preso_t <= 0.0 and _sono_t <= 0.0 and _canto_t <= 0.0:
+	if wants_dodge and _dodge_cd <= 0.0 and not carried_princess and _spin_t <= 0.0 and _ciranda_t <= 0.0 and _preso_t <= 0.0 and _sono_t <= 0.0 and _canto_t <= 0.0 and _casulo_t <= 0.0:
 		_start_dodge()
 	wants_dodge = false
 
@@ -884,7 +911,7 @@ func _start_dodge() -> void:
 		"ninja":
 			_play_once("Running_B", DODGE_TIME + 0.1, 1.8)
 			_mola(-1.0, 10.0)
-		"chama":
+		"chama", "fantasma":
 			_play_once("Dodge_Forward", DODGE_TIME + 0.1)
 			_fogo_dash(true)
 		"rolar", "rolamento":
@@ -906,13 +933,17 @@ func _start_dodge() -> void:
 		_:
 			_play_once("Dodge_Forward", DODGE_TIME + 0.1)
 			_mola(-1.5, 8.0)  # esticão na direção do dash
+	if stats.dash_peca:
+		Herois.dash_peca(self, true)
 
 
 ## Pouso do dash por personalidade.
 func _fim_dash() -> void:
 	_rastro_dash_t = 0.0
+	if stats.dash_peca:
+		Herois.dash_peca(self, false)
 	match stats.dash_estilo:
-		"chama":
+		"chama", "fantasma":
 			_fogo_dash(false)
 		"rolar":
 			# Tanque caindo do rolamento: amassa mais, levanta pó e treme o chão.
@@ -936,6 +967,8 @@ func _fogo_dash(sumir: bool) -> void:
 	if _model == null:
 		return
 	var cor := stats.hat_color.lightened(0.2)
+	if stats.dash_estilo == "fantasma":
+		cor = Color(0.55, 0.78, 1.0)  # Ochimusha: desfaz em cinza azul e volta
 	if stats.estilo_ninja == "_kitsune_luz":
 		cor = Color(1.0, 0.85, 0.4)
 	elif stats.estilo_ninja == "_kitsune_sombria":
@@ -1047,7 +1080,16 @@ func _attack_hit() -> void:
 				Fx.slash(game, global_position + Vector3(0, 1.0, 0), dir, reach, stats.attack_arc_deg + (30.0 if finisher else 0.0), col, tilt, finisher)
 			FxPoder.fita_lamina(self, finisher)
 			var hit_any := false
+			if finisher and stats.eco_corte > 0.0 and combo.size() > 0:
+				Herois.eco(self, dir, alcance, arco, stats.damage * mult * damage_mult() * stats.eco_corte)
 			for other in game.units:
+				if other.alive and other.team == team and other._casulo_t > 0.0 and other != self:
+					var tc := other.global_position - global_position
+					tc.y = 0
+					if tc.length() <= alcance + 0.3:
+						Herois.bater_casulo(other, self)
+						hit_any = true
+					continue
 				if not other.alive or other.team == team:
 					continue
 				var to := other.global_position - global_position
@@ -1200,7 +1242,7 @@ func _alvo_no_cone(dir: Vector3, graus: float) -> Unit:
 
 
 ## Projéteis que voam retos (sem parábola).
-const RETOS := ["shuriken", "vento", "nota", "talisma", "grou"]
+const RETOS := ["shuriken", "vento", "nota", "talisma", "grou", "fio"]
 
 func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZERO) -> Projectile:
 	var dir := aim_dir.normalized() if dir_override == Vector3.ZERO else dir_override
@@ -1324,6 +1366,9 @@ func _update_skill(delta: float, free_hands: bool) -> void:
 			if _usar_rapida():
 				Assinatura.toque_q(self)
 				_quick_cd = quick_cooldown()
+				if stats.cargas_q > 0:  # flechas nas costas: gasta uma, a recarga é por carga
+					cargas_q -= 1
+					_quick_cd = 0.35
 
 
 func tem_rapida() -> bool:
@@ -1346,11 +1391,15 @@ func quick_cooldown() -> float:
 
 
 func quick_ready() -> bool:
+	if stats.cargas_q > 0:
+		return tem_rapida() and cargas_q > 0 and _quick_cd <= 0.0
 	return tem_rapida() and _quick_cd <= 0.0
 
 
 ## 0 = acabou de usar, 1 = pronto.
 func quick_ratio() -> float:
+	if stats.cargas_q > 0 and cargas_q <= 0:
+		return clampf(_carga_q_t / maxf(quick_cooldown(), 0.01), 0.0, 1.0)
 	return 1.0 - clampf(_quick_cd / maxf(quick_cooldown(), 0.01), 0.0, 1.0)
 
 
@@ -1680,7 +1729,7 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		if attacker and amount > 0.0:
 			_esquiva_perfeita(attacker)
 		return
-	amount = Herois.ao_apanhar(self, amount, attacker, dir, melee)
+	amount = Herois.ao_apanhar(self, amount, attacker, dir, melee, elemento, nivel)
 	if amount < 0.0:
 		return  # boneco de papel engoliu o golpe
 	if stats.knock_imune:
@@ -1772,9 +1821,9 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		if not blocked and game.hud and (frac >= Config.cfg.golpe_forte_frac or (forte and frac > 0.05)):
 			game.hud.golpe_forte(clampf(frac / (Config.cfg.golpe_forte_frac * 2.0), 0.4, 1.0), dir)
 	_update_hp_bar()
-	if hp <= 0.0:
+	if hp <= 0.0 and not Herois.nao_cai(self, attacker):
 		_die(attacker)
-	elif _anim_lock <= 0.0 and not blocked and _spin_t <= 0.0:
+	elif _anim_lock <= 0.0 and not blocked and _spin_t <= 0.0 and hp > 0.0:
 		_play_once("Hit_A" if randf() < 0.5 else "Hit_B", 0.25)
 
 
@@ -1860,6 +1909,7 @@ func _explosao(at: Vector3, dano: float, r: float) -> void:
 	Fx.burst(game, at + Vector3(0, 0.4, 0), Color(0.6, 0.6, 0.7), 10, 3.0)
 	Fx.ring(game, at, Color(1.0, 0.55, 0.15, 0.9), r)
 	FxPoder.explosao_polvora(game, at, r)
+	Reacoes.em(game, at, r, "bomba", team)
 	Sfx.play("hit", at, 0.15)
 	game.camera.shake_at(at, 0.45)
 	for u in game.units:
@@ -2023,6 +2073,7 @@ func _die(killer: Unit) -> void:
 	if killer and killer != self:
 		killer.add_power(Config.cfg.power_per_kill)
 		killer.add_super(Config.cfg.super_por_abate)
+		Herois.abateu(killer, self)
 	power *= Config.cfg.power_keep_on_death
 	if _sombra_t > 0.0:
 		_fim_sombra()
@@ -2199,7 +2250,7 @@ func _tick_super(delta: float) -> void:
 
 ## Esconde (ou mostra) o corpo para quem é do outro time do jogador: o inimigo
 ## vê só um vulto que some; o próprio time vê o corpo translúcido, de fantasma.
-func _aplicar_sombra(sumir: bool) -> void:
+func _aplicar_sombra(sumir: bool, esconder := true) -> void:
 	var inimigo_do_jogador := game.player != null and game.player.team != team
 	# Aliado: corpo translúcido de fantasma. Troca o material de cada pedaço pela
 	# versão translúcida (cache) e devolve no fim; sem sombra no chão enquanto dura.
@@ -2228,9 +2279,9 @@ func _aplicar_sombra(sumir: bool) -> void:
 			mi.remove_meta("sombra_orig")
 			mi.remove_meta("sombra_cast")
 	if _visual:
-		_visual.visible = not (sumir and inimigo_do_jogador)
+		_visual.visible = not (sumir and inimigo_do_jogador and esconder)
 	if _hp_root:
-		_hp_root.visible = not (sumir and inimigo_do_jogador)
+		_hp_root.visible = not (sumir and inimigo_do_jogador and esconder)
 
 
 ## Versão translúcida de um material do corpo: o toon troca de shader (mesmos
@@ -2844,7 +2895,7 @@ func _tick_corpo(delta: float, horizontal: Vector3, congelado := false) -> void:
 	# (sx·sy·sz = 1), como massa de modelar.
 	var v := 1.0 + clampf(_sq, -0.45, 0.6)
 	var f := 1.0 + clampf(_st, -0.35, 0.55)
-	var alvo_g: float = Config.cfg.furia_escala if _fury_t > 0.0 else 1.0
+	var alvo_g: float = Config.cfg.furia_escala if _fury_t > 0.0 else (Config.cfg.festa_escala if _festa_t > 0.0 else 1.0)
 	_gigante = move_toward(_gigante, alvo_g, delta * 2.5)
 	_visual.scale = Vector3(1.0 / sqrt(v * f), v / sqrt(f), f / sqrt(v)) * _gigante
 	# Tremor de quem apanha: chacoalho aleatório que some em ~0,2 s.

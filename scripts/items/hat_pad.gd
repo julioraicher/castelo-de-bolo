@@ -507,6 +507,47 @@ static func make_hat(style: String, color: Color) -> Node3D:
 				_add(root, _cyl(0.45 + (0.1 - y) * 0.15, 0.46 + (0.1 - y) * 0.15, 0.04), Vector3(0, y, 0), Vector3.ZERO, Fx.lit(Color(0.45, 0.33, 0.16)))
 			_add(root, BoxMesh.new(), Vector3(0, 0.1, 0.46), Vector3(-8, 0, 0), Fx.lit(Color(0.12, 0.08, 0.05)), Vector3(0.36, 0.12, 0.04))
 			_add(root, _cyl(0.53, 0.53, 0.07), Vector3(0, -0.32, 0), Vector3.ZERO, Fx.unshaded(color))
+		# --- Heróis 2.27 ---
+		"kabuto_rachado":
+			# Ochimusha: elmo amassado, um chifre quebrado, rachadura acesa e
+			# uma flecha cravada.
+			var ferro := Fx.lit(Color(0.18, 0.18, 0.22), 0.4)
+			_add(root, _sph(0.5, 0.33), Vector3.ZERO, Vector3(0, 0, -6), ferro)
+			_add(root, _cyl(0.6, 0.64, 0.06), Vector3(0, -0.05, 0), Vector3(-6, 0, 5), Fx.lit(Color(0.08, 0.08, 0.1)))
+			var chifre := Fx.lit(Color(0.62, 0.5, 0.25), 0.3)
+			_add(root, _cyl(0.0, 0.08, 0.55), Vector3(-0.22, 0.4, 0.2), Vector3(-25, 0, 35), chifre)
+			_add(root, _cyl(0.04, 0.08, 0.2), Vector3(0.2, 0.25, 0.22), Vector3(-25, 0, -35), chifre)
+			for i in 3:
+				_add(root, BoxMesh.new(), Vector3(0.1 + i * 0.06, 0.28 - i * 0.08, 0.3), Vector3(-20, 0, 30 - i * 30), Fx.unshaded(color), Vector3(0.04, 0.13, 0.03))
+			_add(root, _cyl(0.02, 0.02, 0.8), Vector3(-0.15, 0.3, -0.25), Vector3(-40, 0, 25), Fx.lit(Color(0.42, 0.3, 0.18)))
+		"shishi":
+			# Shishimai: cabeça de leão de laca vermelha, olhos dourados, dentes
+			# e a juba branca.
+			var laca := Fx.lit(Color(0.78, 0.12, 0.1), 0.25)
+			var ouro := Fx.lit(Color(1.0, 0.78, 0.3), 0.3)
+			_add(root, _sph(0.48, 0.4), Vector3.ZERO, Vector3.ZERO, laca, Vector3(1.15, 0.92, 1.05))
+			_add(root, BoxMesh.new(), Vector3(0, -0.12, 0.42), Vector3(8, 0, 0), laca, Vector3(0.62, 0.26, 0.3))
+			for s in [-1, 1]:
+				_add(root, _sph(0.13, 0.13), Vector3(0.2 * s, 0.12, 0.42), Vector3.ZERO, ouro)
+				_add(root, _sph(0.06, 0.06), Vector3(0.2 * s, 0.12, 0.53), Vector3.ZERO, Fx.lit(Color(0.06, 0.04, 0.04)))
+			for i in 4:
+				_add(root, BoxMesh.new(), Vector3((i - 1.5) * 0.13, -0.24, 0.58), Vector3.ZERO, Fx.lit(Color(0.97, 0.96, 0.92)), Vector3(0.08, 0.1, 0.04))
+			for i in 5:
+				var a := lerpf(-120.0, 120.0, i / 4.0)
+				var ar := deg_to_rad(a)
+				_add(root, BoxMesh.new(), Vector3(sin(ar) * 0.45, 0.1, -cos(ar) * 0.38), Vector3(-30, a, 0), Fx.lit(Color(0.97, 0.96, 0.92)), Vector3(0.22, 0.6, 0.05))
+			_add(root, _cyl(0.0, 0.08, 0.3), Vector3(0, 0.45, 0.15), Vector3(-15, 0, 0), Fx.unshaded(color))
+		"kanzashi":
+			# Jorogumo: coque alto preto, grampos dourados, os quatro olhinhos de
+			# aranha e duas patas aparecendo.
+			var cabelo := Fx.lit(Color(0.05, 0.04, 0.06), 0.25)
+			_add(root, _sph(0.46, 0.34), Vector3.ZERO, Vector3.ZERO, cabelo)
+			_add(root, _sph(0.26, 0.2), Vector3(0, 0.36, -0.06), Vector3.ZERO, cabelo, Vector3(1.5, 1, 1))
+			for s in [-1, 1]:
+				_add(root, _cyl(0.018, 0.018, 0.7), Vector3(0.28 * s, 0.42, 0), Vector3(0, 0, 70 * s), Fx.lit(Color(1.0, 0.8, 0.35), 0.3))
+				_add(root, _cyl(0.025, 0.04, 0.6), Vector3(0.36 * s, 0.1, -0.3), Vector3(-30, 0, -55 * s), Fx.lit(Color(0.1, 0.07, 0.1)))
+			for i in 4:
+				_add(root, _sph(0.04, 0.04), Vector3((i - 1.5) * 0.1, 0.12, 0.43), Vector3.ZERO, Fx.unshaded(color))
 		"barril":
 			_add(root, _cyl(0.38, 0.38, 0.75), Vector3.ZERO, Vector3.ZERO, Fx.lit(Color(0.42, 0.26, 0.13)))
 			for y in [-0.25, 0.25]:

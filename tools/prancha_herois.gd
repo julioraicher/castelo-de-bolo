@@ -4,7 +4,7 @@ extends "res://tools/prancha_personagens.gd"
 ## ao lado de Samurai, Ninja e Kitsune na câmera do jogo.
 ## Uso: xvfb-run ... -s tools/prancha_herois.gd -- DIR [ids,separados]
 
-var herois := ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso"]
+var herois := ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo"]
 
 
 func _init() -> void:
@@ -42,7 +42,7 @@ func _montar_herois() -> void:
 		var cls: Resource = load("res://config/classes/%s.tres" % grupo[i])
 		for t in 2:
 			var b := _boneco(cls, AZUL if t == 0 else VERMELHO)
-			b.position = Vector3(1000 + (i - (grupo.size() - 1) / 2.0) * 2.6, 0, (t - 0.5) * 3.5)
+			b.position = Vector3(3000 + (i - (grupo.size() - 1) / 2.0) * 2.6, 0, (t - 0.5) * 3.5)
 			b.rotation.y = PI if t == 1 else 0.0
 	cam = Camera3D.new()
 	cena.add_child(cam)
@@ -53,7 +53,7 @@ func _montar_herois() -> void:
 		cam.look_at(Vector3(h * 100, 1.1, 0))
 		await _salvar("%s.png" % herois[h])
 	cam.fov = 42
-	cam.position = Vector3(1000, 19, 17)
-	cam.look_at(Vector3(1000, 0, 0))
+	cam.position = Vector3(3000, 19, 17)
+	cam.look_at(Vector3(3000, 0, 0))
 	await _salvar("jogo.png")
 	quit()

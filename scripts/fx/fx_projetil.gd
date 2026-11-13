@@ -22,7 +22,8 @@ const COR_VAZIO := Color(0.55, 0.2, 1.0)
 const COR_TINTA := Color(0.09, 0.03, 0.14)
 ## Paleta do kit Magia para o estouro do golpe forte de cada elemento.
 const ELEMENTO_MAGIA := {"fogo": "raposa_rosa", "chi": "luz", "magia": "sombra", "shuriken": "aco", "flecha": "vento", "terra": "brasa",
-	"agua": "agua", "vento": "vento", "pena": "pena", "nota": "som", "talisma": "papel", "grou": "papel"}
+	"agua": "agua", "vento": "vento", "pena": "pena", "nota": "som", "talisma": "papel", "grou": "papel",
+	"fio": "seda", "fios": "seda", "onibi": "fantasma", "caidos": "fantasma", "mordida": "festa"}
 
 static var _cache := {}
 
@@ -544,6 +545,17 @@ static func montar(p: Node3D, kind: String, time_cor: Color) -> Node3D:
 			if rastro:
 				_fita(p, Color(0.98, 0.94, 0.8, 0.5), 0.6 if grou else 0.2, 1.8 if grou else 1.0)
 				ps(p, Vector3.ZERO, quad("brilho", tex_brilho()), Color(0.6, 1.0, 0.7) if grou else Color(1.0, 0.4, 0.3), 6, 0.4, {"one_shot": false, "esfera": 0.3, "s0": 0.15, "s1": 0.3, "rampa": "pisca", "local_pos": true})
+		"fio":
+			# Jorogumo: gota de seda esticada puxando um fio longo atrás, com um
+			# brilho na cor do time (o fio "lê" de quem é).
+			corpo.mesh = malha_bola(Color(1.15, 1.12, 1.25), 0.13)
+			corpo.scale = Vector3(0.8, 0.8, 2.2)
+			p.add_child(corpo)
+			brilho_fixo(p, Vector3.ZERO, Color(time_cor.lightened(0.4), 0.7), 0.6, false)
+			_fita(p, Color(0.96, 0.95, 1.0, 0.85), 0.06, 3.2)
+			if rastro:
+				_fita(p, Color(0.8, 0.75, 0.95, 0.35), 0.22, 1.4)
+				ps(p, Vector3.ZERO, quad("brilho", tex_brilho()), Color(0.95, 0.92, 1.0), 4, 0.35, {"one_shot": false, "esfera": 0.12, "s0": 0.1, "s1": 0.18, "rampa": "pisca", "local_pos": true})
 		_:
 			corpo.mesh = malha_bola(Color(1.2, 0.9, 2.0), 0.26)
 			p.add_child(corpo)
@@ -677,6 +689,9 @@ static func impacto(g: Node, at: Vector3, kind: String, dir: Vector3, nivel := 1
 			tw.tween_callback(brilho.bind(g, at, COR_VAZIO, 1.2 * k, 0.16))
 		"bomba":
 			explosao(g, at, 2.0 * k)
+		"fio":  # seda gruda: fiapos soltos e um brilho de orvalho
+			Assinatura.pecas(g, at, "fio", Color(0.95, 0.94, 1.0), int(4 * k), {"tam": 0.6})
+			brilho(g, at, Color(0.95, 0.93, 1.0, 0.8), 0.8 * k, 0.12)
 		"terra":  # pisão/fúria: poeira e pedrinhas
 			fumaca(g, at + Vector3(0, -0.8, 0), Color(0.5, 0.42, 0.32, 0.8), 3, 0.7, 0.6, 1.0)
 			faiscas(g, at, Color(1.0, 0.45, 0.2), int(4 * k), 6.0, dir + Vector3.UP, 50.0, 0.22)
