@@ -4,6 +4,21 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.28b (2026-11-13), Diretor de Jogabilidade: porta do roteador mais insistente + blindagem
+Julio criou a sala e apareceu "Código da internet: indisponível".
+- **UPnP insiste**: procura o roteador duas vezes (3 s cada, a segunda aceitando
+  qualquer aparelho), pede a porta com prazo de 2 h e, se recusar, permanente.
+  A porta com prazo fecha sozinha se o jogo fechar sem apagar.
+- **A sala diz o motivo**: roteador não respondeu (UPnP desligado), roteador
+  recusou, ou CGNAT da operadora; e avisa para criar a sala de novo depois de
+  instalar o Radmin. Dica do firewall do Windows (marcar rede pública também).
+- **Blindagem** (revisão de segurança): o anfitrião só aceita comando do tamanho
+  certo (17 bytes) e no máximo 64 quadros à frente (um jogo adulterado não enche
+  a memória nem a rede dos outros); nome vindo da lista da rede local cortado em 14.
+
+**O que testar**
+- Criar sala: a linha de baixo agora diz qual dos três casos é o seu.
+
 ## Ciclo 2.28 (2026-11-13), Diretor de Jogabilidade: multiplayer com amigos
 Julio: "quero jogar com meus amigos no modo multiplayer, a gente escolhe o lado
 azul ou vermelho". Quiz respondido com todas as recomendadas (1A 2B 3A 4AB 5A)

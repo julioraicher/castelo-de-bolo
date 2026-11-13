@@ -116,7 +116,7 @@ func _montar_entrada() -> void:
 		_salvar_nome()
 		Rede.sala_teste(_nome_ok()))
 	_corpo.add_child(teste)
-	_corpo.add_child(_texto("Amigo em outra casa e o código não conecta? Todos instalam o Radmin VPN (grátis), entram na mesma rede dele e usam o IP 26.x que ele mostra.", Estilo.T_MIN, Estilo.TEXTO_FRACO))
+	_corpo.add_child(_texto("Amigo em outra casa e o código não conecta? Todos instalam o Radmin VPN (grátis), entram na mesma rede dele e usam o IP 26.x que aparece na sala. Quem cria a sala: quando o Windows perguntar do firewall, marque rede privada E pública.", Estilo.T_MIN, Estilo.TEXTO_FRACO))
 
 
 func _montar_lan() -> void:
