@@ -1422,6 +1422,8 @@ func mao_da_arma() -> Node3D:
 
 
 func quick_restante() -> float:
+	if stats.cargas_q > 0 and cargas_q <= 0:  # sem flecha: espera a próxima carga
+		return maxf(quick_cooldown() - _carga_q_t, _quick_cd)
 	return _quick_cd
 
 

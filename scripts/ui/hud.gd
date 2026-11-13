@@ -720,6 +720,8 @@ func update_state(game: Game) -> void:
 		_quick_bar.value = u.quick_ratio() * 100.0
 		if u.quick_ready():
 			_quick_label.text = u.stats.skill_name.to_upper()
+			if u.stats.cargas_q > 0:  # Ochimusha: quantas flechas ainda nas costas
+				_quick_label.text += " ×%d" % maxi(u.cargas_q, 0)
 			_quick_row.modulate = Color.WHITE
 		else:
 			_quick_label.text = "%.1f s" % u.quick_restante()
