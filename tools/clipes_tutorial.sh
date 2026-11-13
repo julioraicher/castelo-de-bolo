@@ -9,7 +9,8 @@ set -e
 cd "$(dirname "$0")/.."
 CENAS="objetivo controles madeira oficinas heroi torreta catapulta luz_sombra"
 CLASSES="guerreiro ronin_oni sohei arqueiro arqueiro_yumi kusarigama kitsune kitsune_luz kitsune_sombria
-  construtor armadilheiro bombardeiro sumotori kappa yamabushi karasu_tengu mujina onmyoji tennin komuso ochimusha shishimai jorogumo"
+  construtor armadilheiro bombardeiro sumotori kappa yamabushi karasu_tengu mujina onmyoji tennin komuso ochimusha shishimai jorogumo
+  kodama kaminari_kozo"
 LISTA="${*:-$CENAS $(for c in $CLASSES; do echo -n "classe:$c "; done)}"
 for cena in $LISTA; do
   pasta="assets/tutorial/${cena/classe:/classe_}"

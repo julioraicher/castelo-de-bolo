@@ -21,7 +21,7 @@ extends Resource
 ## Cor do chapéu exibido no pedestal do castelo.
 @export var hat_color := Color.WHITE
 ## Formato do chapéu do pedestal (HatPad.make_hat).
-@export_enum("elmo", "capuz", "chapeu_pontudo", "kasa", "kabuto", "faixa", "mascara_oni", "eboshi", "orelhas", "cesto", "barril", "hachimaki", "coque", "prato", "tokin", "bico", "mascara_lisa", "halo", "tengai", "kabuto_rachado", "shishi", "kanzashi") var hat_style := "elmo"
+@export_enum("elmo", "capuz", "chapeu_pontudo", "kasa", "kabuto", "faixa", "mascara_oni", "eboshi", "orelhas", "cesto", "barril", "hachimaki", "coque", "prato", "tokin", "bico", "mascara_lisa", "halo", "tengai", "kabuto_rachado", "shishi", "kanzashi", "kodama", "raijin") var hat_style := "elmo"
 ## Visual ninja (NinjaVisual): nome da função que monta as peças (ex.: "_samurai").
 ## Vazio = modelo KayKit original, só com a capa na cor do time.
 @export var estilo_ninja := ""
@@ -65,7 +65,7 @@ extends Resource
 @export var queda_dist_ini := 0.0
 @export var queda_dano_min := 1.0
 ## Visual e comportamento do projétil: bomba cai em parábola e explode em área.
-@export_enum("flecha", "magia", "shuriken", "bomba", "talisma", "fogo", "chi", "vento", "nota", "grou", "fio") var projetil := "flecha"
+@export_enum("flecha", "magia", "shuriken", "bomba", "talisma", "fogo", "chi", "vento", "nota", "grou", "fio", "semente", "trovao") var projetil := "flecha"
 ## Bomba: raio da explosão (m).
 @export var explosao_raio := 2.2
 @export_group("Combo")
@@ -91,7 +91,7 @@ extends Resource
 ## varrida = giro da naginata que acerta só a faixa entre alcance_min e skill_radius
 ## e dá escudo aos aliados perto (Sohei); gancho = corrente que PUXA o primeiro
 ## inimigo na linha até skill_radius m (Kusarigama).
-@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho", "agarrao", "rasteira", "rajada", "mergulho", "roubar_rosto", "dobrar", "laco", "sono", "flecha_arrancada", "mordida", "teia") var skill := "nenhum"
+@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho", "agarrao", "rasteira", "rajada", "mergulho", "roubar_rosto", "dobrar", "laco", "sono", "flecha_arrancada", "mordida", "teia", "raizes", "para_raios") var skill := "nenhum"
 ## Nome mostrado no HUD ao lado da tecla Q.
 @export var skill_name := ""
 ## Recarga do Q em s (cura usa heal_cooldown e armadilha usa trap_cooldown).
@@ -162,13 +162,16 @@ extends Resource
 @export var cargas_q := 0
 ## O dash solta a peça da assinatura do personagem (Assinatura.DADOS["peca"]).
 @export var dash_peca := false
+## Kaminari-kozō (Heróis 2.27): correr e o dash enchem a carga estática; cheia,
+## o próximo acerto descarrega em cadeia (HeroisNatureza).
+@export var carga_estatica := false
 
 @export_group("Poder de Chi (E)")
 ## Poder especial, liberado quando o medidor de Glacê enche.
 ## muralha = Muralha de Fé do Sohei (aliados em volta ganham escudo e pressa,
 ## inimigos na borda são empurrados para fora); ciranda = a Kusarigama gira a
 ## corrente em volta (pulsos que acertam só a ponta e arremessam).
-@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "furia", "leque", "selo", "coluna_fogo", "mutirao", "campo_minado", "bombardeio", "muralha", "ciranda", "pisao_grande", "jato", "redemoinho_longe", "revoada", "susto", "grou", "danca", "hipnose", "onibi", "arrastao", "puxar_fios") var power := "nenhum"
+@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "furia", "leque", "selo", "coluna_fogo", "mutirao", "campo_minado", "bombardeio", "muralha", "ciranda", "pisao_grande", "jato", "redemoinho_longe", "revoada", "susto", "grou", "danca", "hipnose", "onibi", "arrastao", "puxar_fios", "bosque", "relampago") var power := "nenhum"
 @export var power_name := ""
 ## Raio de efeito (m).
 @export var power_radius := 3.0

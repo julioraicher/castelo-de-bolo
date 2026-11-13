@@ -1,10 +1,10 @@
 extends "res://tools/prancha_personagens.gd"
 ## Prancha dos heróis raros (Ciclo 2.23): cada herói de perto em 4 ângulos
-## (frente, 3/4, lado, costas), uma imagem por herói, e uma fileira no fim
+## (frente, 3/4, lado, costas), uma imagem por herói (13 desde o 2.27b), e uma fileira no fim
 ## ao lado de Samurai, Ninja e Kitsune na câmera do jogo.
 ## Uso: xvfb-run ... -s tools/prancha_herois.gd -- DIR [ids,separados]
 
-var herois := ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo"]
+var herois := ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo", "kodama", "kaminari_kozo"]
 
 
 func _init() -> void:

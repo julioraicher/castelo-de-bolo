@@ -4,6 +4,8 @@ extends RefCounted
 ## elemento chama `em` no ponto do impacto, com o raio que o efeito cobre.
 ##  - Fogo queima teia (Kitsune, Luz, Sombria, Onibi, bomba e mina).
 ##  - Vento rasga teia (leque do Yamabushi, redemoinho, asas do Karasu Tengu).
+##  - Fogo queima o bosque do Kodama (a árvore vira tocha e cai: ArvoreKodama).
+##  Raio × molhado e árvore como para-raios: HeroisNatureza.
 ## Só afeta o que é do outro time: ninguém queima a própria teia sem querer.
 
 const FOGO := ["fogo", "chi", "magia", "bomba", "onibi", "coluna_fogo", "brasa"]
@@ -36,3 +38,15 @@ static func em(g: Node, pos: Vector3, raio: float, elemento: String, time: int) 
 			teia.queimar()
 		else:
 			teia.rasgar()
+	if t != "fogo":
+		return
+	for n in g.get_tree().get_nodes_in_group("arvores_kodama"):
+		var arv := n as ArvoreKodama
+		if arv == null or arv.indo or arv.time == time:
+			continue
+		var d := arv.global_position - pos
+		if absf(d.y) > 3.0:
+			continue
+		d.y = 0
+		if d.length() <= raio + arv.raio_tronco() + 0.6:
+			arv.queimar(time)

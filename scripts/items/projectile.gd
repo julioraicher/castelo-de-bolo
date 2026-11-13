@@ -24,6 +24,8 @@ var raio_mult := 1.0
 ## 3º tiro da Kitsune: explode como bomba onde bater (ou no fim do voo).
 var explode_final := false
 var _acertados: Array[Unit] = []
+## Trovão do Kaminari-kozō: quem ficou perto da bola levou o choque de raspão.
+var _chocados: Array[Unit] = []
 var _origem := Vector3.ZERO
 ## Heróis raros (Ciclo 2.23): talismã que segue o alvo (Onmyoji), grou que
 ## cura aliados que atravessa e tiro devolvido pela Rajada do Yamabushi.
@@ -59,10 +61,12 @@ func setup(game: Game, shooter: Unit, origin: Vector3, dir: Vector3, p_kind: Str
 
 ## Som ao lançar e ao acertar, por projétil (gerados por tools/gerar_sons.py).
 const SOM_LANCAR := {"flecha": "shoot", "shuriken": "lancar_metal", "bomba": "pavio", "fogo": "fogo", "chi": "luz", "magia": "sombra",
-	"vento": "magia_vento", "nota": "flauta", "talisma": "papel", "grou": "papel", "fio": "seda"}
+	"vento": "magia_vento", "nota": "flauta", "talisma": "papel", "grou": "papel", "fio": "seda",
+	"semente": "kodama_semente", "trovao": "kaminari_trovao"}
 const SOM_ACERTO := {"flecha": "flecha_chao", "shuriken": "tinido", "bomba": "explosao", "fogo": "brasa", "chi": "sino", "magia": "implosao",
 	"vento": "magia_vento", "nota": "sino", "talisma": "magia_selo", "grou": "magia_selo",
-	"fio": "seda_gruda", "onibi": "ochimusha_onibi", "mordida": "shishimai_mordida"}
+	"fio": "seda_gruda", "onibi": "ochimusha_onibi", "mordida": "shishimai_mordida",
+	"semente": "kodama_brota", "trovao": "kaminari_choque"}
 var nivel := 1  # 2 = tiro carregado (rastro e impacto maiores)
 var kind := "flecha"
 var _spin: Node3D
@@ -84,6 +88,7 @@ func rebater(novo_dono: Unit, dir: Vector3) -> void:
 	segue = null
 	torto = 0.0
 	_acertados.clear()
+	_chocados.clear()
 	_origem = global_position
 	_life = maxf(_life, 1.0)
 	if velocity.length_squared() > 1e-6:
@@ -204,6 +209,13 @@ func _physics_process(delta: float) -> void:
 			var d := u.global_position - global_position
 			var dy := -d.y
 			d.y = 0
+			if kind == "trovao" and d.length() >= HIT_RADIUS and d.length() < HIT_RADIUS + 0.9 \
+					and dy > -0.2 and dy < 2.1 and not _chocados.has(u):
+				# Raspão do trovão: a bola solta uma faísca em quem passa perto.
+				_chocados.append(u)
+				FxNatureza.raio(_game, global_position, u.global_position + Vector3(0, 1.1, 0), 0.15)
+				u.take_damage(damage * 0.25 * queda(), owner_unit, velocity.normalized(), 0.0, false, "trovao", 1)
+				continue
 			if d.length() < HIT_RADIUS and dy > -0.2 and dy < 2.1 and not _acertados.has(u):
 				if kind == "bomba" or explode_final:
 					_explode(global_position)
@@ -236,11 +248,17 @@ func queda_em(d: float) -> float:
 
 func _explode(at: Vector3) -> void:
 	var r := owner_unit.stats.explosao_raio * raio_mult
-	FxProjetil.explosao(_game, at, r)
-	FxProjetil.anel_chao(_game, at, Color(1.0, 0.55, 0.15, 0.8), r)
-	Reacoes.em(_game, at, r, "bomba", owner_unit.team)
-	Sfx.play("explosao", at, 0.1, 1.0 if nivel == 1 else 0.8)
-	_game.camera.shake_at(at, 0.45)
+	var trovao := kind == "trovao"
+	if trovao:
+		# 3º tiro do Kaminari-kozō: estoura em raios (não é fogo: não queima nada).
+		FxNatureza.trovao_estoura(_game, at, r)
+		Sfx.play("kaminari_trovao", at, 0.1, 1.0, -2.0)
+	else:
+		FxProjetil.explosao(_game, at, r)
+		FxProjetil.anel_chao(_game, at, Color(1.0, 0.55, 0.15, 0.8), r)
+		Reacoes.em(_game, at, r, "bomba", owner_unit.team)
+		Sfx.play("explosao", at, 0.1, 1.0 if nivel == 1 else 0.8)
+	_game.camera.shake_at(at, 0.3 if trovao else 0.45)
 	for u in _game.units:
 		if not u.alive or u.team == owner_unit.team:
 			continue
@@ -251,7 +269,7 @@ func _explode(at: Vector3) -> void:
 		if d.length() <= r:
 			var f := 1.0 - 0.5 * d.length() / r
 			u.take_damage(damage * f, owner_unit, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, f, false, kind, nivel)
-			u.launch(5.0 * f)
+			u.launch((2.0 if trovao else 5.0) * f)
 
 
 ## Bateu no cenário (parede/chão): impacto do elemento e som.

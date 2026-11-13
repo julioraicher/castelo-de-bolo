@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="ClassStats" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="1_e07rk"]
+[ext_resource type="PackedScene" path="res://assets/characters/Barbarian.glb" id="2_oqlkd"]
+
+[resource]
+script = ExtResource("1_e07rk")
+id = &"kaminari_kozo"
+display_name = "Kaminari-kozō"
+epiteto = "O menino do trovão"
+descricao = "O filho travesso do deus do trovão, que caiu das nuvens com os tambores amarrados nas costas. Quanto mais corre, mais carga junta no cabelo; o próximo golpe solta tudo numa descarga que pula de inimigo em inimigo."
+model = ExtResource("2_oqlkd")
+visible_meshes = PackedStringArray("Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight")
+hat_color = Color(0.62, 0.82, 1, 1)
+hat_style = "raijin"
+estilo_ninja = "_kaminari_kozo"
+escala_cabeca = 0.58
+escala_extremidades = 1.35
+escala_modelo = 0.9
+dash_estilo = "relampago"
+max_hp = 110.0
+move_speed = 7.2
+attack_kind = "ranged"
+damage = 10.0
+attack_range = 12.0
+attack_cooldown = 0.55
+knockback = 3.0
+projectile_speed = 26.0
+projetil = "trovao"
+explosao_raio = 2.5
+combo_anims = PackedStringArray()
+combo_tiros = 3
+skill = "para_raios"
+skill_name = "Para-raios"
+skill_cooldown = 7.0
+skill_radius = 9.0
+block_reduction = 0.5
+classe_base = &"arqueiro"
+estilo_linha = "Raio em cadeia: correr carrega, bater descarrega, para-raios chama a tempestade."
+dash_peca = true
+carga_estatica = true
+power = "relampago"
+power_name = "Relâmpago"
+power_radius = 9.0
+power_value = 20.0
+power_duration = 0.2
+super_tipo = "proprio"
+super_poder = "tambores"
+super_nome = "Tambores do Trovão"
+som_poder = "kaminari_kozo_poder"
+som_super = "kaminari_kozo_super"
+som_golpe_final = "kaminari_kozo_final"
+heroi = true
+anim_attack = "Throw"

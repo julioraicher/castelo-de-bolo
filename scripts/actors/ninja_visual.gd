@@ -1260,6 +1260,157 @@ func _jorogumo(time: Color) -> void:
 	_peca(mao, _esfera(0.06, 0.06), Vector3(0, 0.05, 0.05), Vector3.ZERO, Vector3.ONE, _plano(seda))
 
 
+## Kodama do Shinboku: o espírito do cedro do santuário. Máscara de madeira
+## clara entalhada (olhos ocos com brilho do time), galhos de chifre com tufos
+## de folha, coroa de folhas, corpo de casca com veios, shimenawa com papéis
+## shide na cintura, musgo do time nos ombros, saia de raízes que balançam e o
+## cajado de muda com a semente acesa.
+func _kodama(time: Color) -> void:
+	var cab := "head"
+	var madeira := Color(0.86, 0.74, 0.55)
+	var casca := Color(0.4, 0.26, 0.15)
+	var casca2 := Color(0.28, 0.18, 0.11)
+	var folha := Color(0.3, 0.52, 0.22)
+	var musgo := Color(0.26, 0.42, 0.18).lerp(time, 0.55)
+	var corda := Color(0.92, 0.82, 0.55)
+	var papel := Color(0.98, 0.97, 0.92)
+	# Máscara entalhada: oval claro, testa e boca em "o", olhos ocos acesos
+	_peca(cab, _esfera(0.5, 0.52), Vector3(0, 0.56, 0.24), Vector3.ZERO, Vector3(1, 1.05, 0.7), _plano(madeira))
+	_peca(cab, _caixa(Vector3(0.62, 0.05, 0.05)), Vector3(0, 0.78, 0.58), Vector3(-12, 0, 0), Vector3.ONE, _plano(madeira.darkened(0.2)))
+	for s in [-1, 1]:
+		_peca(cab, _esfera(0.1, 0.12), Vector3(0.17 * s, 0.6, 0.55), Vector3.ZERO, Vector3(1, 1, 0.5), _plano(Color(0.12, 0.08, 0.05)))
+		_peca(cab, _esfera(0.04, 0.04), Vector3(0.17 * s, 0.6, 0.6), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.35), 2.0))
+		_peca(cab, _caixa(Vector3(0.025, 0.2, 0.02)), Vector3(0.3 * s, 0.42, 0.52), Vector3(0, 0, 18 * s), Vector3.ONE, _plano(madeira.darkened(0.25)))
+	_peca(cab, _esfera(0.07, 0.08), Vector3(0, 0.32, 0.57), Vector3.ZERO, Vector3(1, 1, 0.5), _plano(Color(0.12, 0.08, 0.05)))
+	# Coroa de folhas por trás da máscara e os galhos de chifre
+	_peca(cab, _esfera(0.6, 0.5), Vector3(0, 0.82, -0.12), Vector3.ZERO, Vector3(1.05, 0.9, 1.0), _plano(folha.darkened(0.15)))
+	for i in 5:
+		var a := lerpf(-70.0, 70.0, i / 4.0)
+		var ar := deg_to_rad(a)
+		_peca(cab, _esfera(0.2, 0.12), Vector3(sin(ar) * 0.48, 1.12 - absf(a) * 0.002, -cos(ar) * 0.2), Vector3(0, a, 20), Vector3.ONE,
+				{"cor": musgo if i % 2 == 0 else folha, "neon": false, "balanco": Vector3(0.25, i * 0.9, 0.0)})
+	for s in [-1, 1]:
+		var bal := Vector3(0.18, 0.5 if s > 0 else 1.6, 0.0)
+		_peca(cab, _cilindro(0.035, 0.07, 0.62), Vector3(0.3 * s, 1.25, 0.05), Vector3(-10, 0, -32 * s), Vector3.ONE, {"cor": casca, "neon": false, "balanco": bal})
+		_peca(cab, _cilindro(0.02, 0.04, 0.32), Vector3(0.52 * s, 1.45, 0.05), Vector3(0, 0, -70 * s), Vector3.ONE, {"cor": casca, "neon": false, "balanco": bal})
+		_peca(cab, _esfera(0.12, 0.09), Vector3(0.48 * s, 1.58, 0.05), Vector3.ZERO, Vector3(1.3, 1, 1), {"cor": folha.lightened(0.1), "neon": false, "balanco": bal})
+		_peca(cab, _esfera(0.09, 0.07), Vector3(0.68 * s, 1.5, 0.05), Vector3.ZERO, Vector3(1.3, 1, 1), {"cor": musgo, "neon": false, "balanco": bal})
+	# Corpo de casca com veios e o musgo do time nos ombros
+	var peito := "chest"
+	_peca(peito, _cilindro(0.5, 0.56, 0.66), Vector3(0, 0.06, 0), Vector3.ZERO, Vector3(1, 1, 0.84), _plano(casca))
+	for i in 7:
+		var a := lerpf(-80.0, 80.0, i / 6.0)
+		var ar := deg_to_rad(a)
+		_peca(peito, _caixa(Vector3(0.05, 0.62, 0.04)), Vector3(sin(ar) * 0.52, 0.06, cos(ar) * 0.44), Vector3(0, a, (i % 3 - 1) * 6.0), Vector3.ONE, _plano(casca2))
+	_peca(peito, _esfera(0.18, 0.12), Vector3(0.12, 0.2, 0.46), Vector3.ZERO, Vector3(1, 1, 0.5), _plano(casca2))
+	for s in [-1, 1]:
+		_peca(peito, _esfera(0.3, 0.16), Vector3(0.42 * s, 0.38, 0.0), Vector3(0, 0, 20 * s), Vector3(1, 1, 1.1), _plano(musgo))
+		_peca(peito, _esfera(0.12, 0.1), Vector3(0.5 * s, 0.3, 0.26), Vector3.ZERO, Vector3.ONE, _plano(musgo.lightened(0.15)))
+	# Shimenawa na cintura com os papéis shide em zigue-zague
+	var quad := "hips"
+	_peca(quad, _anel(0.54, 0.07, 14), Vector3(0, 0.14, 0), Vector3(0, 0, 4), Vector3(1, 1, 0.86), _plano(corda))
+	_peca(quad, _anel(0.55, 0.035, 14), Vector3(0, 0.17, 0), Vector3(0, 0, 4), Vector3(1, 1, 0.86), _plano(corda.darkened(0.2)))
+	for k in 4:
+		var a := lerpf(-50.0, 50.0, k / 3.0)
+		var ar := deg_to_rad(a)
+		var base := Vector3(sin(ar) * 0.55, 0.06, cos(ar) * 0.47)
+		var bal := Vector3(0.45, k * 1.3, 0.0)
+		for z in 3:
+			_peca(quad, _caixa(Vector3(0.1, 0.11, 0.015)), base + Vector3(0.04 * (1 - 2 * (z % 2)), -0.1 * z, 0), Vector3(0, a, 0), Vector3.ONE,
+					{"cor": papel, "neon": false, "balanco": bal})
+	_peca(quad, _cilindro(0.52, 0.66, 0.7), Vector3(0, -0.32, 0), Vector3.ZERO, Vector3(1, 1, 0.86), _plano(casca2))
+	_peca(quad, _cilindro(0.665, 0.665, 0.05), Vector3(0, -0.66, 0), Vector3.ZERO, Vector3(1, 1, 0.86), _plano(musgo))
+	# Raízes soltas penduradas da barra (balançam ao andar)
+	for i in 6:
+		var a := lerpf(-150.0, 150.0, i / 5.0)
+		var ar := deg_to_rad(a)
+		_peca(quad, _fita(0.45, 0.09, casca, casca2, 4), Vector3(sin(ar) * 0.62, -0.62, cos(ar) * 0.52), Vector3(175, a, 0), Vector3.ONE,
+				_bal(Vector3(0.55, i * 0.8, 0.0)))
+	for lado in [".l", ".r"]:
+		var sx := 1 if lado == ".l" else -1
+		_peca("upperarm" + lado, _cilindro(0.2, 0.17, 0.4), Vector3(0.1 * sx, 0.05, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(casca))
+		_peca("lowerarm" + lado, _cilindro(0.15, 0.13, 0.32), Vector3(0.15 * sx, 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(casca2))
+		_peca("lowerarm" + lado, _esfera(0.1, 0.07), Vector3(0.05 * sx, 0.12, 0), Vector3.ZERO, Vector3.ONE, _plano(musgo))
+		_peca("lowerleg" + lado, _cilindro(0.15, 0.2, 0.3), Vector3(0, -0.02, 0.02), Vector3.ZERO, Vector3.ONE, _plano(casca2))
+	# Cajado de muda: galho torto, tufo de folhas e a semente acesa no time
+	var mao := "handslot.r"
+	_peca(mao, _cilindro(0.035, 0.05, 1.2), Vector3(0, 0.3, 0), Vector3(0, 0, 6), Vector3.ONE, _plano(casca))
+	_peca(mao, _cilindro(0.02, 0.03, 0.3), Vector3(0.1, 0.82, 0), Vector3(0, 0, -40), Vector3.ONE, _plano(casca))
+	for k in 4:
+		var a := TAU * k / 4.0
+		_peca(mao, _esfera(0.08, 0.05), Vector3(cos(a) * 0.09, 0.96 + (k % 2) * 0.05, sin(a) * 0.09), Vector3(0, 0, 25 * cos(a)), Vector3(1.4, 1, 0.8),
+				_plano(folha if k % 2 == 0 else musgo))
+	_peca(mao, _esfera(0.07, 0.09), Vector3(0.0, 0.84, 0.1), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.35), 2.0))
+
+
+## Kaminari-kozō: o menino do trovão. Chifrinhos de oni, cabelo espetado com
+## as pontas acesas, cachecol de nuvem, tanga de pele de tigre com faixa do
+## time, braceletes de ouro, o anel de tambores taiko nas costas (cada pele com
+## o tomoe na cor do time) e as duas baquetas.
+func _kaminari_kozo(time: Color) -> void:
+	var cab := "head"
+	var cabelo := Color(0.1, 0.12, 0.24)
+	var marfim := Color(0.95, 0.9, 0.78)
+	var tigre := Color(0.95, 0.66, 0.2)
+	var listra := Color(0.12, 0.08, 0.06)
+	var nuvem := Color(0.9, 0.93, 1.0)
+	var tambor := Color(0.55, 0.16, 0.12)
+	var ouro := Color(1.0, 0.78, 0.3)
+	var raio := Color(0.75, 0.88, 1.0)
+	# Cabelo espetado para cima e para trás (as pontas faíscam no time)
+	_peca(cab, _esfera(0.58, 0.42), Vector3(0, 0.88, -0.08), Vector3.ZERO, Vector3(1.0, 0.9, 1.0), _plano(cabelo))
+	for i in 9:
+		var a := lerpf(-110.0, 110.0, i / 8.0)
+		var ar := deg_to_rad(a)
+		var inc := 35.0 + absf(a) * 0.35
+		var base := Vector3(sin(ar) * 0.4, 1.12 - absf(a) * 0.0015, -cos(ar) * 0.25)
+		var bal := Vector3(0.12, i * 0.7, 0.0)
+		_peca(cab, _cone(0.14, 0.62), base, Vector3(-inc * cos(ar), a, inc * sin(ar) * 0.6), Vector3.ONE, {"cor": cabelo, "neon": false, "balanco": bal})
+		if i % 2 == 0:
+			_peca(cab, _cone(0.05, 0.16), base + Vector3(sin(ar) * 0.1, 0.27, -cos(ar) * 0.13), Vector3(-inc * cos(ar), a, inc * sin(ar) * 0.6), Vector3.ONE,
+					_neon_bal(time.lightened(0.35), bal))
+	# Chifrinhos de oni e o sorriso travesso
+	for s in [-1, 1]:
+		_peca(cab, _cone(0.07, 0.26), Vector3(0.2 * s, 1.02, 0.4), Vector3(-30, 0, -20 * s), Vector3.ONE, _plano(marfim))
+		_peca(cab, _caixa(Vector3(0.12, 0.03, 0.02)), Vector3(0.15 * s, 0.68, 0.6), Vector3(0, 0, -14 * s), Vector3.ONE, _plano(cabelo))
+	_peca(cab, _caixa(Vector3(0.24, 0.05, 0.02)), Vector3(0, 0.3, 0.6), Vector3.ZERO, Vector3.ONE, _plano(Color(0.97, 0.96, 0.92)))
+	# Cachecol de nuvem enrolado no pescoço, pontas soltas
+	var peito := "chest"
+	# (só dos lados e atrás: na frente fica o rosto)
+	for k in 5:
+		var a := PI * (0.95 + 0.275 * k)
+		_peca(peito, _esfera(0.15, 0.11), Vector3(cos(a) * 0.36, 0.34, sin(a) * 0.3), Vector3.ZERO, Vector3.ONE, _plano(nuvem if k % 2 == 0 else nuvem.darkened(0.1)))
+	_peca(peito, _fita(0.5, 0.16, nuvem, raio, 4), Vector3(0.28, 0.3, -0.28), Vector3(175, 200, 0), Vector3.ONE, _bal(Vector3(0.7, 0.4, 0.0)))
+	# Anel de tambores nas costas: o aro e seis taikos, pele com o tomoe do time
+	var c := Vector3(0, 0.28, -0.6)
+	_peca(peito, _anel(0.82, 0.045, 24), c, Vector3(90, 0, 0), Vector3.ONE, _plano(ouro.darkened(0.15)))
+	for k in 6:
+		var a := TAU * k / 6.0 + PI / 6.0
+		var p := c + Vector3(cos(a) * 0.82, sin(a) * 0.82, 0)
+		_peca(peito, _cilindro(0.2, 0.2, 0.16), p, Vector3(90, 0, 0), Vector3(1, 1, 1), _plano(tambor))
+		_peca(peito, _cilindro(0.17, 0.17, 0.02), p + Vector3(0, 0, -0.09), Vector3(90, 0, 0), Vector3.ONE, _plano(Color(0.95, 0.9, 0.78)))
+		_peca(peito, _anel(0.08, 0.025, 10), p + Vector3(0, 0, -0.105), Vector3(90, 0, 0), Vector3.ONE, _neon(time.lightened(0.25), 1.6))
+		_peca(peito, _esfera(0.035, 0.035), p + Vector3(0.05, 0.04, -0.11), Vector3.ZERO, Vector3.ONE, _neon(time.lightened(0.25), 1.6))
+	# Tanga de pele de tigre com listras e a faixa do time
+	var quad := "hips"
+	_peca(quad, _cilindro(0.5, 0.58, 0.42), Vector3(0, -0.12, 0), Vector3.ZERO, Vector3(1, 1, 0.86), _plano(tigre))
+	for i in 8:
+		var a := lerpf(-160.0, 160.0, i / 7.0)
+		var ar := deg_to_rad(a)
+		_peca(quad, _caixa(Vector3(0.05, 0.3, 0.03)), Vector3(sin(ar) * 0.55, -0.12, cos(ar) * 0.48), Vector3(0, a, 18 if i % 2 else -18), Vector3.ONE, _plano(listra))
+	_peca(quad, _cilindro(0.52, 0.52, 0.1), Vector3(0, 0.12, 0), Vector3.ZERO, Vector3(1, 1, 0.86), _plano(time.darkened(0.25)))
+	_peca(quad, _cilindro(0.525, 0.525, 0.025), Vector3(0, 0.12, 0), Vector3.ZERO, Vector3(1, 1, 0.86), _neon(time.lightened(0.3), 1.4))
+	_peca(quad, _fita(0.4, 0.22, time.darkened(0.2), time.lightened(0.2), 3), Vector3(0, 0.05, 0.48), Vector3(178, 0, 0), Vector3.ONE, _bal(Vector3(0.6, 0.2, 0.0)))
+	for lado in [".l", ".r"]:
+		var sx := 1 if lado == ".l" else -1
+		_peca("lowerarm" + lado, _cilindro(0.15, 0.15, 0.08), Vector3(0.2 * sx, 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(ouro))
+		_peca("lowerleg" + lado, _cilindro(0.16, 0.16, 0.07), Vector3(0, -0.1, 0.02), Vector3.ZERO, Vector3.ONE, _plano(ouro))
+	# Baquetas (bachi) nas duas mãos
+	for mao in ["handslot.l", "handslot.r"]:
+		_peca(mao, _cilindro(0.035, 0.045, 0.62), Vector3(0, 0.2, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.62, 0.45, 0.26)))
+		_peca(mao, _esfera(0.06, 0.06), Vector3(0, 0.52, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.62, 0.45, 0.26).lightened(0.15)))
+
+
 # --- Formas ------------------------------------------------------------------
 
 func _esfera(r: float, h: float) -> Mesh:

@@ -8,6 +8,7 @@
 [ext_resource type="Resource" path="res://config/classes/karasu_tengu.tres" id="5_k4vbk"]
 [ext_resource type="Resource" path="res://config/classes/mujina.tres" id="6_bwpix"]
 [ext_resource type="Resource" path="res://config/classes/jorogumo.tres" id="7_k4vbk"]
+[ext_resource type="Resource" path="res://config/classes/kaminari_kozo.tres" id="8_bwpix"]
 
 [resource]
 script = ExtResource("2_b2vcn")
@@ -43,7 +44,7 @@ skill_cooldown = 4.0
 block_reduction = 0.5
 chapeu_tempo_mult = 0.9
 caminhos = Array[ExtResource("2_b2vcn")]([ExtResource("2_n3qr4"), ExtResource("3_e1h2c")])
-herois = Array[ExtResource("2_b2vcn")]([ExtResource("4_ql5up"), ExtResource("5_k4vbk"), ExtResource("6_bwpix"), ExtResource("7_k4vbk")])
+herois = Array[ExtResource("2_b2vcn")]([ExtResource("4_ql5up"), ExtResource("5_k4vbk"), ExtResource("6_bwpix"), ExtResource("7_k4vbk"), ExtResource("8_bwpix")])
 power = "leque"
 power_name = "Leque de Shuriken"
 power_radius = 70.0

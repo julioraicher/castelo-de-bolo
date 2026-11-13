@@ -14,7 +14,7 @@ extends "res://tools/gerar_casas.gd"
 ## Tudo de frente para +z (a câmera do jogo olha de +z).
 
 const HEROIS := ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso",
-	"ochimusha", "shishimai", "jorogumo"]
+	"ochimusha", "shishimai", "jorogumo", "kodama", "kaminari_kozo"]
 const PW := 1.7    # vão entre as colunas (x)
 const PD := 1.4    # (z)
 const YB := 0.36   # topo da base
@@ -230,4 +230,23 @@ func _adorno_heroi(h: String, e: float, fundo: float) -> void:
 				for k in 3:
 					var y0 := 0.22 - k * 0.06
 					_viga(Vector3(s2 * 0.05, y0, 0.02) * e, Vector3(s2 * 0.2, y0 + 0.08 - k * 0.05, 0.02) * e, 0.012 * e, ouro.darkened(0.1))
-
+		"kodama":  # cedro do santuário: tronco torto, três nuvens de copa e a shimenawa
+			var casca := Color(0.42, 0.27, 0.16)
+			_cil(0.035 * e, 0.06 * e, 0.3 * e, 6, Vector3(0, 0.15 * e, 0), Vector3(0, 0, 4), casca, false, Vector3(1, 1, fundo))
+			for k in 3:
+				var c := Vector3((0.1 if k == 0 else (-0.09 if k == 1 else 0.0)), 0.26 + k * 0.1, 0) * e
+				_esfera((0.16 - k * 0.03) * e, c, Vector3(1.0, 0.45, fundo), P.folha2 if k % 2 == 0 else P.folha, false, 8, 3)
+			_toro(0.055 * e, 0.075 * e, Vector3(0, 0.12 * e, 0), Vector3(1, 0.6, fundo), P.corda)
+			for s2 in [-1.0, 1.0]:
+				_blocod(Vector3(0.025, 0.06, 0.01) * e, Vector3(s2 * 0.03, 0.08, 0.075 * fundo + 0.01) * e, Vector3(0, 0, 12 * s2), branco, 0.0)
+		"kaminari_kozo":  # anel de tambores com o raio no meio
+			var tambor := Color(0.55, 0.16, 0.12)
+			_toro(0.2 * e, 0.22 * e, Vector3(0, 0.22 * e, 0), Vector3(1, 1, 0.3 * fundo + 0.05), ouro.darkened(0.1))
+			for k in 6:
+				var a := TAU * k / 6.0 + PI / 6.0
+				var c := Vector3(cos(a) * 0.21, 0.22 + sin(a) * 0.21, 0.0) * e
+				_cil(0.055 * e, 0.055 * e, 0.05 * e * fundo + 0.005, 8, c, Vector3(90, 0, 0), tambor)
+				_cil(0.045 * e, 0.045 * e, 0.01 * e, 8, c + Vector3(0, 0, 0.03 * e * fundo + 0.003), Vector3(90, 0, 0), branco)
+			var amarelo := Color(1.0, 0.86, 0.3)
+			_tri(Vector3(0.02, 0.36, 0.01) * e, Vector3(-0.07, 0.2, 0.01) * e, Vector3(0.0, 0.21, 0.01) * e, amarelo, Vector3(0, 0, 1))
+			_tri(Vector3(0.0, 0.23, 0.01) * e, Vector3(0.06, 0.24, 0.01) * e, Vector3(-0.03, 0.06, 0.01) * e, amarelo, Vector3(0, 0, 1))

@@ -504,6 +504,11 @@ func _cena_classe(p: Unit) -> void:
 		240:
 			p.fill_power()
 			p.wants_power = true
+		366:
+			# Floresta Antiga: o anel tem 20 m; a câmera de perto ficava dentro
+			# da copa da árvore do lado dela. Recua antes de o anel nascer.
+			if p.stats.super_poder == "floresta":
+				create_tween().tween_property(self, "_cam_off", Vector3(0, 15.0, 14.0), 0.2).set_trans(Tween.TRANS_SINE)
 		380:
 			p.super_carga = Unit.POWER_MAX
 			p.wants_super = true

@@ -23,7 +23,8 @@ const COR_TINTA := Color(0.09, 0.03, 0.14)
 ## Paleta do kit Magia para o estouro do golpe forte de cada elemento.
 const ELEMENTO_MAGIA := {"fogo": "raposa_rosa", "chi": "luz", "magia": "sombra", "shuriken": "aco", "flecha": "vento", "terra": "brasa",
 	"agua": "agua", "vento": "vento", "pena": "pena", "nota": "som", "talisma": "papel", "grou": "papel",
-	"fio": "seda", "fios": "seda", "onibi": "fantasma", "caidos": "fantasma", "mordida": "festa"}
+	"fio": "seda", "fios": "seda", "onibi": "fantasma", "caidos": "fantasma", "mordida": "festa",
+	"semente": "bosque", "raiz": "bosque", "trovao": "raio", "descarga": "raio", "relampago": "raio", "tambor": "raio", "para_raios": "raio"}
 
 static var _cache := {}
 
@@ -556,6 +557,45 @@ static func montar(p: Node3D, kind: String, time_cor: Color) -> Node3D:
 			if rastro:
 				_fita(p, Color(0.8, 0.75, 0.95, 0.35), 0.22, 1.4)
 				ps(p, Vector3.ZERO, quad("brilho", tex_brilho()), Color(0.95, 0.92, 1.0), 4, 0.35, {"one_shot": false, "esfera": 0.12, "s0": 0.1, "s1": 0.18, "rampa": "pisca", "local_pos": true})
+		"semente":
+			# Kodama: semente de casca com um broto verde saindo, girando no arco.
+			gira = Node3D.new()
+			p.add_child(gira)
+			var casca := MeshInstance3D.new()
+			casca.mesh = malha_bola(Color(0.55, 0.36, 0.2), 0.14)
+			casca.scale = Vector3(0.85, 0.85, 1.25)
+			gira.add_child(casca)
+			for i in 2:
+				var folha := MeshInstance3D.new()
+				folha.mesh = malha_bola(Color(0.45, 0.95, 0.35), 0.08)
+				folha.scale = Vector3(0.5, 1.2, 0.3)
+				folha.position = Vector3(0.06 * (1 - 2 * i), 0.14, 0.05)
+				folha.rotation_degrees.z = 30.0 * (1 - 2 * i)
+				gira.add_child(folha)
+			brilho_fixo(p, Vector3.ZERO, Color(time_cor.lightened(0.35), 0.6), 0.5, false)
+			corpo.free()
+			if rastro:  # folhinhas soltas caindo atrás
+				var r := ps(p, Vector3.ZERO, Assinatura._malha_peca("semente", 1.5), Color(0.75, 0.95, 0.5), 4, 0.6, {"one_shot": false, "esfera": 0.15, "dir": Vector3.DOWN, "spread": 40.0, "v0": 0.3, "v1": 0.8, "g": Vector3(0, -2, 0), "s0": 0.5, "s1": 0.8, "local_pos": true})
+				r.local_coords = false
+		"trovao":
+			# Kaminari-kozō: bola de raio que estala, núcleo branco e arcos na cor do time.
+			corpo.mesh = malha_bola(Color(1.6, 1.7, 2.0), 0.16)
+			p.add_child(corpo)
+			brilho_fixo(p, Vector3.ZERO, Color(0.55, 0.75, 1.0, 0.9), 1.1)
+			brilho_fixo(p, Vector3.ZERO, Color(time_cor.lightened(0.4), 0.8), 0.7, false)
+			gira = Node3D.new()
+			p.add_child(gira)
+			for i in 3:
+				var a := TAU * i / 3.0
+				var arco := MeshInstance3D.new()
+				arco.mesh = lasca(0.42, 0.035)
+				arco.material_override = mat_solido()
+				arco.position = Vector3(cos(a), sin(a), 0) * 0.22
+				arco.rotation = Vector3(0, 0, a + 0.6)
+				gira.add_child(arco)
+			if rastro:
+				_fita(p, Color(0.6, 0.8, 1.0, 0.55), 0.3, 1.5, true)
+				ps(p, Vector3.ZERO, lasca(0.2, 0.03), Color(0.8, 0.9, 1.0), 6, 0.18, {"one_shot": false, "esfera": 0.25, "dir": Vector3.UP, "spread": 180.0, "v0": 2.0, "v1": 4.0, "alinha": true, "rampa": "pisca", "local_pos": true})
 		_:
 			corpo.mesh = malha_bola(Color(1.2, 0.9, 2.0), 0.26)
 			p.add_child(corpo)
@@ -692,6 +732,12 @@ static func impacto(g: Node, at: Vector3, kind: String, dir: Vector3, nivel := 1
 		"fio":  # seda gruda: fiapos soltos e um brilho de orvalho
 			Assinatura.pecas(g, at, "fio", Color(0.95, 0.94, 1.0), int(4 * k), {"tam": 0.6})
 			brilho(g, at, Color(0.95, 0.93, 1.0, 0.8), 0.8 * k, 0.12)
+		"semente":  # a semente estoura em folhas e um broto sobe
+			Assinatura.pecas(g, at, "semente", Color(0.7, 0.95, 0.45), int(5 * k), {"tam": 0.7})
+			brilho(g, at, Color(0.6, 1.0, 0.5, 0.7), 0.7 * k, 0.12)
+		"trovao":  # estalo: faíscas em ziguezague e clarão azul
+			faiscas(g, at, Color(0.75, 0.88, 1.0), int(7 * k), 8.0, Vector3.UP, 120.0, 0.18)
+			brilho(g, at, Color(0.6, 0.8, 1.0), 1.2 * k, 0.1)
 		"terra":  # pisão/fúria: poeira e pedrinhas
 			fumaca(g, at + Vector3(0, -0.8, 0), Color(0.5, 0.42, 0.32, 0.8), 3, 0.7, 0.6, 1.0)
 			faiscas(g, at, Color(1.0, 0.45, 0.2), int(4 * k), 6.0, dir + Vector3.UP, 50.0, 0.22)

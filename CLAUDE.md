@@ -166,6 +166,10 @@ repo: `.claude/skills/`.
   estados em `Herois._tick_2_27`/`_apanhar_2_27`; reações entre elementos em
   `scripts/actors/reacoes.gd` (quem solta fogo/vento chama `Reacoes.em` no impacto);
   teia no chão = `scripts/items/teia.gd`. Painel do pavilhão aceita até 5 heróis.
+  Kodama/Kaminari-kozō (2.27b): regras em `scripts/actors/herois_natureza.gd`
+  (carga, descarga em cadeia, molhado conduz), árvore = `scripts/items/arvore_kodama.gd`
+  (StaticBody no LAYER_WORLD: bloqueia passagem e tiro), baqueta = `para_raios.gd`,
+  efeitos em `scripts/fx/fx_natureza.gd` (malhas no material pintado do tema).
 - Efeitos de poder: kit `Magia` (`scripts/fx/magia.gd`, shader `magia_energia`):
   energia com ruído que se rasga (`corroi`) + filete de tinta; nunca primitiva de
   cor chapada. Receita e orçamento em docs/direcao-efeitos.md §8; conferir com
