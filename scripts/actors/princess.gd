@@ -50,6 +50,7 @@ func setup(game: Game, p_team: int, p_home: Vector3) -> void:
 	_beacon.position.y = 15.0
 	_beacon.visible = false
 	add_child(_beacon)
+	fatness = Config.cfg.peso_inicial
 	_apply_fatness()
 
 

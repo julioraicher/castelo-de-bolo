@@ -15,6 +15,7 @@ func _ready() -> void:
 	# Espera a partida montar e os bonecos nascerem.
 	await get_tree().create_timer(0.5).timeout
 	_dados()
+	_mascara_pesada()  # antes de qualquer teste mexer no peso
 	_dano()
 	_contra_golpe()
 	_guarda_quebra()
@@ -1780,6 +1781,15 @@ func _relogio() -> void:
 
 ## Ciclo 2.25 (menos empate): teto das almas, carregar mais rápido, escolta
 ## que soma por aliado e devolução mais demorada.
+## 2.27c: a máscara nasce com peso_inicial, então o primeiro roubo já é lento.
+func _mascara_pesada() -> void:
+	var cfg = get_node("/root/Config").cfg
+	_check(cfg.peso_inicial >= 0.2 and cfg.peso_inicial < cfg.alma_teto, "peso_inicial fora de [0,2, alma_teto)")
+	for m in game.princesses:
+		_check(m.fatness >= cfg.peso_inicial - 1e-4, "máscara deveria nascer com peso %.2f, tem %.3f" % [cfg.peso_inicial, m.fatness])
+		_check(m._spirits.get_child_count() >= int(round(cfg.peso_inicial / cfg.fat_per_cake)), "máscara deveria nascer com os espíritos do peso inicial à vista")
+
+
 func _menos_empate() -> void:
 	var cfg = get_node("/root/Config").cfg
 	_check(cfg.alma_por_abate <= 0.08, "alma de abate deveria pesar bem menos que os 0,15 de antes")
