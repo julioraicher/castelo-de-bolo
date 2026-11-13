@@ -1682,7 +1682,7 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 	if carried_princess:
 		amount *= Config.cfg.carrier_damage_mult
 	# Bloqueio: vale para golpes que chegam pela frente (até 60° do rosto).
-	var blocked := _blocking and _facing().dot(-dir) > BLOCK_COS
+	var blocked := _blocking and _guarda_trava_t <= 0.0 and _facing().dot(-dir) > BLOCK_COS
 	if blocked and melee and attacker and attacker.alive and _block_t <= Config.cfg.parry_janela:
 		_contra_golpe(attacker, dir)
 		return
@@ -1744,7 +1744,7 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		_impacto(attacker, dir, forte, melee, elemento, nivel)
 		if amount > 0.0 and is_on_floor() and _respingo_t <= 0.0:
 			_respingo_t = 0.2
-			Respingo.em(game, global_position, dir, Config.team_color(team), clampf(amount / max_hp() * 4.0, 0.35, 1.0))
+			Respingo.em(game, global_position, dir, Config.team_color(team), clampf(amount / max_hp() * 5.0, 0.45, 1.0))
 		# Golpe forte soa mais grave (mais "massa"); acerto de longe, mais agudo.
 		Sfx.play("hit", global_position, 0.08, 0.82 if forte else (1.12 if not melee else 1.0), (2.0 if forte else 0.0) - (4.0 if elemento != "" else 0.0))
 		if Projectile.SOM_ACERTO.has(elemento) and elemento != "bomba":

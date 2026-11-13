@@ -229,7 +229,7 @@ extends Resource
 ## a guarda quebra: atordoa guarda_atordoa s e não defende por guarda_trava s.
 ## Golpe de longe soma × guarda_tiro; virote de torreta não soma.
 ## Depois de guarda_espera s sem apanhar, desce guarda_recupera por s.
-@export var guarda_limite := 0.55
+@export var guarda_limite := 0.7
 @export var guarda_tiro := 0.5
 @export var guarda_espera := 1.0
 @export var guarda_recupera := 0.35

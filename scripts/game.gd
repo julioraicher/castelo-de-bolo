@@ -1002,7 +1002,11 @@ func _porrada_teste(delta: float) -> void:
 	var u := pancada
 	var a := func(t: float) -> bool: return _time >= t and _time - delta < t
 	if a.call(1.5):
-		_shot_times = [4.4, 6.6]
+		_shot_times = [4.4, 6.45]
+		player.brain = null  # parado: quem mexe é o roteiro
+		player.move_intent = Vector3.ZERO
+		player.wants_attack = false
+		u.guarda = 0.0
 		player.global_position = u.global_position - arena.forward(time_jogador) * 1.6
 		player.reset_physics_interpolation()
 		camera.snap()
@@ -1012,12 +1016,12 @@ func _porrada_teste(delta: float) -> void:
 	for k in 4:
 		if a.call(2.6 + k * 0.35):
 			u._visual.rotation.y = atan2(-dir.x, -dir.z)
-			u._blocking = true
+			u._blocking = u._guarda_trava_t <= 0.0
 			u._block_t = 5.0
-			u.take_damage(26.0, player, dir, 1.0, true)
+			u.take_damage(u.max_hp() * 0.19, player, dir, 1.0, true)
 	for k in 3:
 		if a.call(4.05 + k * 0.1):
-			u.take_damage(18.0, player, (dir + Vector3(randf_range(-0.6, 0.6), 0, 0)).normalized(), 1.0, true)
+			u.take_damage(u.max_hp() * 0.08, player, (dir + Vector3(randf_range(-0.6, 0.6), 0, 0)).normalized(), 1.0, true)
 	if a.call(6.35):
 		player.take_damage(30.0, u, -dir, 1.4, true)
 
