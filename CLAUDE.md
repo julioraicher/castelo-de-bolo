@@ -20,6 +20,9 @@ godot --headless --import --path .
 godot --headless --path . --fixed-fps 60 -- --autoplay --testes
 # Partida simulada sem janela (bots jogam pelo jogador; eventos no stdout):
 godot --headless --path . --fixed-fps 60 --quit-after 18000 -- --autoplay
+# Arena de chapéus (Ciclo 2.29, 3º modo do menu; --arena / ?arena): QA sem teclado,
+# o Tambor de Desafio toca sozinho a cada N s e gera inimigos:
+godot --headless --path . --fixed-fps 60 --quit-after 7200 -- --autoplay --arena-prova=8
 # Desempenho (xvfb): PERF (fps, chamadas, tris, CPU por seção) + CENSO (passes por dono).
 #   CENSO_DETALHE=Arena lista cada instância; MU_DEBUG=1 mostra os grupos da malha única.
 xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \

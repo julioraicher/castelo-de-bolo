@@ -30,7 +30,7 @@ var _lobby: Lobby
 var _modo := "inicio"              # inicio | pausa
 var _started := false  # fica falso no modo teste (--autoplay), que não deve pausar sozinho
 var _time_escolhido := Config.TEAM_BLUE
-var _sandbox_escolhido := false
+var _modo_escolhido := 0  # 0 normal, 1 modo teste, 2 arena de chapéus
 var _btn_jogar: Button
 
 
@@ -39,7 +39,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	var g := get_parent() as Game
 	_time_escolhido = g.time_jogador if g else Config.TEAM_BLUE
-	_sandbox_escolhido = g.sandbox if g else false
+	_modo_escolhido = _modo_do_jogo(g)
 	_painel = _build()
 	_painel.visible = false
 	add_child(_painel)
@@ -123,8 +123,9 @@ func _fechar() -> void:
 func _begin() -> void:
 	# Modo ou time diferentes do que está montado: recarrega a cena já jogando.
 	var g := get_parent() as Game
-	if g and (g.sandbox != _sandbox_escolhido or g.time_jogador != _time_escolhido):
-		Game.sandbox_pedido = _sandbox_escolhido
+	if g and (_modo_do_jogo(g) != _modo_escolhido or g.time_jogador != _time_escolhido):
+		Game.sandbox_pedido = _modo_escolhido == 1
+		Game.arena_pedido = _modo_escolhido == 2
 		Game.time_pedido = _time_escolhido
 		pular_inicio = true
 		Settings.save()
@@ -138,6 +139,13 @@ func _begin() -> void:
 	get_tree().paused = false
 	_started = true
 	started.emit()
+
+
+## Modo em que a partida montada está (índice do OptionButton da tela inicial).
+func _modo_do_jogo(g: Game) -> int:
+	if g == null:
+		return 0
+	return 2 if g.arena_chapeus else (1 if g.sandbox else 0)
 
 
 func _secao_atual() -> String:
@@ -324,8 +332,9 @@ func _secao_jogar() -> Control:
 	var modo := OptionButton.new()
 	modo.add_item("Normal: 8 contra 8, com bots")
 	modo.add_item("Modo teste: sem bots, tudo pronto e recarregando rápido")
-	modo.selected = 1 if _sandbox_escolhido else 0
-	modo.item_selected.connect(func(i: int): _sandbox_escolhido = i == 1)
+	modo.add_item("Arena de chapéus: toda classe à mão e um tambor que gera inimigos")
+	modo.selected = _modo_escolhido
+	modo.item_selected.connect(func(i: int): _modo_escolhido = i)
 	grade.add_child(modo)
 	grade.add_child(_text("Seu time", Estilo.T_MEDIO, Estilo.OURO, false))
 	var times := HBoxContainer.new()

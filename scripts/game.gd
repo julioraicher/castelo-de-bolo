@@ -102,12 +102,27 @@ var _autoplay := false
 ## --sandbox, com "?sandbox" no endereço da versão web ou pelo botão da tela
 ## inicial (sandbox_pedido sobrevive ao reload da cena).
 static var sandbox_pedido := false
+## Arena de chapéus (Ciclo 2.29): terceiro modo da tela inicial. Campo de
+## testes com os chapéus de TODAS as classes (bases, caminhos e heróis raros)
+## lado a lado e o Tambor de Desafio ([F] gera um inimigo aleatório na frente).
+## Por dentro liga o sandbox (recargas rápidas, madeira infinita, sem relógio).
+## Liga com --arena ou "?arena" no endereço da versão web.
+static var arena_pedido := false
 ## Time do jogador (Config.TEAM_BLUE/RED): escolhido na tela inicial, vale
 ## para a partida normal e o modo teste (--time=vermelho, "?time=vermelho" na web).
 static var time_pedido := Config.TEAM_BLUE
 var time_jogador := Config.TEAM_BLUE
 var sandbox := false
+var arena_chapeus := false
 var _montando_sandbox := false
+## Arena de chapéus: o tambor, os inimigos gerados vivos e um id por inimigo.
+var botao_arena: BotaoArena
+var inimigos_arena: Array[Unit] = []
+var _inimigo_arena_n := 0
+var _arena_prova := 0.0  # --arena-prova=N: QA, tambor sozinho a cada N s
+var _arena_prova_t := 0.0
+## Teto de inimigos gerados vivos ao mesmo tempo (PC fraco aguenta).
+const ARENA_INIMIGOS_MAX := 6
 var _variacoes := false
 var _variacoes_giro := 0
 ## --com-herois (com --variacoes): os 8 heróis raros entram na lista de partida
@@ -176,6 +191,13 @@ func _ready() -> void:
 			lockstep = true
 		elif arg == "--sandbox":
 			sandbox_pedido = true
+		elif arg == "--arena":
+			arena_pedido = true
+		elif arg.begins_with("--arena-prova="):
+			# QA: com --autoplay --arena, bate no tambor a cada N s (prova o
+			# sorteio, a briga e o sumiço do inimigo sem ninguém no teclado).
+			arena_pedido = true
+			_arena_prova = maxf(float(arg.trim_prefix("--arena-prova=")), 1.0)
 		elif arg.begins_with("--time="):
 			time_pedido = Config.TEAM_RED if arg.trim_prefix("--time=").begins_with("v") else Config.TEAM_BLUE
 		elif arg == "--variacoes":
@@ -247,6 +269,8 @@ func _ready() -> void:
 		var busca := str(JavaScriptBridge.eval("window.location.search", true))
 		if busca.contains("sandbox"):
 			sandbox_pedido = true
+		if busca.contains("arena"):
+			arena_pedido = true
 		if busca.contains("time=vermelho"):
 			time_pedido = Config.TEAM_RED
 	online = Rede.em_partida
@@ -254,8 +278,10 @@ func _ready() -> void:
 		semente = int(Rede.sala.semente)
 		lockstep = true
 		sandbox_pedido = false
+		arena_pedido = false
 		time_pedido = int(Rede.eu().get("time", 0))
-	sandbox = sandbox_pedido
+	arena_chapeus = arena_pedido
+	sandbox = sandbox_pedido or arena_chapeus
 	time_jogador = time_pedido
 	Sorte.semear(semente)
 	Sorte.tick = 0
@@ -277,6 +303,8 @@ func _ready() -> void:
 		# Um bairro por classe do pátio (Ciclo 2.21): barraquinha da classe base,
 		# tapetes dos dois caminhos e a casa que vira um deles. Classe sem
 		# caminhos fica só com a maquininha.
+		if arena_chapeus:
+			continue  # Arena de chapéus: as fileiras de pads nascem depois do laço
 		var hats := Config.cfg.hat_classes()
 		for i in hats.size():
 			var pos: Vector3 = arena.hat_spots[team][i]
@@ -370,6 +398,8 @@ func _ready() -> void:
 		add_child(player_brain)
 		Rede.iniciar_partida(self)
 		print("REDE partida: %d humanos, atraso %d quadros, eu = %d" % [Rede.jogadores().size(), Rede.atraso, Rede.id()])
+	if arena_chapeus:
+		_montar_arena_chapeus()
 	camera = CameraRig.new()
 	add_child(camera)
 	camera.target = player
@@ -439,7 +469,7 @@ func _ready() -> void:
 	if _vista != "":
 		hud.visible = false
 	add_child(auto_q)
-	if sandbox:
+	if sandbox and not arena_chapeus:
 		_montar_sandbox()
 	var menus := Menus.new()
 	add_child(menus)
@@ -506,6 +536,128 @@ func _prints_tutorial(menus: Menus) -> void:
 	get_tree().quit()
 
 
+## Arena de chapéus (Ciclo 2.29): fileiras com o chapéu de cada classe na
+## frente do portão do time do jogador (bases, depois caminhos, depois os
+## heróis raros em duas fileiras) e o Tambor de Desafio no meio do caminho.
+## O jogador nasce de frente para tudo.
+func _montar_arena_chapeus() -> void:
+	var t := time_jogador
+	var fr := arena.forward(t)
+	var lado := Vector3.UP.cross(fr).normalized()
+	var origem: Vector3 = arena.gate_spot[t]
+	var bases := Config.cfg.hat_classes()
+	var caminhos: Array[ClassStats] = []
+	for c in Config.cfg.todas_classes():
+		if c not in bases:
+			caminhos.append(c)
+	var herois: Array[ClassStats] = []
+	for c in bases:
+		for h in c.herois:
+			if h not in herois:
+				herois.append(h)
+	var meio := ceili(herois.size() / 2.0)
+	var fileiras: Array = [bases, caminhos, herois.slice(0, meio), herois.slice(meio)]
+	var tams: Array[int] = []
+	for f: Array in fileiras:
+		tams.append(f.size())
+	var posicoes := fileiras_arena(tams)
+	for f in fileiras.size():
+		for i in (fileiras[f] as Array).size():
+			var pv: Vector2 = posicoes[f][i]
+			var pad := HatPad.new()
+			add_child(pad)
+			pad.setup(t, fileiras[f][i], arena.clamp_to_arena(origem + fr * pv.x + lado * pv.y))
+			hat_pads.append(pad)
+	botao_arena = BotaoArena.new()
+	add_child(botao_arena)
+	botao_arena.position = arena.clamp_to_arena(origem + fr * 3.0 + lado * 6.0)
+	botao_arena.look_at(botao_arena.position - fr)  # baquetas para as fileiras, frente para quem chega
+	if player:
+		player.global_position = arena.clamp_to_arena(origem + fr * 1.0)
+		player.reset_physics_interpolation()
+
+
+## Arena de chapéus: posições (avanço, lado) das fileiras de pads, cada uma
+## centrada no eixo do portão. Separada para o teste de regra conferir.
+## Números medidos no Rio das Lanternas: o portão fica a 21,5 m do castelo e
+## o rio começa em |x| = 9; com primeira = 7 e entre = 5,75 a última fileira
+## para a ~5 m da margem.
+static func fileiras_arena(tamanhos: Array[int], espaco := 4.5, primeira := 7.0, entre := 5.75) -> Array:
+	var out := []
+	for f in tamanhos.size():
+		var linha := []
+		for i in tamanhos[f]:
+			linha.append(Vector2(primeira + entre * f, (i - (tamanhos[f] - 1) * 0.5) * espaco))
+		out.append(linha)
+	return out
+
+
+## Arena de chapéus: [F] no tambor. Nasce um inimigo de classe sorteada
+## (qualquer uma, heróis inclusive) a 6 m na direção da mira do jogador.
+## Ele briga (BotBrain ATTACK) e, quando a espera de renascer acaba, some
+## em vez de voltar (Unit.descartavel).
+func _gerar_inimigo_arena() -> void:
+	var pool := Config.cfg.classes_arena()
+	var cls: ClassStats = pool[Sorte.i() % pool.size()]
+	var inimigo := 1 - time_jogador
+	var dir: Vector3 = player.aim_dir
+	dir.y = 0.0
+	if dir.length() < 0.1:
+		dir = arena.forward(time_jogador)
+	dir = dir.normalized()
+	var pos := arena.clamp_to_arena(player.global_position + dir * 6.0)
+	var u := Unit.new()
+	_inimigo_arena_n += 1
+	u.name = "%s_arena_%d" % [Config.TEAM_NAMES[inimigo], _inimigo_arena_n]
+	u.descartavel = true
+	add_child(u)
+	u.setup(self, inimigo, false, cls)
+	u.global_position = pos
+	u.reset_physics_interpolation()
+	var bot := BotBrain.new()
+	bot.unit = u
+	bot.game = self
+	bot.role = BotBrain.Role.ATTACK
+	u.add_child(bot)
+	u.brain = bot
+	u.died.connect(_on_unit_died)
+	units.append(u)
+	inimigos_arena.append(u)
+	_log("arena inimigo %s (%d em campo, t=%.0fs)" % [cls.id, inimigos_arena_vivos(), _time])
+	if botao_arena:
+		botao_arena.acionar()
+	Fx.pillar(self, pos, Config.team_color(inimigo), 2.2)
+	Fx.burst(self, pos + Vector3(0, 1.2, 0), Config.team_color(inimigo).lightened(0.3), 18, 6.0)
+	Sfx.play("renascer", pos, 0.04)
+	if hud:
+		hud.show_big("⚔ %s!" % cls.display_name, Config.team_color(inimigo).lightened(0.35), 1.4)
+
+
+## Arena de chapéus: nível que cada classe veste na arena (base = 1,
+## caminho = nível máximo do mago, herói = um acima). Montado uma vez.
+var _arena_niveis := {}
+
+
+func _nivel_arena(id: StringName) -> int:
+	if _arena_niveis.is_empty():
+		for c in Config.cfg.hat_class_list:
+			_arena_niveis[c.id] = 1
+			for e in c.caminhos:
+				_arena_niveis[e.id] = Config.cfg.mago_nivel_max
+			for h in c.herois:
+				_arena_niveis[h.id] = Config.cfg.mago_nivel_max + 1
+	return int(_arena_niveis.get(id, 1))
+
+
+## Inimigos do tambor ainda em campo (vivos ou caídos esperando sumir).
+func inimigos_arena_vivos() -> int:
+	var n := 0
+	for u in inimigos_arena:
+		if is_instance_valid(u):
+			n += 1
+	return n
+
+
 ## Modo teste: todas as casas do time do jogador prontas (no primeiro
 ## caminho; [F] sobe o nível e, no máximo, troca o caminho) e as
 ## barraquinhas no nível 2.
@@ -564,6 +716,10 @@ func _inimigo_de_treino() -> void:
 
 
 func _on_started() -> void:
+	if arena_chapeus:
+		hud.show_big("ARENA DE CHAPÉUS\nPegue qualquer chapéu com [F]: bases, caminhos e heróis raros.\nO Tambor de Desafio gera um inimigo aleatório na sua frente.", Color(1, 0.9, 0.5), 5.0)
+		Sfx.start_music()
+		return
 	if sandbox:
 		hud.show_big("MODO TESTE\nMadeira infinita: pegue o chapéu de Construtor e erga as casas do zero.\nQ, E, R e catapulta recarregam rápido. F5 recomeça (para a outra escolha).", Color(1, 0.9, 0.5), 5.0)
 		Sfx.start_music()
@@ -777,6 +933,13 @@ func _physics_process(delta: float) -> void:
 			_poderes_t = 4.0
 			for u in units:
 				u.fill_power()
+	if arena_chapeus and _arena_prova > 0.0 and not game_over:
+		# QA (--arena-prova=N): o tambor toca sozinho de N em N segundos.
+		_arena_prova_t -= delta
+		if _arena_prova_t <= 0.0:
+			_arena_prova_t = _arena_prova
+			if inimigos_arena_vivos() < ARENA_INIMIGOS_MAX:
+				_gerar_inimigo_arena()
 	if sandbox:
 		# Modo teste: Chi e Super enchem rápido para testar E e R toda hora.
 		for u in units:
@@ -1141,7 +1304,9 @@ func _rules() -> void:
 			continue
 
 		# Pegar a princesa inimiga: bots pegam sozinhos, o jogador aperta F.
-		if not u.carried_princess and enemy_p.can_be_taken() and pos.distance_to(enemy_p.global_position) < 2.8:
+		# Arena de chapéus: inimigo do tambor fica na briga, não rouba máscara.
+		if not u.carried_princess and enemy_p.can_be_taken() and not u.descartavel \
+				and pos.distance_to(enemy_p.global_position) < 2.8:
 			if u.is_player:
 				hint = "[F] pegar a máscara!"
 			if not u.humano or wants_interact:
@@ -1219,6 +1384,17 @@ func _rules() -> void:
 				u.start_equip(cls, from)
 				if pad.raro:
 					on_heroi_vestido(u, cls)
+
+		# Arena de chapéus: [F] no Tambor de Desafio gera um inimigo aleatório.
+		if arena_chapeus and u.is_player and botao_arena and pad == null \
+				and pos.distance_to(botao_arena.global_position) < BotaoArena.RAIO:
+			var vivos := inimigos_arena_vivos()
+			hint = "[F] Tambor de Desafio: gerar um inimigo aleatório  (%d/%d em campo)" % [vivos, ARENA_INIMIGOS_MAX]
+			if wants_interact:
+				if vivos >= ARENA_INIMIGOS_MAX:
+					hud.show_big("Arena cheia: derrube um inimigo primeiro", Color(1, 0.6, 0.55), 1.5)
+				else:
+					_gerar_inimigo_arena()
 
 	if sandbox:
 		hint = _regras_sandbox(hint)
@@ -1440,7 +1616,8 @@ func _score_point(u: Unit) -> void:
 	FxPoder.coluna_captura(self, arena.princess_spot[u.team], Config.team_color(u.team))
 	Sfx.play("captura", arena.princess_spot[u.team], 0.0, 1.0, 4.0)
 	hud.show_big("PONTO DO %s!" % Config.TEAM_NAMES[u.team].to_upper(), Config.team_color(u.team).lightened(0.4))
-	if score[u.team] >= Config.cfg.score_to_win or morte_subita >= 0.0:
+	# Arena de chapéus: ponto não encerra nada (é um campo de testes sem fim).
+	if not arena_chapeus and (score[u.team] >= Config.cfg.score_to_win or morte_subita >= 0.0):
 		encerrar(u.team)
 
 
@@ -2121,6 +2298,8 @@ func on_mago_nivel(of: Oficina) -> void:
 ## mago_nivel_max; o máximo mostra tudo, 5 caudas na Kitsune). Classe evoluída
 ## sem casa pronta = 2; classe do pátio = 1.
 func nivel_visual_mago(team: int, id: StringName) -> int:
+	if arena_chapeus:
+		return 5 if _nivel_arena(id) >= Config.cfg.mago_nivel_max else 1
 	var evoluida := false
 	for of in oficinas:
 		if of.team != team:
@@ -2140,6 +2319,13 @@ func nivel_visual_mago(team: int, id: StringName) -> int:
 func bonus_mago(team: int, id: StringName) -> int:
 	if id == &"":
 		return 0
+	# Arena de chapéus: caminho veste no nível máximo e herói com o bônus
+	# cheio, para testar a forma final de cada classe.
+	if arena_chapeus:
+		var n := _nivel_arena(id)
+		if n > Config.cfg.mago_nivel_max:
+			return Config.cfg.heroi_bonus_niveis
+		return maxi(mini(n, Config.cfg.mago_nivel_max) - 2, 0)
 	for of in oficinas:
 		if of.team != team:
 			continue
