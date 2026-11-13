@@ -309,7 +309,7 @@ func add_progress(frac: float, by: Unit) -> void:
 func _ritmo_obra() -> float:
 	var rate := 0.0
 	for u in _game.units:
-		if u.alive and u.team == team and u.stats.velocidade_obra > 0.0 and not u.carried_princess \
+		if u.alive and u.team == team and u.lenhador() and not u.carried_princess \
 				and not u.carried_tora and u.global_position.distance_to(global_position) < BUILD_RADIUS \
 				and Vector2(u.velocity.x, u.velocity.z).length() < PARADO_VEL:
 			rate += u.stats.velocidade_obra
@@ -321,7 +321,7 @@ func _ritmo_obra() -> float:
 ## O jogador escolhe pelo painel ([F] no bairro), nunca pisando.
 func _construtor_no_tapete(i: int) -> bool:
 	for u in _game.units:
-		if u.alive and u.team == team and u.stats.velocidade_obra > 0.0 and not u.carried_princess \
+		if u.alive and u.team == team and u.lenhador() and not u.carried_princess \
 				and u.brain is BotBrain \
 				and not u.carried_tora and tapete_sob(u.global_position) == i \
 				and Vector2(u.velocity.x, u.velocity.z).length() < PARADO_VEL:
