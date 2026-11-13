@@ -2724,7 +2724,7 @@ func _multiplayer() -> void:
 	var adulterado := Marshalls.base64_to_raw(txt)
 	adulterado[20] = adulterado[20] ^ 1
 	_check(sb._decifrar(Marshalls.raw_to_base64(adulterado)).is_empty(), "rede: recado adulterado é ignorado")
-	_check(not txt.contains("oi"), "rede: o quadro de recados só vê lixo")
+	_check(not txt.contains("\"") and not txt.contains(":"), "rede: o quadro de recados só vê lixo (sem o JSON aberto)")
 	sa.free(); sb.free(); sc.free()
 
 	var estado = Sorte.rng.state
