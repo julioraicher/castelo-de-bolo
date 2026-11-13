@@ -443,14 +443,33 @@ func _on_servidor_caiu() -> void:
 
 # --- Porta (UPnP), IPs e lista da rede local ---------------------------------------
 
+## UPnP (thread separada). Insiste: procura o roteador duas vezes (filtro de
+## gateway e depois qualquer aparelho), tenta a porta com prazo (2 h) e depois
+## permanente (alguns roteadores só aceitam um dos dois) e pergunta o IP de fora
+## mesmo se a porta falhar, para saber se é CGNAT.
+## motivo: "" (ok), "sem_upnp", "recusou", "cgnat".
 func _upnp_abrir() -> void:
 	var u := UPNP.new()
-	var res := {"ok": false, "ip": ""}
-	if u.discover(2000, 2, "InternetGatewayDevice") == UPNP.UPNP_RESULT_SUCCESS \
-			and u.get_gateway() and u.get_gateway().is_valid_gateway():
-		var r := u.add_port_mapping(PORTA, PORTA, "Castelo de Bolo", "UDP", 0)
-		res.ok = r == UPNP.UPNP_RESULT_SUCCESS
+	var res := {"ok": false, "ip": "", "motivo": "sem_upnp"}
+	var achou := false
+	for filtro in ["InternetGatewayDevice", ""]:
+		u.clear_devices()
+		if u.discover(3000, 2, filtro) == UPNP.UPNP_RESULT_SUCCESS \
+				and u.get_gateway() and u.get_gateway().is_valid_gateway():
+			achou = true
+			break
+	if achou:
+		res.motivo = "recusou"
+		# Com prazo primeiro (2 h): se o jogo fechar sem apagar, a porta fecha sozinha.
+		for prazo in [7200, 0]:
+			if u.add_port_mapping(PORTA, PORTA, "Castelo de Bolo", "UDP", prazo) == UPNP.UPNP_RESULT_SUCCESS:
+				res.ok = true
+				res.motivo = ""
+				break
 		res.ip = u.query_external_address()
+		if res.ip != "" and CodigoSala.ip_privado(res.ip):
+			res.ok = false
+			res.motivo = "cgnat"
 	_upnp_fim.call_deferred(res, u)
 
 
@@ -460,14 +479,24 @@ func _upnp_fim(res: Dictionary, u: UPNP) -> void:
 	if res.ok:
 		_upnp = u
 	var ip: String = res.ip
-	if res.ok and ip != "" and not CodigoSala.ip_privado(ip):
+	if res.ok and ip != "":
 		codigo_internet = CodigoSala.gerar(ip)
 		upnp_texto = "Porta aberta: amigos de outras casas entram com o código."
-	elif ip != "" and CodigoSala.ip_privado(ip):
-		upnp_texto = "Seu provedor não deixa receber conexão (CGNAT). Amigo de outra casa: usem o Radmin VPN e o código dele."
 	else:
-		upnp_texto = "O roteador não abriu a porta sozinho. Amigo de outra casa: usem o Radmin VPN (grátis) e o código dele."
+		upnp_texto = {
+			"cgnat": "Sua internet não recebe conexão de fora (CGNAT da operadora). Amigo de outra casa: usem o Radmin VPN (grátis) e o IP 26.x acima.",
+			"recusou": "O roteador recusou abrir a porta. Amigo de outra casa: usem o Radmin VPN (grátis) e o IP 26.x acima.",
+		}.get(res.motivo, "O roteador não respondeu ao pedido de abrir a porta (UPnP desligado nele?). Amigo de outra casa: usem o Radmin VPN (grátis) e o IP 26.x acima.")
+		if not _tem_radmin():
+			upnp_texto += " Depois de instalar o Radmin, crie a sala de novo."
 	sala_mudou.emit()
+
+
+func _tem_radmin() -> bool:
+	for ip in codigos_lan:
+		if ip.begins_with("26."):
+			return true
+	return false
 
 
 func _ips_locais() -> Array[String]:
@@ -500,7 +529,7 @@ func _process(delta: float) -> void:
 			var ip := _escuta.get_packet_ip()
 			var d = JSON.parse_string(pk.get_string_from_utf8())
 			if d is Dictionary and d.get("j") == "CDB":
-				salas_lan[ip] = {"nome": str(d.get("n", "?")), "n": int(d.get("q", 1)), "versao": str(d.get("v", "")), "visto": Time.get_ticks_msec()}
+				salas_lan[ip] = {"nome": str(d.get("n", "?")).left(14), "n": int(d.get("q", 1)), "versao": str(d.get("v", "")), "visto": Time.get_ticks_msec()}
 				mudou = true
 		for ip in salas_lan.keys():
 			if Time.get_ticks_msec() - int(salas_lan[ip].visto) > 3500:
@@ -640,7 +669,9 @@ func _r_cmd(t: int, b: PackedByteArray) -> void:
 
 
 func _receber_cmd(p: int, t: int, b: PackedByteArray) -> void:
-	if t < _proximo or p not in _ativos:
+	# Só o quadro esperado e poucos à frente, e só o tamanho de um Comando:
+	# um amigo com jogo adulterado não enche a memória nem a rede dos outros.
+	if t < _proximo or t > _proximo + 64 or p not in _ativos or b.size() != 17:
 		return
 	if not _cmds.has(t):
 		_cmds[t] = {}
