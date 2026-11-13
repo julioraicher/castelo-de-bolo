@@ -4,6 +4,37 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.28c (2026-11-13), Diretor de Jogabilidade: conexão automática por código (sem Radmin)
+Julio: o roteador não abriu a porta ("Código da internet: indisponível") e o
+Radmin é complicado demais. Escolheu a conexão automática (WebRTC) e autorizou
+a extensão oficial do Godot.
+- **Criar sala** agora sorteia um **código de 8 letras** e liga os PCs **direto**
+  por WebRTC: ICE + STUN (Google e Cloudflare) fura o NAT, inclusive a maioria
+  dos CGNAT. **Nenhuma porta aberta no roteador** e ninguém instala nada.
+- **Quadro de recados** (`scripts/rede/sinal.gd`): antes de ligar, os PCs trocam
+  meia dúzia de recados pelo ntfy.sh (serviço público sem conta) num tópico tirado
+  do código, **cifrados** (AES-256 + HMAC, chave tirada do código) e sem cache.
+  O ntfy só vê lixo; sem o código ninguém acha, lê ou forja recado.
+- Se a ligação direta não passar (NAT muito fechado dos dois lados, ~10-20%), a
+  tela diz isso; plano B: os dois no Radmin VPN e **o mesmo código**.
+- Extensão `godotengine/webrtc-native` 1.2.2 (oficial), baixada no CI por
+  `tools/baixar_webrtc.sh` com **SHA-256 fixo** (só Windows/Linux x86_64; `lib/` fora
+  do git). O CI barra o .exe se a DLL não for junto.
+- **Bug consertado (vale para o Radmin também)**: o amigo podia cair ao carregar a
+  partida (o ENet derrubava quem ficava 5 s sem responder; agora 30 s) e um
+  comando que chegasse antes de o anfitrião montar o jogo se perdia (travava no
+  quadro 3). O limite de espera agora é em tempo de verdade.
+- Ping medido pelo próprio jogo (funciona nos dois transportes).
+- Testes: 6 checagens novas (código sorteado, recado cifrado volta igual, outro
+  código não lê, adulterado é ignorado); `tools/teste_rtc.sh` (dois jogos ligados
+  por WebRTC, recados por pasta) no CI; o mesmo pela internet de verdade como aviso.
+- Sala de teste (2 janelas) continua por ENet local.
+
+**O que testar**
+- Você: Com amigos → Criar sala → "Copiar código" → manda pro amigo.
+- Amigo: cola o código → Entrar (sem Radmin). Liga? Quanto de atraso a sala mostra?
+- Se o Windows perguntar do firewall, permita.
+
 ## Ciclo 2.28b (2026-11-13), Diretor de Jogabilidade: porta do roteador mais insistente + blindagem
 Julio criou a sala e apareceu "Código da internet: indisponível".
 - **UPnP insiste**: procura o roteador duas vezes (3 s cada, a segunda aceitando

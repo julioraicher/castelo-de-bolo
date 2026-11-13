@@ -5,3 +5,5 @@
 # Sistema
 .DS_Store
 Thumbs.db
+# Extensão WebRTC: baixada e conferida por tools/baixar_webrtc.sh
+addons/webrtc_native/lib/

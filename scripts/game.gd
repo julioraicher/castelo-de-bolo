@@ -479,7 +479,7 @@ func _prints_tutorial(menus: Menus) -> void:
 	for f in 20:
 		await get_tree().process_frame
 	get_viewport().get_texture().get_image().save_jpg("%s/amigos_entrada.jpg" % _tutorial_dir, 0.85)
-	if Rede.hospedar("Julio", false):
+	if Rede.criar_sala("Julio"):
 		for i in 4:
 			Rede._adicionar(100 + i, ["Pedro", "Ana", "Lucas", "Bia"][i])
 		Rede.jogadores()[100].pronto = true

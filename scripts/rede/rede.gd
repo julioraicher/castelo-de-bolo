@@ -1,9 +1,11 @@
 extends Node
 ## Autoload "Rede" (Ciclo 2.28): jogar com amigos.
 ##
-## Sala: um de vocês é o anfitrião (servidor ENet no próprio PC); o jogo
-## pede ao roteador para abrir a porta (UPnP) e mostra um código. Na mesma
-## rede (ou no Radmin VPN) a sala aparece sozinha na lista (aviso UDP).
+## Sala (2.28c): um de vocês é o anfitrião. "Criar sala" sorteia um código;
+## os PCs trocam recados cifrados por um quadro público (Sinal, ntfy.sh) e
+## ligam DIRETO por WebRTC (ICE + STUN fura o NAT, inclusive a maioria dos
+## CGNAT; nenhuma porta aberta no roteador). A sala também aparece sozinha na
+## lista da mesma rede (aviso UDP). Sala de teste e IP digitado usam ENet.
 ##
 ## Partida: LOCKSTEP. Cada PC roda o jogo inteiro; só viajam os Comandos dos
 ## humanos (17 bytes por quadro). O comando apertado no quadro t vale no
@@ -58,6 +60,7 @@ var _latch := 0           # toques entre um quadro e outro
 var _acao: Array = []     # ação do painel esperando ir no próximo comando
 var _hashes := {}         # (anfitrião) tick -> hash dele
 var _esperando := 0.0
+var _espera_ini := 0
 var _dessinc := false
 var _macaco_rng := RandomNumberGenerator.new()
 var _macaco_dir := Vector2.ZERO
@@ -65,6 +68,19 @@ var _macaco_t := 0.0
 var _mira_ult := Vector2(0, 1)
 
 var _enet: ENetMultiplayerPeer
+# --- Conexão automática (WebRTC) ---
+const ICE := {"iceServers": [{"urls": ["stun:stun.l.google.com:19302", "stun:stun.cloudflare.com:3478"]}]}
+const ESPERA_SALA := 25.0  # s procurando a sala antes de desistir
+var _rtc: WebRTCMultiplayerPeer
+var _sinal: Sinal
+var _con := {}          # peer -> WebRTCPeerConnection
+var _ice_pend := {}     # peer -> [[mid, idx, nome], ...] esperando ir num recado
+var _ice_chegou := {}   # peer -> candidatos que chegaram antes da descrição
+var _meu_rtc_id := 0
+var _procura_t := 0.0
+var _oi_t := 0.0
+var _ice_t := 0.0
+var codigo := ""        # código da sala (conexão automática)
 var _udp: PacketPeerUDP
 var _udp_t := 0.0
 var _escuta: PacketPeerUDP
@@ -93,6 +109,9 @@ func _ready() -> void:
 		if arg.begins_with("--hospedar-teste="):
 			_auto_n = int(arg.trim_prefix("--hospedar-teste="))
 			hospedar.call_deferred(meu_nome, false)
+		elif arg.begins_with("--criar-sala-teste="):
+			_auto_n = int(arg.trim_prefix("--criar-sala-teste="))
+			criar_sala.call_deferred(meu_nome)
 		elif arg.begins_with("--entrar="):
 			Menus.abrir_sala = true
 			entrar.call_deferred(meu_nome, arg.trim_prefix("--entrar="))
@@ -117,6 +136,55 @@ func id() -> int:
 
 
 # --- Sala -----------------------------------------------------------------------
+
+## Criar sala (conexão automática). Sem a extensão WebRTC (editor sem o
+## plugin) cai na sala antiga por ENet.
+func criar_sala(nome: String) -> bool:
+	if not _tem_webrtc():
+		return hospedar(nome, true)
+	sair()
+	meu_nome = nome
+	_rtc = WebRTCMultiplayerPeer.new()
+	if _rtc.create_server() != OK:
+		_rtc = null
+		return hospedar(nome, true)
+	multiplayer.multiplayer_peer = _rtc
+	online = true
+	anfitriao = true
+	sala = {"jogadores": {}, "tempo": 15, "dificuldade": Settings.difficulty, "semente": 0, "atraso": 3,
+			"mapa": Settings.mapa, "tema": Settings.theme, "versao": versao()}
+	_adicionar(1, nome)
+	codigo = CodigoSala.novo()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--codigo="):
+			codigo = arg.trim_prefix("--codigo=")
+	codigo_internet = ""
+	codigos_lan.clear()
+	upnp_texto = "Ligando o quadro de recados..."
+	_abrir_sinal()
+	_udp = PacketPeerUDP.new()
+	_udp.set_broadcast_enabled(true)
+	_udp.set_dest_address("255.255.255.255", PORTA_LAN)
+	sala_mudou.emit()
+	return true
+
+
+func _tem_webrtc() -> bool:
+	if OS.get_name() == "Web":
+		return false
+	var c := WebRTCPeerConnection.new()
+	return c.initialize({}) == OK
+
+
+func _abrir_sinal() -> void:
+	if _sinal == null:
+		_sinal = Sinal.new()
+		add_child(_sinal)
+		_sinal.recado.connect(_on_recado)
+		_sinal.aberto.connect(_on_sinal_aberto)
+		_sinal.caiu.connect(_on_sinal_caiu)
+	_sinal.abrir(codigo)
+
 
 func hospedar(nome: String, abrir_porta := true) -> bool:
 	sair()
@@ -167,6 +235,8 @@ func entrar(nome: String, texto: String) -> bool:
 	if alvo.is_empty():
 		aviso.emit("Código inválido. Confira as 8 letras (ou digite o IP).", Color(1, 0.55, 0.5))
 		return false
+	if alvo.has("codigo") and _tem_webrtc():
+		return _entrar_rtc(nome, alvo.codigo)
 	sair()
 	meu_nome = nome
 	_enet = ENetMultiplayerPeer.new()
@@ -191,6 +261,18 @@ func sair() -> void:
 	if _enet:
 		_enet.close()
 		_enet = null
+	if _sinal:
+		_sinal.fechar()
+	for p in _con:
+		_con[p].close()
+	_con.clear()
+	_ice_pend.clear()
+	_ice_chegou.clear()
+	if _rtc:
+		_rtc.close()
+		_rtc = null
+	_procura_t = 0.0
+	codigo = ""
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	_udp = null
 	online = false
@@ -348,6 +430,16 @@ func _r_comecar(s: Dictionary) -> void:
 	Config.cfg.tempo_limite = float(s.tempo) * 60.0
 	for p in jogadores():
 		jogadores()[p].pronto = false
+	# Já aceita comandos desta partida: o amigo pode recarregar a cena antes do
+	# anfitrião e mandar o quadro 3 antes de o anfitrião montar o jogo.
+	_cmds.clear()
+	_quadros.clear()
+	_eventos.clear()
+	_ativos.clear()
+	for p in jogadores():
+		_ativos.append(int(p))
+	_ativos.sort()
+	_proximo = atraso + 1
 	Menus.pular_inicio = true
 	Game.sandbox_pedido = false
 	Game.time_pedido = int(eu().get("time", 0))
@@ -403,13 +495,23 @@ func _espalhar() -> void:
 		sala_mudou.emit()
 
 
-func _on_peer_entrou(_p: int) -> void:
-	pass  # espera o "olá" com nome e versão
+func _on_peer_entrou(p: int) -> void:
+	_folga_enet(p)  # depois espera o "olá" com nome e versão
+
+
+## Carregar a partida trava o PC alguns segundos (Intel UHD: mais). O ENet
+## derruba quem fica 5 s sem responder; dá até 30 s de folga.
+func _folga_enet(p: int) -> void:
+	if _enet:
+		var pp := _enet.get_peer(p)
+		if pp:
+			pp.set_timeout(64, 30000, 60000)
 
 
 func _on_peer_saiu(p: int) -> void:
 	if not anfitriao:
 		return
+	_con.erase(p)
 	var nome: String = jogadores().get(p, {}).get("nome", "Alguém")
 	if em_partida:
 		if p in _ativos:
@@ -423,6 +525,7 @@ func _on_peer_saiu(p: int) -> void:
 
 
 func _on_conectou() -> void:
+	_folga_enet(1)
 	_r_ola.rpc_id(1, meu_nome, versao())
 
 
@@ -529,7 +632,8 @@ func _process(delta: float) -> void:
 			var ip := _escuta.get_packet_ip()
 			var d = JSON.parse_string(pk.get_string_from_utf8())
 			if d is Dictionary and d.get("j") == "CDB":
-				salas_lan[ip] = {"nome": str(d.get("n", "?")).left(14), "n": int(d.get("q", 1)), "versao": str(d.get("v", "")), "visto": Time.get_ticks_msec()}
+				salas_lan[ip] = {"nome": str(d.get("n", "?")).left(14), "n": int(d.get("q", 1)), "versao": str(d.get("v", "")),
+						"codigo": str(d.get("c", "")).left(9), "visto": Time.get_ticks_msec()}
 				mudou = true
 		for ip in salas_lan.keys():
 			if Time.get_ticks_msec() - int(salas_lan[ip].visto) > 3500:
@@ -537,32 +641,192 @@ func _process(delta: float) -> void:
 				mudou = true
 		if mudou:
 			salas_lan_mudaram.emit()
+	_tick_rtc(delta)
 	if not online or not anfitriao:
 		return
 	if _udp and not em_partida:
 		_udp_t -= delta
 		if _udp_t <= 0.0:
 			_udp_t = 1.0
-			var msg := JSON.stringify({"j": "CDB", "v": versao(), "n": meu_nome, "q": jogadores().size()})
+			var msg := JSON.stringify({"j": "CDB", "v": versao(), "n": meu_nome, "q": jogadores().size(), "c": codigo})
 			_udp.put_packet(msg.to_utf8_buffer())
 	_ping_t -= delta
-	if _ping_t <= 0.0 and _enet:
+	if _ping_t <= 0.0:
 		_ping_t = 1.0
-		var mudou_ping := false
 		for p in jogadores():
-			if p == 1 or p not in multiplayer.get_peers():
-				continue
-			var pp := _enet.get_peer(p)
-			if pp:
-				var ms := int(pp.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME))
-				if absi(ms - int(jogadores()[p].ping)) >= 5:
-					jogadores()[p].ping = ms
-					mudou_ping = true
-		if mudou_ping and not em_partida:
-			_espalhar()
+			if p != 1 and p in multiplayer.get_peers():
+				_r_ping.rpc_id(p, Time.get_ticks_msec())
 	if _auto_n > 0 and not em_partida and jogadores().size() >= _auto_n:
 		_auto_n = 0
 		comecar()
+
+
+# --- Conexão automática (WebRTC + Sinal) ---------------------------------------
+
+func _entrar_rtc(nome: String, cod: String) -> bool:
+	sair()
+	meu_nome = nome
+	_meu_rtc_id = randi_range(2, 2147483646)
+	_rtc = WebRTCMultiplayerPeer.new()
+	if _rtc.create_client(_meu_rtc_id) != OK:
+		_rtc = null
+		aviso.emit("Não deu para começar a conexão.", Color(1, 0.55, 0.5))
+		return false
+	multiplayer.multiplayer_peer = _rtc
+	online = true
+	anfitriao = false
+	codigo = cod
+	_procura_t = ESPERA_SALA
+	_oi_t = 0.0
+	_abrir_sinal()
+	aviso.emit("Procurando a sala %s..." % cod, Color(1, 0.9, 0.6))
+	return true
+
+
+func _on_sinal_aberto() -> void:
+	if anfitriao:
+		codigo_internet = codigo
+		upnp_texto = "Código pronto: mande para os amigos (funciona de qualquer casa)."
+		sala_mudou.emit()
+	else:
+		_oi_t = 0.0  # manda o "oi" já
+
+
+func _on_sinal_caiu() -> void:
+	if not online:
+		return
+	if anfitriao:
+		codigo_internet = ""
+		upnp_texto = "Sem acesso ao quadro de recados (internet?). Tentando de novo..."
+		sala_mudou.emit()
+	# tenta de novo em seguida (o ntfy fecha conexões paradas)
+	if codigo != "":
+		_sinal.abrir.call_deferred(codigo)
+
+
+func _tick_rtc(delta: float) -> void:
+	if _rtc == null:
+		return
+	# Candidatos ICE saem em rajada: junta 0,25 s num recado só.
+	_ice_t -= delta
+	if _ice_t <= 0.0 and not _ice_pend.is_empty():
+		_ice_t = 0.25
+		var meu := 1 if anfitriao else _meu_rtc_id
+		for p in _ice_pend:
+			_sinal.enviar({"t": "ice", "de": meu, "para": p, "c": _ice_pend[p]})
+		_ice_pend.clear()
+	if anfitriao:
+		for p in _con.keys():
+			if _con[p].get_connection_state() == WebRTCPeerConnection.STATE_FAILED:
+				_rtc.remove_peer(p)
+				_con.erase(p)
+		return
+	# Amigo: repete o "oi" até o anfitrião responder; desiste depois de um tempo.
+	if 1 in multiplayer.get_peers():
+		_procura_t = 0.0
+		return
+	if _procura_t <= 0.0:
+		return
+	_procura_t -= delta
+	_oi_t -= delta
+	if _oi_t <= 0.0 and _sinal.esta_aberto() and not _con.has(1):
+		_oi_t = 3.0
+		_sinal.enviar({"t": "oi", "de": _meu_rtc_id, "v": versao()})
+	var falhou: bool = _con.has(1) and _con[1].get_connection_state() == WebRTCPeerConnection.STATE_FAILED
+	if _procura_t <= 0.0 or falhou:
+		var msg := "Não deu para ligar direto com o anfitrião (rede muito fechada dos dois lados). Plano B: os dois no Radmin VPN e o mesmo código." if _con.has(1) \
+				else "Não achei a sala %s. Confira o código e se o anfitrião está com a sala aberta." % codigo
+		sair()
+		aviso.emit(msg, Color(1, 0.55, 0.5))
+
+
+func _nova_conexao(p: int) -> WebRTCPeerConnection:
+	var c := WebRTCPeerConnection.new()
+	c.initialize(ICE)
+	var meu := 1 if anfitriao else _meu_rtc_id
+	c.session_description_created.connect(func(tipo: String, sdp: String):
+		c.set_local_description(tipo, sdp)
+		_sinal.enviar({"t": "sdp", "de": meu, "para": p, "tipo": tipo, "sdp": sdp}))
+	c.ice_candidate_created.connect(func(mid: String, idx: int, nome: String):
+		if not _ice_pend.has(p):
+			_ice_pend[p] = []
+		_ice_pend[p].append([mid, idx, nome]))
+	_con[p] = c
+	_rtc.add_peer(c, p)
+	return c
+
+
+func _on_recado(d: Dictionary) -> void:
+	if not online or _rtc == null:
+		return
+	var de := int(d.get("de", 0))
+	var t := str(d.get("t", ""))
+	if anfitriao:
+		if de < 2:
+			return
+		if t == "oi":
+			if _con.has(de):
+				return
+			if str(d.get("v", "")) != versao():
+				_sinal.enviar({"t": "nao", "de": 1, "para": de, "m": "Versões diferentes do jogo (sala: %s). Baixem a mesma da \"ultima-versao\"." % versao()})
+			elif em_partida:
+				_sinal.enviar({"t": "nao", "de": 1, "para": de, "m": "A partida já começou. Espere voltarem para a sala."})
+			elif _con.size() >= MAX_JOGADORES - 1:
+				_sinal.enviar({"t": "nao", "de": 1, "para": de, "m": "Sala cheia (%d)." % MAX_JOGADORES})
+			else:
+				_nova_conexao(de).create_offer()
+			return
+	elif int(d.get("para", 0)) != _meu_rtc_id or de != 1:
+		return
+	match t:
+		"sdp":
+			var c: WebRTCPeerConnection = _con.get(de)
+			if c == null and not anfitriao:
+				c = _nova_conexao(1)
+			if c:
+				c.set_remote_description(str(d.get("tipo", "")), str(d.get("sdp", "")))
+				for cand in _ice_chegou.get(de, []):
+					c.add_ice_candidate(cand[0], cand[1], cand[2])
+				_ice_chegou.erase(de)
+		"ice":
+			var lista: Variant = d.get("c", [])
+			if not lista is Array:
+				return
+			for cand in lista.slice(0, 32):
+				if not cand is Array or cand.size() != 3:
+					continue
+				var cc := [str(cand[0]), int(cand[1]), str(cand[2]).left(300)]
+				if _con.has(de):
+					_con[de].add_ice_candidate(cc[0], cc[1], cc[2])
+				else:
+					if not _ice_chegou.has(de):
+						_ice_chegou[de] = []
+					_ice_chegou[de].append(cc)
+		"nao":
+			var m := str(d.get("m", "O anfitrião recusou.")).left(160)
+			sair()
+			aviso.emit(m, Color(1, 0.55, 0.5))
+
+
+@rpc("authority", "call_remote", "reliable")
+func _r_ping(t: int) -> void:
+	_r_pong.rpc_id(1, t)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _r_pong(t: int) -> void:
+	var p := multiplayer.get_remote_sender_id()
+	if not anfitriao or not jogadores().has(p):
+		return
+	var ms := clampi(Time.get_ticks_msec() - t, 0, 5000)
+	var antes := int(jogadores()[p].ping)
+	var novo := ms if antes == 0 else roundi(antes * 0.7 + ms * 0.3)
+	if absi(novo - antes) >= 5:
+		jogadores()[p].ping = novo
+		if not em_partida:
+			_espalhar()
+	else:
+		jogadores()[p].ping = novo
 
 
 # --- Lockstep --------------------------------------------------------------------
@@ -571,26 +835,21 @@ func _process(delta: float) -> void:
 func iniciar_partida(g: Game) -> void:
 	game = g
 	_tick = 1
-	_quadros.clear()
-	_cmds.clear()
 	_hashes.clear()
-	_eventos.clear()
 	_acao.clear()
 	_latch = 0
 	_esperando = 0.0
+	_espera_ini = 0
 	_dessinc = false
 	_macaco_rng.seed = hash(id())
-	_ativos.clear()
-	for p in jogadores():
-		_ativos.append(int(p))
-	_ativos.sort()
 	# Os primeiros quadros não têm comando de ninguém (o atraso ainda não passou).
 	var vazio := {}
 	for p in _ativos:
 		vazio[p] = Comando.vazio_bytes()
 	for t in range(1, atraso + 1):
 		_quadros[t] = {"c": vazio.duplicate(), "ev": []}
-	_proximo = atraso + 1
+	if anfitriao:
+		_montar_quadros()  # comandos que chegaram enquanto a cena carregava
 
 
 func _physics_process(delta: float) -> void:
@@ -600,7 +859,14 @@ func _physics_process(delta: float) -> void:
 		_latch |= _toques()
 	if not _quadros.has(_tick):
 		get_tree().paused = true
-		_esperando += delta
+		# Tempo de verdade (não o do jogo): esperar a rede é coisa do relógio de
+		# parede, e com o jogo pausado o quadro do motor pode correr à toa.
+		var agora := Time.get_ticks_msec()
+		if _espera_ini == 0:
+			_espera_ini = agora
+		_esperando = (agora - _espera_ini) / 1000.0
+		if DisplayServer.get_name() == "headless":
+			OS.delay_msec(5)  # testes: o quadro parado não gasta o --quit-after à toa
 		if _esperando >= ESPERA_AVISO and game.hud:
 			game.hud.dica_rede("Esperando %s..." % _quem_falta())
 		if anfitriao and _esperando >= ESPERA_LIMITE:
@@ -609,6 +875,7 @@ func _physics_process(delta: float) -> void:
 	if _esperando >= ESPERA_AVISO and game.hud:
 		game.hud.dica_rede(game.dica_fim())
 	_esperando = 0.0
+	_espera_ini = 0
 	get_tree().paused = false
 	var q: Dictionary = _quadros[_tick]
 	_quadros.erase(_tick)
@@ -644,13 +911,14 @@ func _quem_falta() -> String:
 
 func _desistir_dos_lentos() -> void:
 	_esperando = 0.0
+	_espera_ini = 0
 	var tem: Dictionary = _cmds.get(_proximo, {})
 	for p in _ativos.duplicate():
 		if p != 1 and not tem.has(p):
 			_ativos.erase(p)
 			_eventos.append(["saiu", p])
-			if _enet:
-				_enet.disconnect_peer(p)
+			if multiplayer.multiplayer_peer and p in multiplayer.get_peers():
+				multiplayer.multiplayer_peer.disconnect_peer(p)
 	_montar_quadros()
 
 

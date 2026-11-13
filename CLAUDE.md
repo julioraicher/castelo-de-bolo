@@ -40,6 +40,8 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3
 # Multiplayer: mesma semente em 60 x 23 FPS tem de dar o mesmo SINC; e rede real local
 tools/teste_sincronia.sh 90 7      # [segundos] [semente] [godot] [--variacoes ...]
 tools/teste_rede.sh 5000           # anfitrião + amigo (127.0.0.1), compara SINC
+tools/baixar_webrtc.sh             # extensão WebRTC oficial (SHA-256 fixo); antes do import
+tools/teste_rtc.sh 5000            # sala por código (WebRTC, recados por pasta); "internet" = ntfy real
 # Exportar só os dados, sem templates, e inspecionar como no jogo publicado:
 godot --headless --path . --export-pack "Linux" x.pck
 godot --headless --main-pack x.pck -s diag.gd
@@ -77,6 +79,8 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
   quadro. Lobby = `scripts/ui/lobby.gd`. `Unit.humano` (regra: humano ou não)
   ≠ `is_player`/`game.player` (só o deste PC: câmera, HUD, som). Bots usam
   `game.time_tem_humano(t)`, nunca `time_jogador`, para regras de time.
+  Conexão (2.28c): "Criar sala" = `Rede.criar_sala` (WebRTC; código sorteado;
+  recados cifrados por `Sinal` no ntfy.sh). IP digitado e Sala de teste = ENet.
 
 ## Armadilhas já pagas (não repetir)
 
