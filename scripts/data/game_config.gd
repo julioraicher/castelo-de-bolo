@@ -199,6 +199,17 @@ extends Resource
 @export_range(0.0, 2.5, 0.05) var exagero_animacao := 1.4
 ## Antecipação do golpe (s): o corpo "carrega" antes do dano sair.
 @export_range(0.0, 0.1, 0.005) var antecipacao_golpe := 0.05
+## Rastro da barra de vida (Ciclo 2.26): a parte que o golpe tirou fica branca
+## por rastro_espera s e depois desce a rastro_vel (fração da barra por s).
+@export var rastro_espera := 0.45
+@export var rastro_vel := 0.8
+## Borda vermelha do golpe forte: o jogador levou pelo menos esta fração da
+## vida máxima num golpe só (ou um golpe com empurrão forte).
+@export_range(0.0, 1.0) var golpe_forte_frac := 0.15
+## Respingo de tinta no chão onde o golpe acertou (cor do time de quem apanhou).
+## Todos num MultiMesh só (1 chamada de desenho). 0 = desliga.
+@export var respingo_max := 48
+@export var respingo_vida := 2.0
 
 @export_group("Botão direito (Ciclo 2.4)")
 ## Contra-golpe: bloqueio erguido há no máximo parry_janela s quando o golpe
@@ -213,6 +224,19 @@ extends Resource
 @export var carga_raio_bomba := 1.5
 ## Esquiva perfeita (golpe que passa por dentro do dash): Chi ganho.
 @export var chi_esquiva := 8.0
+## Guarda que quebra (Ciclo 2.26): cada golpe que bate na defesa soma o dano
+## (antes da redução) / vida máxima de quem defende. Somou guarda_limite =
+## a guarda quebra: atordoa guarda_atordoa s e não defende por guarda_trava s.
+## Golpe de longe soma × guarda_tiro; virote de torreta não soma.
+## Depois de guarda_espera s sem apanhar, desce guarda_recupera por s.
+@export var guarda_limite := 0.55
+@export var guarda_tiro := 0.5
+@export var guarda_espera := 1.0
+@export var guarda_recupera := 0.35
+@export var guarda_atordoa := 0.6
+@export var guarda_trava := 1.2
+## Chi para quem quebrou a guarda.
+@export var guarda_chi := 10.0
 
 @export_group("Poderes Q (Ciclo 2.4)")
 ## Fúria do Ronin: cresce furia_escala × (e quase não é empurrado).

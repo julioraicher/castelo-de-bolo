@@ -53,6 +53,8 @@ var _abates: Label
 var _quedas: Label
 var _flash: ColorRect
 var _machucado: TextureRect  # borda vermelha com vida baixa
+var _golpe: TextureRect  # borda vermelha rápida do golpe forte (Ciclo 2.26)
+var _hp_rastro: ProgressBar  # branco atrás da vida: quanto o golpe tirou
 var _end_panel: Control
 var _end_title: Label
 var _end_score: Label
@@ -170,6 +172,28 @@ func _ready() -> void:
 	_machucado.modulate.a = 0.0
 	root.add_child(_machucado)
 	root.move_child(_machucado, 0)  # embaixo do resto do HUD
+	# Golpe forte: a mesma ideia, mais fina e mais viva, só por 0,35 s.
+	var g2 := Gradient.new()
+	g2.set_color(0, Color(0.9, 0.05, 0.03, 0.0))
+	g2.set_color(1, Color(0.8, 0.0, 0.0, 1.0))
+	g2.add_point(0.62, Color(0.9, 0.05, 0.03, 0.0))
+	g2.add_point(0.85, Color(0.95, 0.1, 0.05, 0.55))
+	var tex2 := GradientTexture2D.new()
+	tex2.gradient = g2
+	tex2.fill = GradientTexture2D.FILL_RADIAL
+	tex2.fill_from = Vector2(0.5, 0.5)
+	tex2.fill_to = Vector2(1.0, 1.0)
+	tex2.width = 256
+	tex2.height = 256
+	_golpe = TextureRect.new()
+	_golpe.texture = tex2
+	_golpe.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_golpe.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_golpe.stretch_mode = TextureRect.STRETCH_SCALE
+	_golpe.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_golpe.modulate.a = 0.0
+	root.add_child(_golpe)
+	root.move_child(_golpe, 1)
 
 	# Clarão da tela inteira (poder do jogador). Só um ColorRect: custo ~zero.
 	_flash = ColorRect.new()
@@ -180,6 +204,22 @@ func _ready() -> void:
 
 	_build_escolha(root)
 	_build_fim(root)
+
+
+## Golpe forte no jogador (Ciclo 2.26): borda vermelha que acende e some em
+## ~0,35 s; k 0..1 = força. A borda puxa um pouco para o lado de onde veio o
+## golpe (dir = de quem bateu para o jogador, no mundo; câmera olha para -z).
+func golpe_forte(k: float, dir := Vector3.ZERO) -> void:
+	if _golpe == null:
+		return
+	var tela := Vector2(dir.x, dir.z) * 0.04 * k  # centro foge do golpe: o lado de onde veio fica mais vermelho
+	_golpe.pivot_offset = _golpe.size * 0.5
+	_golpe.scale = Vector2.ONE * (1.06 + 0.04 * k)
+	_golpe.position = _golpe.size * tela
+	_golpe.modulate.a = maxf(_golpe.modulate.a, 0.45 + 0.5 * k)
+	var tw := _golpe.create_tween()
+	tw.tween_property(_golpe, "modulate:a", 0.0, 0.35 + 0.15 * k).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	tw.parallel().tween_property(_golpe, "position", Vector2.ZERO, 0.35)
 
 
 ## Clarão rápido na tela (cor com alfa inicial), some em dur segundos.
@@ -326,8 +366,14 @@ func _build_jogador(root: Control) -> void:
 	v.add_child(_class_label)
 	_status_label = Estilo.rotulo("", Estilo.T_PEQUENO + 1, Estilo.FANTASMA, Estilo.NUMERO)
 	v.add_child(_status_label)
+	# Rastro (Ciclo 2.26): uma barra branca por baixo; a de vida vai por cima
+	# com fundo vazio, então o branco aparece só no pedaço que o golpe tirou.
+	_hp_rastro = Estilo.barra(Color(1.0, 0.96, 0.88), Vector2(300, 22))
+	v.add_child(_hp_rastro)
 	_hp_bar = Estilo.barra(Estilo.AZUL, Vector2(300, 22))
-	v.add_child(_hp_bar)
+	_hp_bar.add_theme_stylebox_override("background", StyleBoxEmpty.new())
+	_hp_bar.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_hp_rastro.add_child(_hp_bar)
 	_hp_text = Estilo.rotulo("", 17, Estilo.TEXTO, Estilo.NUMERO, 4)
 	_hp_text.label_settings.shadow_offset = Vector2(0, 1)
 	_hp_text.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -653,6 +699,7 @@ func update_state(game: Game) -> void:
 	_class_label.text = u.stats.display_name if u.alive else ("Caído" if game.reanimar and game.reanimar.pode_reanimar(u) else "Renascendo...")
 	var ratio := u.hp_ratio()
 	_hp_bar.value = ratio * 100.0
+	_hp_rastro.value = maxf(u.hp_rastro, ratio) * 100.0 if u.alive else 0.0
 	_hp_text.text = "%d / %d" % [ceili(u.hp), int(u.max_hp())] if u.alive else ""
 	var baixa := Config.cfg.vida_baixa_frac
 	Estilo.cor_barra(_hp_bar, time_cor if ratio > baixa else Estilo.PERIGO.lerp(Color.WHITE, pulso * 0.4))
