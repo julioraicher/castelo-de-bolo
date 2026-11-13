@@ -80,6 +80,15 @@ func _tem_aliado_de_pe(team: int) -> bool:
 	return false
 
 
+## Arena de chapéus: tira dos registros um corpo que vai sumir de vez
+## (Unit.descartavel, inimigo gerado pelo Tambor de Desafio).
+func esquecer(u: Unit) -> void:
+	_espera_total.erase(u)
+	_reservas.erase(u)
+	_desistindo.erase(u)
+	_remover_visual(u)
+
+
 ## Modo teste: deixa `u` caído para treinar (Game._aliado_de_treino).
 func treino(u: Unit) -> void:
 	boneco_treino = u

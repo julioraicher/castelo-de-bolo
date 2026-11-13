@@ -54,6 +54,7 @@ func _ready() -> void:
 	await _herois_2_27b()
 	_menos_empate()
 	_multiplayer()
+	_arena_chapeus()
 	_sons_proprios()
 	_relogio()  # por último: encerra a partida
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
@@ -2773,3 +2774,47 @@ func _multiplayer() -> void:
 	game.humano_saiu(99)
 	_check(not novo.humano and novo.brain is BotBrain and not game.cerebros.has(99), "rede: quem sai vira bot")
 	_check(game.humanos_time == h0, "rede: humanos por time voltam ao normal")
+
+
+## Arena de chapéus (Ciclo 2.29): a lista do Tambor de Desafio e as fileiras.
+func _arena_chapeus() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var pool: Array = cfg.classes_arena()
+	_check(not pool.has(cfg.villager), "arena: recruta fora do sorteio do tambor")
+	for c in cfg.todas_classes():
+		_check(pool.has(c), "arena: classe %s no sorteio do tambor" % c.id)
+	var herois := 0
+	for c in cfg.hat_classes():
+		for h in c.caminhos:
+			_check(pool.has(h), "arena: caminho %s no sorteio" % h.id)
+		for h in c.herois:
+			_check(pool.has(h), "arena: herói %s no sorteio" % h.id)
+			herois += 1
+	_check(herois == 13, "arena: 13 heróis raros no sorteio (tem %d)" % herois)
+	var vistos := {}
+	for c in pool:
+		_check(not vistos.has(c.id), "arena: classe %s repetida no sorteio" % c.id)
+		vistos[c.id] = true
+	# Fileiras: cada uma centrada, com espaço entre vizinhos e avanços crescentes.
+	var tams: Array[int] = [5, 8, 7, 6]
+	var fileiras: Array = Game.fileiras_arena(tams)
+	_check(fileiras.size() == 4, "arena: uma fileira por grupo")
+	var avanco_ant := -1.0
+	for f in fileiras.size():
+		var linha: Array = fileiras[f]
+		_check(linha.size() == tams[f], "arena: fileira %d com %d pads" % [f, tams[f]])
+		var soma := 0.0
+		for i in linha.size():
+			soma += (linha[i] as Vector2).y
+			if i > 0:
+				_check((linha[i] as Vector2).y - (linha[i - 1] as Vector2).y >= 4.0, "arena: pads vizinhos a 4 m ou mais (fileira %d)" % f)
+		_check(absf(soma) < 0.01, "arena: fileira %d centrada no eixo do portão" % f)
+		_check((linha[0] as Vector2).x > avanco_ant, "arena: fileira %d mais à frente que a anterior" % f)
+		avanco_ant = (linha[0] as Vector2).x
+	# O nível da arena: base veste 1, caminho veste o máximo, herói um acima.
+	var base: ClassStats = cfg.hat_classes()[0]
+	_check(game._nivel_arena(base.id) == 1, "arena: classe base veste nível 1")
+	if base.caminhos.size() > 0:
+		_check(game._nivel_arena(base.caminhos[0].id) == cfg.mago_nivel_max, "arena: caminho veste o nível máximo")
+	if base.herois.size() > 0:
+		_check(game._nivel_arena(base.herois[0].id) == cfg.mago_nivel_max + 1, "arena: herói veste um nível acima do máximo")

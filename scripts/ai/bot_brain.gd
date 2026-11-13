@@ -205,6 +205,13 @@ func _think() -> void:
 	var my_princess := game.princesses[unit.team]
 	var their_princess := game.princesses[enemy_team]
 
+	# Arena de chapéus: inimigo do tambor não tem missão, só caça. Vai atrás
+	# do inimigo mais perto (o jogador, em geral) de qualquer distância.
+	if unit.descartavel:
+		_target = _nearest_enemy(300.0)
+		_goal = _target.global_position if _target else me
+		return
+
 	if unit.carried_princess:
 		_goal = arena.princess_spot[unit.team]
 		return

@@ -39,6 +39,9 @@ var is_player := false
 ## online, os amigos. Regras usam humano; o que é só da sua tela (HUD,
 ## câmera, números) usa is_player. Fora do online, humano == is_player.
 var humano := false
+## Arena de chapéus (Ciclo 2.29): inimigo gerado pelo Tambor de Desafio.
+## Quando a espera de renascer acaba, some do jogo em vez de voltar.
+var descartavel := false
 var brain: Node
 
 var stats: ClassStats
@@ -2111,6 +2114,15 @@ func _die(killer: Unit) -> void:
 
 
 func _respawn() -> void:
+	if descartavel:
+		# Arena de chapéus: inimigo do tambor some em vez de renascer.
+		game.units.erase(self)
+		game.inimigos_arena.erase(self)
+		if game.reanimar:
+			game.reanimar.esquecer(self)
+		Fx.burst(game, global_position + Vector3(0, 0.8, 0), Color(0.6, 0.6, 0.65), 8, 3.0)
+		queue_free()
+		return
 	_voltar_a_vida()
 	global_position = game.arena.random_spawn(team, game.units)
 	reset_physics_interpolation()  # teleporte: sem rastro interpolado até o castelo

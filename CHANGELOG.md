@@ -4,6 +4,28 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.29 (2026-11-13), Diretor de Jogabilidade: Arena de chapéus
+Pedido do Julio: um terceiro "mundo" de testes com os chapéus de todos os
+personagens lado a lado e um botão que gera um inimigo aleatório na frente.
+- **Novo modo na tela inicial** (Partida → "Arena de chapéus"; `--arena` ou
+  `?arena` na web): campo de testes na frente do portão do seu castelo, com
+  **4 fileiras de maquininhas**: as classes base, os caminhos Nv2-5 e os 13
+  heróis raros em duas fileiras. Todo chapéu à mão, com reposição em 1 s.
+- **Caminho veste no nível máximo** (Kitsune Luz/Sombria com 5 caudas, bônus
+  cheios) e **herói com o bônus de herói**: é a forma final de cada classe.
+- **Tambor de Desafio** ao lado do spawn: aperte [F] nele e nasce um inimigo
+  de classe sorteada (qualquer uma, heróis inclusive) a 6 m na direção da sua
+  mira. Ele caça você, não rouba a máscara, e **some ao cair** (não renasce).
+  Máximo de 6 em campo ao mesmo tempo.
+- Por dentro o modo liga o sandbox: mapa leve, sem bots, sem relógio, Chi/Super
+  rápidos, madeira infinita. Ponto de máscara não encerra a partida na arena.
+- QA: `--autoplay --arena-prova=N` toca o tambor sozinho a cada N s (sem
+  teclado). 20 testes de regra novos (sorteio completo, fileiras, níveis).
+- **O que testar**: na tela inicial, troque Partida para "Arena de chapéus".
+  Pegue chapéus das 4 fileiras (heróis ao fundo, perto do rio) e bata no
+  tambor vermelho para brigar. O inimigo some sozinho depois que cai?
+  As fileiras ficaram bem espaçadas no seu PC?
+
 ## Ciclo 2.28c (2026-11-13), Diretor de Jogabilidade: conexão automática por código (sem Radmin)
 Julio: o roteador não abriu a porta ("Código da internet: indisponível") e o
 Radmin é complicado demais. Escolheu a conexão automática (WebRTC) e autorizou

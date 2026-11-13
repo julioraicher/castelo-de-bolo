@@ -658,6 +658,18 @@ func hat_classes() -> Array[ClassStats]:
 	return hat_class_list
 
 
+## Arena de chapéus (Ciclo 2.29): todas as classes com chapéu, heróis raros
+## inclusive, sem repetir. É o sorteio do Tambor de Desafio e a lista das
+## fileiras de pads (o recruta fica de fora: ninguém pega chapéu de recruta).
+func classes_arena() -> Array[ClassStats]:
+	var out := todas_classes()
+	for c in hat_class_list:
+		for h in c.herois:
+			if not out.has(h):
+				out.append(h)
+	return out
+
+
 ## Todas as classes jogáveis: as do pátio e, depois, os caminhos de cada uma
 ## (ClassStats.caminhos), sem repetir.
 func todas_classes() -> Array[ClassStats]:
