@@ -33,6 +33,10 @@ extends Resource
 ## Fração da velocidade perdida pelo carregador quando a princesa está no peso máximo.
 ## Ciclo 2.25: 0,45 → 0,38 (os espíritos entregues ainda enchem a máscara até 1).
 @export_range(0.0, 0.95) var fat_slowdown := 0.38
+## Peso com que a máscara nasce (2.27c, Julio: "tomei 3 pontos logo no começo").
+## 0,3 = três espíritos já presos: o primeiro roubo anda ~11% mais devagar.
+## Some na morte súbita (zerar_peso) como qualquer outro peso.
+@export_range(0.0, 1.0) var peso_inicial := 0.3
 ## Segundos até a princesa largada no chão voltar sozinha para casa.
 @export var princess_return_time := 15.0
 ## Segundos ao lado da máscara caída para devolvê-la (parado se tiver inimigo

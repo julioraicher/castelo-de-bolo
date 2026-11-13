@@ -4,6 +4,20 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.27c (2026-11-13), Diretor de Jogabilidade: máscara mais pesada no começo
+Julio: "tomei 3 pontos logo no começo, a máscara ainda tá andando muito rápido".
+- A máscara agora **nasce com peso 0,3** (três espíritos já orbitando), em vez
+  de 0. O primeiro roubo anda ~11% mais devagar que antes; dali em diante tudo
+  segue o 2.25 (almas até 0,75, espíritos até 1, morte súbita zera o peso).
+- Número novo `peso_inicial` em `game_config.gd` (padrão 0,3; ajustável no
+  `game_config.tres`). Teste novo `_mascara_pesada` em `tests/regras.gd`.
+- Modo teste: as máscaras também nascem com 0,3 (mesma regra, nada a ligar).
+
+**O que testar**
+- Começo da partida: as duas máscaras já com 3 espíritos e a barra de peso no HUD em 30%.
+- Roube a máscara nos primeiros minutos: deve dar mais tempo para o inimigo te alcançar.
+- Diga se ficou pouco (0,4 ou 0,5 é só trocar o número).
+
 ## Ciclo 2.27b (2026-11-13), Diretor de Jogabilidade + Diretor Visual: Kodama e Kaminari-kozō (parte 2 de 2)
 Fecha o quiz da thread "Criar quatro personagens novos": o Kodama que o Julio
 escolheu e o quinto de raio criado por nós (Julio: "encaixar onde bem
