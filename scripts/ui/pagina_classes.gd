@@ -79,7 +79,6 @@ var _papel: Label
 var _barras: Dictionary = {}   # "vida" -> ProgressBar
 var _valores: Dictionary = {}  # "vida" -> Label
 var _poderes: VBoxContainer
-var _atual: ClassStats
 var _ativo := false
 var _max := {"vida": 1.0, "velocidade": 1.0, "dano": 1.0}
 
@@ -260,7 +259,6 @@ static func _dps(s: ClassStats) -> float:
 
 
 func _mostrar(s: ClassStats) -> void:
-	_atual = s
 	_nome.text = s.display_name
 	_nome.label_settings.font_color = s.hat_color.lightened(0.25)
 	_emblema.material = Assinatura.mat_emblema(s.id)

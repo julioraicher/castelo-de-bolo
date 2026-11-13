@@ -84,12 +84,10 @@ var _emblema_bandeira: Node3D
 var _fantasmas: Array[MeshInstance3D] = []
 var _obra: Node3D
 var _telhado: Node3D
-var _obra_cena: PackedScene
 var _label: Label3D
 var _contador: ContadorMadeira
 var _puxar_t := 0.0
 var _dust_t := 0.0
-var _ritmo := 0.0
 var _t := randf() * TAU
 var _texto := ""
 var _custo := -1   # fixado na escolha do caminho
@@ -197,15 +195,6 @@ func opcao() -> ClassStats:
 	if c.is_empty():
 		return base
 	return c[caminho if caminho >= 0 else escolha_bot]
-
-
-## Nome curto do caminho ("Fé", "Sombra").
-func nome_caminho(i := -1) -> String:
-	var c := caminhos()
-	var k := i if i >= 0 else (caminho if caminho >= 0 else escolha_bot)
-	if k >= c.size():
-		return ""
-	return c[k].caminho_nome if c[k].caminho_nome != "" else c[k].display_name
 
 
 func tapete_pos(i: int) -> Vector3:
@@ -375,7 +364,6 @@ func _escolha(delta: float) -> void:
 
 func _obra_tick(delta: float) -> void:
 	var rate := _ritmo_obra() * _game.mult_obra()
-	_ritmo = rate
 	if rate <= 0.0:
 		falta_madeira = false
 		return
@@ -490,7 +478,6 @@ func _degrau_pad(p: HatPad) -> void:
 
 func _obra_nivel(delta: float) -> void:
 	var rate := _ritmo_obra() * _game.mult_obra()
-	_ritmo = rate
 	if rate > 0.0:
 		_puxar_t -= delta * rate
 		if _puxar_t <= 0.0 and puxar_madeira_nivel():
@@ -575,18 +562,6 @@ func _finish_heroi(anim := true) -> void:
 	_game.on_heroi_pronto(self)
 
 
-## Modo teste e testes: pavilhão pronto na hora, sem obra nem madeira.
-func concluir_heroi_ja(i := 0) -> void:
-	if heroi_pronto or herois().is_empty():
-		return
-	if estado != Estado.PRONTA:
-		concluir_ja(0)
-	nivel = Config.cfg.mago_nivel_max
-	if heroi < 0:
-		escolher_heroi(i, true)
-	_finish_heroi(false)
-
-
 func _cena_pavilhao() -> String:
 	var th: ThemeConfig = _game.arena.theme if _game and _game.arena else Config.theme()
 	return th.model_path("pavilhao.scn")
@@ -626,7 +601,6 @@ func _montar_pav_fantasma() -> void:
 	anel.material_override = m
 	anel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_destaque.add_child(anel)
-
 
 
 ## Obra do pavilhão: o modelo de verdade sobe do chão por fração de madeira

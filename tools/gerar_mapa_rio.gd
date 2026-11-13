@@ -2128,7 +2128,7 @@ func _animar_torre(nome: String) -> void:
 	fum.owner = raiz
 	var ps := PackedScene.new()
 	ps.pack(raiz)
-	ResourceSaver.save(ps, caminho)
+	ResourceSaver.save(ps, caminho, ResourceSaver.FLAG_COMPRESS)
 	raiz.free()
 
 

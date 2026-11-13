@@ -2015,7 +2015,6 @@ func _herois_regras() -> void:
 	a.set_class(load("res://config/classes/sumotori.tres"))
 	por.call(a, centro, dx)
 	por.call(b, centro + dx * 1.8, -dx)
-	var masc = game.princesses[a.team]
 	var tinha = b.carried_princess
 	b.carried_princess = null
 	a._quick_cd = 0.0

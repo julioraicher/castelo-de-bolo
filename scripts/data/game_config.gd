@@ -187,8 +187,6 @@ extends Resource
 ## evolução sai cedo, a 4ª lá pelos 5 min de uma partida de ~10.
 @export var oficina_custo_degrau := 2
 @export var oficina_puxar_intervalo := 1.5
-## Antigo (antes do Ciclo 2.21): variações das oficinas comuns. Vazio no jogo.
-@export var oficina_classes: Array[ClassStats] = []
 
 @export_group("Sensação do combate")
 ## Congelamento de atacante e alvo num golpe corpo a corpo (s).
@@ -272,8 +270,6 @@ extends Resource
 ## Construtor escolhe um (painel no jogador, tapete nos bots) e sela o outro
 ## pela partida. A casa evoluída nasce no nível 3 (Ciclo 2.22, abaixo).
 ## (Os nomes "mago_*" ficaram do Ciclo 2.5, quando só a Kitsune tinha caminho.)
-## magos_opostos: antigo, só vale num mapa sem as casas novas.
-@export var magos_opostos: Array[ClassStats] = []
 ## Ciclo 2.22, a escada do bairro (uma por classe do pátio):
 ##   Nv1 → Nv2: só a barraquinha, com casa_nv2_custo madeiras;
 ##   Nv2 → Nv3: o Construtor escolhe o caminho no painel e ergue a casa
@@ -294,8 +290,6 @@ extends Resource
 ## Por nível acima do 2, barraquinha e casa ganham +1 de estoque e fabricam
 ## mais rápido (intervalo × isto).
 @export var mago_pad_intervalo_mult := 0.85
-## Nome curto de cada caminho no mapa antigo (o novo usa ClassStats.caminho_nome).
-@export var magos_caminho_nomes := PackedStringArray(["Luz", "Sombra"])
 ## Os dois times veem o aviso quando um deles escolhe um caminho.
 @export var caminho_aviso_inimigo := true
 

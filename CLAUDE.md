@@ -77,6 +77,8 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
   conversão perdia `visible_meshes` e os personagens ficavam invisíveis no export.
 - Empurrão: velocidade de andar (`_move_vel`) e de empurrão (`_knock`) são
   separadas. Somar o empurrão à velocidade anterior o integra de novo a cada quadro.
+- Modelo `.scn` gerado: salvar com `ResourceSaver.FLAG_COMPRESS` (7x menor, mesmo
+  conteúdo; download web 104 → 43 MB). `tools/comprimir_cenas.gd` converte os antigos.
 - Material billboard ignora escala: use `billboard_keep_scale = true`.
 - `Label` com quebra de linha dentro de `GridContainer` vira uma letra por linha.
 - Interpolação de física está ligada: teleporte chama `reset_physics_interpolation()`;

@@ -1368,7 +1368,6 @@ func _score_point(u: Unit) -> void:
 	Fx.burst(self, arena.princess_spot[u.team] + Vector3(0, 2, 0), Config.team_color(u.team).lightened(0.4), 40, 12.0)
 	FxPoder.coluna_captura(self, arena.princess_spot[u.team], Config.team_color(u.team))
 	Sfx.play("captura", arena.princess_spot[u.team], 0.0, 1.0, 4.0)
-	var mine := u.team == player.team
 	hud.show_big("PONTO DO %s!" % Config.TEAM_NAMES[u.team].to_upper(), Config.team_color(u.team).lightened(0.4))
 	if score[u.team] >= Config.cfg.score_to_win or morte_subita >= 0.0:
 		encerrar(u.team)
@@ -1406,13 +1405,6 @@ func tempo_restante() -> float:
 
 func relogio_ligado() -> bool:
 	return Config.cfg.tempo_limite > 0.0 and not sandbox and _vitrine_dir == "" and _clipe_dir == "" and _filme_dir == ""
-
-
-func _mascara_em_maos() -> bool:
-	for p in princesses:
-		if p.state == Princess.State.CARRIED:
-			return true
-	return false
 
 
 ## Alguma máscara fora do pedestal (na mão ou caída esperando voltar)?
