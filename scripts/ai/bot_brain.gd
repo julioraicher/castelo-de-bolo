@@ -35,7 +35,7 @@ var unit: Unit
 var game: Game
 var role := Role.ATTACK
 
-var _think_t := randf() * 0.3
+var _think_t := Sorte.f() * 0.3
 var _goal := Vector3.ZERO
 var _target: Unit
 var _torreta: Torreta  # torreta inimiga que o bot foi derrubar
@@ -51,7 +51,7 @@ var _unstuck_goal := Vector3.ZERO
 var _parado_n := 0
 ## Planta que este bot está cortando (o _combat mira nela e golpeia).
 var _planta: Planta = null
-var _tatica_t := randf() * 0.2
+var _tatica_t := Sorte.f() * 0.2
 var _bloqueio_t := 0.0  # segurando o bloqueio por mais estes segundos
 var _reanimar_alvo: Unit = null  # aliado caído que este bot foi reanimar
 
@@ -91,7 +91,7 @@ func _tatica(delta: float) -> void:
 	if unit.guarda > Config.cfg.guarda_limite * 0.6:
 		chance_def = 0.0
 	if perto and perto.atacando() and perto.stats.attack_kind == "melee" \
-			and me.distance_to(perto.global_position) < perto.stats.attack_range + 0.8 and randf() < chance_def:
+			and me.distance_to(perto.global_position) < perto.stats.attack_range + 0.8 and Sorte.f() < chance_def:
 		_bloqueio_t = 0.45
 		var to := perto.global_position - me
 		to.y = 0
@@ -104,22 +104,22 @@ func _tatica(delta: float) -> void:
 	var dir := _esquiva_projetil(me)
 	if dir != Vector3.ZERO:
 		pass  # projétil chegando: a esquiva (invulnerável) ganha de tudo
-	elif unit.carried_tora and perto and me.distance_to(perto.global_position) < 4.5 and randf() < 0.5:
+	elif unit.carried_tora and perto and me.distance_to(perto.global_position) < 4.5 and Sorte.f() < 0.5:
 		dir = unit.move_intent  # foge para o depósito
-	elif perto and unit.hp_ratio() < 0.35 and me.distance_to(perto.global_position) < 3.5 and randf() < 0.5:
+	elif perto and unit.hp_ratio() < 0.35 and me.distance_to(perto.global_position) < 3.5 and Sorte.f() < 0.5:
 		dir = me - perto.global_position  # pouca vida: sai da briga
 	elif perto and perto.atacando() and perto.stats.attack_kind == "melee" \
-			and me.distance_to(perto.global_position) < perto.stats.attack_range + 0.5 and randf() < 0.3:
+			and me.distance_to(perto.global_position) < perto.stats.attack_range + 0.5 and Sorte.f() < 0.3:
 		var de := me - perto.global_position
 		de.y = 0
-		dir = de.normalized().rotated(Vector3.UP, PI / 2 * (1.0 if randf() < 0.5 else -1.0)) + de.normalized() * 0.4
+		dir = de.normalized().rotated(Vector3.UP, PI / 2 * (1.0 if Sorte.f() < 0.5 else -1.0)) + de.normalized() * 0.4
 	elif _target and _target.alive and not unit.carried_princess:
 		var to := _target.global_position - me
 		to.y = 0
 		var d := to.length()
-		if unit.stats.attack_kind == "melee" and d > 4.0 and d < 8.0 and randf() < 0.25:
+		if unit.stats.attack_kind == "melee" and d > 4.0 and d < 8.0 and Sorte.f() < 0.25:
 			dir = to  # fecha a distância
-		elif unit.stats.attack_kind != "melee" and d < unit.stats.attack_range * 0.3 and randf() < 0.35:
+		elif unit.stats.attack_kind != "melee" and d < unit.stats.attack_range * 0.3 and Sorte.f() < 0.35:
 			dir = -to  # atirador encurralado: recua
 	dir.y = 0
 	if dir.length() > 0.1:
@@ -149,7 +149,7 @@ func _esquiva_projetil(me: Vector3) -> Vector3:
 		var t := rel.dot(v) / v2  # instante da menor distância
 		if t < 0.0 or t > 0.35 or (rel - v * t).length() > 1.0:
 			continue
-		if randf() >= chance:
+		if Sorte.f() >= chance:
 			return Vector3.ZERO
 		var lado := v.normalized().rotated(Vector3.UP, PI / 2.0)
 		return lado if lado.dot(rel - v * t) >= 0.0 else -lado
@@ -164,7 +164,7 @@ func _esquiva_projetil(me: Vector3) -> Vector3:
 			continue
 		var visto: Dictionary = z.visto
 		if not visto.has(unit):
-			visto[unit] = randf() < 0.5
+			visto[unit] = Sorte.f() < 0.5
 		if visto[unit]:
 			return de.normalized() if de.length() > 0.1 else Vector3.RIGHT
 	return Vector3.ZERO
@@ -188,7 +188,7 @@ func _check_stuck(delta: float) -> void:
 	if quer and not unit.carried_princess and ((moved < 1.5 and far) or _parado_n >= 2):
 		_parado_n = 0
 		_unstuck_t = 2.0
-		_unstuck_goal = me + Vector3(randf_range(-8, 8), 0, randf_range(-8, 8))
+		_unstuck_goal = me + Vector3(Sorte.r(-8, 8), 0, Sorte.r(-8, 8))
 		_target = null
 
 
@@ -215,7 +215,7 @@ func _think() -> void:
 		return
 	if unit.is_villager():
 		var pad := game.nearest_free_hat(unit.team, me, unit)
-		if pad and (role != Role.CAKE or randf() < 0.5):
+		if pad and (role != Role.CAKE or Sorte.f() < 0.5):
 			_goal = pad.global_position
 			_target = _nearest_enemy(5.0)
 			return
@@ -287,8 +287,8 @@ func _think() -> void:
 			if _target:
 				_goal = _target.global_position
 				return
-			if randf() < 0.2:
-				_wander = Vector3(randf_range(-4, 4), 0, randf_range(-4, 4))
+			if Sorte.f() < 0.2:
+				_wander = Vector3(Sorte.r(-4, 4), 0, Sorte.r(-4, 4))
 			_goal = c.global_position + _wander
 			return
 
@@ -305,31 +305,31 @@ func _think() -> void:
 	if their_princess.state == Princess.State.CARRIED and their_princess.carrier.team == unit.team and role != Role.DEFEND:
 		var c := their_princess.carrier
 		_goal = c.global_position + _wander
-		if randf() < 0.2:
-			_wander = Vector3(randf_range(-4, 4), 0, randf_range(-4, 4))
+		if Sorte.f() < 0.2:
+			_wander = Vector3(Sorte.r(-4, 4), 0, Sorte.r(-4, 4))
 		return
 
 	# Começo calmo: atacante e confeiteiro se espalham na própria metade (pela
 	# frente e pelas laterais), esperando o fim do relógio para invadir.
 	if role != Role.DEFEND and game.inicio_calmo():
-		if _wander == Vector3.ZERO or randf() < 0.03:
-			_wander = Vector3(randf_range(6, 16), 0, randf_range(-18, 18))
+		if _wander == Vector3.ZERO or Sorte.f() < 0.03:
+			_wander = Vector3(Sorte.r(6, 16), 0, Sorte.r(-18, 18))
 		_goal = arena.gate_spot[unit.team] + _wander * Vector3(arena.forward(unit.team).x, 1, 1)
 		return
 	# Magos ficam atrás da linha: seguem o guerreiro aliado mais adiantado.
 	if role == Role.ATTACK and eh_mago():
 		var frente := _aliado_mais_adiantado()
 		if frente:
-			if randf() < 0.15 or _wander == Vector3.ZERO:
-				_wander = Vector3(randf_range(-3, 3), 0, randf_range(-4, 4))
+			if Sorte.f() < 0.15 or _wander == Vector3.ZERO:
+				_wander = Vector3(Sorte.r(-3, 3), 0, Sorte.r(-4, 4))
 			_goal = frente.global_position - arena.forward(unit.team) * 6.0 + _wander
 			return
 	match role:
 		Role.ATTACK:
 			_goal = their_princess.global_position
 		Role.DEFEND:
-			if randf() < 0.15 or _wander == Vector3.ZERO:
-				_wander = Vector3(randf_range(-6, 2), 0, randf_range(-7, 7))
+			if Sorte.f() < 0.15 or _wander == Vector3.ZERO:
+				_wander = Vector3(Sorte.r(-6, 2), 0, Sorte.r(-7, 7))
 			_goal = arena.gate_spot[unit.team] + _wander * Vector3(arena.forward(unit.team).x, 1, 1)
 		Role.CAKE:
 			var cake := game.nearest_cake(me)
@@ -573,7 +573,7 @@ func _combat() -> void:
 		lead = _target.velocity * flight * 0.8
 		lead.y = 0
 		to += lead
-		to = to.rotated(Vector3.UP, randf_range(-0.08, 0.08))
+		to = to.rotated(Vector3.UP, Sorte.r(-0.08, 0.08))
 	unit.aim_dir = to.normalized()
 	unit.aim_point = _target.global_position + lead
 	if dist <= unit.stats.attack_range + 0.3:
@@ -661,19 +661,19 @@ func _should_use_quick() -> bool:
 			# Tiro cheio de longe (atravessa): no meio do alcance para cima.
 			return alvo_ok and d > unit.stats.attack_range * 0.4 and d <= unit.stats.attack_range
 		"investida":
-			return alvo_ok and d > 2.5 and d < unit.stats.skill_radius * 0.9 and randf() < 0.5
+			return alvo_ok and d > 2.5 and d < unit.stats.skill_radius * 0.9 and Sorte.f() < 0.5
 		"pisao":
-			return _count(1 - unit.team, me, unit.stats.skill_radius * 0.8) >= 1 and randf() < 0.6
+			return _count(1 - unit.team, me, unit.stats.skill_radius * 0.8) >= 1 and Sorte.f() < 0.6
 		"varrida":
 			# A lâmina corta na faixa [alcance_min, raio]; perto demais só empurra.
-			return alvo_ok and d > unit.stats.alcance_min and d < unit.stats.skill_radius and randf() < 0.6
+			return alvo_ok and d > unit.stats.alcance_min and d < unit.stats.skill_radius and Sorte.f() < 0.6
 		"gancho":
 			# Puxa quem está longe (fujão com a máscara primeiro).
 			if alvo_ok and d > 3.5 and d < unit.stats.skill_radius * 0.95:
 				var to := _target.global_position - me
 				to.y = 0
 				unit.aim_dir = to.normalized()
-				return _target.carried_princess != null or randf() < 0.5
+				return _target.carried_princess != null or Sorte.f() < 0.5
 			return false
 		"corrida":
 			if unit.carried_tora or unit.carried_princess:
@@ -689,7 +689,7 @@ func _wants_trap() -> bool:
 		return false
 	if _target and _target.alive and unit.global_position.distance_to(_target.global_position) < 7.0:
 		return true
-	return role == Role.DEFEND and unit.global_position.distance_to(game.arena.gate_spot[unit.team]) < 8.0 and randf() < 0.02
+	return role == Role.DEFEND and unit.global_position.distance_to(game.arena.gate_spot[unit.team]) < 8.0 and Sorte.f() < 0.02
 
 
 func _count(team: int, at: Vector3, radius: float) -> int:

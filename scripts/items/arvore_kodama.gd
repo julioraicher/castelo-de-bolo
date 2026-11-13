@@ -37,7 +37,7 @@ func setup(game: Game, p_dono: Unit, pos: Vector3, tempo: float, p_grande: bool)
 	add_to_group("arvores_kodama")
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	global_position = pos
-	rotation.y = randf() * TAU
+	rotation.y = Sorte.f() * TAU
 	_corpo = StaticBody3D.new()
 	_corpo.collision_layer = Config.LAYER_WORLD
 	_corpo.collision_mask = 0
@@ -51,7 +51,7 @@ func setup(game: Game, p_dono: Unit, pos: Vector3, tempo: float, p_grande: bool)
 	add_child(_corpo)
 	_visual = FxNatureza.arvore(self, Config.team_color(time), grande)
 	_visual.scale = Vector3(0.25, 0.05, 0.25) * _escala
-	var tw := _visual.create_tween()
+	var tw := _visual.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_property(_visual, "scale", Vector3.ONE * _escala, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	FxNatureza.arvore_nasce(game, global_position, _escala)
 
@@ -61,7 +61,7 @@ func atraso_nascer(t: float) -> void:
 	if t <= 0.0 or _visual == null:
 		return
 	_visual.visible = false
-	var tw := create_tween()
+	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_interval(t)
 	tw.tween_callback(func() -> void: _visual.visible = true)
 
@@ -93,7 +93,7 @@ func _physics_process(delta: float) -> void:
 
 func _curar_sombra() -> void:
 	var cfg := Config.cfg
-	var agora := Time.get_ticks_msec()
+	var agora := Sorte.ms()
 	for u in _game.units:
 		if not u.alive or u.team != time or u.em_voo:
 			continue
@@ -162,7 +162,7 @@ func cair(queimada := false) -> void:
 		_corpo = null
 	FxNatureza.arvore_cai(self, queimada, _escala)
 	var lado := randf() * TAU
-	var tw := create_tween().set_parallel(true)
+	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).set_parallel(true)
 	if _visual:
 		tw.tween_property(_visual, "rotation", Vector3(cos(lado) * 1.3, 0, sin(lado) * 1.3), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		tw.tween_property(_visual, "scale", Vector3.ONE * _escala * 0.2, 0.55).set_delay(0.25)

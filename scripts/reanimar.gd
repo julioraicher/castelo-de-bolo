@@ -379,7 +379,7 @@ func _criar_visual(u: Unit) -> void:
 	raiz.add_child(placa)
 	# Entrada: a chama sai do corpo com um "puf" e cresce.
 	chama.scale = Vector3.ONE * 0.2
-	var tw := chama.create_tween()
+	var tw := chama.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_property(chama, "scale", Vector3.ONE, 0.5).set_delay(0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_visuais[u] = {"raiz": raiz, "chama": chama, "anel": anel, "placa": placa}
 

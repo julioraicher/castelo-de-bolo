@@ -149,7 +149,7 @@ func lancar() -> void:
 	_voo.append(voo)
 	# Braço: golpe rápido para a frente, volta devagar enquanto recarrega.
 	if _braco:
-		var tw := _braco.create_tween()
+		var tw := _braco.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 		tw.tween_property(_braco, "rotation:x", deg_to_rad(BRACO_FIM), 0.24).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw.tween_interval(1.0)
 		tw.tween_property(_braco, "rotation:x", deg_to_rad(BRACO_REPOUSO), 2.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)

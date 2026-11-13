@@ -227,7 +227,7 @@ func _apply_fatness() -> void:
 		w.position = Vector3(cos(a) * 1.25, 0.2 * sin(a * 3.0), sin(a) * 1.25)
 		_spirits.add_child(w)
 	var k := 1.0 + fatness * 0.6
-	var tw := create_tween()
+	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_property(_mask, "scale", Vector3.ONE * k, 0.35).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 

@@ -33,6 +33,12 @@ theme/custom_font="res://assets/fonts/Nunito-Black.ttf"
 3d_physics/layer_1="mundo"
 3d_physics/layer_2="unidades"
 
+[navigation]
+
+world/map_use_async_iterations=false
+world/region_use_async_iterations=false
+baking/thread_model/baking_use_multiple_threads=false
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

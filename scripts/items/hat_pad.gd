@@ -173,7 +173,7 @@ func mostrar_nivel(n: int) -> void:
 			no.visible = true
 			if is_inside_tree():
 				no.scale = Vector3(0.2, 0.2, 0.2)
-				no.create_tween().tween_property(no, "scale", Vector3.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+				no.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(no, "scale", Vector3.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_atualizar()
 
 
@@ -249,7 +249,7 @@ func _fabricou() -> void:
 		var h := _novo_chapeu(_molde if _molde else _slot(estoque - 1), 0.85)
 		h.visible = false
 		_chapeus.append(h)
-		var tw := h.create_tween()  # morre junto com o chapéu se ele for pego antes
+		var tw := h.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)  # morre junto com o chapéu se ele for pego antes
 		tw.tween_interval(0.8)
 		tw.tween_callback(func(): h.visible = true)
 		tw.tween_property(h, "position:y", 0.5, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -259,13 +259,13 @@ func _fabricou() -> void:
 				return
 			var alvo := _slot(_chapeus.find(h))
 			h.reparent(alvo, true)
-			var t2 := h.create_tween().set_parallel()
+			var t2 := h.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).set_parallel()
 			t2.tween_property(h, "position", Vector3.ZERO, 0.3).set_trans(Tween.TRANS_BACK)
 			t2.tween_property(h, "scale", Vector3.ONE * 0.62, 0.3))
 	elif estoque == 1:
 		_hat.visible = true
 		_hat.scale = Vector3.ONE * 0.01
-		create_tween().tween_property(_hat, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(_hat, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if is_inside_tree():
 		Fx.burst(get_parent(), global_position + Vector3(0, 1.4, 0), Color(0.95, 0.95, 0.9), 6, 2.5)
 
@@ -294,7 +294,7 @@ func subir_nivel() -> bool:
 		# Sem peças "N2_*" no modelo: um pulinho mostra que mudou.
 		var alvo: Node3D = _maquina if _maquina else self
 		alvo.scale = Vector3(1.25, 0.75, 1.25)
-		alvo.create_tween().tween_property(alvo, "scale", Vector3.ONE * (1.0 if _n2.size() > 0 or alvo == self else 1.08), 0.5) \
+		alvo.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(alvo, "scale", Vector3.ONE * (1.0 if _n2.size() > 0 or alvo == self else 1.08), 0.5) \
 				.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_atualizar()
 	return true

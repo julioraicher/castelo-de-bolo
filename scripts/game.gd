@@ -165,9 +165,15 @@ const BOT_ROLES := [BotBrain.Role.ATTACK, BotBrain.Role.DEFEND, BotBrain.Role.AT
 func _ready() -> void:
 	Engine.time_scale = 1.0  # reinício no meio de uma câmera lenta
 	randomize()
+	var semente := randi()
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--autoplay":
 			_autoplay = true
+		elif arg.begins_with("--semente="):
+			semente = int(arg.trim_prefix("--semente="))
+		elif arg == "--sinc":
+			_sinc = true
+			lockstep = true
 		elif arg == "--sandbox":
 			sandbox_pedido = true
 		elif arg.begins_with("--time="):
@@ -245,6 +251,8 @@ func _ready() -> void:
 			time_pedido = Config.TEAM_RED
 	sandbox = sandbox_pedido
 	time_jogador = time_pedido
+	Sorte.semear(semente)
+	Sorte.tick = 0
 	if _print_poder:
 		_shot_times = [1e9, 1e9, 1e9, 1e9, 1e9, 1e9]  # quem marca a hora é o poder
 	arena = Arena.new()
@@ -656,8 +664,22 @@ func perigo(pos: Vector3, raio: float, dur: float, time: int) -> void:
 	perigos.append({"pos": pos, "raio": raio, "ate": _time + dur, "time": time, "visto": {}})
 
 
+var _sinc := false
+## Partida em lockstep (online ou --sinc): nada que dependa do relógio de
+## parede ou do ritmo de quadros pode mexer nas regras (câmera lenta desligada).
+var lockstep := false
+var _tick := 0
+
 func _physics_process(delta: float) -> void:
 	_time += delta
+	_tick += 1
+	Sorte.tick = _tick
+	if _sinc:
+		var h := 0
+		for u in units:
+			h = hash([h, u.global_position, u.hp, u.alive])
+			print("U %d %s %s %s %s %s" % [_tick, u.name, var_to_str(u.global_position), u.hp, u.stats.id, u.power])
+		print("SINC %d %d %d" % [_tick, h, hash([score, madeira])])
 	if _perf:
 		for k in perf_secoes:
 			_perf_acc["us_" + k] = _perf_acc.get("us_" + k, 0.0) + perf_secoes[k]
@@ -1021,7 +1043,7 @@ func _porrada_teste(delta: float) -> void:
 			u.take_damage(u.max_hp() * 0.19, player, dir, 1.0, true)
 	for k in 3:
 		if a.call(4.05 + k * 0.1):
-			u.take_damage(u.max_hp() * 0.08, player, (dir + Vector3(randf_range(-0.6, 0.6), 0, 0)).normalized(), 1.0, true)
+			u.take_damage(u.max_hp() * 0.08, player, (dir + Vector3(Sorte.r(-0.6, 0.6), 0, 0)).normalized(), 1.0, true)
 	if a.call(6.35):
 		player.take_damage(30.0, u, -dir, 1.4, true)
 
@@ -1060,7 +1082,7 @@ func _rules() -> void:
 					continue
 			elif cat.reservado == u:
 				cat.embarcar(u)
-				cat.forca = randf_range(0.55, 0.95)
+				cat.forca = Sorte.r(0.55, 0.95)
 				cat.lancar()
 				continue
 		var enemy_p := princesses[1 - u.team]
@@ -1538,13 +1560,13 @@ func _spawn_pickups(delta: float) -> void:
 		return
 	_pickup_t = Config.cfg.pickup_interval
 	var pos := arena.random_cake_spot()
-	if randf() < Config.cfg.pickup_perto_da_briga:
+	if Sorte.f() < Config.cfg.pickup_perto_da_briga:
 		var perto: Variant = _spot_perto_da_briga()
 		if perto != null:
 			pos = perto
 	var it := Pickup.new()
 	add_child(it)
-	it.setup(Pickup.KINDS.pick_random(), pos)
+	it.setup(Pickup.KINDS[Sorte.i() % Pickup.KINDS.size()], pos)
 	pickups.append(it)
 
 
@@ -1567,8 +1589,8 @@ func _spot_perto_da_briga() -> Variant:
 	if best == null:
 		return null
 	for i in 10:
-		var a := randf() * TAU
-		var p := best.global_position + Vector3(cos(a), 0.0, sin(a)) * randf_range(3.0, 7.0)
+		var a := Sorte.f() * TAU
+		var p := best.global_position + Vector3(cos(a), 0.0, sin(a)) * Sorte.r(3.0, 7.0)
 		p.y = 0.0
 		if arena.ground_y(p.x, p.z) >= 0.3 or _perto_de_castelo(p):
 			continue
@@ -1641,7 +1663,7 @@ func soltar_tora(pos: Vector3, dir: Vector3) -> Tora:
 	# Pula para fora da planta (onde o Construtor está).
 	var alvo := pos + dir * 1.2
 	alvo.y = pos.y - 0.4
-	t.create_tween().tween_property(t, "global_position", alvo, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(t, "global_position", alvo, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	return t
 
 
@@ -1683,7 +1705,7 @@ func entregar_tora(u: Unit) -> void:
 	t.set_physics_process(false)
 	var de := t.global_position
 	var ate := pilhas[u.team].global_position + Vector3(0, 0.8, 0)
-	var tw := t.create_tween()
+	var tw := t.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_method(func(k: float):
 		t.global_position = de.lerp(ate, k) + Vector3(0, sin(k * PI) * 2.0, 0)
 		t.rotation.z = k * TAU, 0.0, 1.0, 0.35)
@@ -1849,7 +1871,7 @@ func catapulta_para_bot(u: Unit) -> Catapulta:
 	# mudou de ideia ou morreu, libera.
 	if cat.reservado and cat.reservado.alive and _time - cat.reserva_t < 4.0:
 		return null
-	if u.global_position.distance_to(cat.global_position) > 22.0 or randf() > Config.cfg.catapulta_bots:
+	if u.global_position.distance_to(cat.global_position) > 22.0 or Sorte.f() > Config.cfg.catapulta_bots:
 		return null
 	# Lançar = ir roubar: só com a máscara inimiga em casa (revisão 2026-11-06).
 	if princesses.size() == 2 and princesses[1 - u.team].state != Princess.State.HOME:
@@ -1955,7 +1977,7 @@ func foco_heroi(team: int) -> Oficina:
 			if of.team == team and not of.herois().is_empty():
 				cands.append(of)
 		if not cands.is_empty():
-			_foco_heroi[team] = cands[randi() % cands.size()]
+			_foco_heroi[team] = cands[Sorte.i() % cands.size()]
 	var f: Oficina = _foco_heroi[team]
 	if f == null or not is_instance_valid(f) or f.heroi_pronto:
 		return null
@@ -2242,7 +2264,7 @@ func _alma_de_abate(morto: Unit, team: int) -> void:
 	add_child(alma)
 	var de := morto.global_position + Vector3(0, 1.4, 0)
 	alma.global_position = de
-	var tw := alma.create_tween()
+	var tw := alma.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	# Arco: sobe e cai na máscara (que pode estar andando no colo de alguém).
 	tw.tween_method(func(k: float):
 		var ate := mascara.global_position + Vector3(0, 1.6, 0)
@@ -2265,8 +2287,8 @@ var _slowmo_id := 0
 ## Câmera lenta curta: o jogo inteiro roda a "scale" da velocidade por
 ## real_time segundos de tempo real (não do tempo do jogo).
 func slowmo(scale: float, real_time: float) -> void:
-	if game_over:
-		return
+	if game_over or lockstep:
+		return  # online: o relógio do jogo tem de andar igual em todos os PCs
 	_slowmo_id += 1
 	var id := _slowmo_id
 	Engine.time_scale = minf(Engine.time_scale, scale)

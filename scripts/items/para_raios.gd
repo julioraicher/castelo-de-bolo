@@ -20,7 +20,7 @@ func setup(game: Game, p_dono: Unit, pos: Vector3) -> void:
 	_game = game
 	dono = p_dono
 	time = p_dono.team
-	nasceu = Time.get_ticks_msec()
+	nasceu = Sorte.ms()
 	_vida = Config.cfg.pararaios_tempo
 	add_to_group("para_raios")
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
@@ -81,6 +81,6 @@ func sumir() -> void:
 		return
 	indo = true
 	remove_from_group("para_raios")
-	var tw := create_tween()
+	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_property(self, "scale", Vector3(0.2, 0.05, 0.2), 0.25)
 	tw.tween_callback(queue_free)

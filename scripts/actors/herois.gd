@@ -339,7 +339,7 @@ static func _agarrao(u: Unit) -> bool:
 	var dano := u.stats.skill_value * u.damage_mult()
 	FxHerois.agarrao(u, alvo)
 	Sfx.play("swing", u.global_position, 0.1, 0.7)
-	var tw := u.create_tween()
+	var tw := u.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_interval(cfg.agarrao_segura)
 	tw.tween_callback(func() -> void:
 		if is_instance_valid(u) and u.alive:
@@ -718,7 +718,7 @@ static func _laco(u: Unit) -> bool:
 		perto = chao_valido(u, perto)
 		FxHerois.laco(u, caido)
 		Sfx.play("swing", u.global_position, 0.1, 0.8)
-		var tw := caido.create_tween()
+		var tw := caido.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 		tw.tween_property(caido, "global_position", perto, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw.tween_callback(func() -> void:
 			caido.reset_physics_interpolation()
@@ -987,7 +987,7 @@ static func eco(u: Unit, dir: Vector3, alcance: float, arco: float, dano: float)
 	var at := u.global_position
 	var atraso := Config.cfg.eco_atraso
 	FxHerois.eco_marca(u, at, dir, alcance, atraso)
-	var tw := u.create_tween()
+	var tw := u.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_interval(atraso)
 	tw.tween_callback(func() -> void:
 		if not u.alive:
@@ -1109,7 +1109,7 @@ static func _carga_caidos(u: Unit) -> bool:
 		var ao_longo := p.dot(dir)
 		if ao_longo < -0.6 or ao_longo > comp + 0.6 or (p - dir * ao_longo).length() > meia + 0.4:
 			continue
-		var tw := u.create_tween()
+		var tw := u.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 		tw.tween_interval(clampf(ao_longo / comp, 0.0, 1.0) * cfg.caidos_tempo)
 		tw.tween_callback(func() -> void:
 			if o.alive:

@@ -401,7 +401,7 @@ func start_equip(new_stats: ClassStats, from_world: Vector3) -> void:
 	add_child(_equip_hat)
 	_equip_hat.global_position = from_world
 	_equip_hat.scale = Vector3.ONE * 0.8
-	var tw := _equip_hat.create_tween()
+	var tw := _equip_hat.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_property(_equip_hat, "position", Vector3(0, 3.4, 0), EQUIP_TIME * 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.parallel().tween_property(_equip_hat, "rotation:y", TAU, EQUIP_TIME * 0.6)
 	tw.tween_property(_equip_hat, "position", Vector3(0, 2.3, 0), EQUIP_TIME * 0.4).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
@@ -1030,7 +1030,7 @@ func _attack() -> void:
 	_attack_t = minf(_attack_cd, 0.45)
 	_play_upper(anim, 1.35)
 	if _cego_t > 0.0 and not is_player:
-		aim_dir = aim_dir.rotated(Vector3.UP, deg_to_rad(randf_range(-35.0, 35.0)))
+		aim_dir = aim_dir.rotated(Vector3.UP, deg_to_rad(Sorte.r(-35.0, 35.0)))
 	if _disfarce_t > 0.0:
 		mult *= Config.cfg.mujina_golpe_mult  # golpe saindo do rosto roubado
 		finisher = true
@@ -1847,7 +1847,7 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 	if hp <= 0.0 and not Herois.nao_cai(self, attacker):
 		_die(attacker)
 	elif _anim_lock <= 0.0 and not blocked and _spin_t <= 0.0 and hp > 0.0:
-		_play_once("Hit_A" if randf() < 0.5 else "Hit_B", 0.25)
+		_play_once("Hit_A" if Sorte.f() < 0.5 else "Hit_B", 0.25)
 
 
 ## Impacto no corpo: faísca de corte no golpe corpo a corpo, o efeito do
@@ -1874,7 +1874,7 @@ func _impacto(attacker: Unit, dir: Vector3, forte: bool, melee: bool, elemento: 
 ## rastro e, para o jogador, um instante de câmera lenta.
 ## Leque: segunda onda 0,25 s depois, nos vãos da primeira.
 func _leque_onda2(n: int, base: Vector3) -> void:
-	await get_tree().create_timer(0.25).timeout
+	await get_tree().create_timer(0.25, false, true).timeout
 	if not alive or not is_inside_tree():
 		return
 	_play_upper("Throw", 1.8)
@@ -1916,7 +1916,7 @@ func _bombardeio() -> void:
 	FxPoder.aviso_bombardeio(game, pontos, stats.power_radius, Config.cfg.bombardeio_intervalo)  # pavio
 	_power_active_t = Config.cfg.bombardeio_intervalo * n
 	for i in n:
-		await get_tree().create_timer(Config.cfg.bombardeio_intervalo).timeout
+		await get_tree().create_timer(Config.cfg.bombardeio_intervalo, false, true).timeout
 		if not is_inside_tree():
 			return
 		_explosao(pontos[i], stats.power_value * Config.cfg.dano_poder_mult, stats.power_radius)
@@ -1949,7 +1949,7 @@ func _explosao(at: Vector3, dano: float, r: float) -> void:
 
 
 func _esquiva_perfeita(attacker: Unit) -> void:
-	var agora := Time.get_ticks_msec() / 1000.0
+	var agora := Sorte.ms() / 1000.0
 	if agora - _esquiva_t < 0.6:
 		return
 	_esquiva_t = agora
@@ -2090,7 +2090,7 @@ func _die(killer: Unit) -> void:
 	collision_layer = 0
 	velocity = Vector3.ZERO
 	_hp_root.visible = false
-	_play("Death_A" if randf() < 0.5 else "Death_B", 0.1)
+	_play("Death_A" if Sorte.f() < 0.5 else "Death_B", 0.1)
 	_respawn_t = game.respawn_atual()
 	Sfx.play("death", global_position)
 	if killer and killer != self:

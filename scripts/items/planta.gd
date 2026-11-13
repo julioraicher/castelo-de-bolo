@@ -31,7 +31,7 @@ func setup(game: Game, p_tipo: String, p_lado: int, pos: Vector3) -> void:
 	tipo = p_tipo
 	lado = p_lado
 	position = pos
-	rotation.y = randf() * TAU
+	rotation.y = Sorte.f() * TAU
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # cresce por tween
 	var th := game.arena.theme
 	_cenas = th.arvore_estagios if tipo == "arvore" else th.bambu_estagios
@@ -95,7 +95,7 @@ func golpe(by: Unit) -> bool:
 func _tremer() -> void:
 	if _visual == null:
 		return
-	var tw := _visual.create_tween()
+	var tw := _visual.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_property(_visual, "rotation:z", 0.12, 0.05)
 	tw.tween_property(_visual, "rotation:z", -0.08, 0.08)
 	tw.tween_property(_visual, "rotation:z", 0.0, 0.1)
@@ -113,7 +113,7 @@ func _montar_visual(anima: bool) -> void:
 	add_child(_visual)
 	if anima:
 		_visual.scale = Vector3(1.3, 0.4, 1.3)
-		_visual.create_tween().tween_property(_visual, "scale", Vector3.ONE, 0.45) \
+		_visual.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(_visual, "scale", Vector3.ONE, 0.45) \
 				.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
