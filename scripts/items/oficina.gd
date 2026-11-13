@@ -112,8 +112,8 @@ func setup(game: Game, p_team: int, pos: Vector3, p_base: ClassStats) -> void:
 	team = p_team
 	base = p_base
 	position = pos
-	escolha_bot = randi() % 2
-	escolha_heroi_bot = randi() % maxi(herois().size(), 1)
+	escolha_bot = Sorte.i() % 2
+	escolha_heroi_bot = Sorte.i() % maxi(herois().size(), 1)
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # cresce por código
 	_montar_bairro()
 	pad_base = HatPad.new()
@@ -553,7 +553,7 @@ func _finish_heroi(anim := true) -> void:
 		_pav_obra = null
 	if anim and is_inside_tree():
 		pad_heroi.scale = Vector3(1.0, 0.2, 1.0)
-		pad_heroi.create_tween().tween_property(pad_heroi, "scale", Vector3.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		pad_heroi.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(pad_heroi, "scale", Vector3.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		Fx.pillar(_game, pavilhao_pos(), Estilo.OURO_CLARO, 4.0)
 		FxPoder.subir_nivel(_game, pavilhao_pos(), Estilo.OURO_CLARO, nivel)
 		Fx.burst(_game, pavilhao_pos() + Vector3(0, 2.0, 0), Color(1.0, 0.85, 0.45), 24, 6.0)
@@ -629,7 +629,7 @@ func _crescer_pavilhao() -> void:
 	if _pav_obra == null:
 		return
 	var f := float(madeira_nivel) / maxf(custo_nivel(), 1.0)
-	var tw := _pav_obra.create_tween()
+	var tw := _pav_obra.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_property(_pav_obra, "scale:y", maxf(f, 0.06), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
@@ -654,7 +654,7 @@ func _finish(anim := true) -> void:
 		# O telhado cai, a poeira sobe e a casa de verdade toma o lugar da obra.
 		pad.visible = false
 		var obra := _obra
-		var tw := obra.create_tween()
+		var tw := obra.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 		if _telhado:
 			_telhado.visible = true
 			_telhado.position.y += 4.0
@@ -782,12 +782,12 @@ func _selar_tapete(i: int) -> void:
 		_selos[i].visible = true
 		if is_inside_tree():
 			_selos[i].scale = Vector3(1.0, 0.1, 1.0)
-			_selos[i].create_tween().tween_property(_selos[i], "scale", Vector3.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			_selos[i].create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(_selos[i], "scale", Vector3.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	var f := _fantasmas[i]
 	if f and f.visible and is_inside_tree():
 		# O fantasma do caminho selado se apaga e afunda no tapete.
 		var mat := f.material_override as ShaderMaterial
-		var tw := f.create_tween().set_parallel()
+		var tw := f.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).set_parallel()
 		tw.tween_method(func(a: float): mat.set_shader_parameter("alfa", a), 0.5, 0.0, 0.6)
 		tw.tween_property(f, "position:y", -0.6, 0.6)
 		tw.chain().tween_callback(func(): f.visible = false)
@@ -799,7 +799,7 @@ func _selar_tapete(i: int) -> void:
 	if j < _fantasmas.size() and _fantasmas[j]:
 		var g := _fantasmas[j]
 		if is_inside_tree() and g.visible:
-			var tw2 := g.create_tween().set_parallel()
+			var tw2 := g.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).set_parallel()
 			tw2.tween_property(g, "position", CASA + Vector3(0, 1.0, 0), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 			tw2.tween_property(g, "scale", Vector3.ONE * 0.9, 0.45)
 			tw2.chain().tween_callback(func(): g.visible = false)

@@ -20,7 +20,7 @@ func setup(game: Game, pos: Vector3) -> void:
 	var th := game.arena.theme
 	_visual = th.tora_model.instantiate() if th.tora_model else make_visual()
 	add_child(_visual)
-	rotation.y = randf() * TAU
+	rotation.y = Sorte.f() * TAU
 
 
 static func make_visual() -> Node3D:
@@ -70,8 +70,8 @@ func largar() -> void:
 	var p := carrier.global_position
 	carrier.carried_tora = null
 	carrier = null
-	global_position = p + Vector3(randf_range(-0.6, 0.6), 0.2, randf_range(-0.6, 0.6))
-	rotation = Vector3(0, randf() * TAU, 0)
+	global_position = p + Vector3(Sorte.r(-0.6, 0.6), 0.2, Sorte.r(-0.6, 0.6))
+	rotation = Vector3(0, Sorte.f() * TAU, 0)
 
 
 func _process(delta: float) -> void:

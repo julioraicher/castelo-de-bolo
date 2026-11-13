@@ -4,6 +4,64 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.28 (2026-11-13), Diretor de Jogabilidade: multiplayer com amigos
+Julio: "quero jogar com meus amigos no modo multiplayer, a gente escolhe o lado
+azul ou vermelho". Quiz respondido com todas as recomendadas (1A 2B 3A 4AB 5A)
++ 8v8 sempre, trocar de time no meio, nome em cima da cabeça, atraso mínimo.
+- **Como funciona (lockstep determinístico)**: cada PC roda a partida inteira e
+  pela rede só passam as **intenções** de cada humano (17 bytes por quadro:
+  botões, movimento, mira). Um comando lido no quadro t vale no quadro
+  t+atraso em todos os PCs, inclusive no de quem apertou. O anfitrião junta e
+  repassa; a cada 2 s todos comparam um resumo do estado (dessincronia = aviso).
+  O **atraso se ajusta ao ping** (2 a 9 quadros; rede local/Radmin ≈ 33 ms).
+- **Jogo determinístico** (parte 1, d2b4655): sorteio de regra em `Sorte`
+  (semente da sala), relógio de regra em `Sorte.ms()`, tweens/timers de regra
+  na física, navegação sem iteração assíncrona, câmera lenta desligada online,
+  torreta sem ler o transform visual. Mesma semente = mesma partida em 60 ou
+  23 FPS (5 min idênticos).
+- **Menu "Com amigos"** (botão na tela inicial): seu nome, **Criar sala**
+  (abre a porta do roteador sozinho por UPnP e mostra um **código de 8 letras**
+  tipo `K7QF-M9X2` para mandar no WhatsApp) ou **Entrar** (código, ou o IP do
+  Radmin VPN), e a lista das **salas da sua rede** (aparecem sozinhas).
+- **Sala**: duas colunas azul × vermelho com 8 vagas; vaga vazia = bot (os
+  bots dividem os papéis entre si). Clique numa vaga para ir; o anfitrião (★)
+  clica num amigo e depois numa vaga para movê-lo, ajusta tempo (10/15 min) e
+  dificuldade dos bots e pode embaralhar. Amigos marcam **Pronto**; o anfitrião
+  pode começar mesmo assim.
+- **Na partida**: nome em cima da cabeça de cada humano (cor do time), Esc não
+  pausa (o menu fica por cima), **Trocar de time** no Esc (você assume um bot
+  do outro lado e o seu boneco vira bot), anfitrião tem **Voltar à sala
+  (todos)** para a revanche, "Sair da partida". Quem cai vira bot; anfitrião
+  caiu = partida acaba. Bots do time com humano seguem as regras de time do
+  jogador (dano normal, sem bônus). F5 não reinicia online.
+- Só no **.exe** (o navegador não deixa abrir sala); todos com a mesma versão
+  (o CI carimba o commit) e o mesmo sistema (Windows com Windows).
+- **Modo teste**: botão **"Sala de teste (abre 2 janelas neste PC)"** no Com
+  amigos: abre a sala e uma segunda janela que entra nela.
+- Testes: 17 checagens novas em `tests/regras.gd` (`_multiplayer`); CI ganhou
+  `tools/teste_sincronia.sh` (60 × 23 FPS) e `tools/teste_rede.sh` (anfitrião +
+  amigo de verdade em 127.0.0.1, 37 FPS).
+- Arquivos novos: `scripts/rede/` (`rede.gd` autoload, `comando.gd`,
+  `rede_brain.gd`, `codigo_sala.gd`, `sorte.gd`), `scripts/ui/lobby.gd`. Mexi de
+  leve em `unit.gd` (`humano` separado de `is_player`, `set_nome_tag`),
+  `placar.gd`, `reanimar.gd`, `hud.gd`, `menus.gd`, `settings.gd`, `config.gd`.
+
+**Como jogar com amigos**
+1. Todos baixam o mesmo .exe da release "ultima-versao".
+2. Você: Com amigos → Criar sala → "Copiar código" → manda no WhatsApp.
+3. Eles: Com amigos → cola o código → Entrar → escolhem a vaga → Pronto.
+4. Se o código não conectar (roteador sem UPnP ou internet com CGNAT, aparece
+   "indisponível"): todos instalam o **Radmin VPN** (grátis), entram na mesma
+   rede dele, e os amigos digitam o IP 26.x que aparece na sua sala.
+
+**O que testar**
+- Sala de teste no mesmo PC: as duas janelas na sala, mude de vaga, Pronto, Começar.
+- Com um amigo: o código conecta? Quanto aparece de atraso na sala?
+- Dash, golpe e poder: dá para sentir o atraso? (rede local ≈ 33 ms)
+- Esc → Trocar de time no meio da partida; nome em cima da cabeça.
+- Fim da partida → anfitrião: Esc → Voltar à sala (todos) para a revanche.
+- Se aparecer "dessincronia" na tela, me mande o print (é bug de regra).
+
 ## Ciclo 2.27c (2026-11-13), Diretor de Jogabilidade: máscara mais pesada no começo
 Julio: "tomei 3 pontos logo no começo, a máscara ainda tá andando muito rápido".
 - A máscara agora **nasce com peso 0,3** (três espíritos já orbitando), em vez

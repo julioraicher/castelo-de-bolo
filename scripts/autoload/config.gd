@@ -40,14 +40,16 @@ func _ready() -> void:
 
 ## Tema escolhido em Esc > Configurações (lista em game_config.tres > Mundo).
 func theme() -> ThemeConfig:
-	return cfg.themes[clampi(Settings.theme, 0, cfg.themes.size() - 1)]
+	var t: int = int(Rede.sala.get("tema", Settings.theme)) if Rede.em_partida else Settings.theme  # online: o do anfitrião
+	return cfg.themes[clampi(t, 0, cfg.themes.size() - 1)]
 
 
 ## Mapa escolhido em Esc > Configurações (lista em game_config.tres > Mundo).
 func map() -> MapLayout:
 	if cfg.maps.is_empty():
 		return cfg.map
-	return cfg.maps[clampi(Settings.mapa, 0, cfg.maps.size() - 1)]
+	var m: int = int(Rede.sala.get("mapa", Settings.mapa)) if Rede.em_partida else Settings.mapa
+	return cfg.maps[clampi(m, 0, cfg.maps.size() - 1)]
 
 
 func team_color(team: int) -> Color:

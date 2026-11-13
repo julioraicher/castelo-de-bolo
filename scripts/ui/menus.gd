@@ -15,6 +15,8 @@ const CONTEUDO := Vector2(940, 560)
 ## Depois de trocar modo/time na tela inicial a cena recarrega; com isto
 ## ligado a partida já começa sem passar pela tela inicial de novo.
 static var pular_inicio := false
+## Volta da partida online (ou o anfitrião caiu): abre direto na sala.
+static var abrir_sala := false
 
 var _painel: Control
 var _titulo: Label
@@ -24,6 +26,7 @@ var _secoes: Dictionary = {}       # nome -> Control
 var _botoes_nav: Dictionary = {}   # nome -> Button
 var _tutorial: Tutorial
 var _classes: PaginaClasses
+var _lobby: Lobby
 var _modo := "inicio"              # inicio | pausa
 var _started := false  # fica falso no modo teste (--autoplay), que não deve pausar sozinho
 var _time_escolhido := Config.TEAM_BLUE
@@ -43,6 +46,10 @@ func _ready() -> void:
 
 
 func show_start() -> void:
+	if abrir_sala:
+		abrir_sala = false
+		_abrir("inicio", "amigos")
+		return
 	if pular_inicio:
 		pular_inicio = false
 		_begin()
@@ -89,7 +96,7 @@ func _unhandled_input(event: InputEvent) -> void:
 ## Se o jogo perder o foco (outro app, aviso do Windows, saiu da tela cheia),
 ## pausa na hora: ninguém morre enquanto você está fora.
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and not is_open() and _started and not get_tree().paused:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and not is_open() and _started and not get_tree().paused and not Rede.em_partida:
 		_abrir("pausa", "controles")
 
 
@@ -99,12 +106,14 @@ func _abrir(modo: String, secao: String) -> void:
 	_montar_nav()
 	_mostrar(secao)
 	_painel.visible = true
-	get_tree().paused = true
+	if not Rede.em_partida:  # online o jogo dos outros não para: o menu fica por cima
+		get_tree().paused = true
 
 
 func _fechar() -> void:
 	_painel.visible = false
-	get_tree().paused = false
+	if not Rede.em_partida:
+		get_tree().paused = false
 	Settings.save()
 	if not Settings.tutorial_visto:
 		Settings.tutorial_visto = true
@@ -146,6 +155,7 @@ func _mostrar(nome: String) -> void:
 		b.disabled = n == nome
 		b.modulate = Color(1, 1, 1, 1) if n != nome else Color(1.25, 1.2, 1.1, 1)
 	_tutorial.ativo(nome == "como_jogar")
+	_lobby.ativo(nome == "amigos")
 	_classes.ativo(nome == "classes")
 	if nome == "jogar" and _btn_jogar:
 		_btn_jogar.call_deferred("grab_focus")
@@ -197,6 +207,8 @@ func _build() -> Control:
 	moldura.add_child(_conteudo)
 
 	_secoes["jogar"] = _secao_jogar()
+	_lobby = Lobby.new()
+	_secoes["amigos"] = _lobby
 	_tutorial = Tutorial.new()
 	_secoes["como_jogar"] = _tutorial
 	_classes = PaginaClasses.new()
@@ -222,6 +234,20 @@ func _montar_nav() -> void:
 		_btn_jogar.custom_minimum_size = Vector2(0, 64)
 		_btn_jogar.add_theme_font_size_override("font_size", 32)
 		_nav_botao("Começo", "jogar")
+		_nav_botao("Com amigos", "amigos")
+	elif Rede.em_partida:
+		var cont := _nav_botao("Continuar", "", _fechar)
+		cont.custom_minimum_size = Vector2(0, 64)
+		cont.add_theme_font_size_override("font_size", 30)
+		_nav_botao("Trocar de time", "", func():
+			Rede.pedir_acao(Comando.Acao.TROCAR_TIME)
+			_fechar())
+		if Rede.anfitriao:
+			_nav_botao("Voltar à sala (todos)", "", func(): Rede.voltar_para_sala())
+		_nav_botao("Sair da partida", "", func():
+			Rede.sair()
+			get_tree().paused = false
+			get_tree().reload_current_scene())
 	else:
 		var cont := _nav_botao("Continuar", "", _fechar)
 		cont.custom_minimum_size = Vector2(0, 64)

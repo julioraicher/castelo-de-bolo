@@ -131,4 +131,4 @@ func atualizar(n: int) -> void:
 	_label.modulate = Color(1.0, 0.85, 0.55) if n > 0 else Color(0.8, 0.8, 0.8, 0.8)
 	if cresceu:
 		_label.scale = Vector3.ONE * 1.4
-		_label.create_tween().tween_property(_label, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_BACK)
+		_label.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(_label, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_BACK)

@@ -96,7 +96,7 @@ func setup(p_kind: String, pos: Vector3) -> void:
 	glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(glow)
 	scale = Vector3.ONE * 0.01
-	create_tween().tween_property(self, "scale", Vector3.ONE, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(self, "scale", Vector3.ONE, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _process(delta: float) -> void:

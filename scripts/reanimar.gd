@@ -34,6 +34,9 @@ var _espera_total := {}
 ## Corpo -> bot que está indo reanimar (um por corpo).
 var _reservas := {}
 var _desistir_t := 0.0
+## Online (Ciclo 2.28): o "segurar F" de cada humano caído vem no comando dele
+## (wants_reanimar), e a conta roda igual em todos os PCs.
+var _desistindo := {}
 ## Modo teste: aliado de treino que espera caído para sempre.
 var boneco_treino: Unit = null
 var _treino_t := -1.0
@@ -175,6 +178,8 @@ func tick(delta: float) -> void:
 		_treino_t -= delta
 		if _treino_t < 0.0 and is_instance_valid(boneco_treino) and boneco_treino.alive:
 			boneco_treino._die(null)
+	if game.online:
+		_tick_desistir_online(delta)
 	_tick_jogador_caido(delta)
 	_tick_visuais()
 
@@ -253,8 +258,10 @@ func _tick_jogador_caido(delta: float) -> void:
 	if p.brain is BotBrain:
 		game.hud.reanimar_barra(-1.0, "", Color.WHITE)
 		return
+	if game.online:
+		_desistir_t = float(_desistindo.get(p, 0.0))
 	# Segurar [F] caído desiste, mesmo no meio de uma reanimação (a escolha é sua).
-	if not p.desistiu and Input.is_action_pressed("interact"):
+	elif not p.desistiu and Input.is_action_pressed("interact"):
 		_desistir_t += delta
 		if _desistir_t >= DESISTIR_T:
 			_desistir_t = 0.0
@@ -379,7 +386,7 @@ func _criar_visual(u: Unit) -> void:
 	raiz.add_child(placa)
 	# Entrada: a chama sai do corpo com um "puf" e cresce.
 	chama.scale = Vector3.ONE * 0.2
-	var tw := chama.create_tween()
+	var tw := chama.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_property(chama, "scale", Vector3.ONE, 0.5).set_delay(0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_visuais[u] = {"raiz": raiz, "chama": chama, "anel": anel, "placa": placa}
 
@@ -438,3 +445,18 @@ func _efeito_canal(u: Unit, c: Unit) -> void:
 		Fx.burst(game, peito, Color(1.0, 0.85, 0.45), 3, 1.8)
 		if randf() < 0.3:
 			Sfx.play("reanimar_arrasto", u.global_position, 0.12)
+
+
+func _tick_desistir_online(delta: float) -> void:
+	for u in game.units:
+		if u.alive or not u.humano or u.desistiu or not u.wants_reanimar:
+			_desistindo.erase(u)
+			continue
+		var t: float = _desistindo.get(u, 0.0) + delta
+		if t >= DESISTIR_T:
+			_desistindo.erase(u)
+			desistir(u)
+			if u == game.player and game.hud:
+				game.hud.show_big("Desistiu: renascendo no castelo", Color(0.85, 0.82, 0.8), 1.0)
+		else:
+			_desistindo[u] = t

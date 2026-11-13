@@ -16,6 +16,7 @@ config/icon="res://icon.svg"
 Config="*res://scripts/autoload/config.gd"
 Settings="*res://scripts/autoload/settings.gd"
 Sfx="*res://scripts/autoload/sfx.gd"
+Rede="*res://scripts/rede/rede.gd"
 
 [display]
 
@@ -32,6 +33,12 @@ theme/custom_font="res://assets/fonts/Nunito-Black.ttf"
 
 3d_physics/layer_1="mundo"
 3d_physics/layer_2="unidades"
+
+[navigation]
+
+world/map_use_async_iterations=false
+world/region_use_async_iterations=false
+baking/thread_model/baking_use_multiple_threads=false
 
 [physics]
 

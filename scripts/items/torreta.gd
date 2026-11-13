@@ -206,7 +206,7 @@ func _concluir() -> void:
 	_casa.scale = Vector3.ONE
 	_tiro_t = 0.6
 	# "Pula" ao ficar de pé, como a oficina.
-	var tw := _casa.create_tween()
+	var tw := _casa.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_property(_casa, "scale", Vector3(0.92, 1.14, 0.92), 0.12)
 	tw.tween_property(_casa, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	Fx.pillar(_game, global_position, Config.team_color(team).lightened(0.3), 2.0)
@@ -252,7 +252,11 @@ func _atirar(delta: float) -> void:
 	var boca := global_position + Vector3(0, ALTURA_ARMA + 0.1, 0)
 	if _arma:
 		_arma.position.z = -0.22  # coice (volta em _process)
-		boca += _arma.global_transform.basis.z * 0.7
+		# Direção da besta só pelo giro dela (rotation.y), sem o balanço visual
+		# da casa (_casa.rotation.z sorteado ao apanhar): o tiro é regra e
+		# precisa sair igual em todos os PCs da partida online.
+		var ry := _arma.rotation.y
+		boca += (global_transform.basis * Vector3(sin(ry), 0.0, cos(ry))).normalized() * 0.7
 	var v := Virote.new()
 	_game.add_child(v)
 	v.setup(_game, self, boca, alvo)
@@ -275,7 +279,7 @@ func take_hit(amount: float, from_team: int) -> void:
 	# Tranco: encolhe e torce um pouco, volta com mola.
 	_casa.scale = Vector3(1.07, 0.93, 1.07)
 	_casa.rotation.z = randf_range(-0.07, 0.07)
-	var tw := _casa.create_tween().set_parallel(true)
+	var tw := _casa.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).set_parallel(true)
 	tw.tween_property(_casa, "scale", Vector3.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(_casa, "rotation:z", 0.0, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_atualizar_label()
@@ -296,7 +300,7 @@ func _cair() -> void:
 	Sfx.play("torreta_cai", global_position, 0.1)
 	var lado := randf_range(0.0, TAU)
 	var eixo := Vector3(cos(lado), 0, sin(lado))
-	var tw := _casa.create_tween().set_parallel(true)
+	var tw := _casa.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).set_parallel(true)
 	tw.tween_property(_casa, "rotation", eixo * 1.25, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.tween_property(_casa, "position:y", -0.5, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.chain().tween_callback(func():

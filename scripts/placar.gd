@@ -32,10 +32,19 @@ func _init(config: GameConfig) -> void:
 
 
 func registrar(u: Object, team: int, indice: int, jogador: bool) -> void:
-	var l := {"nome": "Você" if jogador else NOMES[(team * 8 + indice) % NOMES.size()], "unit": u, "team": team, "jogador": jogador}
+	var l := {"nome": "Você" if jogador else NOMES[(team * 8 + indice) % NOMES.size()], "unit": u, "team": team, "jogador": jogador, "indice": indice}
 	for c in CAMPOS:
 		l[c] = 0.0
 	_linhas[u] = l
+
+
+## Online (Ciclo 2.28): nome do amigo na linha dele; vazio = volta o do bot.
+func renomear(u: Object, nome: String, jogador: bool) -> void:
+	var l: Dictionary = _linhas.get(u, {})
+	if l.is_empty():
+		return
+	l.nome = nome if nome != "" else NOMES[(int(l.team) * 8 + int(l.indice)) % NOMES.size()]
+	l.jogador = jogador
 
 
 func linha(u: Object) -> Dictionary:

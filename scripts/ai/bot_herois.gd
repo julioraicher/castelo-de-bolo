@@ -24,11 +24,11 @@ static func rapida(b: BotBrain) -> bool:
 			# o cone do Agarrão precisa do alvo na frente: mira volta para ele
 			if rad_to_deg(u.aim_dir.angle_to((alvo.global_position - me).normalized())) > 30.0:
 				_mirar(u, alvo.global_position)
-			return randf() < 0.7
+			return Sorte.f() < 0.7
 		"rasteira":
 			if alvo_ok and d > 3.0 and d < u.stats.skill_radius + 1.5:
 				_mirar(u, alvo.global_position)
-				return alvo.stats.attack_kind != "melee" or randf() < 0.4
+				return alvo.stats.attack_kind != "melee" or Sorte.f() < 0.4
 			return false
 		"rajada":
 			if _projetil_vindo(b) or (alvo_ok and d < 4.0):
@@ -47,12 +47,12 @@ static func rapida(b: BotBrain) -> bool:
 			# Antes de entrar no pátio inimigo ou ir na máscara: rosto de quem está perto.
 			if alvo_ok and d < u.stats.skill_radius:
 				var casa_inimiga := b.game.arena.princess_spot[1 - u.team]
-				return me.distance_to(casa_inimiga) < 45.0 or randf() < 0.3
+				return me.distance_to(casa_inimiga) < 45.0 or Sorte.f() < 0.3
 			return false
 		"dobrar":
 			if u.shikigami < Config.cfg.shikigami_max:
 				return b._nearest_enemy(7.0) == null or u.shikigami == 0
-			return alvo_ok and (alvo.hp_ratio() < 0.5 or randf() < 0.3)
+			return alvo_ok and (alvo.hp_ratio() < 0.5 or Sorte.f() < 0.3)
 		"laco":
 			if b.game.reanimar:
 				for c in b.game.units:
@@ -82,24 +82,24 @@ static func rapida(b: BotBrain) -> bool:
 					return true
 			if alvo_ok and d < Config.cfg.mordida_alcance:
 				_mirar(u, alvo.global_position)
-				return randf() < 0.7
+				return Sorte.f() < 0.7
 			return false
 		"teia":  # Jorogumo: teia na frente de quem vem (ou de quem leva a máscara)
 			if alvo_ok and d < u.stats.skill_radius and d > 2.0:
 				var adiante := alvo.global_position + Vector3(alvo.velocity.x, 0, alvo.velocity.z) * 0.6
 				_mirar(u, adiante)
-				return alvo.carried_princess != null or randf() < 0.55
+				return alvo.carried_princess != null or Sorte.f() < 0.55
 			return false
 		"raizes":  # Kodama: a linha de raízes onde pega dois, ou quem leva a máscara
 			var comp := Config.cfg.raizes_comp
 			if alvo_ok and d < comp + 0.5:
 				_mirar(u, alvo.global_position)
-				return _alinhados(b, alvo.global_position - me, comp, Config.cfg.raizes_larg) >= 2 or alvo.carried_princess != null or randf() < 0.6
+				return _alinhados(b, alvo.global_position - me, comp, Config.cfg.raizes_larg) >= 2 or alvo.carried_princess != null or Sorte.f() < 0.6
 			return false
 		"para_raios":  # Kaminari-kozō: crava no meio de quem ele vai bater
 			if alvo_ok and d < u.stats.skill_radius + 3.0:
 				_mirar(u, alvo.global_position)
-				return b._count(1 - u.team, alvo.global_position, Config.cfg.pararaios_raio + 1.0) >= 2 or randf() < 0.5
+				return b._count(1 - u.team, alvo.global_position, Config.cfg.pararaios_raio + 1.0) >= 2 or Sorte.f() < 0.5
 			return false
 	return false
 
@@ -155,7 +155,7 @@ static func poder(b: BotBrain) -> bool:
 			for o in b.game.units:
 				if o.alive and o.team == u.team and o != u and o.global_position.distance_to(me) < 6.0 and o.stats.attack_kind == "melee":
 					return true
-			return randf() < 0.3
+			return Sorte.f() < 0.3
 		"onibi":  # fogos girando em volta: só vale com gente encostando
 			return b._count(1 - u.team, me, 3.5) >= 2 or (alvo_ok and me.distance_to(alvo.global_position) < 3.0 and u.hp_ratio() < 0.6)
 		"arrastao":  # leva um inimigo: melhor ainda se ele leva a máscara
@@ -165,7 +165,7 @@ static func poder(b: BotBrain) -> bool:
 			if da < 1.5 or da > Config.cfg.arrastao_dist * 0.8:
 				return false
 			_mirar(u, alvo.global_position)
-			return alvo.carried_princess != null or randf() < 0.55
+			return alvo.carried_princess != null or Sorte.f() < 0.55
 		"puxar_fios":  # puxa quem está preso nos fios dela (ou um bolo de gente perto)
 			var presos := 0
 			for o in b.game.units:
@@ -189,7 +189,7 @@ static func poder(b: BotBrain) -> bool:
 			if alvo_ok and me.distance_to(alvo.global_position) < cfg.bosque_dist and alvo.carried_princess != null:
 				u.aim_point = alvo.global_position + Vector3(alvo.velocity.x, 0, alvo.velocity.z) * 0.8
 				return true
-			return alvo_ok and me.distance_to(alvo.global_position) < 6.0 and randf() < 0.3
+			return alvo_ok and me.distance_to(alvo.global_position) < 6.0 and Sorte.f() < 0.3
 		"relampago":  # atravessa quem está na frente; ferido, foge para casa num raio
 			var cfg := Config.cfg
 			if u.hp_ratio() < 0.35 and b._nearest_enemy(5.0) != null:
@@ -200,7 +200,7 @@ static func poder(b: BotBrain) -> bool:
 				return true
 			if alvo_ok and me.distance_to(alvo.global_position) < cfg.relampago_dist:
 				_mirar(u, alvo.global_position)
-				return _alinhados(b, alvo.global_position - me, cfg.relampago_dist, cfg.relampago_larg) >= 2 or alvo.hp_ratio() < 0.4 or randf() < 0.4
+				return _alinhados(b, alvo.global_position - me, cfg.relampago_dist, cfg.relampago_larg) >= 2 or alvo.hp_ratio() < 0.4 or Sorte.f() < 0.4
 			return false
 	return false
 

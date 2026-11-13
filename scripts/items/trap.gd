@@ -35,7 +35,7 @@ func setup(game: Game, p_owner: Unit, pos: Vector3) -> void:
 	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(ring)
 	scale = Vector3.ONE * 0.2
-	create_tween().tween_property(self, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(self, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 var _mina := false

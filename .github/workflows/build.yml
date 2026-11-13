@@ -54,6 +54,14 @@ jobs:
             exit 1
           fi
 
+      # Multiplayer (Ciclo 2.28): as regras precisam dar o mesmo resultado em
+      # qualquer FPS (lockstep), e dois processos ligados pela rede também.
+      - name: Sincronia (mesma semente, 60 x 23 quadros/s)
+        run: timeout 15m bash tools/teste_sincronia.sh 90 7 ./godot
+
+      - name: Rede de verdade (anfitrião + amigo em 127.0.0.1)
+        run: timeout 15m bash tools/teste_rede.sh 5000 ./godot
+
       # QA do mapa (tests/qa_mapa.gd): passagem, objetos escondidos atrás de
       # estrutura e bots presos. Por enquanto só avisa, não reprova o build.
       - name: QA automático do mapa (aviso)
@@ -94,6 +102,9 @@ jobs:
 
       - name: Exportar Web, Windows e Linux
         run: |
+          # Versão do multiplayer = commit: só entra na sala quem tem o mesmo jogo.
+          sed -i "s/const VERSAO := \"dev\"/const VERSAO := \"${GITHUB_SHA::7}\"/" scripts/rede/rede.gd
+          grep -n "const VERSAO" scripts/rede/rede.gd
           mkdir -p build/web build/windows build/linux
           ./godot --headless --path . --export-release "Web" build/web/index.html
           ./godot --headless --path . --export-release "Windows" build/windows/CasteloDeBolo.exe

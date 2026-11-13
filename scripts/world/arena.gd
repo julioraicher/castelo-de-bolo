@@ -96,7 +96,7 @@ func forward(team: int) -> Vector3:
 
 func random_spawn(team: int, units: Array = []) -> Vector3:
 	if map.spawn_spots.is_empty():
-		return to_world(team, randf_range(map.spawn_min.x, map.spawn_max.x), randf_range(map.spawn_min.y, map.spawn_max.y))
+		return to_world(team, Sorte.r(map.spawn_min.x, map.spawn_max.x), Sorte.r(map.spawn_min.y, map.spawn_max.y))
 	# O ponto com menos aliados vivos perto (empate: sorteio).
 	var melhor := Vector3.ZERO
 	var menos := 1 << 20
@@ -106,11 +106,11 @@ func random_spawn(team: int, units: Array = []) -> Vector3:
 		for u in units:
 			if u.alive and u.team == team and u.global_position.distance_to(p) < 5.0:
 				n += 1
-		if n < menos or (n == menos and randf() < 0.5):
+		if n < menos or (n == menos and Sorte.f() < 0.5):
 			menos = n
 			melhor = p
 	var j := map.spawn_jitter
-	return melhor + Vector3(randf_range(-j, j), 0.0, randf_range(-j, j))
+	return melhor + Vector3(Sorte.r(-j, j), 0.0, Sorte.r(-j, j))
 
 
 ## Ponto livre no chão do meio do mapa (espíritos e itens). Evita telhados,
@@ -118,7 +118,7 @@ func random_spawn(team: int, units: Array = []) -> Vector3:
 func random_cake_spot() -> Vector3:
 	var p := Vector3.ZERO
 	for i in 16:
-		p = Vector3(randf_range(-map.cake_area.x, map.cake_area.x), 0.0, randf_range(-map.cake_area.y, map.cake_area.y))
+		p = Vector3(Sorte.r(-map.cake_area.x, map.cake_area.x), 0.0, Sorte.r(-map.cake_area.y, map.cake_area.y))
 		if ground_y(p.x, p.z) < 0.3:
 			return p
 	return p
@@ -521,7 +521,7 @@ func _build_middle() -> void:
 
 
 func _place_prop(prop: MapProp, pos: Vector3, face: float) -> void:
-	var rot := randf() * TAU if prop.rotation_deg < 0.0 else face + deg_to_rad(prop.rotation_deg)
+	var rot := Sorte.f() * TAU if prop.rotation_deg < 0.0 else face + deg_to_rad(prop.rotation_deg)
 	if prop.model != "":
 		_model_path(theme.model_path(prop.model), pos, prop.scale, rot)
 	if prop.collider == "cilindro":

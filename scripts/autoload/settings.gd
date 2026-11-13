@@ -8,7 +8,7 @@ signal changed
 const PATH := "user://configuracoes.cfg"
 const DIFFICULTIES := ["Fácil", "Normal", "Difícil"]
 const QUALITIES := ["Mínima", "Baixa", "Média", "Alta"]
-const KEYS := ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty", "quality", "show_fps", "theme", "auto_quality", "mapa", "tutorial_visto", "alta_ajuste"]
+const KEYS := ["music_volume", "sfx_volume", "fullscreen", "camera_shake", "damage_numbers", "difficulty", "quality", "show_fps", "theme", "auto_quality", "mapa", "tutorial_visto", "alta_ajuste", "nome_online"]
 ## Alta dinâmica (Ciclo 2.19): o que o AutoQuality já desligou DENTRO da Alta
 ## para segurar 30 FPS, nesta ordem (do menos visível ao mais visível):
 ## 0 nada · 1 resolução 3D 80% · 2 + sem brilho (glow) · 3 + sem contorno no cenário.
@@ -28,6 +28,7 @@ var show_fps := false
 var theme := 0               # índice em GameConfig.themes
 var mapa := 0                # índice em GameConfig.maps
 var tutorial_visto := false  # "Como jogar" abre sozinho só na 1ª partida
+var nome_online := ""         # apelido na sala com amigos (Ciclo 2.28)
 var alta_ajuste := 0         # índice em ALTA_AJUSTES (zera ao escolher qualidade no menu)
 
 
@@ -70,12 +71,20 @@ func _web_setup_escape_lock() -> void:
 
 ## Multiplicador do tempo de reação dos bots INIMIGOS (maior = mais lentos).
 func bot_reaction_mult() -> float:
-	return [1.9, 1.0, 0.75][difficulty]
+	return [1.9, 1.0, 0.75][_dif()]
 
 
 ## Dano causado pelos bots inimigos, relativo ao normal.
 func bot_damage_mult() -> float:
-	return [0.7, 1.0, 1.05][difficulty]
+	return [0.7, 1.0, 1.05][_dif()]
+
+
+## Online (Ciclo 2.28) vale a dificuldade do anfitrião: é regra, e todos os
+## PCs precisam rodar a mesma.
+func _dif() -> int:
+	if Rede.em_partida:
+		return clampi(int(Rede.sala.get("dificuldade", difficulty)), 0, 2)
+	return difficulty
 
 
 func apply() -> void:

@@ -310,7 +310,7 @@ static func bosque(u: Unit) -> void:
 	var centro := Herois.chao_valido(u, Herois.sem_parede(u, u.global_position, u.global_position + to.limit_length(cfg.bosque_dist)))
 	u._play_upper("Spellcast_Raise", 1.3)
 	FxNatureza.bosque(u, centro)
-	var a0 := randf() * TAU
+	var a0 := Sorte.f() * TAU
 	for i in cfg.bosque_n:
 		var a := a0 + TAU * i / maxf(cfg.bosque_n, 1)
 		var p := Herois.chao_valido(u, centro + Vector3(cos(a), 0, sin(a)) * 1.7)
