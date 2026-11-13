@@ -4,6 +4,68 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.27 (2026-11-13), Diretor de Jogabilidade + Diretor Visual: três heróis novos do Nv6 (parte 1 de 2)
+Quiz do Julio (thread "Criar quatro personagens novos"): Ochimusha, Shishimai,
+Jorogumo e Kodama + um quinto de raio criado por nós (Kaminari-kozō), reações
+óbvias entre elementos, o dash solta a peça do personagem, direto na `main`.
+Plano completo em project-files `castelo-de-bolo/herois/plano-5-herois-novos.md`.
+Esta parte traz os três primeiros; Kodama, Kaminari-kozō e as reações de raio e
+bosque vêm na parte 2.
+- **Ochimusha** (Samurai, herói raro): **não cai de primeira**. O golpe que o
+  mataria deixa 1 de vida e ele vira fantasma intocável por 3 s; se derrubar
+  alguém nesse tempo volta com 35% da vida, senão cai (uma vez por vida). Golpe
+  final do combo deixa um **corte que ecoa** 0,6 s depois. Q **Flecha Arrancada**:
+  arranca uma das 4 flechas das costas e crava em quem está na frente (dano +
+  lento); as flechas são as cargas do Q (a HUD mostra ×N). E **Onibi**: três
+  fogos-fantasma giram em volta 5 s e estouram em quem encosta (dano + susto).
+  R **Carga dos Caídos**: quatro samurais-fantasma avançam 12 m em linha.
+- **Shishimai** (Samurai): **Sorte e Azar**. Q **Mordida da Sorte**: aliado
+  cura 15% e ganha Sorte (o próximo golpe dele sai dobrado e o próximo que levar
+  desvia); inimigo leva dano e Azar (o próximo golpe dele erra). E **Arrastão**:
+  avança 8 m levando o primeiro inimigo na boca (derruba a máscara) e o prende no
+  fim. R **Festa da Vila**: vira o leão gigante por 7 s, dá Sorte aos aliados
+  perto a cada 2 s e levanta aliado caído que alcança.
+- **Jorogumo** (Ninja de Shuriken): básico é um **fio de seda** que gruda
+  (lentidão que acumula até 3); o 3º tiro (Rede) prende 1 s. Q **Teia** no chão
+  (até 3, 10 s): inimigo que pisa fica preso 1 s, ela corre 40% mais em cima.
+  E **Puxar os Fios**: quem ela marcou com fio, teia ou rede a até 10 m vem 3 m
+  para perto e fica preso. R **Casulo**: até 3 inimigos perto viram casulo por
+  4 s (não andam nem atacam, a seda segura metade do dano); 3 golpes ou tiros de
+  um aliado deles quebram o casulo (os bots vão soltar o amigo).
+- **Reações** (`scripts/actors/reacoes.gd`): fogo queima teia (fogos da
+  Kitsune, Luz, Sombria, Onibi, bomba e mina do Bombardeiro/Armadilheiro) e
+  vento rasga teia (leque e redemoinho do Yamabushi, asas do Karasu Tengu).
+  Nenhum time queima a própria teia.
+- **Visual** (princípio 13): corpo próprio dos três no esqueleto (elmo rachado
+  com chifre quebrado, flechas nas costas na cor do time e fogo-fantasma;
+  cabeça de leão de laca com juba e pano verde de dança; dama de quimono com seis
+  patas de aranha e quatro olhos na cor do time), chapéu no chão, enfeite e
+  emblema no pavilhão. Assinatura própria: selos novos (ensō partido com
+  flechas, cabeça de leão, teia com a aranha), verbos novos (`racha`, `estala`,
+  `tece`), figuras do R (samurai caído, leão, aranha descendo no fio) e peças
+  (cinza azul, confete, fio de seda). O atlas passou para 7x7/5x5 e já tem os
+  desenhos do Kodama e do Kaminari-kozō. O dash dos três solta a peça deles.
+- **Sons** sintetizados (`gerar_sons.py herois227`): fantasma com coro grave
+  desafinado, flecha arrancada, chama azul, marcha dos caídos; estalo de madeira
+  da boca do leão, suzu, taiko e fue da festa; seda, koto esticando, casulo.
+- **Painel do pavilhão** aceita até 5 heróis (cartões estreitam com 4 ou 5).
+  Samurai e Ninja agora têm 4 heróis cada; a Kitsune ganha o 4º na parte 2.
+- Fichas (Classes) e clipes dos três; texto do Como jogar atualizado.
+- Testes de regra 810/810 (35 novos: não cair, flechas, Onibi, Sorte/Azar,
+  Arrastão, fio, teia, fogo e vento na teia, Puxar, Casulo, R uma vez só).
+- Sonda com heróis (8 partidas, abates por minuto vivo): Ochimusha 1,74,
+  Shishimai 1,26, Jorogumo 0,95 (Samurai 1,82, Sohei 1,54, Kappa 1,31): no
+  meio da faixa dos outros, sem número fora da curva.
+- **Modo teste**: os três já estão no painel do pavilhão; suba a casa do Samurai
+  ou do Shuriken até o Nv5 (madeira infinita, obra rápida) e escolha. Q, E e R
+  recarregam rápido como os outros.
+- **O que testar**: no Modo teste, pegue a **Ochimusha** e deixe um Samurai de
+  treino te derrubar (você vira fantasma: derrube alguém em 3 s). Com o
+  **Shishimai**, morda um aliado (moeda dourada sobre a cabeça) e um inimigo
+  (nuvem roxa: o próximo golpe dele erra), e use o Arrastão em quem leva a
+  máscara. Com a **Jorogumo**, ponha uma teia no caminho de um inimigo, puxe com
+  o E e solte o Casulo num grupo; depois veja uma Kitsune queimar a teia.
+
 ## Revisão 2.26s (2026-11-13), Diretor de Jogabilidade: achados da revisão autorizados
 O Julio autorizou os achados que mudavam comportamento (lista em project-files
 `castelo-de-bolo/revisao/revisao-codigo-2026-11-13.md`).

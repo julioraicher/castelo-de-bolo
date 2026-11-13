@@ -49,6 +49,7 @@ func _ready() -> void:
 	_assinaturas()
 	_heroi_nv6()
 	await _herois_regras()
+	await _herois_2_27()
 	_menos_empate()
 	_sons_proprios()
 	_relogio()  # por último: encerra a partida
@@ -1819,7 +1820,7 @@ func _menos_empate() -> void:
 	_check(_perto(cfg.pts_abates, 120.0, 0.01), "abate deveria valer 120 no placar")
 	# Heróis um pouco mais fortes, igual para todos.
 	_check(cfg.heroi_vida_mult > 1.0 and cfg.heroi_dano_mult > 1.0 and cfg.heroi_recarga_mult < 1.0, "heróis: multiplicadores do Ciclo 2.25")
-	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso"]:
+	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo"]:
 		_check(load("res://config/classes/%s.tres" % id).heroi, "%s deveria estar marcado como herói" % id)
 	_check(not load("res://config/classes/guerreiro.tres").heroi, "Samurai não é herói")
 	# Carregar e escolta: um ladrão do time 1 com 0, 1 e 3 aliados colados.
@@ -2157,7 +2158,7 @@ func _herois_regras() -> void:
 	b._mudo_t = 0.0
 
 	# Super de cada herói gasta a barra uma vez só (Ciclo 2.22, mesmo critério).
-	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso"]:
+	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo"]:
 		var cls = load("res://config/classes/%s.tres" % id)
 		a.set_class(cls)
 		por.call(a, centro, dx)
@@ -2183,6 +2184,225 @@ func _herois_regras() -> void:
 	b.brain = cerebros[1]
 	a.set_class(c0)
 	b.set_class(c1)
+	for u in guardados:
+		if is_instance_valid(u):
+			u.global_position = guardados[u]
+			u.reset_physics_interpolation()
+
+
+## Heróis 2.27: Ochimusha (não cai de primeira, flechas como cargas), Shishimai
+## (Sorte e Azar, Arrastão), Jorogumo (teia, fio, puxar, casulo) e as reações
+## fogo/vento × teia.
+func _herois_2_27() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var a = null
+	var b = null
+	var c = null
+	for u in game.units:
+		if u.alive and not u.is_player and not u.carried_princess and not u.em_voo:
+			if a == null:
+				a = u
+			elif b == null and u.team != a.team:
+				b = u
+			elif c == null and u.team == a.team:
+				c = u
+	if a == null or b == null or c == null:
+		_check(false, "heróis 2.27: faltou boneco")
+		return
+	var classes := [a.stats, b.stats, c.stats]
+	var cerebros := [a.brain, b.brain, c.brain]
+	a.brain = null
+	b.brain = null
+	c.brain = null
+	var centro := Vector3(0, 0, 0)
+	centro.y = game.arena.ground_y(0, 0)
+	var guardados := {}
+	for u in game.units:
+		guardados[u] = u.global_position
+		if u != a and u != b and u != c and u.global_position.distance_to(centro) < 30.0:
+			u.global_position = game.arena.spawn_center[u.team]
+	var por := func(x, p: Vector3, olha: Vector3) -> void:
+		x.global_position = p
+		x.velocity = Vector3.ZERO
+		x._knock = Vector3.ZERO
+		x._dodge_t = 0.0
+		x._blocking = false
+		x._shield = 0.0
+		x._intocavel_t = 0.0
+		x._preso_t = 0.0
+		x._slow_t = 0.0
+		x.hp = x.max_hp()
+		x._visual.rotation.y = atan2(olha.x, olha.z)
+		x.aim_dir = olha
+		x.reset_physics_interpolation()
+	var dx := Vector3(1, 0, 0)
+	var dz := Vector3(0, 0, 1)
+	b.set_class(load("res://config/classes/guerreiro.tres"))
+	c.set_class(load("res://config/classes/guerreiro.tres"))
+	por.call(c, centro + dz * 12.0, dx)
+
+	# Ochimusha: o golpe mortal deixa 1 de vida e vira fantasma intocável.
+	a.set_class(load("res://config/classes/ochimusha.tres"))
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 2.0, -dx)
+	a.take_damage(9999.0, b, dx)
+	_check(a.alive and _perto(a.hp, 1.0, 0.01) and a._fantasma_t > 0.0, "Ochimusha: golpe mortal deixa 1 de vida e vira fantasma")
+	a.take_damage(50.0, b, dx)
+	_check(a.alive and _perto(a.hp, 1.0, 0.01), "Ochimusha: fantasma não apanha")
+	Herois.abateu(a, b)
+	_check(a._fantasma_t <= 0.0 and a.hp >= a.max_hp() * cfg.fantasma_volta - 0.5, "Ochimusha: abate no fantasma volta com %.0f%%" % (cfg.fantasma_volta * 100))
+	a.take_damage(9999.0, b, dx)
+	_check(not a.alive, "Ochimusha: só não cai uma vez por vida")
+	a._voltar_a_vida()
+	a.set_class(load("res://config/classes/ochimusha.tres"))
+	por.call(a, centro, dx)
+	a.take_damage(9999.0, b, dx)
+	Herois._tick_2_27(a, cfg.fantasma_tempo + 0.1)
+	_check(not a.alive, "Ochimusha: sem abate, cai no fim do fantasma")
+	a._voltar_a_vida()
+	a.set_class(load("res://config/classes/ochimusha.tres"))
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 2.0, -dx)
+	# Flecha Arrancada: as flechas nas costas são as cargas do Q.
+	Herois._tick_2_27(a, 0.016)
+	_check(a.cargas_q == a.stats.cargas_q and a.stats.cargas_q == 4, "Ochimusha: começa com 4 flechas (tem %d)" % a.cargas_q)
+	var hp0: float = b.hp
+	a._quick_cd = 0.0
+	a.wants_quick = true
+	a._physics_process(1.0 / 60.0)
+	_check(a.cargas_q == 3 and b.hp < hp0 and b._slow_t > 0.0, "Ochimusha: Q gasta uma flecha, fere e deixa lento (cargas %d)" % a.cargas_q)
+	a._quick_cd = 0.0
+	b.global_position = centro - dx * 3.0  # atrás: ninguém no cone
+	_check(not a._usar_rapida() and a.cargas_q == 3, "Ochimusha: sem ninguém na frente a flecha não sai")
+	# Onibi: três fogos; cada um estoura no primeiro que encosta.
+	por.call(b, centro + dx * 1.2, -dx)
+	Herois._onibi(a)
+	_check(a._onibi_n == cfg.onibi_n, "Ochimusha: Onibi acende %d fogos" % cfg.onibi_n)
+	hp0 = b.hp
+	a.set_meta("onibi_cd", 0.0)
+	Herois._tick_onibi(a, 0.016)
+	_check(a._onibi_n == cfg.onibi_n - 1 and b.hp < hp0 and b._forcado_t > 0.0, "Ochimusha: fogo estoura em quem encosta e assusta")
+	Herois._fim_onibi(a)
+	b._forcado_t = 0.0
+
+	# Shishimai: Mordida no inimigo dá Azar (o próximo golpe dele erra).
+	a.set_class(load("res://config/classes/shishimai.tres"))
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 1.5, -dx)
+	hp0 = b.hp
+	_check(Herois._mordida(a) and b.hp < hp0 and b._azar_t > 0.0, "Shishimai: Mordida fere o inimigo e dá Azar")
+	var ha: float = a.hp
+	a.take_damage(20.0, b, dx)
+	_check(_perto(a.hp, ha, 0.01) and b._azar_t <= 0.0, "Shishimai: com Azar o golpe erra (e o Azar acaba)")
+	# Mordida no aliado: cura e Sorte (desvia o próximo e dobra o próximo dado).
+	por.call(b, centro + dx * 9.0, -dx)
+	por.call(c, centro + dx * 1.5, -dx)
+	c.hp = c.max_hp() * 0.5
+	var hc: float = c.hp
+	_check(Herois._mordida(a) and c.hp > hc and c._sorte_partes == 3, "Shishimai: Mordida no aliado cura e dá Sorte")
+	hc = c.hp
+	c.take_damage(20.0, b, dx)
+	_check(_perto(c.hp, hc, 0.01) and c._sorte_partes == 1, "Shishimai: Sorte desvia o próximo golpe levado")
+	c._sorte_partes = 0
+	var hb: float = b.hp
+	b.take_damage(10.0, c, dx)
+	var normal: float = hb - b.hp
+	b.hp = b.max_hp()
+	Herois.dar_sorte(c, cfg.sorte_tempo)
+	b.take_damage(10.0, c, dx)
+	var dobro: float = b.max_hp() - b.hp
+	_check(normal > 0.0 and _perto(dobro, normal * 2.0, 0.05), "Shishimai: Sorte dobra o próximo golpe dado (%.1f → %.1f)" % [normal, dobro])
+	c._sorte_partes = 0
+	c._sorte_t = 0.0
+	por.call(c, centro + dz * 12.0, dx)
+	# Arrastão: leva o primeiro inimigo da frente e prende no fim.
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 2.0, -dx)
+	hp0 = b.hp
+	var b0: Vector3 = b.global_position
+	Herois._arrastao(a)
+	await get_tree().create_timer(0.75).timeout
+	var andou: float = (b.global_position - b0).dot(dx)
+	_check(andou > 3.0 and b.hp < hp0, "Shishimai: Arrastão leva o inimigo junto (%.1f m) e fere" % andou)
+	_check(b._azar_t > 0.0, "Shishimai: quem foi arrastado fica com Azar")
+	b._azar_t = 0.0
+
+	# Jorogumo: o fio do básico gruda (lento acumulando) e o 3º tiro prende.
+	a.set_class(load("res://config/classes/jorogumo.tres"))
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 5.0, -dx)
+	b.take_damage(4.0, a, dx, 1.0, false, "fio", 1)
+	b.take_damage(4.0, a, dx, 1.0, false, "fio", 1)
+	_check(b._fio_n == 2 and b._fio_dono == a and b._slow_t > 0.0 and b._preso_t <= 0.0, "Jorogumo: o fio gruda e acumula (%d)" % b._fio_n)
+	b.take_damage(4.0, a, dx, 1.0, false, "fio", 2)
+	_check(b._preso_t > 0.0, "Jorogumo: o 3º tiro (Rede) prende")
+	# Puxar os Fios: quem tem o fio dela vem para perto e fica preso.
+	por.call(b, centro + dx * 7.0, -dx)
+	b._fio_dono = a
+	b._fio_t = 2.0
+	Herois._puxar_fios(a)
+	_check(b._knock.dot(-dx) > 1.0 and b._preso_t > 0.0, "Jorogumo: Puxar os Fios puxa e prende quem tem o fio dela")
+	b._fio_t = 0.0
+	b._fio_dono = null
+	# Teia: prende quem pisa; fogo queima e vento rasga.
+	por.call(b, centro + dx * 12.0, -dx)
+	a.aim_point = centro + dx * 5.0
+	var antes_t := get_tree().get_nodes_in_group("teias").size()
+	_check(Herois._teia(a) and get_tree().get_nodes_in_group("teias").size() == antes_t + 1, "Jorogumo: Q tece uma teia")
+	var teia = null
+	for n in get_tree().get_nodes_in_group("teias"):
+		if n.dona == a:
+			teia = n
+	if teia:
+		por.call(b, Vector3(teia.global_position.x, centro.y, teia.global_position.z), -dx)
+		await get_tree().create_timer(0.1).timeout
+		_check(b._preso_t > 0.0 and b._fio_dono == a, "Jorogumo: quem pisa na teia fica preso")
+		Reacoes.em(game, teia.global_position, 1.0, "fogo", b.team)
+		_check(teia.indo, "reação: fogo queima a teia")
+		a.aim_point = centro + dx * 5.0 + dz * 4.0
+		Herois._teia(a)
+		var t2 = null
+		for n in get_tree().get_nodes_in_group("teias"):
+			if n.dona == a and not n.indo:
+				t2 = n
+		_check(t2 != null, "Jorogumo: segunda teia")
+		if t2:
+			Reacoes.em(game, t2.global_position, 1.0, "vento", a.team)
+			_check(not t2.indo, "reação: o próprio time não rasga a teia")
+			Reacoes.em(game, t2.global_position, 1.0, "vento", b.team)
+			_check(t2.indo, "reação: vento rasga a teia")
+	for i in cfg.teia_max + 1:
+		a.aim_point = centro + dz * (3.0 + i)
+		Herois._teia(a)
+	var vivas := 0
+	for n in get_tree().get_nodes_in_group("teias"):
+		if n.dona == a and not n.indo:
+			vivas += 1
+	_check(vivas == cfg.teia_max, "Jorogumo: no máximo %d teias (tem %d)" % [cfg.teia_max, vivas])
+	for n in get_tree().get_nodes_in_group("teias"):
+		if n.dona == a:
+			n.sumir()
+	# Casulo: segura o inimigo, a seda segura parte do dano e o aliado dele quebra.
+	por.call(b, centro + dx * 3.0, -dx)
+	_check(Herois._casulo(a) and b._casulo_t > 0.0 and not b.maos_livres(), "Jorogumo: Casulo enrola o inimigo perto")
+	hb = b.hp
+	b.take_damage(20.0, a, dx)
+	var seda: float = hb - b.hp
+	b.hp = b.max_hp()
+	var vida: int = b._casulo_vida
+	for i in vida:
+		Herois.bater_casulo(b, b)
+	_check(b._casulo_t <= 0.0, "Jorogumo: %d golpes de aliado soltam o casulo" % vida)
+	b.take_damage(20.0, a, dx)
+	var sem: float = b.max_hp() - b.hp
+	_check(seda > 0.0 and _perto(seda, sem * cfg.casulo_dano, 0.05), "Jorogumo: o casulo segura parte do dano (%.1f de %.1f)" % [seda, sem])
+
+	a.brain = cerebros[0]
+	b.brain = cerebros[1]
+	c.brain = cerebros[2]
+	a.set_class(classes[0])
+	b.set_class(classes[1])
+	c.set_class(classes[2])
 	for u in guardados:
 		if is_instance_valid(u):
 			u.global_position = guardados[u]

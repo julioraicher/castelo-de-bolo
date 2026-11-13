@@ -69,6 +69,27 @@ static func rapida(b: BotBrain) -> bool:
 				_mirar(u, alvo.global_position)
 				return b._nearest_enemy(2.5) == null  # parado tocando: não com alguém colado
 			return false
+		"flecha_arrancada":  # Ochimusha: cada carga é uma flecha; só gasta com alguém no cone
+			if alvo_ok and d <= Config.cfg.flecha_alcance + 0.3:
+				_mirar(u, alvo.global_position)
+				return true
+			return false
+		"mordida":  # Shishimai: aliado ferido ganha Sorte; senão morde o inimigo da frente
+			for o in b.game.units:
+				if o != u and o.alive and o.team == u.team and o.hp_ratio() < 0.55 \
+						and o.global_position.distance_to(me) < Config.cfg.mordida_alcance:
+					_mirar(u, o.global_position)
+					return true
+			if alvo_ok and d < Config.cfg.mordida_alcance:
+				_mirar(u, alvo.global_position)
+				return randf() < 0.7
+			return false
+		"teia":  # Jorogumo: teia na frente de quem vem (ou de quem leva a máscara)
+			if alvo_ok and d < u.stats.skill_radius and d > 2.0:
+				var adiante := alvo.global_position + Vector3(alvo.velocity.x, 0, alvo.velocity.z) * 0.6
+				_mirar(u, adiante)
+				return alvo.carried_princess != null or randf() < 0.55
+			return false
 	return false
 
 
@@ -124,6 +145,23 @@ static func poder(b: BotBrain) -> bool:
 				if o.alive and o.team == u.team and o != u and o.global_position.distance_to(me) < 6.0 and o.stats.attack_kind == "melee":
 					return true
 			return randf() < 0.3
+		"onibi":  # fogos girando em volta: só vale com gente encostando
+			return b._count(1 - u.team, me, 3.5) >= 2 or (alvo_ok and me.distance_to(alvo.global_position) < 3.0 and u.hp_ratio() < 0.6)
+		"arrastao":  # leva um inimigo: melhor ainda se ele leva a máscara
+			if not alvo_ok:
+				return false
+			var da := me.distance_to(alvo.global_position)
+			if da < 1.5 or da > Config.cfg.arrastao_dist * 0.8:
+				return false
+			_mirar(u, alvo.global_position)
+			return alvo.carried_princess != null or randf() < 0.55
+		"puxar_fios":  # puxa quem está preso nos fios dela (ou um bolo de gente perto)
+			var presos := 0
+			for o in b.game.units:
+				if o.alive and o.team != u.team and o._fio_t > 0.0 and o._fio_dono == u \
+						and o.global_position.distance_to(me) < Config.cfg.puxar_raio:
+					presos += 1
+			return presos >= 1 or b._count(1 - u.team, me, Config.cfg.puxar_raio * 0.5) >= 2
 	return false
 
 
@@ -150,7 +188,51 @@ static func super_r(b: BotBrain) -> bool:
 			return fracos >= 3
 		"requiem":
 			return b._count(1 - u.team, me, cfg.requiem_raio) >= 3
+		"carga_caidos":  # a linha de fantasmas: mira onde cabem dois ou mais
+			var alvo := b._target
+			if alvo == null or not alvo.alive or me.distance_to(alvo.global_position) > cfg.caidos_comp:
+				return false
+			_mirar(u, alvo.global_position)
+			return _alinhados(b, alvo.global_position - me, cfg.caidos_comp, cfg.caidos_larg * 0.5) >= 2 or alvo.carried_princess != null
+		"festa_vila":  # leão gigante: briga grande ou aliado caído para levantar
+			var caidos := 0
+			if b.game.reanimar:
+				for c in b.game.units:
+					if c.team == u.team and not c.alive and b.game.reanimar.pode_reanimar(c) and c.global_position.distance_to(me) < 6.0:
+						caidos += 1
+			return b._count(1 - u.team, me, 6.0) >= 2 and (caidos >= 1 or b._count(u.team, me, cfg.festa_sorte_raio) >= 2)
+		"casulo":
+			return b._count(1 - u.team, me, cfg.casulo_raio) >= 2
 	return false
+
+
+## Aliado preso no Casulo de uma Jorogumo inimiga perto: o bot vai bater no
+## casulo para soltá-lo (golpe e tiro de aliado quebram). Devolve true se
+## assumiu o combate neste quadro.
+static func soltar_aliado(b: BotBrain) -> bool:
+	var u := b.unit
+	if u.carried_princess or b._nearest_enemy(2.5) != null:
+		return false
+	var me := u.global_position
+	var preso: Unit = null
+	var melhor := 8.0
+	for o in b.game.units:
+		if o != u and o.alive and o.team == u.team and o._casulo_t > 0.0:
+			var d := o.global_position.distance_to(me)
+			if d < melhor:
+				melhor = d
+				preso = o
+	if preso == null:
+		return false
+	_mirar(u, preso.global_position + Vector3(0, 1.0, 0))
+	if melhor > u.stats.attack_range:
+		u.move_intent = (preso.global_position - me).normalized()
+		u.move_intent.y = 0
+	else:
+		u.wants_attack = true
+	if u.stats.attack_kind != "melee" and melhor <= u.stats.attack_range:
+		u.wants_attack = true
+	return true
 
 
 static func _mirar(u: Unit, p: Vector3) -> void:

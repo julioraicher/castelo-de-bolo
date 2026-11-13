@@ -540,6 +540,81 @@ def assinaturas_2():
     save("kitsune_luz_final", mix(chama(), ganho(tigela(784, 0.7), 0.5), ganho(guizos(0.4, 30), 0.5)), 0.6)
     save("kitsune_sombria_final", mix(ao_contrario(chama()), ganho(membrana(55, 0.4, 0.2), 1.0), ganho(tigela(311, 0.6), 0.35)), 0.65)
 
+
+def herois_2_27():
+    """Heróis 2.27 (Ochimusha, Shishimai, Jorogumo): <id>_poder/_super/_final e
+    os sons próprios dos poderes. Semente própria: não muda os outros.
+    Rode: gerar_sons.py herois227"""
+    random.seed(227)
+
+    def save(name, track, gain=0.8):
+        k = len(track)
+        ini = int(k * 0.7)
+        globals()["save"](name, [v * (1.0 if i < ini else (1 - (i - ini) / (k - ini)) ** 2) for i, v in enumerate(track)], gain)
+
+    def super_de(poder, extra=()):
+        base = mix(ganho(membrana(58, 0.9), 1.1), atraso(ganho(membrana(52, 0.9), 0.8), 0.24),
+                   atraso(ganho(sino(98, 1.6, ((1.0, 1.0, 1.6), (2.1, 0.6, 2.3), (3.3, 0.4, 3.2))), 0.6), 0.3))
+        return mix(base, atraso(ganho(poder, 1.1), 0.12), *extra)
+
+    whoosh = lambda sec, pico=0.5: noise(sec, cutoff=lambda x: 0.04 + pico * math.sin(math.pi * x) ** 2, release_pow=1.0)
+    aco = lambda f, s: sino(f, s, ((1.0, 1.0, 9), (2.41, 0.6, 12), (3.9, 0.4, 16), (6.3, 0.2, 22)))
+    # Madeira: modos de uma barra livre-livre (1; 2,76; 5,40) com amortecimento alto.
+    madeira = lambda f: suave(sino(f, 0.12, ((1.0, 1.0, 45), (2.76, 0.45, 70), (5.4, 0.2, 95))), 0.0015)
+    koto = lambda f, sec=0.6: pluck(f, sec, 0.996)
+
+    # Ochimusha: fantasma = ar puxado ao contrário + coro grave desafinado
+    # (batimento de 6,5 Hz entre 110 e 116,5 Hz: o "tremor" de alma penada).
+    fantasma = mix(ao_contrario(noise(0.6, cutoff=lambda x: 0.05 + 0.35 * x, release_pow=2.2)),
+                   atraso(ganho(coro((110, 116.5), 1.0, ataque=0.15), 0.55), 0.45))
+    save("ochimusha_fantasma", fantasma, 0.7)
+    # Flecha arrancada: rasgo (ruído largo curto) + corda grave + assobio caindo (Doppler).
+    rasgo = noise(0.07, cutoff=lambda x: 0.9 - 0.5 * x, release_pow=1.5)
+    assobio = tone(lambda x: 2300 - 1100 * x, 0.32, release_pow=1.0)
+    save("ochimusha_flecha", mix(rasgo, ganho(pluck(165, 0.35, 0.992), 0.7), atraso(ganho(assobio, 0.22), 0.03)), 0.7)
+    chama = noise(0.6, cutoff=lambda x: 0.05 + 0.25 * math.sin(math.pi * x), release_pow=1.2)
+    onibi = mix(chama, ganho(tigela(370, 0.9), 0.3), ganho(tigela(392, 0.9), 0.2))  # 22 Hz de batimento: chama azul tremida
+    save("ochimusha_onibi", onibi, 0.65)
+    passos = mix(*(atraso(ganho(membrana(64 + random.uniform(-6, 6), 0.25, 0.25), random.uniform(0.55, 0.9)), 0.13 * k + random.uniform(0, 0.03)) for k in range(10)))
+    grito = ganho(coro((98, 147, 196), 1.2, vogal=(600, 1000), ataque=0.3), 0.5)
+    caidos = mix(passos, atraso(grito, 0.1), atraso(whoosh(1.0, 0.3), 0.2))
+    save("ochimusha_caidos", caidos, 0.8)
+    save("ochimusha_poder", mix(onibi, atraso(ganho(fantasma, 0.5), 0.05)), 0.7)
+    save("ochimusha_super", super_de(caidos, (atraso(ganho(fantasma, 0.7), 0.0),)), 0.85)
+    eco = mix(ganho(aco(1100, 0.4), 0.6), atraso(ganho(ao_contrario(aco(1100, 0.3)), 0.35), 0.25))
+    save("ochimusha_final", mix(whoosh(0.22, 0.75), atraso(eco, 0.08)), 0.7)
+
+    # Shishimai: a boca de madeira estala (kachi-kachi), suzu, taiko e o fue da festa.
+    estalo = mix(madeira(820), atraso(ganho(madeira(1180), 0.7), 0.055))
+    save("shishimai_mordida", mix(estalo, atraso(ganho(guizos(0.25, 30), 0.4), 0.03)), 0.75)
+    save("shishimai_sino", ganho(guizos(0.35, 45), 1.0), 0.6)
+    save("shishimai_taiko", mix(ganho(membrana(92, 0.45), 1.1), noise(0.02, cutoff=lambda x: 0.6)), 0.8)
+    ritmo = mix(*(atraso(ganho(membrana(92 if k % 2 == 0 else 120, 0.35), 1.0 if k % 4 == 0 else 0.6), 0.16 * k) for k in range(8)))
+    fue = mix(*(atraso(ganho(sopro(midi(m), 0.22, 0.02), 0.5), 0.14 * k) for k, m in enumerate((79, 81, 84, 81, 79, 76, 79))))
+    festa = mix(ritmo, atraso(fue, 0.1), ganho(guizos(1.2, 35), 0.45), atraso(estalo, 0.0), atraso(estalo, 0.64))
+    save("shishimai_festa", festa, 0.8)
+    save("shishimai_poder", mix(estalo, whoosh(0.55, 0.55), ganho(guizos(0.5, 30), 0.5)), 0.7)
+    save("shishimai_super", super_de(festa), 0.85)
+    save("shishimai_final", mix(estalo, atraso(ganho(membrana(110, 0.3), 0.8), 0.06), ganho(guizos(0.3, 30), 0.5)), 0.7)
+
+    # Jorogumo: seda é ruído agudo e fino (fio vibrando no ar) + cordas de koto tensas.
+    seda = mix(noise(0.22, cutoff=lambda x: 0.75 - 0.4 * x, release_pow=1.6), ganho(tone(lambda x: 1900 + 500 * x, 0.18, release_pow=1.4), 0.12))
+    save("seda", seda, 0.5)
+    gruda = mix(noise(0.09, cutoff=lambda x: 0.25 - 0.2 * x, release_pow=2.0), ganho(tone(lambda x: 420 - 260 * x, 0.14, release_pow=1.8), 0.35))
+    save("seda_gruda", gruda, 0.6)
+    teia = mix(*(atraso(ganho(koto(midi(m), 0.5), 0.45), 0.05 * k) for k, m in enumerate((81, 76, 84))))
+    save("jorogumo_teia", mix(seda, atraso(teia, 0.12), atraso(gruda, 0.2)), 0.65)
+    # Puxar os fios: as cordas esticam (Karplus-Strong com afinação subindo a cada puxão).
+    fios = mix(*(atraso(ganho(koto(midi(57 + 5 * k), 0.4), 0.55), 0.07 * k) for k in range(4)), atraso(whoosh(0.4, 0.6), 0.1))
+    save("jorogumo_fios", fios, 0.7)
+    enrola = noise(0.7, cutoff=lambda x: 0.1 + 0.6 * abs(math.sin(22 * x)) * x, release_pow=0.8)
+    casulo = mix(enrola, atraso(ganho(membrana(75, 0.3, 0.2), 0.8), 0.62), atraso(ganho(gruda, 0.8), 0.62))
+    save("jorogumo_casulo", casulo, 0.75)
+    save("jorogumo_poder", fios, 0.7)
+    arpejo = mix(*(atraso(ganho(koto(midi(m), 0.7), 0.4), 0.07 * k) for k, m in enumerate((57, 60, 64, 69, 72, 76))))
+    save("jorogumo_super", super_de(casulo, (atraso(arpejo, 0.2),)), 0.85)
+    save("jorogumo_final", mix(seda, atraso(ganho(koto(midi(76), 0.4), 0.5), 0.05)), 0.6)
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1:] == ["efeitos"]:
@@ -552,6 +627,8 @@ if __name__ == "__main__":
         magia()
     elif sys.argv[1:] == ["assinaturas2"]:
         assinaturas_2()
+    elif sys.argv[1:] == ["herois227"]:
+        herois_2_27()
     else:
         main()
         efeitos()
@@ -559,3 +636,4 @@ if __name__ == "__main__":
         elementos()
         magia()
         assinaturas_2()
+        herois_2_27()

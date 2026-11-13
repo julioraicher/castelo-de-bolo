@@ -542,6 +542,8 @@ func _combat() -> void:
 		unit.wants_power = _should_use_power()
 	if unit.super_ready() and not unit.wants_power:
 		unit.wants_super = _should_use_super()
+	if BotHerois.soltar_aliado(self):  # Casulo (Jorogumo): aliado preso perto vem antes
+		return
 	if _target == null or not _target.alive or unit.carried_princess:
 		if _torreta and _torreta.pronta() and not unit.carried_princess:
 			var to_t := _torreta.global_position - unit.global_position

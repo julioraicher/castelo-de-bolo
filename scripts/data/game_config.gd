@@ -351,6 +351,71 @@ extends Resource
 @export var requiem_raio := 16.0
 @export var requiem_tempo := 4.0
 
+@export_group("Heróis 2.27: Ochimusha, Shishimai, Jorogumo")
+## Ochimusha, Não cai de primeira: s como fantasma (1 de vida, intocável) e a
+## vida com que volta se fizer um abate nesse tempo. Uma vez por vida.
+@export var fantasma_tempo := 3.0
+@export var fantasma_volta := 0.35
+## Corte do Eco: s até o risco no chão cortar de novo.
+@export var eco_atraso := 0.6
+## Flecha Arrancada (Q): alcance, cone (graus), lentidão (multiplicador) e tempo.
+@export var flecha_alcance := 3.2
+@export var flecha_cone := 80.0
+@export var flecha_lenta := 0.6
+@export var flecha_lenta_t := 2.0
+## Onibi (E): fogos girando, raio da órbita e de toque, susto (s correndo de medo).
+@export var onibi_n := 3
+@export var onibi_orbita := 1.3
+@export var onibi_toque := 2.0
+@export var onibi_susto := 0.6
+## Carga dos Caídos (R): fantasmas, comprimento, largura da faixa, dano e s até o fim.
+@export var caidos_n := 4
+@export var caidos_comp := 12.0
+@export var caidos_larg := 3.4
+@export var caidos_dano := 34.0
+@export var caidos_tempo := 0.7
+## Shishimai: Sorte (próximo golpe dobrado + próximo que levar desvia) e Azar
+## (próximo golpe erra), em s; cura da Mordida em aliado (fração da vida).
+@export var sorte_tempo := 8.0
+@export var azar_tempo := 6.0
+@export var mordida_cura := 0.15
+@export var mordida_alcance := 3.2
+## Arrastão (E): metros levando o inimigo na boca e s preso no fim.
+@export var arrastao_dist := 8.0
+@export var arrastao_preso := 0.6
+## Festa da Vila (R): s de leão gigante, escala, raio da mordida que levanta
+## caído, raio e intervalo da Sorte para os aliados.
+@export var festa_tempo := 7.0
+@export var festa_escala := 1.45
+@export var festa_levanta := 3.0
+@export var festa_sorte_raio := 8.0
+@export var festa_sorte_cada := 2.0
+## Jorogumo, fio de seda: cada acerto deixa fio_lento mais lento (até fio_max
+## vezes) por fio_tempo s; o 3º tiro (Rede) prende rede_preso s.
+@export var fio_lento := 0.1
+@export var fio_max := 3
+@export var fio_tempo := 2.5
+@export var rede_preso := 1.0
+## Teia (Q): raio, s no chão, quantas por dona, s preso de quem pisa, espera
+## até a mesma teia prender a mesma pessoa de novo e velocidade da dona em cima.
+@export var teia_raio := 2.1
+@export var teia_tempo := 10.0
+@export var teia_max := 3
+@export var teia_preso := 1.0
+@export var teia_espera := 2.5
+@export var teia_vel := 1.4
+## Puxar os Fios (E): raio, metros puxados e s preso.
+@export var puxar_raio := 10.0
+@export var puxar_dist := 3.0
+@export var puxar_preso := 0.8
+## Casulo (R): raio, quantos, s enrolado, golpes de aliado para quebrar e
+## quanto do dano passa pela seda.
+@export var casulo_raio := 6.0
+@export var casulo_n := 3
+@export var casulo_tempo := 4.0
+@export var casulo_golpes := 3
+@export var casulo_dano := 0.5
+
 @export_group("Sohei e Kusarigama (Ciclo 2.21)")
 ## Varrida (Q do Sohei): aliados a até varrida_aliados_raio m ganham escudo.
 @export var varrida_escudo := 22.0

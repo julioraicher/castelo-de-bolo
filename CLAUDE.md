@@ -162,6 +162,10 @@ repo: `.claude/skills/`.
   (.tres), `tools/gerar_pavilhao.gd` (pavilhão, adornos, emblemas); prancha
   `tools/prancha_herois.gd`; sonda `HEROIS=1 tools/sonda_equilibrio.sh`. Relógio de
   15 min com empate e prorrogação enquanto houver máscara fora (`tempo_limite`).
+  Heróis 2.27 (Ochimusha, Shishimai, Jorogumo; parte 2: Kodama, Kaminari-kozō):
+  estados em `Herois._tick_2_27`/`_apanhar_2_27`; reações entre elementos em
+  `scripts/actors/reacoes.gd` (quem solta fogo/vento chama `Reacoes.em` no impacto);
+  teia no chão = `scripts/items/teia.gd`. Painel do pavilhão aceita até 5 heróis.
 - Efeitos de poder: kit `Magia` (`scripts/fx/magia.gd`, shader `magia_energia`):
   energia com ruído que se rasga (`corroi`) + filete de tinta; nunca primitiva de
   cor chapada. Receita e orçamento em docs/direcao-efeitos.md §8; conferir com
@@ -170,7 +174,7 @@ repo: `.claude/skills/`.
   Selo com silhueta e verbo próprios, figura em pé no R, partícula com forma, hanko.
   Desenhos em `tools/assinaturas/desenhos.js` (gerar: `node tools/assinaturas/gerar.js`
   + `cinza.py`). Personagem novo ganha desenho + linha em `DADOS`; nunca reutilizar
-  o selo de outro. Tabela dos 20 em docs/direcao-efeitos.md §9.
+  o selo de outro. Tabela em docs/direcao-efeitos.md §9 (atlas 7x7 desde o 2.27).
 - Visual: peças por código no esqueleto KayKit (`NinjaVisual`) + shader toon;
   pitaco por prancha (`tools/prancha_personagens.gd`). Ver docs/arte-personagens.md.
 

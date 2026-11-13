@@ -104,6 +104,7 @@ func _physics_process(delta: float) -> void:
 	_pulse_t -= delta
 	if _pulse_t <= 0.0:
 		_pulse_t = PULSE
+		Reacoes.em(_game, global_position, _radius, _kind, _owner.team)
 		for u in _game.units:
 			if not u.alive or u.team == _owner.team:
 				continue

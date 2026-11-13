@@ -161,12 +161,18 @@ o **hanko** (carimbo vermelho com o emblema).
 | Onmyoji | Seimei (5 pontas) + talismãs | pincel | talismãs | talismãs em leque viram grous |
 | Tennin | fitas em espiral + nuvens | espiral, girando | pétalas | véu de fitas, anéis subindo |
 | Komusō | cesto trançado + ondas de som | ondas, pulsando | notas | nota no ar, anéis de som que param |
+| Ochimusha (2.27) | ensō partido com 4 flechas cravadas | racha | cinza azul | samurai caído se ergue atrás dele, chão racha |
+| Shishimai (2.27) | cabeça de leão com juba em estrela | estala | confete | cabeça do leão pula e morde, 3 batidas de taiko, chuva de confete |
+| Jorogumo (2.27) | teia de 8 raios com a aranha | tece, girando | fios de seda | a aranha desce pelo fio, a teia se fecha |
+| Kodama (2.27, parte 2) | anéis de tronco com broto | brota | sementes | (parte 2) |
+| Kaminari-kozō (2.27, parte 2) | anel de 8 tambores + raio | troveja | faíscas | (parte 2) |
 
 **Como é feito** (barato: cada peça é 1 chamada de desenho):
-- `tools/assinaturas/desenhos.js`: os 20 selos, 16 figuras e 16 peças em SVG
+- `tools/assinaturas/desenhos.js`: os 25 selos, 21 figuras e 22 peças em SVG
   (branco = tinta, preto = corte). `node tools/assinaturas/gerar.js [--prancha x.png]`
   e depois `python3 tools/assinaturas/cinza.py` geram dois atlas de **campo de
-  distância** (`assets/fx/assinaturas/selos.png` 6x6, `pecas.png` 4x4). Do campo de
+  distância** (`assets/fx/assinaturas/selos.png` 7x7, `pecas.png` 5x5 desde o 2.27;
+`Assinatura.COLS`/`PCOLS` acompanham). Do campo de
   distância o shader tira traço, filete de tinta e brilho, nítidos de 1 a 14 m.
 - `assets/shaders/assinatura_selo.gdshader` (selo, figura em pé, hanko) e
   `assinatura_peca.gdshader` (partícula que tomba no ar).

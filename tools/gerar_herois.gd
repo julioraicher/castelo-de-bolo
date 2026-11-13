@@ -1,6 +1,7 @@
 extends SceneTree
-## Gera os 8 heróis raros do Ciclo 2.23 (config/classes/<id>.tres) e liga cada
-## um ao bairro (campo `herois` da classe base). Rodar depois de mudar números:
+## Gera os heróis raros (Ciclo 2.23: 8; Heróis 2.27: +Ochimusha, Shishimai,
+## Jorogumo) em config/classes/<id>.tres e liga cada um ao bairro (campo
+## `herois` da classe base). Sons de assinatura: <id>_poder/_super/_final. Rodar depois de mudar números:
 ##   godot --headless --path . -s tools/gerar_herois.gd
 ## Herói futuro: uma entrada em HEROIS + o id na lista do bairro em BAIRROS +
 ## `NinjaVisual._<id>` + adorno/emblema (tools/gerar_casas.gd).
@@ -19,8 +20,8 @@ const MALHAS := {
 
 ## Ordem = ordem dos botões no painel do Nv6.
 const BAIRROS := {
-	"guerreiro": ["sumotori", "kappa"],
-	"arqueiro": ["yamabushi", "karasu_tengu", "mujina"],
+	"guerreiro": ["sumotori", "kappa", "ochimusha", "shishimai"],
+	"arqueiro": ["yamabushi", "karasu_tengu", "mujina", "jorogumo"],
 	"kitsune": ["onmyoji", "tennin", "komuso"],
 }
 
@@ -110,7 +111,7 @@ const HEROIS := {
 		"combo_anims": [], "combo_finisher_mult": 1.0, "block_reduction": 0.5,
 		"skill": "dobrar", "skill_name": "Dobrar Shikigami", "skill_cooldown": 3.5, "skill_value": 14.0,
 		"power": "grou", "power_name": "Grou de Papel", "power_radius": 18.0, "power_value": 22.0, "power_duration": 1.0,
-		"heal_amount": 25.0,
+		"heal_amount": 22.0,
 		"super_tipo": "proprio", "super_poder": "mil_grous", "super_nome": "Mil Grous",
 		"anim_attack": "Spellcast_Shoot",
 	},
@@ -142,6 +143,51 @@ const HEROIS := {
 		"super_tipo": "proprio", "super_poder": "requiem", "super_nome": "Réquiem",
 		"anim_attack": "1H_Ranged_Shoot",
 	},
+	# --- Heróis 2.27 ---------------------------------------------------------
+	"ochimusha": {
+		"display_name": "Ochimusha", "epiteto": "O samurai que não deita", "modelo": "Knight",
+		"descricao": "Caiu numa batalha que ninguém lembra e se levantou mesmo assim, com a armadura rachada e as flechas do inimigo ainda nas costas. O golpe que derrubaria qualquer um só o deixa de pé por mais um instante, e nesse instante ele caça.",
+		"estilo_linha": "Duelista que não cai de primeira: abate no último fôlego e volta.",
+		"hat_style": "kabuto_rachado", "hat_color": Color(0.55, 0.76, 1.0), "estilo_ninja": "_ochimusha",
+		"dash_estilo": "fantasma", "dash_peca": true, "nao_cai": true, "eco_corte": 0.6,
+		"max_hp": 135.0, "move_speed": 6.6, "attack_kind": "melee", "damage": 16.0, "attack_range": 2.6,
+		"attack_arc_deg": 120.0, "attack_cooldown": 0.45, "knockback": 6.0,
+		"combo_anims": ["1H_Melee_Attack_Slice_Diagonal", "1H_Melee_Attack_Slice_Horizontal", "1H_Melee_Attack_Chop"],
+		"combo_finisher_mult": 1.6, "block_reduction": 0.55,
+		"skill": "flecha_arrancada", "skill_name": "Flecha Arrancada", "skill_cooldown": 8.0, "skill_value": 15.0, "cargas_q": 4,
+		"power": "onibi", "power_name": "Onibi", "power_radius": 2.0, "power_value": 16.0, "power_duration": 5.0,
+		"super_tipo": "proprio", "super_poder": "carga_caidos", "super_nome": "Carga dos Caídos",
+		"anim_attack": "1H_Melee_Attack_Slice_Diagonal",
+	},
+	"shishimai": {
+		"display_name": "Shishimai", "epiteto": "A dança que morde", "modelo": "Barbarian",
+		"descricao": "O leão da festa de ano-novo, de cabeça de laca vermelha e juba branca, que dança na frente da briga. Quem ele morde do próprio time ganha sorte; quem ele morde do outro time leva azar.",
+		"estilo_linha": "Apoio da linha de frente: sorte para o time, azar para o inimigo.",
+		"hat_style": "shishi", "hat_color": Color(0.92, 0.22, 0.18), "estilo_ninja": "_shishimai",
+		"escala_extremidades": 1.4, "escala_modelo": 1.08, "dash_estilo": "rolar", "dash_peca": true,
+		"max_hp": 170.0, "move_speed": 6.3, "attack_kind": "melee", "damage": 15.0, "attack_range": 2.5,
+		"attack_arc_deg": 110.0, "attack_cooldown": 0.5, "knockback": 7.0,
+		"combo_anims": ["Unarmed_Melee_Attack_Punch_A", "Unarmed_Melee_Attack_Punch_B", "2H_Melee_Attack_Spinning"],
+		"combo_finisher_mult": 1.5, "block_reduction": 0.6,
+		"skill": "mordida", "skill_name": "Mordida da Sorte", "skill_cooldown": 7.0, "skill_value": 16.0,
+		"power": "arrastao", "power_name": "Arrastão", "power_radius": 8.0, "power_value": 22.0, "power_duration": 0.6,
+		"super_tipo": "proprio", "super_poder": "festa_vila", "super_nome": "Festa da Vila",
+		"anim_attack": "Unarmed_Melee_Attack_Punch_A",
+	},
+	"jorogumo": {
+		"display_name": "Jorogumo", "epiteto": "A noiva que tece", "modelo": "Rogue",
+		"descricao": "Uma dama de quimono escuro que ninguém viu chegar, com seis patas de aranha dobradas nas costas. Tece teias pelo caminho, puxa de volta quem tentou fugir e enrola os mais lentos em casulos de seda.",
+		"estilo_linha": "Emboscada e controle: teia no chão, fios que puxam e casulo.",
+		"hat_style": "kanzashi", "hat_color": Color(0.8, 0.22, 0.42), "estilo_ninja": "_jorogumo",
+		"dash_estilo": "ninja", "dash_peca": true,
+		"max_hp": 105.0, "move_speed": 7.0, "attack_kind": "ranged", "damage": 11.0, "attack_range": 12.0,
+		"attack_cooldown": 0.6, "knockback": 2.0, "projectile_speed": 24.0, "projetil": "fio",
+		"combo_anims": [], "combo_tiros": 3, "combo_finisher_mult": 1.2, "block_reduction": 0.5,
+		"skill": "teia", "skill_name": "Teia", "skill_cooldown": 6.0, "skill_radius": 10.0,
+		"power": "puxar_fios", "power_name": "Puxar os Fios", "power_radius": 10.0, "power_value": 10.0, "power_duration": 0.8,
+		"super_tipo": "proprio", "super_poder": "casulo", "super_nome": "Casulo",
+		"anim_attack": "Spellcast_Shoot",
+	},
 }
 
 
@@ -158,6 +204,9 @@ func _init() -> void:
 		c.escala_extremidades = 1.3
 		c.chapeu_tempo_mult = 1.0
 		c.heroi = true
+		c.som_poder = id + "_poder"
+		c.som_super = id + "_super"
+		c.som_golpe_final = id + "_final"
 		for k in d:
 			if k == "modelo":
 				continue
