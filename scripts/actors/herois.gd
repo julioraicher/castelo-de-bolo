@@ -1175,7 +1175,8 @@ static func _marca_sorte(u: Unit) -> void:
 	var quer := "sorte" if u._sorte_partes > 0 and u._sorte_t > 0.0 else ("azar" if u._azar_t > 0.0 else "")
 	if str(u.get_meta("marca_tipo", "")) == quer:
 		return
-	var velha: Variant = u.get_meta("marca_no", null)
+	# set_meta com null apaga a chave: ler só se existir (senão o Godot reclama).
+	var velha: Variant = u.get_meta("marca_no") if u.has_meta("marca_no") else null
 	if velha is Node and is_instance_valid(velha):
 		(velha as Node).queue_free()
 	u.set_meta("marca_tipo", quer)

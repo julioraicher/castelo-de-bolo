@@ -53,6 +53,9 @@ bosque vêm na parte 2.
 - Fichas (Classes) e clipes dos três; texto do Como jogar atualizado.
 - Testes de regra 810/810 (35 novos: não cair, flechas, Onibi, Sorte/Azar,
   Arrastão, fio, teia, fogo e vento na teia, Puxar, Casulo, R uma vez só).
+- Sonda com heróis (8 partidas, abates por minuto vivo): Ochimusha 1,74,
+  Shishimai 1,26, Jorogumo 0,95 (Samurai 1,82, Sohei 1,54, Kappa 1,31): no
+  meio da faixa dos outros, sem número fora da curva.
 - **Modo teste**: os três já estão no painel do pavilhão; suba a casa do Samurai
   ou do Shuriken até o Nv5 (madeira infinita, obra rápida) e escolha. Q, E e R
   recarregam rápido como os outros.
