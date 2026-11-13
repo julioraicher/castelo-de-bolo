@@ -86,15 +86,15 @@ func _montar_entrada() -> void:
 	cartoes.add_theme_constant_override("separation", 12)
 	_corpo.add_child(cartoes)
 	var criar := _cartao("CRIAR SALA", Estilo.OURO)
-	criar.get_child(0).add_child(_texto("Você é o anfitrião: o jogo abre a porta do roteador e mostra um código para mandar no WhatsApp.", Estilo.T_PEQUENO, Estilo.TEXTO))
+	criar.get_child(0).add_child(_texto("Você é o anfitrião: o jogo mostra um código para mandar no WhatsApp. Ninguém precisa instalar nada.", Estilo.T_PEQUENO, Estilo.TEXTO))
 	var b_criar := _botao("Criar sala", func():
 		_salvar_nome()
-		Rede.hospedar(_nome_ok()))
+		Rede.criar_sala(_nome_ok()))
 	b_criar.custom_minimum_size = Vector2(0, 52)
 	criar.get_child(0).add_child(b_criar)
 	cartoes.add_child(criar)
 	var entrar := _cartao("ENTRAR", Estilo.AZUL)
-	entrar.get_child(0).add_child(_texto("Cole o código que o anfitrião mandou (ou o IP do Radmin VPN).", Estilo.T_PEQUENO, Estilo.TEXTO))
+	entrar.get_child(0).add_child(_texto("Cole o código de 8 letras que o anfitrião mandou.", Estilo.T_PEQUENO, Estilo.TEXTO))
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	_codigo = LineEdit.new()
@@ -116,7 +116,7 @@ func _montar_entrada() -> void:
 		_salvar_nome()
 		Rede.sala_teste(_nome_ok()))
 	_corpo.add_child(teste)
-	_corpo.add_child(_texto("Amigo em outra casa e o código não conecta? Todos instalam o Radmin VPN (grátis), entram na mesma rede dele e usam o IP 26.x que aparece na sala. Quem cria a sala: quando o Windows perguntar do firewall, marque rede privada E pública.", Estilo.T_MIN, Estilo.TEXTO_FRACO))
+	_corpo.add_child(_texto("O código liga os PCs direto (com cifra), sem abrir porta no roteador. Se mesmo assim não ligar (rede muito fechada dos dois lados): os dois instalam o Radmin VPN, entram na mesma rede e usam o mesmo código. Se o Windows perguntar do firewall, permita (privada e pública).", Estilo.T_MIN, Estilo.TEXTO_FRACO))
 
 
 func _montar_lan() -> void:
@@ -137,7 +137,8 @@ func _montar_lan() -> void:
 		if s.versao != Rede.versao():
 			h.add_child(_texto("versão diferente", Estilo.T_PEQUENO, Estilo.VERMELHO, false))
 		else:
-			h.add_child(_botao("Entrar", func(): _entrar(ip)))
+			var alvo: String = s.codigo if s.get("codigo", "") != "" else ip
+			h.add_child(_botao("Entrar", func(): _entrar(alvo)))
 		_lista_lan.add_child(h)
 
 
@@ -178,7 +179,7 @@ func _montar_sala() -> void:
 	topo.add_child(direita)
 	if Rede.anfitriao:
 		var cod := Rede.codigo_internet
-		var linha := "Código: %s" % cod if cod != "" else "Código: (abrindo a porta...)" if Rede.upnp_texto.begins_with("Abrindo") else "Código da internet: indisponível"
+		var linha := "Código: %s" % cod if cod != "" else "Código: (preparando...)" if Rede.upnp_texto.begins_with("Abrindo") or Rede.upnp_texto.begins_with("Ligando") else "Código da internet: indisponível"
 		v.add_child(_texto(linha, Estilo.T_MEDIO, Estilo.TEXTO, false))
 		if not Rede.codigos_lan.is_empty():
 			var ips := PackedStringArray()

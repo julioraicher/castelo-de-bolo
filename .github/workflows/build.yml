@@ -38,6 +38,9 @@ jobs:
           unzip -q "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
           mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
 
+      - name: Baixar extensão WebRTC (oficial do Godot, versão e SHA-256 fixos)
+        run: bash tools/baixar_webrtc.sh
+
       - name: Importar assets
         run: ./godot --headless --import --path . || true
 
@@ -61,6 +64,15 @@ jobs:
 
       - name: Rede de verdade (anfitrião + amigo em 127.0.0.1)
         run: timeout 15m bash tools/teste_rede.sh 5000 ./godot
+
+      - name: Conexão automática por código (WebRTC, recados por pasta)
+        run: timeout 15m bash tools/teste_rtc.sh 5000 ./godot
+
+      # Pela internet de verdade (ntfy.sh + STUN): só avisa, porque depende de
+      # serviço de fora; se falhar, a conexão automática pode estar quebrada.
+      - name: Conexão automática pela internet (aviso)
+        continue-on-error: true
+        run: timeout 15m bash tools/teste_rtc.sh 5000 ./godot internet
 
       # QA do mapa (tests/qa_mapa.gd): passagem, objetos escondidos atrás de
       # estrutura e bots presos. Por enquanto só avisa, não reprova o build.
@@ -97,6 +109,9 @@ jobs:
           unzip -q "Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
           mv templates/* "$tdir/"
 
+      - name: Baixar extensão WebRTC (oficial do Godot, versão e SHA-256 fixos)
+        run: bash tools/baixar_webrtc.sh
+
       - name: Importar assets
         run: ./godot --headless --import --path . || true
 
@@ -109,6 +124,8 @@ jobs:
           ./godot --headless --path . --export-release "Web" build/web/index.html
           ./godot --headless --path . --export-release "Windows" build/windows/CasteloDeBolo.exe
           ./godot --headless --path . --export-release "Linux" build/linux/CasteloDeBolo.x86_64
+          ls build/windows
+          ls build/windows | grep -q webrtc || { echo "::error::O .exe saiu sem a DLL do WebRTC (conexão automática)."; exit 1; }
           (cd build/windows && zip -q -r ../CasteloDeBolo-windows.zip .)
           (cd build/linux && zip -q -r ../CasteloDeBolo-linux.zip .)
 

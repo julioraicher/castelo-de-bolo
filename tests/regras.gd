@@ -2708,6 +2708,24 @@ func _multiplayer() -> void:
 	var errado := cod.substr(0, 8) + ("0" if cod[8] != "0" else "1")
 	_check(CodigoSala.ler(errado, 24680).is_empty(), "rede: código com uma letra errada é recusado")
 	_check(CodigoSala.ip_privado("100.70.1.2") and CodigoSala.ip_privado("192.168.0.9") and not CodigoSala.ip_privado("189.45.201.7"), "rede: reconhece CGNAT e rede local")
+	# 2.28c: código sorteado + recados cifrados (só quem tem o código lê).
+	var cod_novo := CodigoSala.novo()
+	_check(CodigoSala.ler(cod_novo, 24680).get("codigo", "") == cod_novo.replace("-", ""), "rede: código sorteado é lido como código (%s)" % cod_novo)
+	_check(not CodigoSala.ler("26.10.0.5", 24680).has("codigo"), "rede: IP digitado não vira código")
+	var sa := Sinal.new()
+	var sb := Sinal.new()
+	var sc := Sinal.new()
+	sa._chave = Sinal._sha("cdb1-chave:" + cod_novo); sa._chave_mac = Sinal._sha("cdb1-mac:" + cod_novo)
+	sb._chave = sa._chave; sb._chave_mac = sa._chave_mac
+	sc._chave = Sinal._sha("cdb1-chave:OUTRO"); sc._chave_mac = Sinal._sha("cdb1-mac:OUTRO")
+	var txt := sa._cifrar("{\"t\":\"oi\",\"de\":42}".to_utf8_buffer())
+	_check(sb._decifrar(txt).get_string_from_utf8() == "{\"t\":\"oi\",\"de\":42}", "rede: recado cifrado volta igual com o mesmo código")
+	_check(sc._decifrar(txt).is_empty(), "rede: outro código não lê o recado")
+	var adulterado := Marshalls.base64_to_raw(txt)
+	adulterado[20] = adulterado[20] ^ 1
+	_check(sb._decifrar(Marshalls.raw_to_base64(adulterado)).is_empty(), "rede: recado adulterado é ignorado")
+	_check(not txt.contains("oi"), "rede: o quadro de recados só vê lixo")
+	sa.free(); sb.free(); sc.free()
 
 	var estado = Sorte.rng.state
 	Sorte.semear(42)

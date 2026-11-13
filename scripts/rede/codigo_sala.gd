@@ -1,5 +1,9 @@
 class_name CodigoSala
-## Código da sala (Ciclo 2.28): o endereço IPv4 do anfitrião virado em 8
+## Código da sala (Ciclo 2.28; 2.28c: sorteado, para a conexão automática).
+## Formato: 32 bits + 8 bits de conferência = 8 letras. No 2.28 os 32 bits eram
+## o IPv4 do anfitrião; desde o 2.28c são sorteados (o código só dá o tópico e a
+## chave do quadro de recados, ver Sinal). ler() devolve "codigo" para as 8
+## letras e "ip" (legado e testes). Texto antigo: o endereço IPv4 do anfitrião virado em 8
 ## letras fáceis de ditar ("K7QF-M9X2"). 32 bits do IP + 8 bits de conferência
 ## = 40 bits = 8 símbolos de 5 bits. Alfabeto Crockford (sem I, L, O, U: não
 ## confunde com 1, 0 e V). Também aceita o IP digitado direto ("26.1.2.3" ou
@@ -23,7 +27,14 @@ static func gerar(ip: String) -> String:
 	return out.substr(0, 4) + "-" + out.substr(4)
 
 
-## {"ip": String, "porta": int}; vazio se o texto não for código nem IP.
+## Código novo e sorteado (conexão automática).
+static func novo() -> String:
+	var b := Crypto.new().generate_random_bytes(4)
+	return gerar("%d.%d.%d.%d" % [b[0], b[1], b[2], b[3]])
+
+
+## {"ip": String, "porta": int} (+ "codigo" se vieram as 8 letras); vazio se
+## o texto não for código nem IP.
 static func ler(texto: String, porta_padrao: int) -> Dictionary:
 	var t := texto.strip_edges().to_upper()
 	if t.count(".") == 3:
@@ -46,7 +57,7 @@ static func ler(texto: String, porta_padrao: int) -> Dictionary:
 	var ip_n := n >> 8
 	if (n & 255) != _conferencia(ip_n):
 		return {}
-	return {"ip": "%d.%d.%d.%d" % [(ip_n >> 24) & 255, (ip_n >> 16) & 255, (ip_n >> 8) & 255, ip_n & 255], "porta": porta_padrao}
+	return {"ip": "%d.%d.%d.%d" % [(ip_n >> 24) & 255, (ip_n >> 16) & 255, (ip_n >> 8) & 255, ip_n & 255], "porta": porta_padrao, "codigo": t}
 
 
 static func _conferencia(n: int) -> int:
