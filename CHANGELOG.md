@@ -4,6 +4,40 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.26 (2026-11-13), Diretor de Jogabilidade: porrada que se sente
+Pedido do Julio: aproveitar 3 h; ele escolheu o pacote "Porrada que se sente"
+(itens 1, 3, 4 e 5 da lista de sensação de porrada em `docs/ideias.md`).
+- **Rastro na barra de vida**: o pedaço que o golpe tirou fica **branco** por
+  0,45 s e desce depois (`rastro_espera`, `rastro_vel`). Nos bonecos (mesmo quad,
+  `barra_vida.gdshader` ganhou `rastro`) e na barra do HUD (uma barra branca por baixo).
+- **Borda vermelha do golpe forte**: levou ≥ 15% da vida num golpe (ou um golpe com
+  empurrão forte), a borda acende e some em ~0,4 s, mais forte do lado de onde veio
+  (`Hud.golpe_forte`, `golpe_forte_frac`). Separada da borda de vida baixa.
+- **Guarda que quebra**: cada golpe que bate na defesa gasta a guarda em
+  dano / vida máxima (tiro gasta metade, virote de torreta nada). Somou 0,7 =
+  **GUARDA QUEBRADA!**: atordoa 0,6 s, não defende por 1,2 s e quem quebrou ganha
+  10 de Chi. Recupera depois de 1 s sem apanhar. O arco da defesa esquenta para
+  laranja e treme perto de quebrar. A física: a defesa absorve impulso; golpe
+  pesado gasta mais e corpo grande aguenta mais (Kitsune aguenta 3 golpes de
+  Samurai; Samurai aguenta 5 de Samurai e ~10 de Kitsune). Bots param de defender com a guarda gasta. Contra-golpe intacto.
+  Números no grupo "Botão direito" do `game_config` (`guarda_*`).
+- **Respingo de tinta no chão**: golpe que acerta pinta uma mancha de pincel na cor
+  do time de quem apanhou, esticada na direção do golpe, com gotas na frente; some
+  roída pelas bordas em 2 s. Todos os respingos = **1 chamada de desenho**
+  (`scripts/fx/respingo.gd`, MultiMesh de 48, forma por shader, sem textura).
+- **Modo teste**: Samurai **inimigo de treino** ao lado do aliado caído
+  (`BrainPancada`): defende 4 s (quebre a guarda dele), bate 2,5 s se você estiver
+  perto (sinta o golpe forte, treine a sua defesa) e fica parado 2,5 s; cura sozinho
+  e renasce no mesmo lugar.
+- Testes de regra: `_guarda_quebra` (guarda, tiro, torreta, recuperação, quebra,
+  trava, Chi, rastro, respingo). Print: `PORRADA_TESTE=1` com `--sandbox --shots=DIR`.
+- Prancha: project-files `castelo-de-bolo/jogabilidade/20-porrada-que-se-sente.jpg`.
+- **O que testar**: no Modo teste, bata no Samurai vermelho enquanto ele defende
+  (a guarda dele quebra no 4º golpe forte?), deixe ele bater em você (borda vermelha e o
+  branco na barra) e veja a tinta no chão. Na partida: a guarda quebra rápido ou
+  devagar demais? O respingo atrapalha a leitura da briga? O branco da barra
+  ajuda a ver quanto cada golpe tira?
+
 ## Ciclo 2.25c (2026-11-13), Diretor de Jogabilidade: som próprio em toda classe
 Pedido do Julio: "o que eu pulei de etapa nas classes novas?". A auditoria
 (project-files `castelo-de-bolo/revisao/auditoria-classes-novas-2026-11-12.md`)

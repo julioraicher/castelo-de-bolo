@@ -121,6 +121,7 @@ var _letreiros_t := 0.0
 var _poderes := false
 var _poderes_t := 2.0
 var _shots_dir := ""
+var pancada: Unit  # modo teste: inimigo de treino (Ciclo 2.26)
 var _mira_print := false
 var _menu_print := ""
 var _clipe_dir := ""  # --clipe=DIR --cena=NOME [--clipe-n=N]: grava um clipe do "Como jogar" (ClipeCenas)
@@ -471,6 +472,7 @@ func _montar_sandbox() -> void:
 		t.concluir_ja()
 	_montando_sandbox = false
 	_aliado_de_treino()
+	_inimigo_de_treino()
 
 
 ## Modo teste: um aliado sem cérebro, caído na frente do portão, para treinar
@@ -487,6 +489,32 @@ func _aliado_de_treino() -> void:
 	placar.registrar(u, time_jogador, 1, false)
 	units.append(u)
 	reanimar.treino(u)
+
+
+## Modo teste (Ciclo 2.26): Samurai inimigo de treino (BrainPancada) ao lado
+## do aliado caído: defende, bate e fica parado em ciclo, para treinar a guarda
+## que quebra, o rastro da barra, a borda do golpe forte e o respingo.
+func _inimigo_de_treino() -> void:
+	var inimigo := 1 - time_jogador
+	var u := Unit.new()
+	u.name = "%s_pancada" % Config.TEAM_NAMES[inimigo]
+	add_child(u)
+	u.setup(self, inimigo, false, load("res://config/classes/guerreiro.tres"))
+	var fr := arena.forward(time_jogador)
+	var lado := Vector3.UP.cross(fr).normalized()
+	var casa: Vector3 = arena.gate_spot[time_jogador] + fr * 13.0 + lado * 5.0
+	u.global_position = casa
+	u.reset_physics_interpolation()
+	var b := BrainPancada.new()
+	b.unit = u
+	b.game = self
+	b.casa = casa
+	u.add_child(b)
+	u.brain = b
+	u.died.connect(_on_unit_died)
+	placar.registrar(u, inimigo, 1, false)
+	units.append(u)
+	pancada = u
 
 
 func _on_started() -> void:
@@ -644,6 +672,9 @@ func _physics_process(delta: float) -> void:
 			abrir_morte_subita()
 		if _time >= 14.6 and _time - delta < 14.6:
 			_multikill(player, 3, Placar.bonus_degrau(3, Config.cfg))
+	# Print da porrada (Ciclo 2.26): PORRADA_TESTE=1 com --sandbox --shots=DIR.
+	if _shots_dir != "" and sandbox and OS.get_environment("PORRADA_TESTE") != "" and pancada:
+		_porrada_teste(delta)
 	if _shots_dir != "" and not _shot_times.is_empty() and _time >= _shot_times[0]:
 		_take_shot()
 	if _filme_dir != "" and _time >= 3.0:
@@ -963,6 +994,36 @@ func _vitrine() -> void:
 
 	if f % 3 == 0 and f >= 6:
 		get_viewport().get_texture().get_image().save_png("%s/f_%03d.png" % [_vitrine_dir, f / 3])
+
+
+## Roteiro do print da porrada: jogador na frente do Samurai de treino; quebra
+## a guarda dele, respinga tinta e leva um golpe forte (borda vermelha).
+func _porrada_teste(delta: float) -> void:
+	var u := pancada
+	var a := func(t: float) -> bool: return _time >= t and _time - delta < t
+	if a.call(1.5):
+		_shot_times = [4.4, 6.45]
+		player.brain = null  # parado: quem mexe é o roteiro
+		player.move_intent = Vector3.ZERO
+		player.wants_attack = false
+		u.guarda = 0.0
+		player.global_position = u.global_position - arena.forward(time_jogador) * 1.6
+		player.reset_physics_interpolation()
+		camera.snap()
+	var dir := (u.global_position - player.global_position)
+	dir.y = 0.0
+	dir = dir.normalized()
+	for k in 4:
+		if a.call(2.6 + k * 0.35):
+			u._visual.rotation.y = atan2(-dir.x, -dir.z)
+			u._blocking = u._guarda_trava_t <= 0.0
+			u._block_t = 5.0
+			u.take_damage(u.max_hp() * 0.19, player, dir, 1.0, true)
+	for k in 3:
+		if a.call(4.05 + k * 0.1):
+			u.take_damage(u.max_hp() * 0.08, player, (dir + Vector3(randf_range(-0.6, 0.6), 0, 0)).normalized(), 1.0, true)
+	if a.call(6.35):
+		player.take_damage(30.0, u, -dir, 1.4, true)
 
 
 func _take_shot() -> void:

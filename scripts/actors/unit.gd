@@ -130,6 +130,15 @@ var _slow_t := 0.0
 var _slow_mult := 1.0
 var _quick_cd := 0.0  # recarga do Q
 var _escudo_def: MeshInstance3D  # arco na frente enquanto defende
+# Guarda que quebra (Ciclo 2.26): quanto a defesa já segurou (fração da vida
+# máxima), há quanto tempo apanhou na defesa e por quanto tempo não defende.
+var guarda := 0.0
+var _guarda_calma := 0.0
+var _guarda_trava_t := 0.0
+# Rastro da barra de vida: fração que ainda aparece branca e a espera para descer.
+var hp_rastro := 1.0
+var _rastro_espera := 0.0
+var _respingo_t := 0.0  # último respingo de tinta (um a cada 0,2 s por boneco)
 var _silence_t := 0.0   # Selo do Onmyoji: sem ataque, botão direito nem poder
 var _preso_t := 0.0     # Gancho da Kusarigama: preso na corrente (não anda, não ataca, não esquiva)
 var _muralha_t := 0.0   # Muralha de Fé do Sohei: anel que empurra inimigos para fora
@@ -233,6 +242,8 @@ func setup(p_game: Game, p_team: int, p_is_player: bool, start_class: ClassStats
 
 func set_class(new_stats: ClassStats) -> void:
 	_super_t = 0.0
+	guarda = 0.0
+	_guarda_trava_t = 0.0
 	_stats_normal = null
 	if _sombra_t > 0.0:
 		_fim_sombra()
@@ -686,6 +697,8 @@ func _physics_process(delta: float) -> void:
 
 	if em_voo:
 		return  # a catapulta move o corpo (Catapulta._physics_process)
+	_tick_rastro(delta)
+	_tick_guarda(delta)
 
 	# Hitstop: no impacto de um golpe, atacante e alvo congelam por ~60 ms.
 	# É o Δt do contato (J = F·Δt) ficando visível; o empurrão sai depois.
@@ -1287,7 +1300,7 @@ func _set_anim_speed(s: float) -> void:
 func _update_skill(delta: float, free_hands: bool) -> void:
 	_block_t += delta
 	_quick_cd = maxf(_quick_cd - delta, 0.0)
-	var held := wants_block and free_hands and reanimando == null
+	var held := wants_block and free_hands and reanimando == null and _guarda_trava_t <= 0.0
 	if held != _blocking:
 		_blocking = held
 		if held:
@@ -1546,7 +1559,18 @@ func _tick_escudo_def(delta: float) -> void:
 	if _blocking:
 		# Janela do contra-golpe: brilha mais forte (dá para aprender o tempo).
 		alvo = 0.6 if _block_t <= Config.cfg.parry_janela else 0.3
-	mat2.albedo_color.a = move_toward(mat2.albedo_color.a, alvo, delta * 3.0)
+	# Guarda gasta (Ciclo 2.26): o arco esquenta para laranja-vermelho e fica
+	# mais opaco perto de quebrar, e treme no fim; dá para ler dos dois lados.
+	var g := clampf(guarda / maxf(Config.cfg.guarda_limite, 0.01), 0.0, 1.0)
+	var base := Config.team_color(team).lightened(0.45)
+	var cor := base.lerp(Color(1.0, 0.35, 0.12), smoothstep(0.25, 1.0, g))
+	alvo = minf(alvo + 0.3 * g, 0.85) if _blocking else alvo
+	mat2.albedo_color = Color(cor, move_toward(mat2.albedo_color.a, alvo, delta * 3.0))
+	if g > 0.7 and _blocking:
+		var tr := (g - 0.7) * 0.12
+		_escudo_def.position = Vector3(randf_range(-tr, tr), 1.0, 0.55 + randf_range(-tr, tr))
+	else:
+		_escudo_def.position = Vector3(0, 1.0, 0.55)
 	_escudo_def.visible = mat2.albedo_color.a > 0.01
 
 
@@ -1658,14 +1682,20 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 	if carried_princess:
 		amount *= Config.cfg.carrier_damage_mult
 	# Bloqueio: vale para golpes que chegam pela frente (até 60° do rosto).
-	var blocked := _blocking and _facing().dot(-dir) > BLOCK_COS
+	var blocked := _blocking and _guarda_trava_t <= 0.0 and _facing().dot(-dir) > BLOCK_COS
 	if blocked and melee and attacker and attacker.alive and _block_t <= Config.cfg.parry_janela:
 		_contra_golpe(attacker, dir)
 		return
+	var quebrou := false
 	if blocked:
+		quebrou = _gastar_guarda(amount, melee, elemento)
 		# Contra torreta o escudo segura quase tudo (vale para qualquer classe).
 		amount *= 1.0 - (Config.cfg.torreta_bloqueio if elemento == "torreta" else stats.block_reduction)
 		knock_mult *= 0.3
+	if amount > 0.0 and hp_rastro <= hp_ratio() + 0.001:
+		hp_rastro = hp_ratio()  # o branco começa onde a vida estava
+	if amount > 0.0:
+		_rastro_espera = Config.cfg.rastro_espera
 	if _shield > 0.0:
 		var absorbed := minf(_shield, amount)
 		_shield -= absorbed
@@ -1698,7 +1728,9 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 		if blocked:
 			col = Color(0.6, 0.8, 1.0)
 		Fx.damage_number(game, global_position, str(int(amount)), col, 0.6 if blocked else maxf(knock_mult, 1.0), dir)
-	if blocked:
+	if quebrou:
+		_quebrar_guarda(attacker, dir)
+	elif blocked:
 		Fx.burst(game, global_position + Vector3(0, 1.3, 0) - dir * 0.6, Color(0.8, 0.9, 1.0), 10, 6.0)
 		Sfx.play("block", global_position, 0.1)
 		_play_upper("Block_Hit", 1.5)
@@ -1708,8 +1740,11 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 			attacker._knock = -dir * attacker.stats.knockback * 0.5
 			attacker.hitstop(Config.cfg.hitstop_time * 0.7)
 			attacker._mola(-2.0, -3.0)
-	else:
+	if not blocked:
 		_impacto(attacker, dir, forte, melee, elemento, nivel)
+		if amount > 0.0 and is_on_floor() and _respingo_t <= 0.0:
+			_respingo_t = 0.2
+			Respingo.em(game, global_position, dir, Config.team_color(team), clampf(amount / max_hp() * 5.0, 0.45, 1.0))
 		# Golpe forte soa mais grave (mais "massa"); acerto de longe, mais agudo.
 		Sfx.play("hit", global_position, 0.08, 0.82 if forte else (1.12 if not melee else 1.0), (2.0 if forte else 0.0) - (4.0 if elemento != "" else 0.0))
 		if Projectile.SOM_ACERTO.has(elemento) and elemento != "bomba":
@@ -1724,6 +1759,10 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 	if is_player:
 		game.camera.add_trauma(0.2 if blocked else 0.45)
 		game.camera.kick(dir, 0.15 if blocked else 0.35)
+		# Golpe forte: borda vermelha rápida (separada da de vida baixa).
+		var frac := amount / max_hp()
+		if not blocked and game.hud and (frac >= Config.cfg.golpe_forte_frac or (forte and frac > 0.05)):
+			game.hud.golpe_forte(clampf(frac / (Config.cfg.golpe_forte_frac * 2.0), 0.4, 1.0), dir)
 	_update_hp_bar()
 	if hp <= 0.0:
 		_die(attacker)
@@ -1846,6 +1885,76 @@ func _esquiva_perfeita(attacker: Unit) -> void:
 
 ## Contra-golpe (bloqueio na hora certa): o golpe não entra, quem bateu fica
 ## atordoado e leva um corte de volta. dir = direção do golpe recebido.
+## Guarda (Ciclo 2.26): soma o golpe que bateu na defesa; true = quebrou.
+## Física: a defesa absorve impulso; golpe pesado (mais dano, mais massa)
+## gasta mais, e um corpo grande (mais vida) aguenta mais golpes.
+func _gastar_guarda(amount: float, melee: bool, elemento: String) -> bool:
+	var cfg := Config.cfg
+	if elemento == "torreta" or amount <= 0.0 or cfg.guarda_limite <= 0.0:
+		return false
+	guarda += amount / max_hp() * (1.0 if melee else cfg.guarda_tiro)
+	_guarda_calma = 0.0
+	return guarda >= cfg.guarda_limite
+
+
+func _tick_guarda(delta: float) -> void:
+	if _guarda_trava_t > 0.0:
+		_guarda_trava_t -= delta
+	if guarda <= 0.0:
+		return
+	_guarda_calma += delta
+	if _guarda_calma >= Config.cfg.guarda_espera:
+		guarda = maxf(guarda - Config.cfg.guarda_recupera * delta, 0.0)
+
+
+## Guarda quebrou: a defesa cai, atordoa um instante e não volta logo.
+func _quebrar_guarda(attacker: Unit, dir: Vector3) -> void:
+	var cfg := Config.cfg
+	guarda = 0.0
+	_guarda_trava_t = cfg.guarda_trava
+	_cancel_skill()
+	_preso_t = maxf(_preso_t, cfg.guarda_atordoa)  # quase parado, sem atacar nem esquivar
+	_attack_cd = maxf(_attack_cd, cfg.guarda_atordoa)
+	_anim_lock = maxf(_anim_lock, cfg.guarda_atordoa)
+	_windup_t = 0.0
+	_play_once("Hit_B", cfg.guarda_atordoa)
+	_mola(-6.0, -4.0)
+	_tremor_t = 0.3
+	hitstop(cfg.hitstop_time * 2.0)
+	var p := global_position + Vector3(0, 1.2, 0) - dir * 0.55
+	Fx.burst(game, p, Config.team_color(team).lightened(0.5), 18, 8.0)
+	Fx.burst(game, p, Color(1.0, 0.45, 0.15), 10, 5.0)
+	Fx.ring(game, global_position, Color(1.0, 0.5, 0.2, 0.85), 1.6)
+	Fx.damage_number(game, global_position + Vector3(0, 0.6, 0), "GUARDA QUEBRADA!", Color(1.0, 0.55, 0.25), 1.7)
+	Sfx.play("block", global_position, 0.05, 0.6, 3.0)
+	Sfx.play("hit", global_position, 0.1, 0.75)
+	if attacker:
+		attacker.add_power(cfg.guarda_chi)
+		attacker.hitstop(cfg.hitstop_time * 1.5)
+		if attacker.is_player:
+			game.camera.add_trauma(0.35)
+	if is_player:
+		game.camera.add_trauma(0.5)
+		if game.hud:
+			game.hud.golpe_forte(0.6, dir)
+
+
+## Rastro branco da barra: segura um instante e desce até a vida atual.
+func _tick_rastro(delta: float) -> void:
+	var r := clampf(hp_ratio(), 0.0, 1.0)
+	var antes := hp_rastro
+	if hp_rastro <= r:
+		hp_rastro = r
+	elif _rastro_espera > 0.0:
+		_rastro_espera -= delta
+	else:
+		hp_rastro = move_toward(hp_rastro, r, Config.cfg.rastro_vel * delta)
+	if _respingo_t > 0.0:
+		_respingo_t -= delta
+	if hp_rastro != antes and _hp_fill:
+		_hp_fill.set_instance_shader_parameter("rastro", hp_rastro)
+
+
 func _contra_golpe(attacker: Unit, dir: Vector3) -> void:
 	var cfg := Config.cfg
 	_block_t = cfg.parry_janela + 1.0  # um contra-golpe por bloqueio
@@ -2504,6 +2613,8 @@ func _end_buffs() -> void:
 	_fury_t = 0.0
 	_silence_t = 0.0
 	_preso_t = 0.0
+	guarda = 0.0
+	_guarda_trava_t = 0.0
 	_muralha_t = 0.0
 	_ciranda_t = 0.0
 	_dmg_boost_t = 0.0
@@ -2794,6 +2905,7 @@ func _update_hp_bar() -> void:
 		return
 	var r := clampf(hp / max_hp(), 0.0, 1.0)
 	_hp_fill.set_instance_shader_parameter("fracao", r)
+	_hp_fill.set_instance_shader_parameter("rastro", maxf(hp_rastro, r))
 	_hp_root.visible = alive and (r < 0.999 or is_player)
 
 

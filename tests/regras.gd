@@ -17,6 +17,7 @@ func _ready() -> void:
 	_dados()
 	_dano()
 	_contra_golpe()
+	_guarda_quebra()
 	_carga()
 	_poderes_q()
 	_sohei_kusarigama()
@@ -883,6 +884,79 @@ func _contra_golpe() -> void:
 	d.take_damage(20.0, a, dir, 1.0, true)
 	_check(_perto(d.max_hp() - d.hp, 20.0 * (1.0 - d.stats.block_reduction), 0.01), "bloqueio fora da janela deveria só reduzir")
 	d._blocking = false
+	d.hp = d.max_hp()
+	a.hp = a.max_hp()
+
+
+## Ciclo 2.26: guarda que quebra, rastro da barra de vida e respingo de tinta.
+func _guarda_quebra() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var d = null
+	var a = null
+	for u in game.units:
+		if u.alive and not u.is_player:
+			if d == null:
+				d = u
+			elif a == null and u.team != d.team:
+				a = u
+	if d == null or a == null:
+		_check(false, "guarda: faltou boneco")
+		return
+	d.set_class(load("res://config/classes/guerreiro.tres"))
+	var dir := Vector3(1, 0, 0)
+	d._visual.rotation.y = atan2(-dir.x, -dir.z)
+	d._dodge_t = 0.0
+	d._shield = 0.0
+	d.carried_princess = null
+	d.hp = d.max_hp()
+	d._blocking = true
+	d._block_t = cfg.parry_janela + 0.5
+	d.guarda = 0.0
+	# Golpe de perto soma dano/vida; de longe soma × guarda_tiro; torreta não soma.
+	d.take_damage(20.0, a, dir, 1.0, true)
+	var g1: float = d.guarda
+	_check(g1 > 0.0 and g1 < cfg.guarda_limite, "guarda: um golpe na defesa deveria gastar um pouco (%.3f)" % g1)
+	d.take_damage(20.0, a, dir, 1.0, false)
+	_check(_perto(d.guarda - g1, g1 * cfg.guarda_tiro, 0.002), "guarda: tiro deveria gastar × guarda_tiro")
+	var g2: float = d.guarda
+	d.take_damage(20.0, a, dir, 1.0, false, "torreta")
+	_check(_perto(d.guarda, g2, 0.0001), "guarda: virote de torreta não deveria gastar a guarda")
+	# Recupera só depois de guarda_espera s sem apanhar.
+	d._tick_guarda(cfg.guarda_espera * 0.5)
+	_check(_perto(d.guarda, g2, 0.0001), "guarda: não deveria recuperar antes de guarda_espera")
+	d._tick_guarda(cfg.guarda_espera)
+	_check(d.guarda < g2, "guarda: deveria recuperar depois de guarda_espera")
+	# Perto do limite: o próximo golpe quebra, atordoa e trava a defesa.
+	d.guarda = cfg.guarda_limite - 0.001
+	var chi0: float = a.power
+	d.take_damage(20.0, a, dir, 1.0, true)
+	_check(not d._blocking, "guarda: quebrada deveria baixar a defesa")
+	_check(d._guarda_trava_t > 0.0 and d._preso_t > 0.0, "guarda: quebrada deveria atordoar e travar a defesa")
+	_check(_perto(d.guarda, 0.0, 0.0001), "guarda: depois de quebrar volta a zero")
+	_check(a.power > chi0, "guarda: quem quebrou deveria ganhar Chi")
+	d.wants_block = true
+	d._update_skill(0.016, true)
+	_check(not d._blocking, "guarda: não deveria defender enquanto a guarda está travada")
+	d.wants_block = false
+	d._guarda_trava_t = 0.0
+	d._preso_t = 0.0
+	d._anim_lock = 0.0
+	d._attack_cd = 0.0
+	# Rastro: o branco fica na vida de antes e desce depois da espera.
+	d.hp = d.max_hp()
+	d._tick_rastro(0.016)
+	d.take_damage(40.0, a, dir, 1.0, true)
+	var r: float = d.hp_ratio()
+	_check(r < 1.0 and d.hp_rastro > r + 0.1, "rastro: deveria ficar branco onde a vida estava (%.2f, vida %.2f)" % [d.hp_rastro, r])
+	d._tick_rastro(cfg.rastro_espera * 0.5)
+	_check(d.hp_rastro > r + 0.1, "rastro: não deveria descer antes da espera")
+	for i in 120:
+		d._tick_rastro(1.0 / 60.0)
+	_check(_perto(d.hp_rastro, d.hp_ratio(), 0.001), "rastro: deveria chegar à vida atual")
+	# Respingo: um MultiMesh só no jogo, cresce um por golpe.
+	load("res://scripts/fx/respingo.gd").em(game, d.global_position, dir, Color.RED, 0.8)
+	var rs = game.get_node_or_null("Respingo")
+	_check(rs != null and rs.multimesh.visible_instance_count >= 1, "respingo: deveria existir no jogo")
 	d.hp = d.max_hp()
 	a.hp = a.max_hp()
 

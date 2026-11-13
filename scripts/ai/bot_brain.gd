@@ -87,6 +87,9 @@ func _tatica(delta: float) -> void:
 	var perto := _nearest_enemy(6.0)
 	# Bloqueio: inimigo de corpo a corpo golpeando de frente, a até 3 m.
 	var chance_def := 0.35 if unit.stats.attack_kind == "melee" else 0.18
+	# Guarda quase quebrando (Ciclo 2.26): o bot para de defender e prefere o dash.
+	if unit.guarda > Config.cfg.guarda_limite * 0.6:
+		chance_def = 0.0
 	if perto and perto.atacando() and perto.stats.attack_kind == "melee" \
 			and me.distance_to(perto.global_position) < perto.stats.attack_range + 0.8 and randf() < chance_def:
 		_bloqueio_t = 0.45

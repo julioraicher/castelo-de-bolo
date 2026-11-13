@@ -21,7 +21,7 @@ const CONTROLS := [
 	["W A S D", "andar"],
 	["Mouse", "mirar"],
 	["Clique esquerdo", "atacar (segure para golpear sem parar)"],
-	["Clique direito", "defender (segure). Erguido na hora do golpe, contra-ataca"],
+	["Clique direito", "defender (segure). Erguido na hora do golpe, contra-ataca. Apanhar muito na defesa quebra a guarda"],
 	["Q", "habilidade rápida da classe (recarga curta): investida, pisão, tiro perfurante, cura, mina ou estrepes"],
 	["E", "poder especial, quando a barra de Chi enche"],
 	["R", "SUPER, quando a barra dourada enche (abates, dano, itens e espíritos)"],
