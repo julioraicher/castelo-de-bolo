@@ -1,6 +1,6 @@
 extends SceneTree
 ## Gera os heróis raros (Ciclo 2.23: 8; Heróis 2.27: +Ochimusha, Shishimai,
-## Jorogumo) em config/classes/<id>.tres e liga cada um ao bairro (campo
+## Jorogumo; 2.27b: +Kodama do Shinboku, Kaminari-kozō) em config/classes/<id>.tres e liga cada um ao bairro (campo
 ## `herois` da classe base). Sons de assinatura: <id>_poder/_super/_final. Rodar depois de mudar números:
 ##   godot --headless --path . -s tools/gerar_herois.gd
 ## Herói futuro: uma entrada em HEROIS + o id na lista do bairro em BAIRROS +
@@ -21,8 +21,8 @@ const MALHAS := {
 ## Ordem = ordem dos botões no painel do Nv6.
 const BAIRROS := {
 	"guerreiro": ["sumotori", "kappa", "ochimusha", "shishimai"],
-	"arqueiro": ["yamabushi", "karasu_tengu", "mujina", "jorogumo"],
-	"kitsune": ["onmyoji", "tennin", "komuso"],
+	"arqueiro": ["yamabushi", "karasu_tengu", "mujina", "jorogumo", "kaminari_kozo"],
+	"kitsune": ["onmyoji", "tennin", "komuso", "kodama"],
 }
 
 const HEROIS := {
@@ -187,6 +187,35 @@ const HEROIS := {
 		"power": "puxar_fios", "power_name": "Puxar os Fios", "power_radius": 10.0, "power_value": 10.0, "power_duration": 0.8,
 		"super_tipo": "proprio", "super_poder": "casulo", "super_nome": "Casulo",
 		"anim_attack": "Spellcast_Shoot",
+	},
+	# --- Heróis 2.27b --------------------------------------------------------
+	"kodama": {
+		"display_name": "Kodama do Shinboku", "epiteto": "O espírito do cedro sagrado", "modelo": "Mage",
+		"descricao": "O espírito que mora no cedro do santuário, de casca no corpo e máscara de madeira entalhada. Atira sementes que brotam nos pés de quem acerta, faz nascer árvores que fecham o caminho e curam na sombra e, no fim, ergue uma floresta inteira em volta da briga.",
+		"estilo_linha": "Dono do terreno: árvores que bloqueiam, raízes que prendem, sombra que cura.",
+		"hat_style": "kodama", "hat_color": Color(0.55, 0.88, 0.35), "estilo_ninja": "_kodama",
+		"escala_modelo": 1.06, "dash_estilo": "brota", "dash_peca": true,
+		"max_hp": 125.0, "move_speed": 6.2, "attack_kind": "ranged", "damage": 14.0, "attack_range": 13.0,
+		"attack_cooldown": 0.65, "knockback": 3.0, "projectile_speed": 20.0, "projetil": "semente",
+		"combo_anims": [], "combo_tiros": 3, "combo_finisher_mult": 1.3, "block_reduction": 0.5,
+		"skill": "raizes", "skill_name": "Raízes", "skill_cooldown": 8.0, "skill_value": 16.0,
+		"power": "bosque", "power_name": "Bosque Sagrado", "power_radius": 9.0, "power_value": 0.0, "power_duration": 12.0,
+		"super_tipo": "proprio", "super_poder": "floresta", "super_nome": "Floresta Antiga",
+		"anim_attack": "Spellcast_Shoot",
+	},
+	"kaminari_kozo": {
+		"display_name": "Kaminari-kozō", "epiteto": "O menino do trovão", "modelo": "Barbarian",
+		"descricao": "O filho travesso do deus do trovão, que caiu das nuvens com os tambores amarrados nas costas. Quanto mais corre, mais carga junta no cabelo; o próximo golpe solta tudo numa descarga que pula de inimigo em inimigo.",
+		"estilo_linha": "Raio em cadeia: correr carrega, bater descarrega, para-raios chama a tempestade.",
+		"hat_style": "raijin", "hat_color": Color(0.62, 0.82, 1.0), "estilo_ninja": "_kaminari_kozo",
+		"escala_modelo": 0.9, "escala_extremidades": 1.35, "dash_estilo": "relampago", "dash_peca": true, "carga_estatica": true,
+		"max_hp": 110.0, "move_speed": 7.2, "attack_kind": "ranged", "damage": 10.0, "attack_range": 12.0,
+		"attack_cooldown": 0.55, "knockback": 3.0, "projectile_speed": 26.0, "projetil": "trovao", "explosao_raio": 2.5,
+		"combo_anims": [], "combo_tiros": 3, "combo_finisher_mult": 1.4, "block_reduction": 0.5,
+		"skill": "para_raios", "skill_name": "Para-raios", "skill_cooldown": 7.0, "skill_radius": 9.0,
+		"power": "relampago", "power_name": "Relâmpago", "power_radius": 9.0, "power_value": 20.0, "power_duration": 0.2,
+		"super_tipo": "proprio", "super_poder": "tambores", "super_nome": "Tambores do Trovão",
+		"anim_attack": "Throw",
 	},
 }
 

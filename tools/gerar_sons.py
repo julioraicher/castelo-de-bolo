@@ -615,6 +615,112 @@ def herois_2_27():
     save("jorogumo_super", super_de(casulo, (atraso(arpejo, 0.2),)), 0.85)
     save("jorogumo_final", mix(seda, atraso(ganho(koto(midi(76), 0.4), 0.5), 0.05)), 0.6)
 
+
+def herois_2_27b():
+    """Heróis 2.27b (Kodama do Shinboku, Kaminari-kozō). Semente própria.
+    Rode: gerar_sons.py herois227b"""
+    random.seed(2272)
+
+    def save(name, track, gain=0.8):
+        k = len(track)
+        ini = int(k * 0.7)
+        globals()["save"](name, [v * (1.0 if i < ini else (1 - (i - ini) / (k - ini)) ** 2) for i, v in enumerate(track)], gain)
+
+    def super_de(poder, extra=()):
+        base = mix(ganho(membrana(58, 0.9), 1.1), atraso(ganho(membrana(52, 0.9), 0.8), 0.24),
+                   atraso(ganho(sino(98, 1.6, ((1.0, 1.0, 1.6), (2.1, 0.6, 2.3), (3.3, 0.4, 3.2))), 0.6), 0.3))
+        return mix(base, atraso(ganho(poder, 1.1), 0.12), *extra)
+
+    whoosh = lambda sec, pico=0.5: noise(sec, cutoff=lambda x: 0.04 + pico * math.sin(math.pi * x) ** 2, release_pow=1.0)
+    madeira = lambda f: suave(sino(f, 0.12, ((1.0, 1.0, 45), (2.76, 0.45, 70), (5.4, 0.2, 95))), 0.0015)
+
+    def rangido(sec, f0=45.0, f1=70.0):
+        """Madeira rangendo = atrito de aderência e deslize (stick-slip): um trem
+        de pulsos curtos cuja taxa varia devagar; cada pulso excita a fibra."""
+        out = [0.0] * n(sec)
+        t = 0.0
+        while t < sec * 0.95:
+            x = t / sec
+            f = f0 + (f1 - f0) * x + 8 * math.sin(2 * math.pi * 1.7 * t)
+            i0 = n(t)
+            for j in range(n(0.008)):
+                if i0 + j < len(out):
+                    out[i0 + j] += math.sin(2 * math.pi * 900 * j / SR) * math.exp(-j / SR * 500) * math.sin(math.pi * x) ** 0.5
+            t += 1.0 / f * random.uniform(0.8, 1.25)
+        return out
+
+    def farfalha(sec, dens=0.5):
+        """Folhas: ruído agudo com envelope que pisca ao acaso (as folhas batendo)."""
+        base = noise(sec, cutoff=lambda x: 0.55, release_pow=1.0)
+        e, alvo = 0.0, 0.0
+        out = []
+        for i, v in enumerate(base):
+            if i % 200 == 0:
+                alvo = random.uniform(0.1, 1.0) if random.random() < dens else 0.05
+            e += 0.01 * (alvo - e)
+            out.append(v * e)
+        return out
+
+    def estalos(sec, dens=900.0, cauda=4000.0):
+        """Faísca: impulsos esparsos (descargas de corona) com sinal ao acaso."""
+        out = [0.0] * n(sec)
+        for i in range(len(out)):
+            if random.random() < dens / SR * (1 - i / len(out)):
+                a = random.choice((-1, 1)) * random.uniform(0.3, 1.0)
+                for j in range(60):
+                    if i + j < len(out):
+                        out[i + j] += a * math.exp(-j / SR * cauda)
+        return out
+
+    def zumbido(sec, f=120.0):
+        """O "bzzz" da descarga: quadrada na rede elétrica com harmônicos ímpares."""
+        return tone(lambda x: f * (1 + 0.15 * x), sec, wave_fn=square, release_pow=1.5)
+
+    def trovao(sec=1.6, longe=0.0):
+        """Trovão: estalo (onda N do canal que expande a supersônico) seguido do
+        ronco, que é a soma dos ecos de cada pedaço do raio chegando a tempos
+        diferentes (por isso rola). Longe: o ar come os agudos primeiro."""
+        estalo = noise(0.09, cutoff=lambda x: 0.95 - 0.6 * x - 0.5 * longe, release_pow=1.6)
+        ecos = [atraso(ganho(noise(random.uniform(0.5, 1.0), cutoff=lambda x: 0.03 + 0.03 * (1 - x), release_pow=1.2), random.uniform(0.4, 1.0)), random.uniform(0.02, 0.5)) for _ in range(6)]
+        ronco = mix(*ecos)
+        return mix(ganho(estalo, 1.2 * (1 - 0.6 * longe)), ganho(ronco, 1.6))[:n(sec)]
+
+    # Kodama: madeira oca, folhas, terra e o ranger da árvore crescendo.
+    pop = mix(madeira(640), ganho(whoosh(0.18, 0.35), 0.5))
+    save("kodama_semente", pop, 0.55)
+    broto = mix(ganho(tone(lambda x: 300 + 500 * x ** 0.7, 0.2, release_pow=1.6), 0.45), atraso(ganho(farfalha(0.3, 0.7), 0.6), 0.04))
+    save("kodama_brota", broto, 0.6)
+    terra = noise(0.7, cutoff=lambda x: 0.05 + 0.04 * (1 - x), release_pow=1.3)
+    rachas = mix(*(atraso(ganho(madeira(random.uniform(180, 320)), random.uniform(0.5, 1.0)), 0.035 * k + random.uniform(0, 0.02)) for k in range(7)))
+    raizes = mix(ganho(terra, 1.4), rachas, atraso(ganho(rangido(0.5, 50, 80), 0.6), 0.1))
+    save("kodama_raizes", raizes, 0.8)
+    bosque = mix(ganho(rangido(1.0, 35, 60), 0.9), atraso(ganho(farfalha(0.9, 0.6), 0.7), 0.25), ganho(terra, 0.9), atraso(ganho(broto, 0.6), 0.1))
+    save("kodama_bosque", bosque, 0.75)
+    cai = mix(ganho(rangido(0.55, 70, 30), 0.9), atraso(ganho(membrana(48, 0.6, 0.2), 1.2), 0.45), atraso(ganho(farfalha(0.6, 0.8), 0.8), 0.45))
+    save("kodama_cai", cai, 0.75)
+    floresta = mix(ganho(noise(1.8, cutoff=lambda x: 0.03, release_pow=0.8), 1.6),
+                   *(atraso(ganho(rangido(0.9, 30 + 6 * k, 55 + 5 * k), 0.6), 0.12 * k) for k in range(4)),
+                   atraso(ganho(farfalha(1.4, 0.8), 0.7), 0.4), atraso(ganho(coro((73, 110), 1.4, vogal=(500, 900), ataque=0.4), 0.45), 0.2))
+    save("kodama_floresta", floresta, 0.85)
+    save("kodama_poder", bosque, 0.75)
+    save("kodama_super", super_de(floresta), 0.85)
+    save("kodama_final", mix(pop, atraso(broto, 0.06)), 0.65)
+
+    # Kaminari-kozō: estalo, zumbido, carga subindo e trovão rolando.
+    choque = mix(ganho(estalos(0.22, 1400.0), 0.8), ganho(zumbido(0.18, 140), 0.35), noise(0.03, cutoff=lambda x: 0.9))
+    save("kaminari_choque", choque, 0.6)
+    carga = mix(ganho(tone(lambda x: 180 + 1100 * x ** 1.5, 0.55, wave_fn=square, release_pow=0.6), 0.25), ganho(estalos(0.6, 600.0), 0.7))
+    save("kaminari_carga", carga, 0.55)
+    save("kaminari_trovao", trovao(1.6), 0.85)
+    relampago = mix(ganho(whoosh(0.3, 0.8), 0.8), atraso(choque, 0.02), atraso(ganho(trovao(0.9, 0.3), 0.7), 0.05))
+    save("kaminari_relampago", relampago, 0.8)
+    rufo = mix(*(atraso(ganho(membrana(70 + 12 * (k % 3), 0.4), 0.9 if k % 3 == 0 else 0.6), 0.11 * k) for k in range(9)))
+    tambor = mix(rufo, atraso(ganho(trovao(1.6, 0.5), 0.9), 0.5))
+    save("kaminari_tambor", tambor, 0.85)
+    save("kaminari_kozo_poder", relampago, 0.8)
+    save("kaminari_kozo_super", super_de(tambor), 0.85)
+    save("kaminari_kozo_final", mix(choque, atraso(ganho(trovao(0.7, 0.2), 0.6), 0.03)), 0.75)
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1:] == ["efeitos"]:
@@ -629,6 +735,8 @@ if __name__ == "__main__":
         assinaturas_2()
     elif sys.argv[1:] == ["herois227"]:
         herois_2_27()
+    elif sys.argv[1:] == ["herois227b"]:
+        herois_2_27b()
     else:
         main()
         efeitos()
@@ -637,3 +745,4 @@ if __name__ == "__main__":
         magia()
         assinaturas_2()
         herois_2_27()
+        herois_2_27b()

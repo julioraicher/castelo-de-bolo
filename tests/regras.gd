@@ -50,6 +50,7 @@ func _ready() -> void:
 	_heroi_nv6()
 	await _herois_regras()
 	await _herois_2_27()
+	await _herois_2_27b()
 	_menos_empate()
 	_sons_proprios()
 	_relogio()  # por último: encerra a partida
@@ -1820,7 +1821,7 @@ func _menos_empate() -> void:
 	_check(_perto(cfg.pts_abates, 120.0, 0.01), "abate deveria valer 120 no placar")
 	# Heróis um pouco mais fortes, igual para todos.
 	_check(cfg.heroi_vida_mult > 1.0 and cfg.heroi_dano_mult > 1.0 and cfg.heroi_recarga_mult < 1.0, "heróis: multiplicadores do Ciclo 2.25")
-	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo"]:
+	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo", "kodama", "kaminari_kozo"]:
 		_check(load("res://config/classes/%s.tres" % id).heroi, "%s deveria estar marcado como herói" % id)
 	_check(not load("res://config/classes/guerreiro.tres").heroi, "Samurai não é herói")
 	# Carregar e escolta: um ladrão do time 1 com 0, 1 e 3 aliados colados.
@@ -1891,7 +1892,7 @@ func _heroi_nv6() -> void:
 		return
 	var t: int = of.team
 	of.nivel = cfg.mago_nivel_max
-	_check(of.herois().size() == 3 and of.pede_heroi() and not of.pode_subir(), "Nv6: casa no Nv5 com heróis pede a escolha e não sobe sozinha")
+	_check(of.herois().size() == 4 and of.pede_heroi() and not of.pode_subir(), "Nv6: casa no Nv5 com heróis pede a escolha e não sobe sozinha")
 	var cons = null
 	for o in game.oficinas:
 		if o.team == t and o.base.id == &"construtor":
@@ -2158,7 +2159,7 @@ func _herois_regras() -> void:
 	b._mudo_t = 0.0
 
 	# Super de cada herói gasta a barra uma vez só (Ciclo 2.22, mesmo critério).
-	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo"]:
+	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo", "kodama", "kaminari_kozo"]:
 		var cls = load("res://config/classes/%s.tres" % id)
 		a.set_class(cls)
 		por.call(a, centro, dx)
@@ -2403,6 +2404,248 @@ func _herois_2_27() -> void:
 	a.set_class(classes[0])
 	b.set_class(classes[1])
 	c.set_class(classes[2])
+	for u in guardados:
+		if is_instance_valid(u):
+			u.global_position = guardados[u]
+			u.reset_physics_interpolation()
+
+
+## Heróis 2.27b: Kodama do Shinboku (sementes, Raízes, Bosque, Floresta) e
+## Kaminari-kozō (carga, descarga em cadeia, Para-raios, Relâmpago, Tambores) e
+## as reações (molhado conduz, fogo queima o bosque, árvore é para-raios).
+func _herois_2_27b() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var a = null
+	var b = null
+	var c = null
+	var e = null
+	for u in game.units:
+		if u.alive and not u.is_player and not u.carried_princess and not u.em_voo:
+			if a == null:
+				a = u
+			elif b == null and u.team != a.team:
+				b = u
+			elif c == null and u.team == a.team:
+				c = u
+			elif e == null and b != null and u.team == b.team:
+				e = u
+	if a == null or b == null or c == null or e == null:
+		_check(false, "heróis 2.27b: faltou boneco")
+		return
+	var lista := [a, b, c, e]
+	var classes := []
+	var cerebros := []
+	for u in lista:
+		classes.append(u.stats)
+		cerebros.append(u.brain)
+		u.brain = null
+	var centro := Vector3(0, 0, 0)
+	centro.y = game.arena.ground_y(0, 0)
+	var guardados := {}
+	for u in game.units:
+		guardados[u] = u.global_position
+		if not u in lista and u.global_position.distance_to(centro) < 35.0:
+			u.global_position = game.arena.spawn_center[u.team]
+	var por := func(x, p: Vector3, olha: Vector3) -> void:
+		x.global_position = p
+		x.velocity = Vector3.ZERO
+		x._knock = Vector3.ZERO
+		x._dodge_t = 0.0
+		x._blocking = false
+		x._shield = 0.0
+		x._intocavel_t = 0.0
+		x._preso_t = 0.0
+		x._slow_t = 0.0
+		x._molhado_t = 0.0
+		x.hp = x.max_hp()
+		x._visual.rotation.y = atan2(olha.x, olha.z)
+		x.aim_dir = olha
+		x.reset_physics_interpolation()
+	var limpar := func() -> void:
+		for n in get_tree().get_nodes_in_group("arvores_kodama"):
+			n.remove_from_group("arvores_kodama")
+			n.queue_free()
+		for n in get_tree().get_nodes_in_group("para_raios"):
+			n.remove_from_group("para_raios")
+			n.queue_free()
+	limpar.call()  # árvores e para-raios que sobraram dos testes de todos os heróis
+	var dx := Vector3(1, 0, 0)
+	var dz := Vector3(0, 0, 1)
+	for u in [b, c, e]:
+		u.set_class(load("res://config/classes/guerreiro.tres"))
+	por.call(c, centro - dz * 14.0, dx)
+	por.call(e, centro + dz * 16.0, dx)
+
+	# --- Kodama ---
+	a.set_class(load("res://config/classes/kodama.tres"))
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 4.0, -dx)
+	var hp0: float = b.hp
+	_check(HeroisNatureza.raizes(a) and b.hp < hp0 and b._preso_t > 0.0, "Kodama: Raízes ferem e prendem quem está na linha")
+	por.call(b, centro + dx * 4.0, -dx)
+	b.take_damage(5.0, a, dx, 1.0, false, "semente", 1)
+	_check(b._preso_t <= 0.0, "Kodama: semente comum não prende")
+	b.take_damage(5.0, a, dx, 1.0, false, "semente", 2)
+	_check(b._preso_t > 0.0, "Kodama: o 3º tiro (semente forte) brota e prende")
+	# Bosque: três árvores que bloqueiam tiro e passagem e curam na sombra.
+	por.call(b, centro + dx * 14.0, -dx)
+	a.aim_point = centro + dx * 6.0
+	HeroisNatureza.bosque(a)
+	var arvores := []
+	for n in get_tree().get_nodes_in_group("arvores_kodama"):
+		if n.dono == a:
+			arvores.append(n)
+	_check(arvores.size() == cfg.bosque_n, "Kodama: Bosque faz %d árvores (fez %d)" % [cfg.bosque_n, arvores.size()])
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	if arvores.size() > 0:
+		var arv = arvores[0]
+		var p0: Vector3 = arv.global_position + Vector3(0, 1.2, 0)
+		var q := PhysicsRayQueryParameters3D.create(p0 - dz * 2.0, p0 + dz * 2.0, 1)
+		var hit: Dictionary = game.get_world_3d().direct_space_state.intersect_ray(q)
+		_check(not hit.is_empty(), "Kodama: o tronco bloqueia tiro (raio no mundo bate)")
+		por.call(c, arv.global_position + dz * 1.4, dx)
+		c.hp = c.max_hp() * 0.5
+		var hc: float = c.hp
+		if c.has_meta("sombra_ms"):
+			c.remove_meta("sombra_ms")
+		arv._curar_sombra()
+		_check(c.hp > hc, "Kodama: a sombra da árvore cura o aliado (%.0f → %.0f)" % [hc, c.hp])
+		# Fogo do próprio time não queima; do outro vira tocha.
+		Reacoes.em(game, arv.global_position, 1.0, "fogo", a.team)
+		_check(arv._tocha_t <= 0.0, "reação: fogo do próprio time não queima a árvore")
+		Reacoes.em(game, arv.global_position, 1.0, "fogo", b.team)
+		_check(arv._tocha_t > 0.0, "reação: fogo do inimigo vira tocha")
+		arv._tick_tocha(cfg.tocha_tempo + 0.1)
+		_check(arv.indo, "Kodama: a tocha cai no fim")
+		por.call(c, centro - dz * 14.0, dx)
+	if arvores.size() > 1:
+		var arv2 = arvores[1]
+		var toras0: int = game.toras.size()
+		var cortes := 0
+		for i in cfg.arvore_golpes:
+			var dir: Vector3 = (arv2.global_position - b.global_position)
+			dir.y = 0
+			por.call(b, arv2.global_position - dx * 1.2, dx)
+			if HeroisNatureza.cortar_arvore(b, dx, 2.0, 120.0):
+				cortes += 1
+		_check(cortes == cfg.arvore_golpes and arv2.indo and game.toras.size() == toras0 + 1, "Kodama: o lenhador derruba em %d golpes e ganha 1 tora" % cfg.arvore_golpes)
+	limpar.call()
+	await get_tree().process_frame
+	# Floresta Antiga: anel de gigantes; dentro, inimigo preso e aliado curado.
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 4.0, -dx)
+	por.call(c, centro - dx * 4.0, dx)
+	c.hp = c.max_hp() * 0.5
+	var hc2: float = c.hp
+	hp0 = b.hp
+	_check(HeroisNatureza.floresta(a), "Kodama: Floresta Antiga sai")
+	var gigantes := 0
+	for n in get_tree().get_nodes_in_group("arvores_kodama"):
+		if n.dono == a and n.grande:
+			gigantes += 1
+	_check(gigantes >= cfg.floresta_n - 3, "Kodama: o anel tem %d gigantes" % gigantes)
+	HeroisNatureza._tick_floresta(a, 0.7)
+	_check(b.hp < hp0 and b._preso_t > 0.0 and c.hp > hc2, "Kodama: a floresta prende e fere o inimigo e cura o aliado de dentro")
+	a._floresta_t = 0.0
+	limpar.call()
+	await get_tree().process_frame
+
+	# --- Kaminari-kozō ---
+	a.set_class(load("res://config/classes/kaminari_kozo.tres"))
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 2.0, -dx)
+	por.call(e, centro + dx * 2.0 + dz * 3.0, -dx)
+	a.carga = 0.0
+	HeroisNatureza.somar_carga(a, 1.0)
+	_check(a.carga >= 1.0 and a.has_meta("carga_no"), "Kaminari-kozō: carga cheia acende o cabelo")
+	hp0 = b.hp
+	var he: float = e.hp
+	b.take_damage(10.0, a, dx)
+	_check(hp0 - b.hp >= 10.0 + cfg.descarga_dano * 0.9 and a.carga <= 0.0 and not a.has_meta("carga_no"), "Kaminari-kozō: o golpe com carga cheia descarrega (%.0f de dano)" % (hp0 - b.hp))
+	_check(e.hp < he, "Kaminari-kozō: a descarga pula para o inimigo perto")
+	# Molhado conduz: mais dano de raio e a descarga pula mais longe.
+	por.call(b, centro + dx * 2.0, -dx)
+	hp0 = b.hp
+	b.take_damage(10.0, a, dx, 0.0, false, "trovao", 1)
+	var seco: float = hp0 - b.hp
+	b.hp = b.max_hp()
+	b.take_damage(0.5, c, dx, 0.0, false, "agua", 1)
+	_check(b._molhado_t > 0.0, "reação: a água molha")
+	hp0 = b.hp
+	b.take_damage(10.0, a, dx, 0.0, false, "trovao", 1)
+	var molhado: float = hp0 - b.hp
+	_check(_perto(molhado, seco * cfg.molhado_dano, 0.05), "reação: molhado leva %.0f%% do raio (%.1f → %.1f)" % [cfg.molhado_dano * 100, seco, molhado])
+	por.call(e, centro + dx * 2.0 + dz * (cfg.descarga_raio + 2.0), -dx)
+	b.hp = b.max_hp()
+	b._molhado_t = cfg.molhado_tempo
+	he = e.hp
+	HeroisNatureza.somar_carga(a, 1.0)
+	b.take_damage(5.0, a, dx)
+	_check(e.hp < he, "reação: molhado, a descarga pula %.0f m" % (cfg.descarga_raio + 2.0))
+	b._molhado_t = 0.0
+	# Correr carrega.
+	a.carga = 0.0
+	a.velocity = dx * 7.0
+	HeroisNatureza.tick(a, 1.0)
+	_check(a.carga > 0.05, "Kaminari-kozō: correr junta carga (%.2f)" % a.carga)
+	a.velocity = Vector3.ZERO
+	a.carga = 0.0
+	# Para-raios: crava onde mira, dá choque em volta e só pararaios_max por dono.
+	por.call(b, centro + dx * 4.5, -dx)
+	por.call(e, centro + dz * 16.0, dx)
+	a.aim_point = centro + dx * 4.0
+	_check(HeroisNatureza.para_raios(a), "Kaminari-kozō: Q crava um para-raios")
+	var pr = null
+	for n in get_tree().get_nodes_in_group("para_raios"):
+		if n.dono == a:
+			pr = n
+	_check(pr != null, "Kaminari-kozō: o para-raios existe")
+	if pr:
+		hp0 = b.hp
+		pr._physics_process(0.6)
+		_check(b.hp < hp0, "Kaminari-kozō: o para-raios dá choque em quem está perto")
+	for i in cfg.pararaios_max + 1:
+		a.aim_point = centro + dz * (3.0 + i)
+		HeroisNatureza.para_raios(a)
+	var vivos := 0
+	for n in get_tree().get_nodes_in_group("para_raios"):
+		if n.dono == a and not n.indo:
+			vivos += 1
+	_check(vivos == cfg.pararaios_max, "Kaminari-kozō: no máximo %d para-raios (tem %d)" % [cfg.pararaios_max, vivos])
+	limpar.call()
+	await get_tree().process_frame
+	# Relâmpago: salta em linha e fere quem está no caminho.
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 4.0 + dz * 0.4, -dx)
+	hp0 = b.hp
+	HeroisNatureza.relampago(a)
+	var salto: float = (a.global_position - centro).dot(dx)
+	_check(salto > cfg.relampago_dist * 0.8 and b.hp < hp0 and a.carga >= cfg.carga_relampago - 0.01, "Kaminari-kozō: Relâmpago salta %.1f m, fere no caminho e carrega" % salto)
+	a.carga = 0.0
+	HeroisNatureza.zerar(a)
+	# Tambores: raio do céu no inimigo mais perto.
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 5.0, -dx)
+	hp0 = b.hp
+	HeroisNatureza.tambores(a)
+	HeroisNatureza._tick_tambores(a, 0.2)
+	_check(b.hp < hp0 and b._preso_t > 0.0, "Kaminari-kozō: Tambores derrubam um raio no inimigo")
+	a._tambores_t = 0.0
+	# Árvore do Kodama é para-raios: o raio cai nela (e ela pega fogo), não no alvo.
+	var arv3 = HeroisNatureza.plantar(b, centro + dx * 5.0 + dz * 2.0, 6.0, false)
+	por.call(b, centro + dx * 5.0, -dx)
+	hp0 = b.hp
+	HeroisNatureza.raio_do_ceu(a, b)
+	_check(b.hp >= hp0 - 0.01 and arv3._tocha_t > 0.0, "reação: a árvore do Kodama pega o raio e vira tocha")
+	limpar.call()
+	await get_tree().process_frame
+
+	for i in lista.size():
+		var u = lista[i]
+		u.brain = cerebros[i]
+		u.set_class(classes[i])
+		HeroisNatureza.zerar(u)
 	for u in guardados:
 		if is_instance_valid(u):
 			u.global_position = guardados[u]

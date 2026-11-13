@@ -416,6 +416,70 @@ extends Resource
 @export var casulo_golpes := 3
 @export var casulo_dano := 0.5
 
+@export_group("Heróis 2.27b: Kodama, Kaminari-kozō")
+## Kodama, Broto (3º tiro de sementes): s preso.
+@export var broto_preso := 0.5
+## Raízes (Q): comprimento e largura da linha, s preso.
+@export var raizes_comp := 8.0
+@export var raizes_larg := 1.1
+@export var raizes_preso := 1.0
+## Bosque (E): árvores, s de vida, distância máxima da mira, raio da sombra que
+## cura aliados (vida/s) e vida da árvore (golpes de machado até cair).
+@export var bosque_n := 3
+@export var bosque_tempo := 12.0
+@export var bosque_dist := 9.0
+@export var bosque_sombra := 3.2
+@export var bosque_cura := 8.0
+@export var arvore_golpes := 2
+## Fogo no bosque: a árvore vira tocha tocha_tempo s (fere tocha_dano/s quem é do
+## time dela a até tocha_raio m) e cai.
+@export var tocha_tempo := 2.0
+@export var tocha_dano := 10.0
+@export var tocha_raio := 2.2
+## Floresta Antiga (R): raio do anel, árvores, s, raízes a cada N s (s preso e
+## dano nos inimigos de dentro) e cura dos aliados de dentro (vida/s).
+@export var floresta_raio := 10.0
+@export var floresta_n := 10
+@export var floresta_tempo := 8.0
+@export var floresta_cada := 2.0
+@export var floresta_preso := 1.0
+@export var floresta_dano := 8.0
+@export var floresta_cura := 7.0
+## Kaminari-kozō, carga estática (0 a 1): por s correndo, por dash e pelo
+## Relâmpago. Cheia: o próximo acerto descarrega (dano, alcance entre um e
+## outro, quantos e s atordoado).
+@export var carga_correr := 0.16
+@export var carga_dash := 0.35
+@export var carga_relampago := 0.5
+@export var descarga_dano := 16.0
+@export var descarga_raio := 5.0
+@export var descarga_n := 3
+@export var descarga_preso := 0.4
+## Molhado (água do Kappa): s; o raio pula molhado_alcance × mais longe e fere
+## molhado_dano × mais em quem está molhado.
+@export var molhado_tempo := 4.0
+@export var molhado_alcance := 2.0
+@export var molhado_dano := 1.5
+## Para-raios (Q): s cravado, quantos, raio do choque, intervalo, dano e de
+## quantos m ele puxa a descarga do dono.
+@export var pararaios_tempo := 6.0
+@export var pararaios_max := 2
+@export var pararaios_raio := 3.0
+@export var pararaios_cada := 1.0
+@export var pararaios_dano := 6.0
+@export var pararaios_puxa := 9.0
+## Relâmpago (E): metros do salto e largura do caminho que fere.
+@export var relampago_dist := 9.0
+@export var relampago_larg := 1.3
+## Tambores do Trovão (R): s, intervalo entre raios, alcance, dano e s atordoado.
+@export var tambores_tempo := 6.0
+@export var tambores_cada := 0.5
+@export var tambores_raio := 10.0
+@export var tambores_dano := 14.0
+@export var tambores_preso := 0.25
+## Árvore do Kodama é para-raios: raio que cai a até N m dela cai nela.
+@export var arvore_pararaios := 4.0
+
 @export_group("Sohei e Kusarigama (Ciclo 2.21)")
 ## Varrida (Q do Sohei): aliados a até varrida_aliados_raio m ganham escudo.
 @export var varrida_escudo := 22.0

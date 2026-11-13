@@ -164,8 +164,8 @@ o **hanko** (carimbo vermelho com o emblema).
 | Ochimusha (2.27) | ensō partido com 4 flechas cravadas | racha | cinza azul | samurai caído se ergue atrás dele, chão racha |
 | Shishimai (2.27) | cabeça de leão com juba em estrela | estala | confete | cabeça do leão pula e morde, 3 batidas de taiko, chuva de confete |
 | Jorogumo (2.27) | teia de 8 raios com a aranha | tece, girando | fios de seda | a aranha desce pelo fio, a teia se fecha |
-| Kodama (2.27, parte 2) | anéis de tronco com broto | brota | sementes | (parte 2) |
-| Kaminari-kozō (2.27, parte 2) | anel de 8 tambores + raio | troveja | faíscas | (parte 2) |
+| Kodama do Shinboku (2.27b) | anéis de tronco com broto | brota | sementes | o cedro sagrado brota atrás dele, o chão racha em verde, chuva de folhas |
+| Kaminari-kozō (2.27b) | anel de 8 tambores + raio | troveja | faíscas | os tambores aparecem no céu, cada batida um raio no chão |
 
 **Como é feito** (barato: cada peça é 1 chamada de desenho):
 - `tools/assinaturas/desenhos.js`: os 25 selos, 21 figuras e 22 peças em SVG

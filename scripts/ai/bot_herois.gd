@@ -90,6 +90,17 @@ static func rapida(b: BotBrain) -> bool:
 				_mirar(u, adiante)
 				return alvo.carried_princess != null or randf() < 0.55
 			return false
+		"raizes":  # Kodama: a linha de raízes onde pega dois, ou quem leva a máscara
+			var comp := Config.cfg.raizes_comp
+			if alvo_ok and d < comp + 0.5:
+				_mirar(u, alvo.global_position)
+				return _alinhados(b, alvo.global_position - me, comp, Config.cfg.raizes_larg) >= 2 or alvo.carried_princess != null or randf() < 0.6
+			return false
+		"para_raios":  # Kaminari-kozō: crava no meio de quem ele vai bater
+			if alvo_ok and d < u.stats.skill_radius + 3.0:
+				_mirar(u, alvo.global_position)
+				return b._count(1 - u.team, alvo.global_position, Config.cfg.pararaios_raio + 1.0) >= 2 or randf() < 0.5
+			return false
 	return false
 
 
@@ -162,6 +173,35 @@ static func poder(b: BotBrain) -> bool:
 						and o.global_position.distance_to(me) < Config.cfg.puxar_raio:
 					presos += 1
 			return presos >= 1 or b._count(1 - u.team, me, Config.cfg.puxar_raio * 0.5) >= 2
+		"bosque":  # árvores: entre ele e quem persegue a máscara, ou sombra para os feridos
+			var cfg := Config.cfg
+			var perseguidor := b._nearest_enemy(10.0)
+			if u.carried_princess and perseguidor:
+				u.aim_point = me.lerp(perseguidor.global_position, 0.5)
+				return true
+			var feridos := 0
+			for o in b.game.units:
+				if o.alive and o.team == u.team and o.hp_ratio() < 0.6 and o.global_position.distance_to(me) < 6.0:
+					feridos += 1
+			if feridos >= 2:
+				u.aim_point = me + u.aim_dir * 2.5
+				return true
+			if alvo_ok and me.distance_to(alvo.global_position) < cfg.bosque_dist and alvo.carried_princess != null:
+				u.aim_point = alvo.global_position + Vector3(alvo.velocity.x, 0, alvo.velocity.z) * 0.8
+				return true
+			return alvo_ok and me.distance_to(alvo.global_position) < 6.0 and randf() < 0.3
+		"relampago":  # atravessa quem está na frente; ferido, foge para casa num raio
+			var cfg := Config.cfg
+			if u.hp_ratio() < 0.35 and b._nearest_enemy(5.0) != null:
+				_mirar(u, b.game.arena.princess_spot[u.team])
+				return true
+			if u.carried_princess:
+				_mirar(u, b.game.arena.princess_spot[u.team])
+				return true
+			if alvo_ok and me.distance_to(alvo.global_position) < cfg.relampago_dist:
+				_mirar(u, alvo.global_position)
+				return _alinhados(b, alvo.global_position - me, cfg.relampago_dist, cfg.relampago_larg) >= 2 or alvo.hp_ratio() < 0.4 or randf() < 0.4
+			return false
 	return false
 
 
@@ -203,6 +243,14 @@ static func super_r(b: BotBrain) -> bool:
 			return b._count(1 - u.team, me, 6.0) >= 2 and (caidos >= 1 or b._count(u.team, me, cfg.festa_sorte_raio) >= 2)
 		"casulo":
 			return b._count(1 - u.team, me, cfg.casulo_raio) >= 2
+		"floresta":  # anel de gigantes: briga grande em volta ou o time ferido junto
+			var feridos := 0
+			for o in b.game.units:
+				if o.alive and o.team == u.team and o.hp_ratio() < 0.6 and o.global_position.distance_to(me) < cfg.floresta_raio * 0.8:
+					feridos += 1
+			return b._count(1 - u.team, me, cfg.floresta_raio * 0.7) >= 2 or (feridos >= 2 and b._count(1 - u.team, me, cfg.floresta_raio) >= 1)
+		"tambores":
+			return b._count(1 - u.team, me, cfg.tambores_raio) >= 2
 	return false
 
 

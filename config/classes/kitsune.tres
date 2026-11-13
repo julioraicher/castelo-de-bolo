@@ -7,6 +7,7 @@
 [ext_resource type="Resource" path="res://config/classes/onmyoji.tres" id="4_dfk7c"]
 [ext_resource type="Resource" path="res://config/classes/tennin.tres" id="5_0nfrg"]
 [ext_resource type="Resource" path="res://config/classes/komuso.tres" id="6_k3t5r"]
+[ext_resource type="Resource" path="res://config/classes/kodama.tres" id="7_0nfrg"]
 
 [resource]
 script = ExtResource("2_fhba0")
@@ -40,7 +41,7 @@ skill = "cura"
 skill_name = "Cura"
 block_reduction = 0.5
 caminhos = Array[ExtResource("2_fhba0")]([ExtResource("2_p0v7d"), ExtResource("3_4d5wp")])
-herois = Array[ExtResource("2_fhba0")]([ExtResource("4_dfk7c"), ExtResource("5_0nfrg"), ExtResource("6_k3t5r")])
+herois = Array[ExtResource("2_fhba0")]([ExtResource("4_dfk7c"), ExtResource("5_0nfrg"), ExtResource("6_k3t5r"), ExtResource("7_0nfrg")])
 power = "coluna_fogo"
 power_name = "Coluna de Fogo-Raposa"
 power_radius = 3.5

@@ -4,6 +4,72 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.27b (2026-11-13), Diretor de Jogabilidade + Diretor Visual: Kodama e Kaminari-kozō (parte 2 de 2)
+Fecha o quiz da thread "Criar quatro personagens novos": o Kodama que o Julio
+escolheu e o quinto de raio criado por nós (Julio: "encaixar onde bem
+entender, sem ser na casinha do construtor"). Agora são 13 heróis raros.
+- **Kodama do Shinboku** (Kitsune, 4º herói do bairro): básico atira
+  **sementes** em arco; o 3º tiro brota nos pés de quem acerta e prende 0,5 s.
+  Q **Raízes**: uma linha de 8 m rompe o chão, fere e prende 1 s. E **Bosque
+  Sagrado**: três árvores nascem onde ele mira (até 9 m) e ficam 12 s. **O tronco
+  é sólido**: bloqueia passagem e tiro dos dois times; a sombra cura os aliados
+  (8/s, não acumula com várias árvores). R **Floresta Antiga**: um anel de dez
+  árvores gigantes de 10 m em volta dele por 8 s; a cada 2 s as raízes prendem e
+  ferem quem é do outro time dentro do anel e os aliados de dentro recuperam vida.
+  O Construtor (qualquer lenhador) derruba uma árvore em 2 golpes (gigante: 4) e
+  ganha 1 tora.
+- **Kaminari-kozō** (Ninja de Shuriken, 5º herói do bairro): o menino do
+  trovão. Básico é um **trovão** reto que solta faísca em quem passa perto; o 3º
+  estoura em raios (área de 2,5 m, não queima nada). **Carga estática**: correr
+  carrega (mais rápido, mais carga), o dash dá +35% e o Relâmpago +50%. Com a
+  carga cheia o cabelo faísca e a HUD mostra "CARGA CHEIA"; o próximo golpe que
+  acertar solta a **descarga**: +16 de dano, prende 0,4 s e pula para até 3
+  inimigos a 5 m. Q **Para-raios**: crava uma baqueta de cobre (até 2, 6 s) que dá
+  choque em volta a cada 1 s; a descarga perto dela também estoura nela. E
+  **Relâmpago**: vira raio e salta 9 m em linha (para antes da parede), ferindo
+  quem estiver no caminho. R **Tambores do Trovão**: 6 s de tempestade; a cada
+  0,5 s um raio do céu cai no inimigo mais perto dele ou de um para-raios dele.
+- **Reações novas** (quiz 3B): **molhado conduz** (a água do Kappa molha 4 s:
+  raio fere 50% mais e a descarga pula o dobro da distância); **fogo queima o
+  bosque** (a árvore vira tocha 2 s, fere o time dela em volta e cai);
+  **a árvore do Kodama é para-raios** (raio que cai a até 4 m dela cai nela e ela
+  pega fogo). Fogo do próprio time não queima.
+- **Dash com peça** nos dois (quiz 4B): o Kodama afunda num tufo de raízes e
+  brota adiante; o Kaminari-kozō vira um risco de raio.
+- **Visual** (princípio 13): Kodama com máscara de madeira entalhada (olhos
+  ocos acesos na cor do time), galhos de chifre, coroa de folhas, corpo de
+  casca, shimenawa com papéis shide na cintura, musgo do time e cajado de muda.
+  Kaminari-kozō pequeno, cabelo espetado com pontas acesas, chifrinhos de oni,
+  tanga de tigre, baquetas e o anel de seis tambores nas costas (pele com o
+  tomoe do time). A **árvore do Kodama** é a do santuário: tronco torcido, três
+  nuvens de copa podadas (as de fora na cor do time), shimenawa com shide e
+  raízes com musgo, no material pintado do tema (vento, sombra e raio X iguais
+  aos do cenário), uma chamada de desenho por árvore. Raios em zigue-zague com
+  galho, que piscam e se rasgam (kit Magia, paleta "raio"). Chapéu no chão,
+  enfeite e emblema no pavilhão, selo, verbo (`brota`, `troveja`) e figura do R
+  próprios (cedro brotando; tambores no céu, cada batida um raio).
+- **Sons** sintetizados (`gerar_sons.py herois227b`): madeira rangendo (atrito
+  de aderência e deslize), folhas, terra rachando; estalo de faísca, zumbido,
+  carga subindo e trovão (estalo da onda de choque + ronco dos ecos).
+- Bots usam os seis poderes (Bosque entre ele e quem persegue a máscara,
+  Relâmpago para fugir ferido, R com dois ou mais em volta).
+- Testes de regra 857/857 (47 novos dos dois e das três reações).
+- Sonda com heróis (`HEROIS=1 tools/sonda_equilibrio.sh`, 8 partidas, ~9 min
+  vivo cada; abates e dano por min vivo): a 1ª versão deu Kaminari-kozō 3,0
+  abates/614 de dano (o dobro dos outros) e Kodama 0,2/137. Ajuste: Kaminari
+  dano 12→10, descarga 22→16, raspão do trovão 35→25%; Kodama dano 12→14, Raízes
+  14→16, sombra 2,6→3,2 m e cura 6→8/s. Depois: **Kaminari 2,0/407**, **Kodama
+  0,9/262 (+48 de cura)**; Yamabushi 1,5/492, Sohei 1,4/354, Shishimai 1,4/220.
+  Amostra pequena: o pitaco do Julio manda.
+- **Modo teste**: os dois já estão no painel do pavilhão; suba a casa da
+  Kitsune (Kodama) ou do Shuriken (Kaminari-kozō) até o Nv5 e escolha.
+- **O que testar**: com o **Kodama**, plante o Bosque na frente de quem vem
+  (eles têm que contornar, e tiro bate no tronco) e fique na sombra ferido; solte
+  a Floresta Antiga no meio de uma briga. Com o **Kaminari-kozō**, corra até o
+  cabelo faiscar e bata num grupo (a descarga pula), crave um para-raios e use os
+  Tambores perto dele. Junte um Kappa (água) com o raio e uma Kitsune (fogo) com
+  o bosque para ver as reações.
+
 ## Ciclo 2.27 (2026-11-13), Diretor de Jogabilidade + Diretor Visual: três heróis novos do Nv6 (parte 1 de 2)
 Quiz do Julio (thread "Criar quatro personagens novos"): Ochimusha, Shishimai,
 Jorogumo e Kodama + um quinto de raio criado por nós (Kaminari-kozō), reações

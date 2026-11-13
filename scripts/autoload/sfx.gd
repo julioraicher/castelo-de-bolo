@@ -25,7 +25,10 @@ const SOUNDS := ["swing", "hit", "shoot", "magic", "heal", "pickup", "hat", "eat
 	# Heróis 2.27 (Ochimusha, Shishimai, Jorogumo): gerar_sons.py herois227.
 	"ochimusha_poder", "ochimusha_super", "ochimusha_final", "ochimusha_fantasma", "ochimusha_flecha", "ochimusha_onibi", "ochimusha_caidos",
 	"shishimai_poder", "shishimai_super", "shishimai_final", "shishimai_mordida", "shishimai_sino", "shishimai_taiko", "shishimai_festa",
-	"jorogumo_poder", "jorogumo_super", "jorogumo_final", "jorogumo_teia", "jorogumo_fios", "jorogumo_casulo", "seda", "seda_gruda"]
+	"jorogumo_poder", "jorogumo_super", "jorogumo_final", "jorogumo_teia", "jorogumo_fios", "jorogumo_casulo", "seda", "seda_gruda",
+	# Heróis 2.27b
+	"kodama_poder", "kodama_super", "kodama_final", "kodama_semente", "kodama_brota", "kodama_raizes", "kodama_bosque", "kodama_cai", "kodama_floresta",
+	"kaminari_kozo_poder", "kaminari_kozo_super", "kaminari_kozo_final", "kaminari_choque", "kaminari_carga", "kaminari_trovao", "kaminari_relampago", "kaminari_tambor"]
 const POOL_SIZE := 32
 
 const MAX_VARIACOES := 8

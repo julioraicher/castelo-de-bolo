@@ -726,6 +726,8 @@ func update_state(game: Game) -> void:
 		else:
 			_quick_label.text = "%.1f s" % u.quick_restante()
 			_quick_row.modulate = Color(1, 1, 1, 0.6)
+		if u.stats.carga_estatica:  # Kaminari-kozō: a carga que o próximo golpe solta
+			_quick_label.text += ("  ·  carga %d%%" % int(u.carga * 100.0)) if u.carga < 1.0 else "  ·  CARGA CHEIA"
 	var mad: int = game.madeira[u.team] if u.team < game.madeira.size() else 0
 	if mad != _madeira_visto:
 		if mad > _madeira_visto and _madeira_visto >= 0:

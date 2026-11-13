@@ -548,6 +548,40 @@ static func make_hat(style: String, color: Color) -> Node3D:
 				_add(root, _cyl(0.025, 0.04, 0.6), Vector3(0.36 * s, 0.1, -0.3), Vector3(-30, 0, -55 * s), Fx.lit(Color(0.1, 0.07, 0.1)))
 			for i in 4:
 				_add(root, _sph(0.04, 0.04), Vector3((i - 1.5) * 0.1, 0.12, 0.43), Vector3.ZERO, Fx.unshaded(color))
+		# --- Heróis 2.27b ---
+		"kodama":
+			# Kodama: máscara de madeira entalhada, olhos ocos acesos e os galhos
+			# de chifre com tufos de folha.
+			var madeira := Fx.lit(Color(0.86, 0.74, 0.55), 0.6)
+			var casca := Fx.lit(Color(0.4, 0.26, 0.15))
+			var oco := Fx.lit(Color(0.12, 0.08, 0.05))
+			_add(root, _sph(0.46, 0.34), Vector3(0, 0.08, -0.08), Vector3.ZERO, Fx.lit(Color(0.25, 0.42, 0.2)))
+			_add(root, _sph(0.42, 0.48), Vector3(0, -0.05, 0.12), Vector3.ZERO, madeira, Vector3(1, 1, 0.7))
+			for s in [-1, 1]:
+				_add(root, _sph(0.09, 0.1), Vector3(0.15 * s, 0.02, 0.4), Vector3.ZERO, oco)
+				_add(root, _sph(0.035, 0.035), Vector3(0.15 * s, 0.02, 0.46), Vector3.ZERO, Fx.unshaded(color))
+				_add(root, _cyl(0.03, 0.06, 0.5), Vector3(0.24 * s, 0.4, 0.0), Vector3(-10, 0, -32 * s), casca)
+				_add(root, _sph(0.11, 0.08), Vector3(0.42 * s, 0.66, 0.0), Vector3.ZERO, Fx.lit(Color(0.3, 0.55, 0.22)), Vector3(1.3, 1, 1))
+			_add(root, _sph(0.06, 0.07), Vector3(0, -0.24, 0.42), Vector3.ZERO, oco)
+			_add(root, _cyl(0.4, 0.42, 0.06), Vector3(0, -0.38, 0.04), Vector3.ZERO, Fx.unshaded(color))
+		"raijin":
+			# Kaminari-kozō: cabelo espetado com as pontas acesas, chifrinhos de
+			# oni e três taikos pequenos atrás da cabeça.
+			var cabelo := Fx.lit(Color(0.1, 0.12, 0.24))
+			_add(root, _sph(0.44, 0.34), Vector3.ZERO, Vector3.ZERO, cabelo)
+			for i in 7:
+				var a := lerpf(-100.0, 100.0, i / 6.0)
+				var ar := deg_to_rad(a)
+				_add(root, _cyl(0.0, 0.11, 0.48), Vector3(sin(ar) * 0.28, 0.32, -cos(ar) * 0.12), Vector3(-35 * cos(ar), a, 30 * sin(ar)), cabelo)
+				if i % 2 == 0:
+					_add(root, _cyl(0.0, 0.04, 0.12), Vector3(sin(ar) * 0.38, 0.55, -cos(ar) * 0.22), Vector3(-35 * cos(ar), a, 30 * sin(ar)), Fx.unshaded(color))
+			for s in [-1, 1]:
+				_add(root, _cyl(0.0, 0.06, 0.22), Vector3(0.16 * s, 0.22, 0.34), Vector3(-30, 0, -20 * s), Fx.lit(Color(0.95, 0.9, 0.78)))
+			for k in 3:
+				var a := deg_to_rad(-40.0 + 40.0 * k)
+				var p := Vector3(sin(a) * 0.5, 0.2 + (0.12 if k == 1 else 0.0), -0.4)
+				_add(root, _cyl(0.13, 0.13, 0.1), p, Vector3(90, 0, 0), Fx.lit(Color(0.55, 0.16, 0.12)))
+				_add(root, _cyl(0.1, 0.1, 0.02), p + Vector3(0, 0, -0.06), Vector3(90, 0, 0), Fx.unshaded(color))
 		"barril":
 			_add(root, _cyl(0.38, 0.38, 0.75), Vector3.ZERO, Vector3.ZERO, Fx.lit(Color(0.42, 0.26, 0.13)))
 			for y in [-0.25, 0.25]:

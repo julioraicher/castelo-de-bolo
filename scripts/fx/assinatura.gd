@@ -43,6 +43,8 @@ const VERBO := {
 	"racha": [Vector4(0.0, 0.25, 0.85, 0.0), true, 0.14],   # Ochimusha: aparece aos pedaços, de fora para dentro
 	"estala": [Vector4(0.0, 1.0, 0.3, 0.0), false, 0.1],    # Shishimai: estalo do centro para fora
 	"tece": [Vector4(0.7, 0.6, 0.0, 0.0), false, 0.4],      # Jorogumo: girando, como fio enrolando
+	"brota": [Vector4(0.0, 1.0, 0.45, 0.0), false, 0.35],   # Kodama: do centro para fora, irregular como raiz
+	"troveja": [Vector4(0.0, 0.0, 0.7, 0.8), false, 0.08],  # Kaminari-kozō: um risco rápido, quebrado
 }
 
 ## Um por personagem. pal: paleta do kit Magia (nome ou [núcleo, meio, borda]);
@@ -72,6 +74,8 @@ const DADOS := {
 	&"ochimusha": {"pal": "fantasma", "verbo": "racha", "peca": "cinza", "peca_cor": Color(0.62, 0.8, 1.0), "giro": -0.03, "flash": Color(0.04, 0.06, 0.14)},
 	&"shishimai": {"pal": "festa", "traco": Color(0.86, 0.16, 0.18), "verbo": "estala", "peca": "confete", "peca_cor": Color(1.0, 0.82, 0.3), "giro": 0.12},
 	&"jorogumo": {"pal": "seda", "traco": Color(0.62, 0.2, 0.38), "verbo": "tece", "peca": "fio", "peca_cor": Color(0.96, 0.94, 1.0), "giro": 0.08},
+	&"kodama": {"pal": "bosque", "traco": Color(0.42, 0.27, 0.16), "verbo": "brota", "peca": "semente", "peca_cor": Color(0.62, 0.92, 0.4), "giro": 0.02},
+	&"kaminari_kozo": {"pal": "raio", "verbo": "troveja", "peca": "faisca", "peca_cor": Color(0.82, 0.92, 1.0), "giro": 0.0, "pulso": 1.0, "flash": Color(0.86, 0.92, 1.0)},
 }
 
 ## Jeitos de a peça se mexer (chaves do FxProjetil.ps + gira, vira, tam).
@@ -358,7 +362,7 @@ static func abrir_e(u: Unit) -> void:
 	var d := de(u)
 	var pal := paleta(u)
 	var raio := clampf(maxf(u.stats.power_radius, 2.5) * 1.15, 3.2, 6.4)
-	if u.stats.power in ["leque", "grou", "jato", "arrastao"]:
+	if u.stats.power in ["leque", "grou", "jato", "arrastao", "bosque", "relampago"]:
 		raio = 3.6  # poder de linha: o raio do .tres é o alcance, não a área
 	var no_super := u._super_t > 0.0
 	# Quem desenha o próprio selo no poder (no alvo ou enquanto dura) não ganha outro.
@@ -432,6 +436,11 @@ static func abrir_e(u: Unit) -> void:
 			Magia.onda(g, p, pal, 3.0, 0.3, {"banda": 0.1})
 		&"jorogumo":  # os fios brilham em roda antes do puxão
 			pecas(g, p + Vector3(0, 0.8, 0), peca, pc, 14, {"anel": raio * 0.7, "tang": 10.0, "mov": "espirra", "v0": 0.4, "v1": 1.4, "g": Vector3(0, -1.5, 0), "vida": 1.0})
+		&"kodama":  # as folhas sobem em espiral da mão que planta
+			pecas(g, alto, peca, pc, 14, {"anel": 1.4, "tang": 12.0, "mov": "sobe", "g": Vector3(0, 1.5, 0)})
+		&"kaminari_kozo":  # estalo: o cabelo arrepia e as faíscas espirram
+			pecas(g, p + Vector3(0, 2.0, 0), peca, pc, 14, {"v0": 5.0, "v1": 9.0})
+			FxProjetil.faiscas(g, p + Vector3(0, 2.0, 0), Color(0.82, 0.92, 1.0), 8, 7.0, Vector3.UP, 90.0, 0.2)
 		_:
 			pecas(g, alto, peca, pc, 10)
 
@@ -457,7 +466,7 @@ static func abrir_r(u: Unit) -> void:
 	var pc: Color = d["peca_cor"]
 	var alto := p + Vector3(0, 1.2, 0)
 	var id := _id(u)
-	if id != &"sumotori" and id != &"sohei":  # Dohyō e Muralha desenham o selo no tamanho da área
+	if not id in [&"sumotori", &"sohei", &"kodama"]:  # Dohyō, Muralha e Floresta desenham o selo no tamanho da área
 		selo(g, p, u, RAIO_R, 2.6, {"giro": 1.0} if id == &"kusarigama" else ({"escrita": 0.5} if id == &"bombardeiro" else {}))
 	match id:
 		&"guerreiro":  # Passo da Sombra: um risco de tinta atravessa a tela e ele some em fumaça
@@ -631,6 +640,23 @@ static func abrir_r(u: Unit) -> void:
 			Magia.lanca(g, p + Vector3(0, 9.0, 0) + _fundo(g, 1.0), p + Vector3(0, 4.6, 0) + _fundo(g, 1.0), pal, 0.08, 1.2, {"cresce": 0.4})
 			Magia.onda(g, p, pal, 7.0, 0.7, {"banda": 0.05, "gira": -1.2})
 			pecas(g, p + Vector3(0, 4.0, 0), peca, pc, 24, {"esfera": 3.5, "vida": 1.8})
+		&"kodama":  # o cedro sagrado brota do chão atrás dele e as folhas chovem
+			var arv := figura(g, p + Vector3(0, -2.6, 0) + _fundo(g, 1.3), "arvore", pal, Vector2(6.4, 7.6), 1.9, {"verbo": "brota", "escrita": 0.35})
+			arv.create_tween().tween_property(arv, "global_position:y", p.y + 3.8, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			Magia.rachaduras(g, p, pal, 6.5, 10, 1.6)
+			pecas(g, p + Vector3(0, 6.0, 0), peca, pc, 30, {"esfera": 4.5, "mov": "cai", "vida": 2.2})
+		&"kaminari_kozo":  # os tambores do trovão aparecem no céu e cada batida é um raio
+			var tamb := figura(g, p + Vector3(0, 6.2, 0) + _fundo(g, 1.2), "tambores", pal, Vector2(7.0, 7.0), 1.6, {"verbo": "troveja", "escrita": 0.08})
+			var alvo := tamb.scale
+			tamb.scale = alvo * 0.6
+			tamb.create_tween().tween_property(tamb, "scale", alvo, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			for k in 3:
+				_depois(u, 0.16 + 0.16 * k, func() -> void:
+					var chao := p + _roda(k, 3, 3.4, 0.3)
+					FxNatureza.raio(g, p + Vector3(0, 6.0, 0) + _fundo(g, 1.2), chao + Vector3(0, 0.05, 0), 0.3, 0.5)
+					Magia.onda(g, chao, pal, 2.4, 0.3, {"banda": 0.12}))
+			pecas(g, alto, peca, pc, 26, {"v1": 11.0})
+			Magia.onda(g, p, pal, 8.0, 0.45, {"banda": 0.08})
 		_:
 			pecas(g, alto, peca, pc, 20)
 

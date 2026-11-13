@@ -221,6 +221,14 @@ var _teia_t := 0.0          # dona em cima da própria teia (corre mais)
 var _arrastao_t := 0.0      # Shishimai avançando com um inimigo na boca
 var _arrastao_dir := Vector3.ZERO
 var _arrastao_alvo: Unit = null
+# Heróis 2.27b (Kodama, Kaminari-kozō): regras em HeroisNatureza
+var _molhado_t := 0.0       # água do Kappa: o raio pula mais longe e fere mais
+var carga := 0.0            # Kaminari-kozō: carga estática (0 a 1)
+var _tambores_t := 0.0      # Tambores do Trovão: um raio a cada tambores_cada s
+var _tambores_tick := 0.0
+var _floresta_t := 0.0      # Floresta Antiga em volta (centro fixo)
+var _floresta_tick := 0.0
+var _floresta_centro := Vector3.ZERO
 
 static var _flash_mat: StandardMaterial3D
 static var _merged_body := {}  # caminho do .tres da classe -> ArrayMesh do corpo
@@ -774,7 +782,10 @@ func _physics_process(delta: float) -> void:
 		_pose_dash.peso = move_toward(_pose_dash.peso, 1.0 if _dodge_t > 0.0 else 0.0, delta * 9.0)
 	if _fogo_dash_t > 0.0:
 		_fogo_dash_t -= delta
-		if Engine.get_physics_frames() % 3 == 0:
+		if stats.dash_estilo in ["brota", "relampago"]:
+			if Engine.get_physics_frames() % 2 == 0:
+				FxNatureza.dash_rastro(self)
+		elif Engine.get_physics_frames() % 3 == 0:
 			var cor := Color(1.0, 0.85, 0.4) if stats.estilo_ninja == "_kitsune_luz" else (Color(0.65, 0.3, 1.0) if stats.estilo_ninja == "_kitsune_sombria" else stats.hat_color)
 			Fx.burst(game, global_position + Vector3(0, 0.9, 0), cor, 3, 1.2)
 	if _rastro_dash_t > 0.0:
@@ -911,7 +922,7 @@ func _start_dodge() -> void:
 		"ninja":
 			_play_once("Running_B", DODGE_TIME + 0.1, 1.8)
 			_mola(-1.0, 10.0)
-		"chama", "fantasma":
+		"chama", "fantasma", "brota", "relampago":
 			_play_once("Dodge_Forward", DODGE_TIME + 0.1)
 			_fogo_dash(true)
 		"rolar", "rolamento":
@@ -935,6 +946,8 @@ func _start_dodge() -> void:
 			_mola(-1.5, 8.0)  # esticão na direção do dash
 	if stats.dash_peca:
 		Herois.dash_peca(self, true)
+	if stats.carga_estatica:
+		HeroisNatureza.somar_carga(self, Config.cfg.carga_dash)
 
 
 ## Pouso do dash por personalidade.
@@ -943,7 +956,7 @@ func _fim_dash() -> void:
 	if stats.dash_peca:
 		Herois.dash_peca(self, false)
 	match stats.dash_estilo:
-		"chama", "fantasma":
+		"chama", "fantasma", "brota", "relampago":
 			_fogo_dash(false)
 		"rolar":
 			# Tanque caindo do rolamento: amassa mais, levanta pó e treme o chão.
@@ -965,6 +978,12 @@ func _fim_dash() -> void:
 ## Só esconde o modelo (o _visual continua com o Passo da Sombra e o chapéu).
 func _fogo_dash(sumir: bool) -> void:
 	if _model == null:
+		return
+	if stats.dash_estilo in ["brota", "relampago"]:
+		# Kodama afunda no chão e brota adiante; Kaminari-kozō vira um risco de raio.
+		FxNatureza.dash_heroi(self, sumir)
+		_model.visible = not sumir
+		_fogo_dash_t = DODGE_TIME if sumir else 0.0
 		return
 	var cor := stats.hat_color.lightened(0.2)
 	if stats.dash_estilo == "fantasma":
@@ -1133,6 +1152,8 @@ func _attack_hit() -> void:
 			else:
 				var p := _shoot_arrow(mult, 1.0)
 				if finisher and p:
+					if stats.projetil == "trovao":
+						p.explode_final = true  # Kaminari-kozō: o 3º trovão estoura em raios
 					_poder_visual(p)
 					if Sfx.has(stats.som_golpe_final):
 						Sfx.play(stats.som_golpe_final, global_position, 0.05)
@@ -1242,7 +1263,7 @@ func _alvo_no_cone(dir: Vector3, graus: float) -> Unit:
 
 
 ## Projéteis que voam retos (sem parábola).
-const RETOS := ["shuriken", "vento", "nota", "talisma", "grou", "fio"]
+const RETOS := ["shuriken", "vento", "nota", "talisma", "grou", "fio", "trovao"]
 
 func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZERO) -> Projectile:
 	var dir := aim_dir.normalized() if dir_override == Vector3.ZERO else dir_override
