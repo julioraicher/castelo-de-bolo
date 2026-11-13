@@ -926,7 +926,7 @@ func _salvar(nome: String) -> void:
 	_pecas.clear()
 	var ps := PackedScene.new()
 	ps.pack(root)
-	ResourceSaver.save(ps, _dir.path_join(nome + ".scn"))
+	ResourceSaver.save(ps, _dir.path_join(nome + ".scn"), ResourceSaver.FLAG_COMPRESS)
 	root.free()
 
 

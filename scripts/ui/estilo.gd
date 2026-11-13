@@ -33,7 +33,6 @@ static func _static_init() -> void:
 	if f.fallbacks.is_empty():
 		f.fallbacks = [NUNITO]
 
-const T_GIGANTE := 110  # fim de partida
 const T_GRANDE := 28    # nome da classe, placar secundário
 const T_MEDIO := 22     # botões, dicas, cabeçalhos de cartão
 const T_TEXTO := 20     # texto corrido

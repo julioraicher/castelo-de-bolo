@@ -4,6 +4,31 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Revisão 2.26r (2026-11-13), Diretor de Jogabilidade: limpeza sem mudar o jogo
+Pedido do Julio: revisar, otimizar e tirar o que não serve antes do próximo lote
+de feedback. Nada muda na jogabilidade nem no visual.
+- **Download do jogo 104 MB → 43 MB** (pacote exportado). Os 568 modelos de
+  `assets/ninja/` (4 climas) agora são salvos com `ResourceSaver.FLAG_COMPRESS`:
+  73 MB → 15 MB no disco, conteúdo idêntico (impressão digital de cada cena:
+  árvore, transforms, vértices e materiais, iguais antes e depois). No navegador,
+  o jogo começa bem mais rápido; o .exe encolhe junto.
+  Geradores (`gerar_cenario_ninja`, `gerar_economia` e quem estende, `gerar_mapa_rio`)
+  já salvam comprimido; `tools/comprimir_cenas.gd` converte o que existe.
+- **Código morto removido** (~100 linhas): painel de fim antigo do HUD (`show_end`,
+  nunca aparecia: o placar faz esse papel), `Game._mascara_em_maos`,
+  `Menus._abrir_tutorial`, `Oficina.nome_caminho`/`concluir_heroi_ja`/`_ritmo`/`_obra_cena`,
+  campos antigos do `GameConfig` sem leitor (`oficina_classes`, `magos_opostos`,
+  `magos_caminho_nomes`), `Config.LAYER_ITEMS/LAYER_PROJECTILES`, `KITSUNEBI`,
+  `Estilo.T_GIGANTE` e variáveis locais sem uso.
+- Conferido e deixado: duplicação quase nula (blocos repetidos têm parâmetros
+  diferentes); script por quadro sem desperdício que valha o risco; malhas
+  paradas já juntas (`MalhaUnica`).
+- Achados que **mudariam** comportamento (esperam o Julio): project-files
+  `castelo-de-bolo/revisao/revisao-codigo-2026-11-13.md`.
+- Testes de regra 750/750 e 5 min simulados sem erro, antes e depois.
+- **O que testar**: abrir o jogo no navegador (deve carregar mais rápido) e jogar
+  uma partida normal: nada deve parecer diferente.
+
 ## Ciclo 2.26 (2026-11-13), Diretor de Jogabilidade: porrada que se sente
 Pedido do Julio: aproveitar 3 h; ele escolheu o pacote "Porrada que se sente"
 (itens 1, 3, 4 e 5 da lista de sensação de porrada em `docs/ideias.md`).

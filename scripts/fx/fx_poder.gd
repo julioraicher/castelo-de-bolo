@@ -230,7 +230,6 @@ static func leque(u: Unit, dir: Vector3) -> void:
 ## se escreve no alvo como um selo que gira e aperta até a salva cair.
 static func chuva(u: Unit, alvo: Vector3, r: float) -> void:
 	var g := u.game
-	var pal := Magia.paleta_de(Config.team_color(u.team).lightened(0.15))
 	var p := u.global_position + Vector3(0, 1.6, 0)
 	for k in 5:
 		var off := Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6))

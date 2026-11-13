@@ -55,12 +55,8 @@ var _flash: ColorRect
 var _machucado: TextureRect  # borda vermelha com vida baixa
 var _golpe: TextureRect  # borda vermelha rápida do golpe forte (Ciclo 2.26)
 var _hp_rastro: ProgressBar  # branco atrás da vida: quanto o golpe tirou
-var _end_panel: Control
-var _end_title: Label
-var _end_score: Label
 var _big_tween: Tween
 var _meu_time := 0
-var _score := [0, 0]
 ## Painel da escolha do caminho (Ciclo 2.22): dois botões, abre com [F] no
 ## bairro de uma casa no Nv2. Quem confirma é o clique (ou 1/2 no teclado).
 var _escolha: PanelContainer
@@ -203,7 +199,6 @@ func _ready() -> void:
 	root.add_child(_flash)
 
 	_build_escolha(root)
-	_build_fim(root)
 
 
 ## Golpe forte no jogador (Ciclo 2.26): borda vermelha que acende e some em
@@ -585,33 +580,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			return
 
 
-func _build_fim(root: Control) -> void:
-	_end_panel = ColorRect.new()
-	_end_panel.color = Color(Estilo.TINTA, 0.78)
-	_end_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_end_panel.visible = false
-	root.add_child(_end_panel)
-	var centro := CenterContainer.new()
-	centro.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_end_panel.add_child(centro)
-	var v := VBoxContainer.new()
-	v.alignment = BoxContainer.ALIGNMENT_CENTER
-	v.add_theme_constant_override("separation", 18)
-	centro.add_child(v)
-	_end_title = Estilo.titulo("", Estilo.T_GIGANTE, Estilo.OURO)
-	v.add_child(_end_title)
-	v.add_child(Estilo.ornamento(460.0))
-	_end_score = Estilo.rotulo("", 36, Estilo.TEXTO, Estilo.NUMERO)
-	_end_score.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(_end_score)
-	var again := HBoxContainer.new()
-	again.alignment = BoxContainer.ALIGNMENT_CENTER
-	again.add_theme_constant_override("separation", 10)
-	again.add_child(Estilo.tecla("R", 24))
-	again.add_child(Estilo.rotulo("jogar de novo", 24, Estilo.TEXTO, Estilo.CORPO))
-	v.add_child(again)
-
-
 # --- Atualização ------------------------------------------------------------------
 
 func _process(_delta: float) -> void:
@@ -657,7 +625,6 @@ func update_state(game: Game) -> void:
 	var pulso := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.012)
 	_atualizar_relogio(game, pulso)
 	for team in 2:
-		_score[team] = game.score[team]
 		_placar[team].text = str(game.score[team])
 		for k in _pips[team].size():
 			var pip: Icone = _pips[team][k]
@@ -891,10 +858,3 @@ func show_big(text: String, color := Color.WHITE, duration := 2.2) -> void:
 	_big_tween.tween_interval(duration)
 	_big_tween.tween_property(_big, "modulate:a", 0.0, 0.5)
 
-
-func show_end(won: bool) -> void:
-	_end_panel.visible = true
-	var cor := Estilo.OURO if won else Estilo.PERIGO
-	_end_title.text = "Vitória!" if won else "Derrota..."
-	_end_title.label_settings.font_color = cor
-	_end_score.text = "AZUL   %d  ×  %d   VERMELHO" % [_score[0], _score[1]]

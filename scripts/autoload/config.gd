@@ -9,8 +9,6 @@ const TEAM_NAMES := ["Azul", "Vermelho"]
 ## Camadas de física (veja Projeto > Configurações > Nomes de camadas).
 const LAYER_WORLD := 1
 const LAYER_UNITS := 2
-const LAYER_ITEMS := 4
-const LAYER_PROJECTILES := 8
 ## Barreira que só segura quem ANDA (parapeito da ponte, mureta da muralha,
 ## trava do rio): tiro, mira do mouse e golpes passam por cima dela.
 const LAYER_PASSAGEM := 16

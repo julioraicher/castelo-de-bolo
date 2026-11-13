@@ -689,7 +689,7 @@ func _completar(nome: String, maquina: bool) -> void:
 		_subir_nivel(raiz)
 	var ps := PackedScene.new()
 	ps.pack(raiz)
-	ResourceSaver.save(ps, caminho)
+	ResourceSaver.save(ps, caminho, ResourceSaver.FLAG_COMPRESS)
 	raiz.free()
 
 

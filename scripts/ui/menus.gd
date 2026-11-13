@@ -52,16 +52,6 @@ func show_start() -> void:
 		_mostrar("como_jogar")
 
 
-## Abre o "Como jogar" numa aba (ex.: "Madeira"); também usado pelos prints.
-func _abrir_tutorial(aba := "") -> void:
-	if not _painel.visible:
-		_abrir(_modo, "como_jogar")
-	else:
-		_mostrar("como_jogar")
-	if aba != "":
-		_tutorial.abrir(aba)
-
-
 ## Só para prints (--menu=inicio|pausa): mostra a tela sem pausar o jogo.
 func mostrar_para_print(qual: String) -> void:
 	_modo = qual

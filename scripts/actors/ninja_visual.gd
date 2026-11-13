@@ -22,7 +22,6 @@ const MAGENTA := Color(1.0, 0.25, 0.85)
 const FANTASMA := Color(0.45, 1.0, 0.45)
 const OURO := Color(1.0, 0.78, 0.3)
 const FOGO := Color(1.0, 0.45, 0.08)
-const KITSUNEBI := Color(1.0, 0.45, 0.75)  # fogo de raposa (rosa: ciano = Shuriken, roxo = Kitsune Sombria)
 
 static var _pecas_cache := {}   # "estilo|r,g,b" -> ArrayMesh
 static var _corpo_cache := {}   # "textura|time|contorno" -> ShaderMaterial
