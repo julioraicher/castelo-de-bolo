@@ -1,14 +1,18 @@
 class_name BotaoArena
 extends Node3D
-## Tambor de desafio da Arena de chapéus (Ciclo 2.29): um taiko baixo de laca
-## escura com o botão vermelho no topo. [F] perto dele gera um inimigo
-## aleatório na frente do jogador (Game._gerar_inimigo_arena).
+## Tambor da Arena de chapéus (Ciclo 2.29): um taiko baixo de laca escura com
+## o botão no topo. [F] perto dele gera um inimigo aleatório na frente do
+## jogador (Game._gerar_inimigo_arena). Dois tambores (2.29b): o de Desafio
+## (botão vermelho) chama classe base; o dos Heróis (botão dourado, faixa
+## roxa) chama caminho Nv2-5 ou herói raro.
 ## Silhueta própria (princípio 13): tambor com tachas douradas e duas
 ## baquetas cruzadas atrás; o botão afunda e volta ao ser apertado.
 
 ## Distância para acionar (igual ao raio de pegar chapéu).
 const RAIO := 2.6
 
+## true = Tambor dos Heróis (definir antes de entrar na árvore).
+var heroi := false
 var _botao: MeshInstance3D
 var _aro: MeshInstance3D
 var _apertando := false
@@ -38,7 +42,10 @@ func _ready() -> void:
 	dome.radial_segments = 12
 	dome.rings = 4
 	_botao.mesh = dome
-	_botao.material_override = Fx.lit(Color(0.78, 0.12, 0.1), 0.25)
+	_botao.material_override = Fx.lit(Color(1.0, 0.76, 0.25) if heroi else Color(0.78, 0.12, 0.1), 0.25)
+	if heroi:
+		# Faixa roxa no meio do corpo: o tambor que chama os raros.
+		_peca(_cil(0.88, 0.92, 0.18, 10), Vector3(0, 0.5, 0), Vector3.ZERO, Fx.lit(Color(0.45, 0.2, 0.6), 0.4))
 	_botao.position = Vector3(0, 1.04, 0)
 	add_child(_botao)
 	# Letreiro no estilo das maquininhas.
@@ -50,13 +57,17 @@ func _ready() -> void:
 	l.outline_size = 10
 	l.outline_modulate = Estilo.TINTA
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	l.modulate = Color(1.0, 0.55, 0.5)
+	l.modulate = Color(1.0, 0.82, 0.4) if heroi else Color(1.0, 0.55, 0.5)
 	l.position.y = 2.6
-	l.text = "TAMBOR DE DESAFIO\n[F] gera um inimigo"
+	l.text = "%s\n[F] %s" % [nome().to_upper(), "caminho ou herói" if heroi else "classe base"]
 	l.add_to_group("letreiro_perto")
 	add_child(l)
 	# Tudo que é parado vira uma malha só; o botão fica de fora (anima).
 	MalhaUnica.juntar(self, [_botao])
+
+
+func nome() -> String:
+	return "Tambor dos Heróis" if heroi else "Tambor de Desafio"
 
 
 ## O botão afunda e salta de volta (tween na física: regra não depende dele,
