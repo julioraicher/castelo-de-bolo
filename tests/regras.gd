@@ -55,6 +55,7 @@ func _ready() -> void:
 	_menos_empate()
 	_multiplayer()
 	_arena_chapeus()
+	_poderes_2_29b()
 	_sons_proprios()
 	_relogio()  # por último: encerra a partida
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
@@ -2818,3 +2819,51 @@ func _arena_chapeus() -> void:
 		_check(game._nivel_arena(base.caminhos[0].id) == cfg.mago_nivel_max, "arena: caminho veste o nível máximo")
 	if base.herois.size() > 0:
 		_check(game._nivel_arena(base.herois[0].id) == cfg.mago_nivel_max + 1, "arena: herói veste um nível acima do máximo")
+
+
+## Ciclo 2.29b: tambores separados, recarga rápida só de quem testa, troca de
+## chapéu encerra o poder antigo e golpe de toque mede até a borda do corpo.
+func _poderes_2_29b() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var herois_pool: Array = cfg.classes_arena_herois()
+	for c in cfg.hat_classes():
+		_check(not herois_pool.has(c), "2.29b: classe base %s fora do Tambor dos Heróis" % c.id)
+	_check(herois_pool.size() == cfg.classes_arena().size() - cfg.hat_classes().size(), "2.29b: Tambor dos Heróis = caminhos + heróis")
+	var u = _alvo()
+	if u == null:
+		return
+	# O inimigo da arena não ganha recarga rápida (antes soltava poder sem parar).
+	var era: bool = u.descartavel
+	u.descartavel = true
+	_check(not game.recarga_rapida(u), "2.29b: inimigo do tambor recarrega no ritmo normal")
+	u.descartavel = era
+	# Trocar de chapéu no meio da Ciranda: a corrente para e o Q novo sai.
+	u.set_class(load("res://config/classes/kusarigama.tres"))
+	u._ciranda_t = 5.0
+	u._spin_t = 2.0
+	u._fury_t = 2.0
+	u.set_class(load("res://config/classes/kitsune_luz.tres"))
+	_check(u._ciranda_t <= 0.0 and u._spin_t <= 0.0 and u._fury_t <= 0.0 and u.maos_livres(),
+			"2.29b: trocar de chapéu encerra Ciranda/Redemoinho/Fúria da classe antiga")
+	# Flecha Arrancada: inimigo alinhado a alcance + 0,5 m (encostando a borda) é achado.
+	var inim = null
+	for x in game.units:
+		if x.alive and x.team != u.team and x != u:
+			inim = x
+			break
+	if inim == null:
+		return
+	u.set_class(load("res://config/classes/ochimusha.tres"))
+	var p0: Vector3 = u.global_position
+	var q0: Vector3 = inim.global_position
+	var dir := Vector3.RIGHT
+	u.aim_dir = dir
+	inim.global_position = p0 + dir * (cfg.flecha_alcance + 0.5)
+	_check(Herois.alvo_toque(u, cfg.flecha_alcance, cfg.flecha_cone) == inim, "2.29b: Flecha Arrancada acha o inimigo alinhado na borda do alcance")
+	inim.global_position = p0 + dir.rotated(Vector3.UP, deg_to_rad(cfg.flecha_cone * 0.5 - 5.0)) * cfg.flecha_alcance
+	_check(Herois.alvo_toque(u, cfg.flecha_alcance, cfg.flecha_cone) == inim, "2.29b: Flecha Arrancada acha o inimigo meio de lado")
+	inim.global_position = p0 - dir * 2.0
+	_check(Herois.alvo_toque(u, cfg.flecha_alcance, cfg.flecha_cone) == null, "2.29b: Flecha Arrancada não acerta quem está atrás")
+	inim.global_position = q0
+	u.global_position = p0
+	u.set_class(cfg.villager)

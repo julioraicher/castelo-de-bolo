@@ -364,7 +364,7 @@ extends Resource
 @export var eco_atraso := 0.6
 ## Flecha Arrancada (Q): alcance, cone (graus), lentidão (multiplicador) e tempo.
 @export var flecha_alcance := 3.2
-@export var flecha_cone := 80.0
+@export var flecha_cone := 100.0
 @export var flecha_lenta := 0.6
 @export var flecha_lenta_t := 2.0
 ## Onibi (E): fogos girando, raio da órbita e de toque, susto (s correndo de medo).
@@ -667,6 +667,16 @@ func classes_arena() -> Array[ClassStats]:
 		for h in c.herois:
 			if not out.has(h):
 				out.append(h)
+	return out
+
+
+## Arena de chapéus: o que o Tambor dos Heróis sorteia (caminhos Nv2-5 e
+## heróis raros; o Tambor de Desafio sorteia só as classes base).
+func classes_arena_herois() -> Array[ClassStats]:
+	var out: Array[ClassStats] = []
+	for c in classes_arena():
+		if not hat_class_list.has(c):
+			out.append(c)
 	return out
 
 

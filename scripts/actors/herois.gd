@@ -314,15 +314,7 @@ static func acordar(u: Unit) -> void:
 static func _agarrao(u: Unit) -> bool:
 	var cfg := Config.cfg
 	var dir := _dir_mira(u)
-	var alvo: Unit = null
-	var melhor := INF
-	for o in _inimigos(u, u.global_position, u.stats.skill_radius, dir, 70.0):
-		if o._dodge_t > 0.0 or o.em_voo:
-			continue
-		var d := o.global_position.distance_to(u.global_position)
-		if d < melhor:
-			melhor = d
-			alvo = o
+	var alvo := alvo_toque(u, u.stats.skill_radius, 70.0, func(o: Unit) -> bool: return o._dodge_t <= 0.0)
 	u._play_upper("Interact", 1.8)
 	if alvo == null:
 		u._quick_cd = u.quick_cooldown() * 0.25  # errou: volta logo
@@ -578,13 +570,7 @@ static func _cadeia_corvos(u: Unit, alvos: Array, i: int) -> void:
 
 ## Q Roubar Rosto: toca um inimigo perto e fica com a classe e a cor do time dele.
 static func _roubar_rosto(u: Unit) -> bool:
-	var alvo: Unit = null
-	var melhor := u.stats.skill_radius
-	for o in _inimigos(u, u.global_position, u.stats.skill_radius):
-		var d := o.global_position.distance_to(u.global_position)
-		if d <= melhor:
-			melhor = d
-			alvo = o
+	var alvo := alvo_toque(u, u.stats.skill_radius, 360.0)
 	if alvo == null:
 		u._quick_cd = u.quick_cooldown() * 0.15
 		Fx.damage_number(u.game, u.global_position + Vector3(0, 0.6, 0), "NINGUÉM PERTO", Color(0.8, 0.7, 1.0), 0.6)
@@ -738,6 +724,8 @@ static func _laco(u: Unit) -> bool:
 			aliado = o
 	if aliado == null:
 		u._quick_cd = u.quick_cooldown() * 0.2
+		if u.is_player:
+			Fx.damage_number(u.game, u.global_position + Vector3(0, 0.6, 0), "NENHUM ALIADO LONGE", Color(0.95, 0.85, 1.0), 0.6)
 		return false
 	FxHerois.laco(u, aliado)
 	var de := u.global_position - aliado.global_position
@@ -1004,15 +992,7 @@ static func eco(u: Unit, dir: Vector3, alcance: float, arco: float, dano: float)
 static func _flecha_arrancada(u: Unit) -> bool:
 	var cfg := Config.cfg
 	var dir := _dir_mira(u)
-	var alvo: Unit = null
-	var melhor := INF
-	for o in _inimigos(u, u.global_position, cfg.flecha_alcance, dir, cfg.flecha_cone):
-		if o.na_sombra_para(u):
-			continue
-		var d := o.global_position.distance_to(u.global_position)
-		if d < melhor:
-			melhor = d
-			alvo = o
+	var alvo := alvo_toque(u, cfg.flecha_alcance, cfg.flecha_cone)
 	if alvo == null:
 		u._quick_cd = 0.25
 		if u.is_player:
@@ -1138,7 +1118,7 @@ static func _mordida(u: Unit) -> bool:
 			continue
 		d.y = 0
 		var dist := d.length()
-		if dist > cfg.mordida_alcance:
+		if dist > cfg.mordida_alcance + RAIO_CORPO:
 			continue
 		# A frente vale mais: fora do cone de 70°, a distância conta 2,5 ×.
 		var nota := dist * (2.5 if dist > 0.8 and rad_to_deg(dir.angle_to(d / dist)) > 35.0 else 1.0)
@@ -1407,6 +1387,35 @@ static func _inimigos(u: Unit, centro: Vector3, r: float, dir := Vector3.ZERO, g
 			continue
 		lista.append(o)
 	return lista
+
+
+## Raio do corpo (cápsula da Unit): alcance de toque mede até a borda do
+## inimigo, não até o centro dele.
+const RAIO_CORPO := 0.6
+
+
+## Alvo de um golpe de toque (Q de herói). 1º: o inimigo sob o cursor do
+## humano, se está ao alcance (ele apontou: não importa o cone). 2º: o mais
+## perto dentro do cone. Antes era só o cone, medido de centro a centro: com o
+## inimigo "na frente" a 3,5 m ou um pouco de lado, dava "NINGUÉM" (2.29b).
+static func alvo_toque(u: Unit, alcance: float, cone: float, filtro := Callable()) -> Unit:
+	var r := alcance + RAIO_CORPO
+	var m := u.aim_unit
+	if u.humano and m != null and is_instance_valid(m) and m.alive and m.team != u.team and not m.em_voo \
+			and not m.na_sombra_para(u) and (not filtro.is_valid() or filtro.call(m)):
+		var d := m.global_position - u.global_position
+		if absf(d.y) <= 1.8 and Vector2(d.x, d.z).length() <= r:
+			return m
+	var alvo: Unit = null
+	var melhor := INF
+	for o in _inimigos(u, u.global_position, r, _dir_mira(u), cone):
+		if o.na_sombra_para(u) or (filtro.is_valid() and not filtro.call(o)):
+			continue
+		var dist := o.global_position.distance_to(u.global_position)
+		if dist < melhor:
+			melhor = dist
+			alvo = o
+	return alvo
 
 
 static func _mais_perto(u: Unit, r: float, n: int) -> Array:

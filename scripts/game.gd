@@ -116,7 +116,8 @@ var sandbox := false
 var arena_chapeus := false
 var _montando_sandbox := false
 ## Arena de chapéus: o tambor, os inimigos gerados vivos e um id por inimigo.
-var botao_arena: BotaoArena
+## [0] = Tambor de Desafio (classes base), [1] = Tambor dos Heróis (caminhos e heróis).
+var botoes_arena: Array[BotaoArena] = []
 var inimigos_arena: Array[Unit] = []
 var _inimigo_arena_n := 0
 var _arena_prova := 0.0  # --arena-prova=N: QA, tambor sozinho a cada N s
@@ -167,6 +168,7 @@ var _perf_censo := true
 ## --perf: microssegundos gastos por seção neste quadro (Unit soma aqui).
 var perf_secoes := {}
 var _testes := false  # --testes: roda tests/regras.gd e sai
+var _varredura := false  # --varredura-poderes: tests/varredura_poderes.gd
 var _prancha_rean_dir := ""  # --prancha-reanimar=DIR: fotos da reanimação (prancha)
 var _qa_dir := ""
 var _shot_times: Array[float] = [4.0, 15.0, 30.0, 50.0, 75.0]
@@ -256,6 +258,11 @@ func _ready() -> void:
 			Settings.theme = int(arg.trim_prefix("--tema="))
 		elif arg == "--testes":
 			_testes = true
+		elif arg == "--varredura-poderes":
+			# QA (Ciclo 2.29b): Q, E e R de cada classe com inimigo alinhado
+			# (tests/varredura_poderes.gd); roda na Arena e sai 0/1.
+			_varredura = true
+			arena_pedido = true
 		elif arg.begins_with("--prancha-reanimar="):
 			_prancha_rean_dir = arg.trim_prefix("--prancha-reanimar=")
 			sandbox_pedido = true
@@ -437,6 +444,10 @@ func _ready() -> void:
 		var t: Node = load("res://tests/regras.gd").new()
 		t.set("game", self)
 		add_child(t)
+	if _varredura:
+		var vr: Node = load("res://tests/varredura_poderes.gd").new()
+		vr.set("game", self)
+		add_child(vr)
 	if _qa_dir != "":
 		var qa: Node = load("res://tests/qa_mapa.gd").new()
 		qa.set("game", self)
@@ -568,10 +579,15 @@ func _montar_arena_chapeus() -> void:
 			add_child(pad)
 			pad.setup(t, fileiras[f][i], arena.clamp_to_arena(origem + fr * pv.x + lado * pv.y))
 			hat_pads.append(pad)
-	botao_arena = BotaoArena.new()
-	add_child(botao_arena)
-	botao_arena.position = arena.clamp_to_arena(origem + fr * 3.0 + lado * 6.0)
-	botao_arena.look_at(botao_arena.position - fr)  # baquetas para as fileiras, frente para quem chega
+	# Dois tambores, um de cada lado do caminho: o vermelho chama classe base
+	# (briga simples), o dourado chama caminho ou herói raro.
+	for k in 2:
+		var b := BotaoArena.new()
+		b.heroi = k == 1
+		add_child(b)
+		b.position = arena.clamp_to_arena(origem + fr * 3.0 + lado * (6.0 if k == 0 else -6.0))
+		b.look_at(b.position - fr)  # baquetas para as fileiras, frente para quem chega
+		botoes_arena.append(b)
 	if player:
 		player.global_position = arena.clamp_to_arena(origem + fr * 1.0)
 		player.reset_physics_interpolation()
@@ -596,8 +612,8 @@ static func fileiras_arena(tamanhos: Array[int], espaco := 4.5, primeira := 7.0,
 ## (qualquer uma, heróis inclusive) a 6 m na direção da mira do jogador.
 ## Ele briga (BotBrain ATTACK) e, quando a espera de renascer acaba, some
 ## em vez de voltar (Unit.descartavel).
-func _gerar_inimigo_arena() -> void:
-	var pool := Config.cfg.classes_arena()
+func _gerar_inimigo_arena(heroi := false) -> void:
+	var pool := Config.cfg.classes_arena_herois() if heroi else Config.cfg.hat_classes()
 	var cls: ClassStats = pool[Sorte.i() % pool.size()]
 	var inimigo := 1 - time_jogador
 	var dir: Vector3 = player.aim_dir
@@ -624,8 +640,9 @@ func _gerar_inimigo_arena() -> void:
 	units.append(u)
 	inimigos_arena.append(u)
 	_log("arena inimigo %s (%d em campo, t=%.0fs)" % [cls.id, inimigos_arena_vivos(), _time])
-	if botao_arena:
-		botao_arena.acionar()
+	var b := botoes_arena[1 if heroi else 0] if botoes_arena.size() == 2 else null
+	if b:
+		b.acionar()
 	Fx.pillar(self, pos, Config.team_color(inimigo), 2.2)
 	Fx.burst(self, pos + Vector3(0, 1.2, 0), Config.team_color(inimigo).lightened(0.3), 18, 6.0)
 	Sfx.play("renascer", pos, 0.04)
@@ -647,6 +664,12 @@ func _nivel_arena(id: StringName) -> int:
 			for h in c.herois:
 				_arena_niveis[h.id] = Config.cfg.mago_nivel_max + 1
 	return int(_arena_niveis.get(id, 1))
+
+
+## Modo teste/arena: quem ganha Chi, Super e Q rápidos. O inimigo gerado
+## pelo tambor fica no ritmo normal (senão soltava poder sem parar).
+func recarga_rapida(u: Unit) -> bool:
+	return sandbox and not u.descartavel
 
 
 ## Inimigos do tambor ainda em campo (vivos ou caídos esperando sumir).
@@ -939,10 +962,13 @@ func _physics_process(delta: float) -> void:
 		if _arena_prova_t <= 0.0:
 			_arena_prova_t = _arena_prova
 			if inimigos_arena_vivos() < ARENA_INIMIGOS_MAX:
-				_gerar_inimigo_arena()
+				_gerar_inimigo_arena(_inimigo_arena_n % 2 == 1)
 	if sandbox:
-		# Modo teste: Chi e Super enchem rápido para testar E e R toda hora.
+		# Modo teste: Chi e Super enchem rápido para testar E e R toda hora
+		# (só para quem testa: o inimigo da arena carrega no ritmo normal).
 		for u in units:
+			if not recarga_rapida(u):
+				continue
 			u.add_power(Config.cfg.power_regen * (Config.cfg.sandbox_chi_mult - 1.0) * delta)
 			u.add_super(Unit.POWER_MAX / maxf(Config.cfg.sandbox_super_s, 0.5) * delta)
 	if _perf:
@@ -1386,15 +1412,20 @@ func _rules() -> void:
 					on_heroi_vestido(u, cls)
 
 		# Arena de chapéus: [F] no Tambor de Desafio gera um inimigo aleatório.
-		if arena_chapeus and u.is_player and botao_arena and pad == null \
-				and pos.distance_to(botao_arena.global_position) < BotaoArena.RAIO:
+		var tambor: BotaoArena = null
+		if arena_chapeus and u.is_player and pad == null:
+			for b in botoes_arena:
+				if pos.distance_to(b.global_position) < BotaoArena.RAIO:
+					tambor = b
+		if tambor:
 			var vivos := inimigos_arena_vivos()
-			hint = "[F] Tambor de Desafio: gerar um inimigo aleatório  (%d/%d em campo)" % [vivos, ARENA_INIMIGOS_MAX]
+			hint = "[F] %s: inimigo %s  (%d/%d em campo)" % [tambor.nome(),
+					"de caminho ou herói raro" if tambor.heroi else "de classe base", vivos, ARENA_INIMIGOS_MAX]
 			if wants_interact:
 				if vivos >= ARENA_INIMIGOS_MAX:
 					hud.show_big("Arena cheia: derrube um inimigo primeiro", Color(1, 0.6, 0.55), 1.5)
 				else:
-					_gerar_inimigo_arena()
+					_gerar_inimigo_arena(tambor.heroi)
 
 	if sandbox:
 		hint = _regras_sandbox(hint)

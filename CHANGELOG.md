@@ -4,6 +4,39 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.29b (2026-11-14), Diretor de Jogabilidade: arena mais simples + revisão dos poderes
+Julio: o tambor gerava herói demais, o inimigo soltava poder sem parar (a
+aranha), um poder parecia bugado e às vezes o jogo dizia que não tinha inimigo
+"na frente" com o inimigo ali.
+- **Dois tambores**: o vermelho (**Tambor de Desafio**) chama só **classe base**
+  (Samurai, Ninja, Kitsune, Construtor, Ronin); o dourado com faixa roxa
+  (**Tambor dos Heróis**) chama caminho Nv2-5 ou herói raro.
+- **Inimigo da arena no ritmo normal**: o modo teste dava Chi, Super e Q
+  rápidos para TODO mundo, inclusive o inimigo gerado. Agora só você recarrega
+  rápido (`Game.recarga_rapida`).
+- **Varredura de poderes** (`--varredura-poderes`, tests/varredura_poderes.gd):
+  usa Q, E e R das 26 classes com um inimigo parado e alinhado na frente e
+  aponta o que não saiu ou não fez nada. Achou:
+  - **Bug real: trocar de chapéu no meio de um poder** (Ciranda, Redemoinho,
+    Muralha, Fúria) deixava o poder antigo girando com os números da classe
+    nova e **travava o Q** dela até acabar. Agora a troca encerra o poder.
+  - **"NINGUÉM NA FRENTE / NINGUÉM PERTO" com inimigo ali**: Flecha Arrancada
+    (Ochimusha), Roubar Rosto (Mujina), Agarrão (Sumotori) e Mordida (Shishimai)
+    mediam de centro a centro, num cone estreito. Agora medem até a borda do
+    corpo, a Flecha tem cone de 100° (era 80°) e **o inimigo sob o cursor vale
+    primeiro** (`Herois.alvo_toque`).
+  - Laço do Manto (Tennin) sem aliado longe falhava calado: agora diz
+    "NENHUM ALIADO LONGE".
+  - Os outros 11 "sem efeito" são de propósito (cura sem ferido, mina, anel do
+    Dohyō, Véu...): lista com o motivo em `POR_DESENHO` na varredura.
+- Testes: 10 checagens novas (994/994), varredura 0 suspeitos, 5 min
+  simulados, arena com tambor automático e sincronia online ok.
+- **O que testar**: na Arena, o tambor vermelho deve dar só classe base e o
+  inimigo não pode mais spammar poder. Pegue Kusarigama, solte o E e troque de
+  chapéu no meio: a corrente para. De Ochimusha/Mujina, mire no inimigo com o
+  cursor e use Q encostado: não deve mais dizer "NINGUÉM". Se o poder que você
+  achou bugado continuar estranho, me diga qual é.
+
 ## Ciclo 2.29 (2026-11-13), Diretor de Jogabilidade: Arena de chapéus
 Pedido do Julio: um terceiro "mundo" de testes com os chapéus de todos os
 personagens lado a lado e um botão que gera um inimigo aleatório na frente.

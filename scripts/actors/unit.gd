@@ -291,6 +291,16 @@ func set_class(new_stats: ClassStats) -> void:
 	if _sombra_t > 0.0:
 		_fim_sombra()
 	Herois.trocou_classe(self)
+	# Poder da classe antiga ainda girando (Ciranda, Redemoinho, Muralha, Fúria)
+	# acaba na troca: antes seguia com os números da classe nova e travava o Q
+	# dela até o fim (achado da varredura de poderes, Ciclo 2.29b).
+	_ciranda_t = 0.0
+	_muralha_t = 0.0
+	_spin_t = 0.0
+	_fury_t = 0.0
+	_power_active_t = 0.0
+	_anim_lock = 0.0
+	_cancel_skill()
 	stats = new_stats
 	if not lenhador():
 		drop_tora()
@@ -1411,7 +1421,7 @@ func quick_cooldown() -> float:
 	var m := Config.cfg.rapida_cooldown_mult
 	if stats.heroi:
 		m *= Config.cfg.heroi_recarga_mult
-	if game and game.sandbox:
+	if game and game.recarga_rapida(self):
 		m *= Config.cfg.sandbox_q_mult  # modo teste: Q toda hora
 	match stats.skill:
 		"cura":
