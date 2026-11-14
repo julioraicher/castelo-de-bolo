@@ -4,6 +4,7 @@
 [ext_resource type="Resource" path="res://config/classes/armadilheiro.tres" id="2_bslkn"]
 [ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="2_otkm4"]
 [ext_resource type="Resource" path="res://config/classes/bombardeiro.tres" id="3_pqhwn"]
+[ext_resource type="Resource" path="res://config/classes/predero.tres" id="4_pqhwn"]
 
 [resource]
 script = ExtResource("2_otkm4")
@@ -31,6 +32,7 @@ skill_cooldown = 4.0
 block_reduction = 0.6
 velocidade_obra = 1.0
 caminhos = Array[ExtResource("2_otkm4")]([ExtResource("2_bslkn"), ExtResource("3_pqhwn")])
+herois = Array[ExtResource("2_otkm4")]([ExtResource("4_pqhwn")])
 power = "mutirao"
 power_name = "Mutirão"
 power_radius = 6.0

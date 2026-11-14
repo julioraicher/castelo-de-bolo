@@ -1411,6 +1411,80 @@ func _kaminari_kozo(time: Color) -> void:
 		_peca(mao, _esfera(0.06, 0.06), Vector3(0, 0.52, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.62, 0.45, 0.26).lightened(0.15)))
 
 
+# --- Herói 2.30 ------------------------------------------------------------------
+
+## Predero: pedreiro de capacete amarelo torto, bigodão, regata branca com a
+## barriga escapando, lenço do time no pescoço, engradado de cachaça nas costas
+## (os gargalos acendem na cor do time), colher de pedreiro e trena no cinto,
+## meia branca na canela e a garrafa na mão direita.
+func _predero(time: Color) -> void:
+	var cab := "head"
+	var amarelo := Color(1.0, 0.8, 0.16)
+	var bigode := Color(0.2, 0.12, 0.07)
+	var regata := Color(0.95, 0.93, 0.88)
+	var vidro := Color(0.36, 0.72, 0.42)
+	var mad := Color(0.62, 0.45, 0.26)
+	# Capacete de obra, torto para a direita: casco, aba, friso e o adesivo do time
+	var torto := Vector3(-4, 0, -9)
+	_peca(cab, _esfera(0.6, 0.42), Vector3(0.03, 0.86, -0.02), torto, Vector3(1.0, 0.9, 1.05), _plano(amarelo))
+	_peca(cab, _cilindro(0.7, 0.72, 0.05), Vector3(0.03, 0.82, 0.06), torto, Vector3(1.0, 1.0, 1.12), _plano(amarelo.darkened(0.08)))
+	_peca(cab, _caixa(Vector3(0.1, 0.08, 0.95)), Vector3(0.0, 1.27, -0.02), torto, Vector3.ONE, _plano(amarelo.lightened(0.12)))
+	_peca(cab, _cilindro(0.11, 0.11, 0.02), Vector3(-0.3, 1.05, 0.42), Vector3(55, 0, 30), Vector3.ONE, _neon(time.lightened(0.25), 1.5))
+	# Lápis de carpinteiro atrás da orelha
+	_peca(cab, _cilindro(0.03, 0.03, 0.42), Vector3(0.52, 0.55, 0.0), Vector3(0, 0, 70), Vector3.ONE, _plano(Color(0.95, 0.55, 0.15)))
+	# Bigodão de vassoura e as sobrancelhas grossas
+	for sx in [-1, 1]:
+		_peca(cab, _esfera(0.17, 0.08), Vector3(0.13 * sx, 0.4, 0.6), Vector3(0, 0, 18 * sx), Vector3(1.0, 1.0, 0.8), _plano(bigode))
+		_peca(cab, _esfera(0.07, 0.06), Vector3(0.27 * sx, 0.35, 0.56), Vector3.ZERO, Vector3.ONE, _plano(bigode))
+		_peca(cab, _caixa(Vector3(0.2, 0.06, 0.05)), Vector3(0.17 * sx, 0.7, 0.6), Vector3(0, 0, -12 * sx), Vector3.ONE, _plano(bigode))
+	var peito := "chest"
+	# Regata branca (alças largas) e a barriga escapando embaixo
+	_peca(peito, _cilindro(0.52, 0.56, 0.5), Vector3(0, 0.08, 0.02), Vector3.ZERO, Vector3(1.05, 1.0, 0.9), _plano(regata))
+	for sx in [-1, 1]:
+		_peca(peito, _caixa(Vector3(0.14, 0.3, 0.5)), Vector3(0.3 * sx, 0.38, 0.02), Vector3.ZERO, Vector3.ONE, _plano(regata.darkened(0.03)))
+	_peca(peito, _esfera(0.42, 0.32), Vector3(0, -0.28, 0.2), Vector3.ZERO, Vector3(1.1, 0.9, 0.95), _plano(PELE))
+	_peca(peito, _esfera(0.03, 0.03), Vector3(0, -0.22, 0.54), Vector3.ZERO, Vector3.ONE, _plano(PELE.darkened(0.3)))
+	# Lenço do time amarrado no pescoço, ponta solta
+	_peca(peito, _anel(0.36, 0.07, 14), Vector3(0, 0.46, 0.02), Vector3(8, 0, 0), Vector3(1, 1, 0.9), _plano(time.darkened(0.2)))
+	_peca(peito, _fita(0.3, 0.16, time.darkened(0.2), time.lightened(0.15), 3), Vector3(0.12, 0.42, 0.36), Vector3(170, 20, 0), Vector3.ONE, _bal(Vector3(0.6, 0.3, 0.0)))
+	# Engradado de cachaça nas costas: caixa de ripas e seis gargalos (tampinha acesa no time)
+	var c := Vector3(0, 0.15, -0.62)
+	for sz in [-1, 1]:
+		_peca(peito, _caixa(Vector3(0.78, 0.42, 0.05)), c + Vector3(0, 0, 0.2 * sz), Vector3.ZERO, Vector3.ONE, _plano(mad))
+	for sx in [-1, 1]:
+		_peca(peito, _caixa(Vector3(0.05, 0.42, 0.42)), c + Vector3(0.38 * sx, 0, 0), Vector3.ZERO, Vector3.ONE, _plano(mad.darkened(0.12)))
+	_peca(peito, _caixa(Vector3(0.78, 0.04, 0.42)), c + Vector3(0, -0.2, 0), Vector3.ZERO, Vector3.ONE, _plano(mad.darkened(0.2)))
+	_peca(peito, _caixa(Vector3(0.3, 0.12, 0.02)), c + Vector3(0, 0.02, -0.23), Vector3.ZERO, Vector3.ONE, _plano(time.darkened(0.1)))
+	for i in 3:
+		for j in 2:
+			var p := c + Vector3(-0.24 + i * 0.24, 0.24, -0.09 + j * 0.18)
+			var inc := Vector3(8 * (j * 2 - 1), 0, 6 * (i - 1))
+			_peca(peito, _cilindro(0.04, 0.08, 0.2), p, inc, Vector3.ONE, _plano(vidro))
+			_peca(peito, _cilindro(0.035, 0.035, 0.12), p + Vector3(0, 0.15, 0), inc, Vector3.ONE, _plano(vidro.darkened(0.15)))
+			_peca(peito, _cilindro(0.04, 0.04, 0.04), p + Vector3(0, 0.22, 0), inc, Vector3.ONE, _neon(time.lightened(0.3), 1.4))
+	# Cinto de ferramentas: colher de pedreiro, trena e o martelo
+	var quad := "hips"
+	_peca(quad, _cilindro(0.5, 0.5, 0.1), Vector3(0, 0.06, 0), Vector3.ZERO, Vector3(1, 1, 0.85), _plano(Color(0.32, 0.22, 0.12)))
+	_peca(quad, _caixa(Vector3(0.14, 0.12, 0.04)), Vector3(0, 0.06, 0.45), Vector3.ZERO, Vector3.ONE, _plano(Color(0.85, 0.7, 0.35)))
+	_peca(quad, _caixa(Vector3(0.22, 0.02, 0.3)), Vector3(0.42, -0.22, 0.12), Vector3(0, 45, 80), Vector3.ONE, _plano(Color(0.7, 0.72, 0.76)))
+	_peca(quad, _cilindro(0.03, 0.035, 0.24), Vector3(0.42, 0.0, 0.12), Vector3(0, 0, 8), Vector3.ONE, _plano(mad))
+	_peca(quad, _caixa(Vector3(0.18, 0.18, 0.1)), Vector3(-0.42, -0.06, 0.18), Vector3(0, -20, 0), Vector3.ONE, _plano(amarelo))
+	_peca(quad, _cilindro(0.05, 0.05, 0.11), Vector3(-0.42, -0.06, 0.18), Vector3(0, -20, 90), Vector3.ONE, _plano(Color(0.15, 0.15, 0.17)))
+	_peca(quad, _cilindro(0.03, 0.03, 0.34), Vector3(-0.36, -0.12, -0.3), Vector3(0, 0, 8), Vector3.ONE, _plano(mad))
+	_peca(quad, _caixa(Vector3(0.08, 0.08, 0.22)), Vector3(-0.37, 0.06, -0.3), Vector3.ZERO, Vector3.ONE, _plano(Color(0.25, 0.25, 0.3)))
+	# Meia branca puxada na canela (de chinelo, claro)
+	for lado in [".l", ".r"]:
+		_peca("lowerleg" + lado, _cilindro(0.17, 0.16, 0.16), Vector3(0, -0.2, 0.0), Vector3.ZERO, Vector3.ONE, _plano(regata))
+		_peca("lowerleg" + lado, _cilindro(0.175, 0.175, 0.03), Vector3(0, -0.13, 0.0), Vector3.ZERO, Vector3.ONE, _plano(time.lightened(0.1)))
+	# A garrafa na mão direita
+	var mao := "handslot.r"
+	_peca(mao, _cilindro(0.11, 0.1, 0.28), Vector3(0, 0.12, 0), Vector3.ZERO, Vector3.ONE, _plano(vidro))
+	_peca(mao, _cilindro(0.115, 0.115, 0.1), Vector3(0, 0.14, 0), Vector3.ZERO, Vector3.ONE, _plano(time.lightened(0.2)))
+	_peca(mao, _cilindro(0.04, 0.1, 0.12), Vector3(0, 0.32, 0), Vector3.ZERO, Vector3.ONE, _plano(vidro.darkened(0.1)))
+	_peca(mao, _cilindro(0.04, 0.04, 0.14), Vector3(0, 0.44, 0), Vector3.ZERO, Vector3.ONE, _plano(vidro))
+	_peca(mao, _cilindro(0.042, 0.042, 0.05), Vector3(0, 0.52, 0), Vector3.ZERO, Vector3.ONE, _plano(Color(0.62, 0.42, 0.24)))
+
+
 # --- Formas ------------------------------------------------------------------
 
 func _esfera(r: float, h: float) -> Mesh:

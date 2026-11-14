@@ -28,6 +28,7 @@ const SOUNDS := ["swing", "hit", "shoot", "magic", "heal", "pickup", "hat", "eat
 	"jorogumo_poder", "jorogumo_super", "jorogumo_final", "jorogumo_teia", "jorogumo_fios", "jorogumo_casulo", "seda", "seda_gruda",
 	# Heróis 2.27b
 	"kodama_poder", "kodama_super", "kodama_final", "kodama_semente", "kodama_brota", "kodama_raizes", "kodama_bosque", "kodama_cai", "kodama_floresta",
+	"predero_poder", "predero_super", "predero_final", "garrafa_lancar", "garrafa_quebra", "poca_splash", "poca_fogo", "andaime_sobe", "andaime_cai",
 	"kaminari_kozo_poder", "kaminari_kozo_super", "kaminari_kozo_final", "kaminari_choque", "kaminari_carga", "kaminari_trovao", "kaminari_relampago", "kaminari_tambor"]
 const POOL_SIZE := 32
 

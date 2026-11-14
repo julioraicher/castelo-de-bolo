@@ -24,6 +24,7 @@ const POR_DESENHO := {
 	"tennin Q": "puxa um aliado distante (não há)",
 	"tennin R": "Véu Celeste: aliados intocáveis",
 	"kodama E": "Bosque Sagrado: árvores que bloqueiam e curam",
+	"predero E": "Andaime Expresso: cobertura que bloqueia passagem e tiro",
 }
 ## Distância do inimigo "perto" (pode vir de --varredura-perto=N para testar alcance).
 var DIST_PERTO := 2.2
@@ -111,7 +112,7 @@ func _testar(p, cls, poder: String) -> void:
 				"E": usou = p.power < p.POWER_MAX * 0.5
 				"R": usou = p.super_carga < p.POWER_MAX * 0.5
 		for b in [perto, longe]:
-			if is_instance_valid(b) and (b._slow_t > 0.0 or b._preso_t > 0.0 or b._forcado_t > 0.0 or b._mudo_t > 0.0 or b._sono_t > 0.0 or b._silence_t > 0.0 or b._knock.length() > 1.0):
+			if is_instance_valid(b) and (b._slow_t > 0.0 or b._preso_t > 0.0 or b._forcado_t > 0.0 or b._mudo_t > 0.0 or b._sono_t > 0.0 or b._silence_t > 0.0 or b._knock.length() > 1.0 or b._derrapa_t > 0.0 or b._encachacado_t > 0.0):
 				efeito = true
 	var dano: float = float(linha.get("dano", 0.0)) - dano0
 	var cura: float = float(linha.get("cura", 0.0)) - cura0

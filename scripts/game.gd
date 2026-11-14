@@ -1948,8 +1948,9 @@ func soltar_tora(pos: Vector3, dir: Vector3) -> Tora:
 func golpear_plantas(u: Unit, dir: Vector3, alcance: float, arco_deg: float) -> bool:
 	var melhor := planta_no_alcance(u, dir, alcance, arco_deg)
 	if melhor == null:
-		# Árvore do Kodama (Heróis 2.27b): também rende tora.
-		return HeroisNatureza.cortar_arvore(u, dir, alcance, arco_deg)
+		# Árvore do Kodama (Heróis 2.27b): também rende tora. Andaime do
+		# Predero inimigo (2.30): desmonta, sem tora.
+		return HeroisNatureza.cortar_arvore(u, dir, alcance, arco_deg) or HeroisObra.cortar_andaime(u, dir, alcance, arco_deg)
 	return melhor.golpe(u)
 
 

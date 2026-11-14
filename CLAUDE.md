@@ -201,6 +201,10 @@ repo: `.claude/skills/`.
   (carga, descarga em cadeia, molhado conduz), árvore = `scripts/items/arvore_kodama.gd`
   (StaticBody no LAYER_WORLD: bloqueia passagem e tiro), baqueta = `para_raios.gd`,
   efeitos em `scripts/fx/fx_natureza.gd` (malhas no material pintado do tema).
+  Predero (2.30, único herói do Construtor): regras em `scripts/actors/herois_obra.gd`
+  (encachaçado, derrapa = ACCEL × poca_atrito), poça = `items/poca_cachaca.gd`
+  (fogo de qualquer time acende via `Reacoes`), andaime = `items/andaime.gd`
+  (LAYER_WORLD), projétil "garrafa" em `projectile.gd`, efeitos em `fx/fx_obra.gd`.
 - Efeitos de poder: kit `Magia` (`scripts/fx/magia.gd`, shader `magia_energia`):
   energia com ruído que se rasga (`corroi`) + filete de tinta; nunca primitiva de
   cor chapada. Receita e orçamento em docs/direcao-efeitos.md §8; conferir com

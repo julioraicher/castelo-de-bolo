@@ -1,6 +1,6 @@
 extends SceneTree
 ## Gera os heróis raros (Ciclo 2.23: 8; Heróis 2.27: +Ochimusha, Shishimai,
-## Jorogumo; 2.27b: +Kodama do Shinboku, Kaminari-kozō) em config/classes/<id>.tres e liga cada um ao bairro (campo
+## Jorogumo; 2.27b: +Kodama do Shinboku, Kaminari-kozō; 2.30: +Predero, o do Construtor) em config/classes/<id>.tres e liga cada um ao bairro (campo
 ## `herois` da classe base). Sons de assinatura: <id>_poder/_super/_final. Rodar depois de mudar números:
 ##   godot --headless --path . -s tools/gerar_herois.gd
 ## Herói futuro: uma entrada em HEROIS + o id na lista do bairro em BAIRROS +
@@ -23,6 +23,7 @@ const BAIRROS := {
 	"guerreiro": ["sumotori", "kappa", "ochimusha", "shishimai"],
 	"arqueiro": ["yamabushi", "karasu_tengu", "mujina", "jorogumo", "kaminari_kozo"],
 	"kitsune": ["onmyoji", "tennin", "komuso", "kodama"],
+	"construtor": ["predero"],
 }
 
 const HEROIS := {
@@ -215,6 +216,22 @@ const HEROIS := {
 		"skill": "para_raios", "skill_name": "Para-raios", "skill_cooldown": 7.0, "skill_radius": 9.0,
 		"power": "relampago", "power_name": "Relâmpago", "power_radius": 9.0, "power_value": 20.0, "power_duration": 0.2,
 		"super_tipo": "proprio", "super_poder": "tambores", "super_nome": "Tambores do Trovão",
+		"anim_attack": "Throw",
+	},
+	# --- Herói 2.30 (o único do Construtor; o nome errado é de propósito) -----
+	"predero": {
+		"display_name": "Predero", "epiteto": "O mestre de obra (quase)", "modelo": "Barbarian",
+		"descricao": "Pedreiro de mão cheia (de garrafa). Chegou na obra do castelo de capacete torto, colher no cinto e um engradado de cachaça que ele jura que é para limpar a ferramenta. Arremessa as garrafas por cima de qualquer muro, deixa o chão escorregando e levanta um andaime antes de alguém dizer \"ó o aço\". Ninguém escreve o nome dele direito, nem ele.",
+		"estilo_linha": "Bagunça na obra: garrafa em arco, chão que escorrega, andaime de cobertura e a saideira pegando fogo.",
+		"hat_style": "capacete", "hat_color": Color(1.0, 0.8, 0.18), "estilo_ninja": "_predero",
+		"escala_modelo": 1.04, "escala_extremidades": 1.35, "dash_estilo": "tropeco", "dash_peca": true,
+		"max_hp": 130.0, "move_speed": 6.4, "attack_kind": "ranged", "damage": 13.0, "attack_range": 11.0,
+		"attack_cooldown": 0.75, "knockback": 3.0, "projectile_speed": 15.0, "projetil": "garrafa", "explosao_raio": 1.6,
+		"combo_anims": [], "combo_tiros": 3, "combo_finisher_mult": 1.4, "block_reduction": 0.55,
+		"velocidade_obra": 1.0, "carry_speed_mult": 0.85,
+		"skill": "poca", "skill_name": "Poça de Cachaça", "skill_cooldown": 7.0, "skill_radius": 9.0,
+		"power": "andaime", "power_name": "Andaime Expresso", "power_radius": 4.0, "power_value": 0.0, "power_duration": 7.0,
+		"super_tipo": "proprio", "super_poder": "saideira", "super_nome": "Saideira",
 		"anim_attack": "Throw",
 	},
 }

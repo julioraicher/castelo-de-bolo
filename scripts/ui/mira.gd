@@ -345,7 +345,7 @@ func _marcas_no_chao(u: Unit) -> void:
 	var dir := to.normalized() if to.length() > 0.1 else u.aim_dir
 	# Tiro em arco: cai onde o cursor está, preso entre o mínimo e o máximo.
 	if st.attack_kind == "ranged" and st.projetil != "shuriken":
-		var minimo := 3.0 if st.projetil == "bomba" else 6.0
+		var minimo := 3.0 if st.projetil in ["bomba", "garrafa"] else 6.0
 		var dist := clampf(to.length(), minimo, st.attack_range * 1.4)
 		_mostrar(_marca_tiro, u.global_position + dir * dist, 0.9, Color(cp, 0.85), true, 0.15, u)
 	if not u.power_ready():

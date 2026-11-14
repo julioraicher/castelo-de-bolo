@@ -52,6 +52,7 @@ func _ready() -> void:
 	await _herois_regras()
 	await _herois_2_27()
 	await _herois_2_27b()
+	await _predero_2_30()
 	_menos_empate()
 	_multiplayer()
 	_arena_chapeus()
@@ -1834,7 +1835,7 @@ func _menos_empate() -> void:
 	_check(_perto(cfg.pts_abates, 120.0, 0.01), "abate deveria valer 120 no placar")
 	# Heróis um pouco mais fortes, igual para todos.
 	_check(cfg.heroi_vida_mult > 1.0 and cfg.heroi_dano_mult > 1.0 and cfg.heroi_recarga_mult < 1.0, "heróis: multiplicadores do Ciclo 2.25")
-	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo", "kodama", "kaminari_kozo"]:
+	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo", "kodama", "kaminari_kozo", "predero"]:
 		_check(load("res://config/classes/%s.tres" % id).heroi, "%s deveria estar marcado como herói" % id)
 	_check(not load("res://config/classes/guerreiro.tres").heroi, "Samurai não é herói")
 	# Carregar e escolta: um ladrão do time 1 com 0, 1 e 3 aliados colados.
@@ -1917,7 +1918,7 @@ func _heroi_nv6() -> void:
 		cons.nivel = cfg.mago_nivel_max
 		cons.caminho = 0
 		cons.estado = 2
-		_check(not cons.pede_heroi() and cons.herois().is_empty(), "Nv6: bairro do Construtor (sem heróis) para no Nv5")
+		_check(cons.pede_heroi() and cons.herois().size() == 1 and cons.herois()[0].id == &"predero", "Nv6: bairro do Construtor pede o Predero (o único herói dele)")
 		cons.nivel = n0
 		cons.caminho = c0
 		cons.estado = e0
@@ -2172,7 +2173,7 @@ func _herois_regras() -> void:
 	b._mudo_t = 0.0
 
 	# Super de cada herói gasta a barra uma vez só (Ciclo 2.22, mesmo critério).
-	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo", "kodama", "kaminari_kozo"]:
+	for id in ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso", "ochimusha", "shishimai", "jorogumo", "kodama", "kaminari_kozo", "predero"]:
 		var cls = load("res://config/classes/%s.tres" % id)
 		a.set_class(cls)
 		por.call(a, centro, dx)
@@ -2665,6 +2666,215 @@ func _herois_2_27b() -> void:
 			u.reset_physics_interpolation()
 
 
+## Herói 2.30: Predero (garrafa encachaça, poça derrapa e pega fogo, andaime
+## bloqueia tiro e cai na machadada, Saideira chove garrafas e acende as poças).
+func _predero_2_30() -> void:
+	var cfg = get_node("/root/Config").cfg
+	var a = null
+	var b = null
+	var c = null
+	for u in game.units:
+		if u.alive and not u.is_player and not u.carried_princess and not u.em_voo:
+			if a == null:
+				a = u
+			elif b == null and u.team != a.team:
+				b = u
+			elif c == null and b != null and u.team == b.team:
+				c = u
+	if a == null or b == null or c == null:
+		_check(false, "Predero: faltou boneco")
+		return
+	var lista := [a, b, c]
+	var classes := []
+	var cerebros := []
+	for u in lista:
+		classes.append(u.stats)
+		cerebros.append(u.brain)
+		u.brain = null
+	var centro := Vector3(0, 0, 0)
+	centro.y = game.arena.ground_y(0, 0)
+	var guardados := {}
+	for u in game.units:
+		guardados[u] = u.global_position
+		if not u in lista and u.global_position.distance_to(centro) < 35.0:
+			u.global_position = game.arena.spawn_center[u.team]
+	var por := func(x, p: Vector3, olha: Vector3) -> void:
+		x.global_position = p
+		x.velocity = Vector3.ZERO
+		x._move_vel = Vector3.ZERO
+		x._knock = Vector3.ZERO
+		x._dodge_t = 0.0
+		x._blocking = false
+		x._shield = 0.0
+		x._intocavel_t = 0.0
+		x._preso_t = 0.0
+		x._slow_t = 0.0
+		x.move_intent = Vector3.ZERO
+		HeroisObra.zerar(x)
+		x.hp = x.max_hp()
+		x._visual.rotation.y = atan2(olha.x, olha.z)
+		x.aim_dir = olha
+		x.reset_physics_interpolation()
+	var limpar := func() -> void:
+		for grupo in ["pocas_cachaca", "andaimes"]:
+			for n in get_tree().get_nodes_in_group(grupo):
+				n.remove_from_group(grupo)
+				n.queue_free()
+	limpar.call()
+	var dx := Vector3(1, 0, 0)
+	var dz := Vector3(0, 0, 1)
+	for u in [b, c]:
+		u.set_class(load("res://config/classes/guerreiro.tres"))
+	a.set_class(load("res://config/classes/predero.tres"))
+	_check(a.stats.projetil == "garrafa" and a.stats.attack_kind == "ranged", "Predero: ataque é garrafa à distância")
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 4.0, -dx)
+	por.call(c, centro + dz * 16.0, dx)
+
+	# Garrafada: quem leva fica encachaçado e o fogo arde mais nele.
+	var hp0: float = b.hp
+	b.take_damage(8.0, a, dx, 0.0, false, "garrafa", 1)
+	_check(b.hp < hp0 and b._encachacado_t > 0.0, "Predero: a garrafa fere e encachaça")
+	b._encachacado_t = 0.0
+	b.hp = b.max_hp()
+	hp0 = b.hp
+	b.take_damage(10.0, c, dx, 0.0, false, "brasa", 1)
+	var seco: float = hp0 - b.hp
+	b.hp = b.max_hp()
+	b._encachacado_t = cfg.encachacado_tempo
+	hp0 = b.hp
+	b.take_damage(10.0, c, dx, 0.0, false, "brasa", 1)
+	var bebado: float = hp0 - b.hp
+	_check(_perto(bebado, seco * cfg.encachacado_fogo, 0.05), "Predero: encachaçado leva %.0f%% do fogo (%.1f → %.1f)" % [cfg.encachacado_fogo * 100, seco, bebado])
+	b._encachacado_t = 0.0
+	# Projétil de verdade: a garrafa estoura no chão e fere em volta.
+	por.call(b, centro + dx * 6.0, -dx)
+	hp0 = b.hp
+	var pj := Projectile.new()
+	pj.setup(game, a, b.global_position + Vector3(0, 0.3, 0), dx, "garrafa")
+	game.add_child(pj)
+	pj.global_position = b.global_position + Vector3(0, 0.4, 0)
+	pj._explode(b.global_position)
+	_check(b.hp < hp0 and b._encachacado_t > 0.0, "Predero: a garrafa estoura em estilhaço (área) e encachaça")
+	if is_instance_valid(pj):
+		pj.queue_free()
+
+	# Poça (Q): nasce na mira, faz derrapar quem pisa, no máximo poca_max.
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 6.0, -dx)
+	a.aim_point = centro + dx * 6.0
+	_check(HeroisObra.poca(a), "Predero: Q joga o garrafão")
+	var pocas := []
+	for n in get_tree().get_nodes_in_group("pocas_cachaca"):
+		if n.dono == a:
+			pocas.append(n)
+	_check(pocas.size() == 1, "Predero: Q faz uma poça (fez %d)" % pocas.size())
+	if pocas.size() == 1:
+		var poca = pocas[0]
+		poca._physics_process(0.6)  # o garrafão chega no chão
+		_check(poca.ativa() and poca.cobre(b.global_position), "Predero: a poça cai na mira")
+		HeroisObra.pisou(b, a)
+		_check(b._derrapa_t > 0.0 and b._encachacado_t > 0.0, "Predero: pisar na poça derrapa e encachaça")
+		# Derrapar: a mesma vontade de andar acelera poca_atrito × menos (a = μ·g).
+		b.move_intent = -dx
+		b._move_vel = Vector3.ZERO
+		await get_tree().physics_frame
+		var v_poca: float = b._move_vel.length()
+		b._derrapa_t = 0.0
+		b._move_vel = Vector3.ZERO
+		por.call(b, centro + dx * 20.0, -dx)
+		b.move_intent = -dx
+		await get_tree().physics_frame
+		var v_seco: float = b._move_vel.length()
+		b.move_intent = Vector3.ZERO
+		_check(v_seco > 0.0 and v_poca < v_seco * 0.5, "Predero: na poça acelera menos (%.2f vs %.2f m/s num quadro)" % [v_poca, v_seco])
+		# Fogo de qualquer time acende; acesa queima o inimigo e evapora.
+		por.call(b, centro + dx * 6.0, -dx)
+		Reacoes.em(game, poca.global_position, 1.0, "fogo", b.team)
+		_check(poca.acesa(), "Predero: fogo (até do inimigo) acende a poça")
+		hp0 = b.hp
+		poca._physics_process(0.1)
+		_check(b.hp < hp0, "Predero: a poça acesa queima o inimigo em cima")
+		poca._physics_process(cfg.poca_fogo_tempo + 0.1)
+		_check(poca.indo, "Predero: a poça acesa evapora no fim")
+	for i in cfg.poca_max + 1:
+		a.aim_point = centro + dz * (4.0 + i * 1.5)
+		HeroisObra.poca(a)
+	var vivas := 0
+	for n in get_tree().get_nodes_in_group("pocas_cachaca"):
+		if n.dono == a and not n.indo:
+			vivas += 1
+	_check(vivas == cfg.poca_max, "Predero: no máximo %d poças (tem %d)" % [cfg.poca_max, vivas])
+	limpar.call()
+	await get_tree().process_frame
+
+	# Andaime (E): parede que bloqueia tiro; o lenhador inimigo desmonta.
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 12.0, -dx)
+	HeroisObra.andaime(a)
+	var andaime = null
+	for n in get_tree().get_nodes_in_group("andaimes"):
+		if n.dono == a:
+			andaime = n
+	_check(andaime != null, "Predero: E levanta o andaime")
+	if andaime:
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var p0: Vector3 = andaime.global_position + Vector3(0, 1.2, 0)
+		var q := PhysicsRayQueryParameters3D.create(p0 - dx * 2.0, p0 + dx * 2.0, 1)
+		var hit: Dictionary = game.get_world_3d().direct_space_state.intersect_ray(q)
+		_check(not hit.is_empty(), "Predero: o andaime bloqueia tiro (raio no mundo bate)")
+		var cortes := 0
+		for i in cfg.andaime_golpes:
+			por.call(b, andaime.global_position + dx * 1.2, -dx)
+			if HeroisObra.cortar_andaime(b, -dx, 2.0, 120.0):
+				cortes += 1
+		_check(cortes == cfg.andaime_golpes and andaime.indo, "Predero: o lenhador desmonta o andaime em %d golpes" % cfg.andaime_golpes)
+	# Quem estava no lugar é empurrado para fora.
+	limpar.call()
+	await get_tree().process_frame
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * cfg.andaime_dist, -dx)
+	HeroisObra.andaime(a)
+	var frente: float = (b.global_position - centro).dot(dx)
+	_check(absf(frente - cfg.andaime_dist) > 0.3, "Predero: o andaime empurra quem estava no lugar")
+	limpar.call()
+	await get_tree().process_frame
+
+	# Saideira (R): chuva de garrafas; a última vem acesa e põe fogo nas poças dele.
+	por.call(a, centro, dx)
+	por.call(b, centro + dx * 6.0, -dx)
+	a.aim_point = centro + dx * 6.0
+	HeroisObra.poca(a)
+	for n in get_tree().get_nodes_in_group("pocas_cachaca"):
+		n._physics_process(0.6)
+	hp0 = b.hp
+	_check(HeroisObra.saideira(a), "Predero: Saideira sai")
+	HeroisObra.tick(a, FxObra.SAIDEIRA_VOO + cfg.saideira_cada * cfg.saideira_n + 0.1)
+	_check(a._saideira_n == cfg.saideira_n and b.hp < hp0, "Predero: Saideira derruba %d garrafas e fere (caíram %d)" % [cfg.saideira_n, a._saideira_n])
+	var acesas := 0
+	var pequenas := 0
+	for n in get_tree().get_nodes_in_group("pocas_cachaca"):
+		if n.dono == a and n.acesa():
+			acesas += 1
+		if n.dono == a and n.pequena:
+			pequenas += 1
+	_check(acesas >= 1, "Predero: a garrafa acesa põe fogo nas poças dele (%d acesas)" % acesas)
+	_check(pequenas >= 1, "Predero: as garrafas da Saideira deixam pocinhas")
+	limpar.call()
+	await get_tree().process_frame
+
+	for i in lista.size():
+		var u = lista[i]
+		u.brain = cerebros[i]
+		u.set_class(classes[i])
+		HeroisObra.zerar(u)
+	for u in guardados:
+		if is_instance_valid(u):
+			u.global_position = guardados[u]
+			u.reset_physics_interpolation()
+
+
 ## 2.25c: toda classe jogável tem som de poder próprio (nenhum repetido);
 ## caminhos e heróis têm super próprio; todos têm som de golpe final, exceto o
 ## Construtor (base corpo a corpo de martelo).
@@ -2806,7 +3016,7 @@ func _arena_chapeus() -> void:
 		for h in c.herois:
 			_check(pool.has(h), "arena: herói %s no sorteio" % h.id)
 			herois += 1
-	_check(herois == 13, "arena: 13 heróis raros no sorteio (tem %d)" % herois)
+	_check(herois == 14, "arena: 14 heróis raros no sorteio (tem %d)" % herois)
 	var vistos := {}
 	for c in pool:
 		_check(not vistos.has(c.id), "arena: classe %s repetida no sorteio" % c.id)

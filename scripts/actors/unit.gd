@@ -238,6 +238,13 @@ var _tambores_tick := 0.0
 var _floresta_t := 0.0      # Floresta Antiga em volta (centro fixo)
 var _floresta_tick := 0.0
 var _floresta_centro := Vector3.ZERO
+# Herói 2.30 (Predero): regras em HeroisObra
+var _derrapa_t := 0.0       # pisou na poça de cachaça: anda sem atrito (derrapa)
+var _encachacado_t := 0.0   # levou garrafada: fogo fere mais
+var _saideira_t := 0.0      # Saideira: garrafas chovendo em volta de _saideira_centro
+var _saideira_tick := 0.0
+var _saideira_n := 0
+var _saideira_centro := Vector3.ZERO
 
 static var _flash_mat: StandardMaterial3D
 static var _merged_body := {}  # caminho do .tres da classe -> ArrayMesh do corpo
@@ -834,7 +841,10 @@ func _physics_process(delta: float) -> void:
 		elif _attack_t > 0.0:
 			speed *= 0.8  # o golpe sai do tronco: dá para bater correndo
 		var target := move_intent.limit_length(1.0) * speed + _separation() * 3.0
-		_move_vel = _move_vel.move_toward(target, ACCEL * delta)
+		# Na poça de cachaça o atrito some: a = μ·g cai junto com μ e o boneco
+		# leva ~1/poca_atrito × mais tempo para virar ou frear (derrapa).
+		var atrito := Config.cfg.poca_atrito if _derrapa_t > 0.0 else 1.0
+		_move_vel = _move_vel.move_toward(target, ACCEL * atrito * delta)
 	# O empurrão entra só na velocidade final. Antes ele era somado à própria
 	# velocidade do quadro anterior, ou seja, integrado de novo a cada quadro:
 	# um golpe de guerreiro jogava o alvo ~45 m em vez de ~1 m.
@@ -1174,6 +1184,8 @@ func _attack_hit() -> void:
 				if finisher and p:
 					if stats.projetil == "trovao":
 						p.explode_final = true  # Kaminari-kozō: o 3º trovão estoura em raios
+					elif stats.projetil == "garrafa":
+						p.raio_mult = 1.5  # Predero: o 3º é o garrafão
 					_poder_visual(p)
 					if Sfx.has(stats.som_golpe_final):
 						Sfx.play(stats.som_golpe_final, global_position, 0.05)
@@ -1303,7 +1315,7 @@ func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZE
 		_nota_teleguiada(p, mirado if mirado else _alvo_no_cone(dir, Config.cfg.nota_cone))
 	_tiro_lento_t = Config.cfg.atirador_lento_t
 	p.velocity *= speed_mult
-	var dist := clampf(to.length(), 6.0 if stats.projetil != "bomba" else 3.0, stats.attack_range * 1.4 * speed_mult)
+	var dist := clampf(to.length(), 6.0 if not stats.projetil in ["bomba", "garrafa"] else 3.0, stats.attack_range * 1.4 * speed_mult)
 	# Altura do ALVO (não a do atirador): da ponte/muralha o tiro desce junto.
 	var chao_alvo := mirado.global_position.y if mirado else aim_point.y
 	if stats.projetil in RETOS:

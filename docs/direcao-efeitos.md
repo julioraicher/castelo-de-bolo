@@ -166,6 +166,7 @@ o **hanko** (carimbo vermelho com o emblema).
 | Jorogumo (2.27) | teia de 8 raios com a aranha | tece, girando | fios de seda | a aranha desce pelo fio, a teia se fecha |
 | Kodama do Shinboku (2.27b) | anéis de tronco com broto | brota | sementes | o cedro sagrado brota atrás dele, o chão racha em verde, chuva de folhas |
 | Kaminari-kozō (2.27b) | anel de 8 tambores + raio | troveja | faíscas | os tambores aparecem no céu, cada batida um raio no chão |
+| Predero (2.30) | capacete de obra sobre duas garrafas cruzadas | carimbo | cacos de vidro | a garrafa gigante tomba no céu e chovem cacos |
 
 **Como é feito** (barato: cada peça é 1 chamada de desenho):
 - `tools/assinaturas/desenhos.js`: os 25 selos, 21 figuras e 22 peças em SVG
