@@ -182,11 +182,9 @@ static func mat_poca() -> StandardMaterial3D:
 		_mat_poca.vertex_color_use_as_albedo = true
 		_mat_poca.vertex_color_is_srgb = true
 		_mat_poca.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		_mat_poca.roughness = 0.05
-		_mat_poca.metallic_specular = 1.0
-		_mat_poca.emission_enabled = true
-		_mat_poca.emission = CACHACA_ESCURA
-		_mat_poca.emission_energy_multiplier = 0.35
+		# Sem luz: o reflexo especular do céu lavava o âmbar para cinza. A poça
+		# brilha pela própria cor (miolo claro, borda escura) como a tinta do tema.
+		_mat_poca.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		_mat_poca.cull_mode = BaseMaterial3D.CULL_DISABLED
 		_mat_poca.render_priority = -1
 	return _mat_poca

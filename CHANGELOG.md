@@ -4,6 +4,42 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.30 (2026-11-14), Diretor de Jogabilidade + Visual: Predero, o herói do Construtor
+Julio: um herói de humor, o **Predero** (escrito errado de propósito, como na
+placa da obra), que joga garrafa de cachaça nos inimigos. Único herói novo e o
+primeiro do bairro do Construtor (que parava no Nv5). Kit "Mestre de obra".
+- **Nv6 do Construtor**: com a casa no Nv5, o tapete do caminho pede o herói
+  como nos outros bairros (pavilhão dourado com capacete e garrafa no topo).
+- **Ataque, Garrafada**: garrafa em arco (como a bomba), o vidro estoura em
+  estilhaço pequeno e deixa o alvo **encachaçado** ("HIC!", pingando): fogo
+  nele arde 1,5×. O 3º tiro estoura maior. Garrafa que cai numa poça dele
+  espalha o estilhaço pela poça inteira.
+- **Q, Poça de Cachaça**: o garrafão voa até a mira e vira poça âmbar (2 por
+  vez; a mais velha seca). Inimigo que pisa **derrapa**: a aceleração de andar
+  cai para 12% (a = μ·g, μ despenca), então virar ou frear leva ~8× mais. A
+  6,4 m/s ele para em 0,3 m no seco e em 2,4 m na poça. Qualquer fogo que
+  encosta (até do inimigo) acende: queima quem está em cima e evapora.
+- **E, Andaime Expresso**: parede de andaime com lona na cor do time, 4 m de
+  largura por 7 s. Bloqueia passagem e tiro (como a árvore do Kodama); quem
+  estava no lugar é empurrado; lenhador inimigo desmonta em 3 machadadas.
+- **R, Saideira**: o engradado sobe e 8 garrafas chovem em espiral na mira;
+  cada uma deixa uma pocinha e a última vem **acesa** e põe fogo nas poças dele.
+- Visual: capacete amarelo torto com adesivo do time, bigodão, regata,
+  engradado nas costas, cinto de ferramentas; chapéu "capacete" na
+  maquininha; selo e figura próprios (garrafa tombando) na assinatura; sons
+  sintetizados (vidro quebrando, chuá, fogo de álcool, marretadas).
+  Bordões: "Ó O AÇO!", "TÁ NO PRUMO!", "ESCORREGOU!", "Ó O FOGO!".
+- Código: regras em `scripts/actors/herois_obra.gd`, poça = `items/poca_cachaca.gd`,
+  andaime = `items/andaime.gd`, efeitos em `scripts/fx/fx_obra.gd`.
+- **Modo teste e Arena**: o Predero está na fileira dos heróis da Arena de
+  chapéus (14 heróis agora) e no sandbox pelo bairro do Construtor.
+- Testes: 26 checagens novas (1027/1027), varredura sem suspeito novo, 5 min
+  simulados, arena e sincronia online (também com o Predero em campo) ok.
+- **O que testar**: na Arena, pegue o capacete do Predero. Q na frente de
+  inimigos e veja se eles patinam; jogue uma garrafa na poça; acenda a poça
+  com fogo (Saideira ou Yamabushi). Levante o andaime entre você e um Ninja
+  atirando. As frases e o tom de humor ficaram no ponto?
+
 ## Ciclo 2.29b (2026-11-14), Diretor de Jogabilidade: arena mais simples + revisão dos poderes
 Julio: o tambor gerava herói demais, o inimigo soltava poder sem parar (a
 aranha), um poder parecia bugado e às vezes o jogo dizia que não tinha inimigo
