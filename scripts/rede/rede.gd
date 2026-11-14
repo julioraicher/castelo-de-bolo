@@ -34,6 +34,9 @@ const VERSAO := "dev"
 const HASH_A_CADA := 120     # quadros (2 s)
 const ESPERA_AVISO := 1.0    # s segurando antes de mostrar "esperando..."
 const ESPERA_LIMITE := 20.0  # s sem notícia de alguém: vira bot
+const ESPERA_AMIGO := 30.0   # (amigo) s sem quadro do anfitrião: a conexão caiu
+const ESPERA_VOLTA := 600.0  # (amigo que caiu) s tentando voltar para a sala
+const VOLTAR_DESSINC := 5.0  # s mostrando o aviso antes de todos voltarem à sala
 
 var online := false
 var anfitriao := false
@@ -62,6 +65,10 @@ var _hashes := {}         # (anfitrião) tick -> hash dele
 var _esperando := 0.0
 var _espera_ini := 0
 var _dessinc := false
+var _voltar_t := 0.0      # (anfitrião) contagem até voltar todos à sala
+var _reconectando := false  # amigo que caiu: tenta a sala de novo até o anfitrião voltar
+## Aviso para a sala mostrar depois que a cena recarrega (o rótulo antigo some junto).
+var aviso_pendente: Array = []
 var _macaco_rng := RandomNumberGenerator.new()
 var _macaco_dir := Vector2.ZERO
 var _macaco_t := 0.0
@@ -88,6 +95,11 @@ var _upnp: UPNP
 var _upnp_thread: Thread
 var _ping_t := 0.0
 var _auto_n := 0          # --hospedar-teste=N: começa sozinho com N jogadores
+# Teste de queda (tools/teste_queda.sh): o amigo derruba a ligação ou mexe no
+# próprio estado no quadro T; o anfitrião volta à sala sozinho e recomeça.
+var _cair_teste := 0
+var _dessinc_teste := 0
+var _recomecar_teste := false
 var _tempo_original := -1.0
 
 
@@ -105,6 +117,12 @@ func _ready() -> void:
 			meu_nome = arg.trim_prefix("--nome=")
 		elif arg == "--autoplay":
 			macaco = true
+		elif arg.begins_with("--cair-teste="):
+			_cair_teste = int(arg.trim_prefix("--cair-teste="))
+		elif arg.begins_with("--dessinc-teste="):
+			_dessinc_teste = int(arg.trim_prefix("--dessinc-teste="))
+		elif arg == "--recomecar-teste":
+			_recomecar_teste = true
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--hospedar-teste="):
 			_auto_n = int(arg.trim_prefix("--hospedar-teste="))
@@ -272,6 +290,8 @@ func sair() -> void:
 		_rtc.close()
 		_rtc = null
 	_procura_t = 0.0
+	_reconectando = false
+	_voltar_t = 0.0
 	codigo = ""
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	_udp = null
@@ -370,9 +390,17 @@ func comecar() -> void:
 
 
 func voltar_para_sala() -> void:
-	if anfitriao:
-		_r_voltar.rpc()
-		_r_voltar()
+	if not anfitriao:
+		return
+	_voltar_t = 0.0
+	# Quem caiu durante a partida sai da lista (se voltar, entra de novo).
+	var ligados := multiplayer.get_peers()
+	for p in jogadores().keys():
+		if int(p) != 1 and int(p) not in ligados:
+			jogadores().erase(p)
+	_espalhar()
+	_r_voltar.rpc()
+	_r_voltar()
 
 
 # --- RPC da sala ------------------------------------------------------------------
@@ -449,6 +477,7 @@ func _r_comecar(s: Dictionary) -> void:
 
 @rpc("authority", "call_remote", "reliable")
 func _r_voltar() -> void:
+	print("REDE sala")
 	em_partida = false
 	game = null
 	_restaurar_config()
@@ -518,6 +547,8 @@ func _on_peer_saiu(p: int) -> void:
 			_ativos.erase(p)
 			_eventos.append(["saiu", p])
 			_montar_quadros()
+			if _recomecar_teste:
+				_voltar_t = 6.0  # teste: o "Julio" aperta Esc → Voltar à sala
 	else:
 		jogadores().erase(p)
 		_espalhar()
@@ -535,13 +566,31 @@ func _on_falhou() -> void:
 
 
 func _on_servidor_caiu() -> void:
+	if not online or anfitriao:
+		return
 	var estava := em_partida
+	var cod := codigo
 	sair()
-	aviso.emit("O anfitrião fechou a sala.", Color(1, 0.55, 0.5))
+	if estava and cod != "" and _tem_webrtc():
+		# Caiu no meio da partida (a internet piscou, o PC travou): volta para
+		# a mesma sala sozinho. Enquanto o anfitrião estiver na partida, ele
+		# responde "espere"; quando voltar à sala, o amigo entra de novo.
+		_entrar_rtc(meu_nome, cod)
+		_reconectando = true
+		_procura_t = ESPERA_VOLTA
+		_aviso_depois("Você caiu da partida. Tentando voltar para a sala %s sozinho..." % cod, Color(1, 0.8, 0.45))
+	else:
+		_aviso_depois("A conexão com o anfitrião caiu (ou ele fechou a sala)." if estava else "O anfitrião fechou a sala.", Color(1, 0.55, 0.5))
 	if estava:
 		Menus.abrir_sala = true
 		get_tree().paused = false
 		get_tree().reload_current_scene()
+
+
+## Aviso agora (sala aberta) e guardado para a sala nova depois de recarregar.
+func _aviso_depois(texto: String, cor: Color) -> void:
+	aviso_pendente = [texto, cor]
+	aviso.emit(texto, cor)
 
 
 # --- Porta (UPnP), IPs e lista da rede local ---------------------------------------
@@ -644,6 +693,10 @@ func _process(delta: float) -> void:
 	_tick_rtc(delta)
 	if not online or not anfitriao:
 		return
+	if _voltar_t > 0.0:
+		_voltar_t -= delta
+		if _voltar_t <= 0.0 and em_partida:
+			voltar_para_sala()
 	if _udp and not em_partida:
 		_udp_t -= delta
 		if _udp_t <= 0.0:
@@ -657,7 +710,8 @@ func _process(delta: float) -> void:
 			if p != 1 and p in multiplayer.get_peers():
 				_r_ping.rpc_id(p, Time.get_ticks_msec())
 	if _auto_n > 0 and not em_partida and jogadores().size() >= _auto_n:
-		_auto_n = 0
+		if not _recomecar_teste:
+			_auto_n = 0
 		comecar()
 
 
@@ -724,6 +778,11 @@ func _tick_rtc(delta: float) -> void:
 	# Amigo: repete o "oi" até o anfitrião responder; desiste depois de um tempo.
 	if 1 in multiplayer.get_peers():
 		_procura_t = 0.0
+		if _reconectando:
+			print("REDE voltou")
+			_reconectando = false
+			aviso_pendente = []
+			aviso.emit("De volta à sala!", Color(0.7, 1, 0.75))
 		return
 	if _procura_t <= 0.0:
 		return
@@ -736,6 +795,13 @@ func _tick_rtc(delta: float) -> void:
 	if _procura_t <= 0.0 or falhou:
 		var msg := "Não deu para ligar direto com o anfitrião (rede muito fechada dos dois lados). Plano B: os dois no Radmin VPN e o mesmo código." if _con.has(1) \
 				else "Não achei a sala %s. Confira o código e se o anfitrião está com a sala aberta." % codigo
+		if _reconectando and falhou:
+			# Voltando de uma queda: a ligação nova falhou, tenta outra do zero.
+			_con[1].close()
+			_con.erase(1)
+			_rtc.remove_peer(1)
+			_oi_t = 3.0
+			return
 		sair()
 		aviso.emit(msg, Color(1, 0.55, 0.5))
 
@@ -770,7 +836,7 @@ func _on_recado(d: Dictionary) -> void:
 			if str(d.get("v", "")) != versao():
 				_sinal.enviar({"t": "nao", "de": 1, "para": de, "m": "Versões diferentes do jogo (sala: %s). Baixem a mesma da \"ultima-versao\"." % versao()})
 			elif em_partida:
-				_sinal.enviar({"t": "nao", "de": 1, "para": de, "m": "A partida já começou. Espere voltarem para a sala."})
+				_sinal.enviar({"t": "nao", "de": 1, "para": de, "k": "partida", "m": "A partida já começou. Espere voltarem para a sala."})
 			elif _con.size() >= MAX_JOGADORES - 1:
 				_sinal.enviar({"t": "nao", "de": 1, "para": de, "m": "Sala cheia (%d)." % MAX_JOGADORES})
 			else:
@@ -803,6 +869,9 @@ func _on_recado(d: Dictionary) -> void:
 						_ice_chegou[de] = []
 					_ice_chegou[de].append(cc)
 		"nao":
+			if _reconectando and str(d.get("k", "")) == "partida":
+				aviso.emit("O anfitrião ainda está na partida. Quando ele for em Esc → Voltar à sala (todos), você entra sozinho.", Color(1, 0.8, 0.45))
+				return  # continua mandando "oi" a cada 3 s
 			var m := str(d.get("m", "O anfitrião recusou.")).left(160)
 			sair()
 			aviso.emit(m, Color(1, 0.55, 0.5))
@@ -871,6 +940,8 @@ func _physics_process(delta: float) -> void:
 			game.hud.dica_rede("Esperando %s..." % _quem_falta())
 		if anfitriao and _esperando >= ESPERA_LIMITE:
 			_desistir_dos_lentos()
+		elif not anfitriao and _esperando >= ESPERA_AMIGO:
+			_on_servidor_caiu()  # nada do anfitrião há 30 s: a ligação morreu calada
 		return
 	if _esperando >= ESPERA_AVISO and game.hud:
 		game.hud.dica_rede(game.dica_fim())
@@ -889,13 +960,21 @@ func _physics_process(delta: float) -> void:
 		game.comando_humano(int(p), c)
 	# Resumo do estado ANTES deste quadro (= depois do anterior).
 	if (_tick - 1) % HASH_A_CADA == 0 and _tick > 1:
-		var h := game.hash_estado()
+		var h := game.hash_partes()
 		if anfitriao:
 			_hashes[_tick - 1] = h
 		else:
 			_r_hash.rpc_id(1, _tick - 1, h)
 	_enviar(_tick + atraso, _amostrar(delta))
 	_tick += 1
+	if _cair_teste > 0 and _tick == _cair_teste and _con.has(1):
+		_cair_teste = 0
+		print("REDE teste: derrubando a ligação")
+		_con[1].close()
+	if _dessinc_teste > 0 and _tick == _dessinc_teste:
+		_dessinc_teste = 0
+		print("REDE teste: mexendo no estado")
+		game.units[0].global_position.x += 0.5  # meio metro: o caos faz o resto
 
 
 func _quem_falta() -> String:
@@ -974,27 +1053,41 @@ func _r_quadro(t: int, q: Dictionary) -> void:
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func _r_hash(t: int, h: int) -> void:
-	if not anfitriao or _dessinc:
+func _r_hash(t: int, h: PackedInt64Array) -> void:
+	if not anfitriao or _dessinc or game == null or not is_instance_valid(game):
 		return
-	if _hashes.has(t) and int(_hashes[t]) != h:
+	if _hashes.has(t) and _hashes[t] != h:
+		var meu: PackedInt64Array = _hashes[t]
+		var i := 0
+		while i < mini(meu.size(), h.size()) and meu[i] == h[i]:
+			i += 1
 		var p := multiplayer.get_remote_sender_id()
-		_r_dessinc.rpc(t, str(jogadores().get(p, {}).get("nome", "?")))
-		_r_dessinc(t, str(jogadores().get(p, {}).get("nome", "?")))
+		var quem := str(jogadores().get(p, {}).get("nome", "?"))
+		var onde := game.descrever_parte(i)
+		_r_dessinc.rpc(t, quem, onde)
+		_r_dessinc(t, quem, onde)
 	for k in _hashes.keys():
 		if int(k) < t - HASH_A_CADA * 10:
 			_hashes.erase(k)
 
 
+## A partida se separou: cada PC passou a ver um jogo diferente (Ciclo 2.28d:
+## o Julio e o amigo seguiram jogando sem saber). Não dá para juntar de volta
+## no lockstep, então avisa grande e, em 5 s, todos voltam para a sala; de lá é
+## só Começar de novo. O aviso diz onde separou, para consertar a causa.
 @rpc("authority", "call_remote", "reliable")
-func _r_dessinc(t: int, quem: String) -> void:
+func _r_dessinc(t: int, quem: String, onde: String) -> void:
 	if _dessinc:
 		return
 	_dessinc = true
-	push_warning("Rede: dessincronizou no quadro %d (%s)" % [t, quem])
-	print("DESSINC %d %s" % [t, quem])
-	if game and game.hud:
-		game.hud.show_big("A partida dessincronizou com %s\n(conte para o Claude: quadro %d)" % [quem, t], Color(1, 0.6, 0.5), 6.0)
+	push_warning("Rede: dessincronizou no quadro %d (%s): %s" % [t, quem, onde])
+	print("DESSINC %d %s | %s" % [t, quem, onde])
+	if game and is_instance_valid(game) and game.hud:
+		game.hud.show_big("A partida se separou entre os PCs\nvoltando todos para a sala...", Color(1, 0.6, 0.5), VOLTAR_DESSINC + 1.0)
+		game.hud.dica_rede("Dessincronizou com %s  ·  voltando para a sala em %d s" % [quem, int(VOLTAR_DESSINC)])
+	_aviso_depois("A partida se separou entre os PCs (dessincronia com %s) e todos voltaram para a sala. Cliquem Começar para jogar de novo. Para o Claude: quadro %d, %s, versão %s." % [quem, t, onde, versao()], Color(1, 0.7, 0.5))
+	if anfitriao:
+		_voltar_t = VOLTAR_DESSINC
 
 
 # --- Comando local ----------------------------------------------------------------
@@ -1055,6 +1148,25 @@ func _macaco(c: Comando, delta: float) -> void:
 		c.ponto = alvo
 		if _macaco_dir.length() > 0.1:
 			c.mira = _macaco_dir.normalized()
+		# Metade do tempo vai para cima do inimigo mais perto e mira nele: o
+		# teste precisa de humano acertando gente (tiro, golpe, poder), não só
+		# andando sozinho pela base (Ciclo 2.28d).
+		var inimigo: Unit = null
+		var melhor := 40.0
+		for u in game.units:
+			if u.alive and u.team != p.team:
+				var d := u.global_position.distance_to(p.global_position)
+				if d < melhor:
+					melhor = d
+					inimigo = u
+		if inimigo and _macaco_rng.randf() < 0.5:
+			var to := inimigo.global_position - p.global_position
+			to.y = 0.0
+			if to.length() > 0.1:
+				c.mira = Vector2(to.x, to.z).normalized()
+				c.move = c.mira if melhor > p.stats.attack_range * 0.8 else Vector2.ZERO
+			c.ponto = inimigo.global_position
+			c.alvo = game.units.find(inimigo)
 	if _macaco_rng.randf() < 0.3:
 		c.botoes |= Comando.ATAQUE
 	elif _macaco_rng.randf() < 0.05:
