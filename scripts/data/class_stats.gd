@@ -21,7 +21,7 @@ extends Resource
 ## Cor do chapéu exibido no pedestal do castelo.
 @export var hat_color := Color.WHITE
 ## Formato do chapéu do pedestal (HatPad.make_hat).
-@export_enum("elmo", "capuz", "chapeu_pontudo", "kasa", "kabuto", "faixa", "mascara_oni", "eboshi", "orelhas", "cesto", "barril", "hachimaki", "coque", "prato", "tokin", "bico", "mascara_lisa", "halo", "tengai", "kabuto_rachado", "shishi", "kanzashi", "kodama", "raijin") var hat_style := "elmo"
+@export_enum("elmo", "capuz", "chapeu_pontudo", "kasa", "kabuto", "faixa", "mascara_oni", "eboshi", "orelhas", "cesto", "barril", "hachimaki", "coque", "prato", "tokin", "bico", "mascara_lisa", "halo", "tengai", "kabuto_rachado", "shishi", "kanzashi", "kodama", "raijin", "capacete") var hat_style := "elmo"
 ## Visual ninja (NinjaVisual): nome da função que monta as peças (ex.: "_samurai").
 ## Vazio = modelo KayKit original, só com a capa na cor do time.
 @export var estilo_ninja := ""
@@ -65,7 +65,7 @@ extends Resource
 @export var queda_dist_ini := 0.0
 @export var queda_dano_min := 1.0
 ## Visual e comportamento do projétil: bomba cai em parábola e explode em área.
-@export_enum("flecha", "magia", "shuriken", "bomba", "talisma", "fogo", "chi", "vento", "nota", "grou", "fio", "semente", "trovao") var projetil := "flecha"
+@export_enum("flecha", "magia", "shuriken", "bomba", "talisma", "fogo", "chi", "vento", "nota", "grou", "fio", "semente", "trovao", "garrafa") var projetil := "flecha"
 ## Bomba: raio da explosão (m).
 @export var explosao_raio := 2.2
 @export_group("Combo")

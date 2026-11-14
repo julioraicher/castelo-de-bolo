@@ -6,7 +6,9 @@ extends RefCounted
 ##  - Vento rasga teia (leque do Yamabushi, redemoinho, asas do Karasu Tengu).
 ##  - Fogo queima o bosque do Kodama (a árvore vira tocha e cai: ArvoreKodama).
 ##  Raio × molhado e árvore como para-raios: HeroisNatureza.
-## Só afeta o que é do outro time: ninguém queima a própria teia sem querer.
+##  - Fogo de qualquer time acende a poça de cachaça do Predero (PocaCachaca).
+## Só afeta o que é do outro time (ninguém queima a própria teia sem querer),
+## menos a poça de cachaça, que pega fogo de qualquer um.
 
 const FOGO := ["fogo", "chi", "magia", "bomba", "onibi", "coluna_fogo", "brasa"]
 const VENTO := ["vento", "redemoinho", "rajada", "pena", "revoada"]
@@ -40,6 +42,18 @@ static func em(g: Node, pos: Vector3, raio: float, elemento: String, time: int) 
 			teia.rasgar()
 	if t != "fogo":
 		return
+	# Poça de cachaça do Predero (2.30): fogo de qualquer time acende (quem
+	# acende a do outro time leva o troco: ela queima quem é inimigo do dono).
+	for n in g.get_tree().get_nodes_in_group("pocas_cachaca"):
+		var poca := n as PocaCachaca
+		if poca == null or poca.indo or poca.acesa():
+			continue
+		var dp := poca.global_position - pos
+		if absf(dp.y) > 2.5:
+			continue
+		dp.y = 0
+		if dp.length() <= raio + poca.raio:
+			poca.acender()
 	for n in g.get_tree().get_nodes_in_group("arvores_kodama"):
 		var arv := n as ArvoreKodama
 		if arv == null or arv.indo or arv.time == time:

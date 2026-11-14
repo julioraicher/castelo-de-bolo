@@ -62,11 +62,11 @@ func setup(game: Game, shooter: Unit, origin: Vector3, dir: Vector3, p_kind: Str
 ## Som ao lançar e ao acertar, por projétil (gerados por tools/gerar_sons.py).
 const SOM_LANCAR := {"flecha": "shoot", "shuriken": "lancar_metal", "bomba": "pavio", "fogo": "fogo", "chi": "luz", "magia": "sombra",
 	"vento": "magia_vento", "nota": "flauta", "talisma": "papel", "grou": "papel", "fio": "seda",
-	"semente": "kodama_semente", "trovao": "kaminari_trovao"}
+	"semente": "kodama_semente", "trovao": "kaminari_trovao", "garrafa": "garrafa_lancar"}
 const SOM_ACERTO := {"flecha": "flecha_chao", "shuriken": "tinido", "bomba": "explosao", "fogo": "brasa", "chi": "sino", "magia": "implosao",
 	"vento": "magia_vento", "nota": "sino", "talisma": "magia_selo", "grou": "magia_selo",
 	"fio": "seda_gruda", "onibi": "ochimusha_onibi", "mordida": "shishimai_mordida",
-	"semente": "kodama_brota", "trovao": "kaminari_choque"}
+	"semente": "kodama_brota", "trovao": "kaminari_choque", "garrafa": "garrafa_quebra"}
 var nivel := 1  # 2 = tiro carregado (rastro e impacto maiores)
 var kind := "flecha"
 var _spin: Node3D
@@ -99,7 +99,7 @@ func rebater(novo_dono: Unit, dir: Vector3) -> void:
 func carregar() -> void:
 	nivel = 2
 	FxProjetil.carregar(self, kind)
-	if kind == "bomba":
+	if kind in ["bomba", "garrafa"]:
 		raio_mult = Config.cfg.carga_raio_bomba
 		scale = Vector3.ONE * 1.4
 	else:
@@ -122,7 +122,7 @@ func aim_ballistic(distance: float, chao_alvo := 0.0) -> void:
 	gravity = GRAVITY
 	var vh := Vector3(velocity.x, 0, velocity.z).length()
 	var t := distance / maxf(vh, 0.1)
-	var alvo := chao_alvo + (0.0 if kind == "bomba" else TARGET_HEIGHT)
+	var alvo := chao_alvo + (0.0 if kind in ["bomba", "garrafa"] else TARGET_HEIGHT)
 	velocity.y = GRAVITY * t * 0.5 - (position.y - alvo) / t
 	_life = maxf(_life, t * 1.6)
 
@@ -152,9 +152,12 @@ func _physics_process(delta: float) -> void:
 	velocity.y -= gravity * delta
 	var to := from + velocity * delta
 	if _spin:
-		_spin.rotate_object_local(Vector3.FORWARD, delta * (25.0 if kind == "shuriken" else 9.0))
+		if kind == "garrafa":
+			_spin.rotate_object_local(Vector3.RIGHT, delta * 14.0)  # garrafa capotando no ar
+		else:
+			_spin.rotate_object_local(Vector3.FORWARD, delta * (25.0 if kind == "shuriken" else 9.0))
 	if to.y <= -1.0:  # segurança: o chão é colisor, o raio abaixo já pega
-		if kind == "bomba" or explode_final:
+		if estoura():
 			_explode(Vector3(to.x, 0.0, to.z))
 		else:
 			_bateu(Vector3(to.x, 0.1, to.z))
@@ -163,7 +166,7 @@ func _physics_process(delta: float) -> void:
 	var query := PhysicsRayQueryParameters3D.create(from, to, Config.LAYER_WORLD)
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
-		if kind == "bomba" or explode_final:
+		if estoura():
 			_explode(from)
 		else:
 			_bateu(hit.position)
@@ -174,7 +177,7 @@ func _physics_process(delta: float) -> void:
 		look_at(to + velocity, Vector3.UP)
 	for t in _game.torretas:
 		if t.team != owner_unit.team and t.encosta(global_position, 0.3):
-			if kind == "bomba" or explode_final:
+			if estoura():
 				_explode(global_position)
 			t.take_hit(damage, owner_unit.team)
 			_bateu(global_position)
@@ -195,7 +198,7 @@ func _physics_process(delta: float) -> void:
 			dc.y = 0
 			if dc.length() < HIT_RADIUS and dyc > -0.2 and dyc < 2.1:
 				Herois.bater_casulo(u, owner_unit)
-				if kind == "bomba" or explode_final:
+				if estoura():
 					_explode(global_position)
 				else:
 					_bateu(global_position)
@@ -217,7 +220,7 @@ func _physics_process(delta: float) -> void:
 				u.take_damage(damage * 0.25 * queda(), owner_unit, velocity.normalized(), 0.0, false, "trovao", 1)
 				continue
 			if d.length() < HIT_RADIUS and dy > -0.2 and dy < 2.1 and not _acertados.has(u):
-				if kind == "bomba" or explode_final:
+				if estoura():
 					_explode(global_position)
 				else:
 					u.take_damage(damage * queda(), owner_unit, velocity.normalized(), 1.0, false, kind, nivel)
@@ -229,6 +232,11 @@ func _physics_process(delta: float) -> void:
 						continue
 				_fim()
 				return
+
+
+## Bomba e garrafa do Predero explodem onde batem (o 3º tiro da Kitsune também).
+func estoura() -> bool:
+	return kind == "bomba" or kind == "garrafa" or explode_final
 
 
 ## Bomba: dano em área, mais forte no centro (cai linearmente até 50% na borda).
@@ -247,6 +255,9 @@ func queda_em(d: float) -> float:
 
 
 func _explode(at: Vector3) -> void:
+	if kind == "garrafa":
+		_estilhaco(at)
+		return
 	var r := owner_unit.stats.explosao_raio * raio_mult
 	var trovao := kind == "trovao"
 	if trovao:
@@ -270,6 +281,31 @@ func _explode(at: Vector3) -> void:
 			var f := 1.0 - 0.5 * d.length() / r
 			u.take_damage(damage * f, owner_unit, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, f, false, kind, nivel)
 			u.launch((2.0 if trovao else 5.0) * f)
+
+
+## Garrafa do Predero: o vidro estoura em estilhaço (sem fogo: cachaça não
+## queima sozinha) e encachaça quem leva (HeroisObra.apanhar). Caiu numa poça
+## dele: o estilhaço corre pela poça inteira.
+func _estilhaco(at: Vector3) -> void:
+	var r := owner_unit.stats.explosao_raio * raio_mult
+	var dano := damage
+	var poca := HeroisObra.poca_em(owner_unit, at)
+	if poca and poca.raio > r:
+		r = poca.raio
+		dano *= Config.cfg.garrafa_poca_mult
+		at = Vector3(poca.global_position.x, at.y, poca.global_position.z)
+	FxObra.estilhaco(_game, at, r, nivel >= 2, poca != null)
+	for u in _game.units:
+		if not u.alive or u.team == owner_unit.team or u.em_voo:
+			continue
+		var d := u.global_position - at
+		if absf(d.y) > 2.5:
+			continue
+		d.y = 0
+		if d.length() <= r:
+			var f := 1.0 - 0.4 * d.length() / r
+			u.take_damage(dano * f, owner_unit, d.normalized() if d.length() > 0.1 else velocity.normalized(), 0.5 * f, false, "garrafa", nivel)
+			u.launch(1.5 * f)
 
 
 ## Bateu no cenário (parede/chão): impacto do elemento e som.

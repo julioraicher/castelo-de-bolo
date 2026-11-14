@@ -481,6 +481,40 @@ extends Resource
 @export var tambores_raio := 10.0
 @export var tambores_dano := 14.0
 @export var tambores_preso := 0.25
+
+@export_group("Herói 2.30: Predero")
+## Garrafada (ataque; o raio do estilhaço é explosao_raio no .tres): s de
+## "encachaçado" em quem leva (fogo fere encachacado_fogo × mais nele).
+@export var encachacado_tempo := 4.0
+@export var encachacado_fogo := 1.5
+## Garrafa que estoura dentro de uma poça do dono: o estilhaço cobre a poça
+## inteira (raio da poça) com garrafa_poca_mult × o dano.
+@export var garrafa_poca_mult := 0.8
+## Poça de Cachaça (Q): raio, s no chão, quantas por dono e atrito de quem pisa
+## (aceleração da caminhada × poca_atrito: derrapa) e s que dura depois de sair.
+@export var poca_raio := 2.6
+@export var poca_tempo := 8.0
+@export var poca_max := 2
+@export var poca_atrito := 0.12
+@export var poca_derrapa := 0.6
+## Poça acesa (qualquer fogo encosta): s queimando, dano/s em quem é inimigo do dono.
+@export var poca_fogo_tempo := 3.0
+@export var poca_fogo_dano := 14.0
+## Andaime Expresso (E): largura e altura da cobertura (bloqueia passagem e
+## tiros), distância da frente do Predero, s de pé e golpes de machado até cair.
+@export var andaime_larg := 4.0
+@export var andaime_alt := 2.6
+@export var andaime_dist := 2.2
+@export var andaime_tempo := 7.0
+@export var andaime_golpes := 3
+## Saideira (R): garrafas que chovem, raio da chuva em volta da mira, distância
+## máxima da mira, dano de cada uma e s entre elas; a última vem acesa (palito)
+## e põe fogo em todas as poças do dono no raio.
+@export var saideira_n := 8
+@export var saideira_raio := 4.5
+@export var saideira_dist := 11.0
+@export var saideira_dano := 14.0
+@export var saideira_cada := 0.14
 ## Árvore do Kodama é para-raios: raio que cai a até N m dela cai nela.
 @export var arvore_pararaios := 4.0
 

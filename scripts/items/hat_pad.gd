@@ -582,6 +582,25 @@ static func make_hat(style: String, color: Color) -> Node3D:
 				var p := Vector3(sin(a) * 0.5, 0.2 + (0.12 if k == 1 else 0.0), -0.4)
 				_add(root, _cyl(0.13, 0.13, 0.1), p, Vector3(90, 0, 0), Fx.lit(Color(0.55, 0.16, 0.12)))
 				_add(root, _cyl(0.1, 0.1, 0.02), p + Vector3(0, 0, -0.06), Vector3(90, 0, 0), Fx.unshaded(color))
+		# --- Herói 2.30 ---
+		"capacete":
+			# Predero: capacete de obra amarelo, torto, com o friso, o adesivo do
+			# time e uma garrafa de cachaça encostada (a placa da casa dele).
+			var casco := Fx.lit(Color(1.0, 0.8, 0.16), 0.35)
+			var torto := Vector3(0, 0, -10)
+			var sp := SphereMesh.new()
+			sp.radius = 0.46
+			sp.height = 0.62
+			sp.is_hemisphere = true
+			_add(root, sp, Vector3(0, -0.05, 0), torto, casco)
+			_add(root, _cyl(0.56, 0.58, 0.05), Vector3(0, -0.06, 0.04), torto, casco, Vector3(1, 1, 1.15))
+			_add(root, _box(Vector3(0.08, 0.07, 0.75)), Vector3(-0.05, 0.27, 0), torto, Fx.lit(Color(1.0, 0.9, 0.45), 0.35))
+			_add(root, _cyl(0.09, 0.09, 0.02), Vector3(-0.22, 0.12, 0.33), Vector3(55, 0, 25), Fx.unshaded(color))
+			var vidro := Fx.lit(Color(0.36, 0.72, 0.42), 0.15)
+			_add(root, _cyl(0.1, 0.1, 0.28), Vector3(0.5, -0.05, 0.1), Vector3(0, 0, -12), vidro)
+			_add(root, _cyl(0.04, 0.09, 0.12), Vector3(0.53, 0.14, 0.1), Vector3(0, 0, -12), vidro)
+			_add(root, _cyl(0.04, 0.04, 0.12), Vector3(0.55, 0.25, 0.1), Vector3(0, 0, -12), vidro)
+			_add(root, _cyl(0.105, 0.105, 0.09), Vector3(0.5, -0.04, 0.1), Vector3(0, 0, -12), Fx.unshaded(color))
 		"barril":
 			_add(root, _cyl(0.38, 0.38, 0.75), Vector3.ZERO, Vector3.ZERO, Fx.lit(Color(0.42, 0.26, 0.13)))
 			for y in [-0.25, 0.25]:
@@ -670,4 +689,10 @@ static func _cyl(top: float, bottom: float, h: float) -> CylinderMesh:
 	m.height = h
 	m.radial_segments = 12
 	m.rings = 1
+	return m
+
+
+static func _box(t: Vector3) -> BoxMesh:
+	var m := BoxMesh.new()
+	m.size = t
 	return m

@@ -1,5 +1,5 @@
 // Gera os atlas de campo de distância (SDF) das assinaturas:
-//   assets/fx/assinaturas/selos.png (7x7 células de 256: 25 selos + 21 figuras)
+//   assets/fx/assinaturas/selos.png (7x7 células de 256: 26 selos + 22 figuras)
 //   assets/fx/assinaturas/pecas.png (5x5 células de 96: partículas)
 // Uso: node tools/assinaturas/gerar.js [--prancha arquivo.png]
 // Cada desenho (desenhos.js) é pintado grande num canvas, vira máscara e a

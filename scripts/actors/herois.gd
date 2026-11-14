@@ -11,7 +11,7 @@ extends RefCounted
 
 ## Q dos heróis que moram aqui (Unit.tem_rapida).
 const RAPIDAS := ["agarrao", "rasteira", "rajada", "mergulho", "roubar_rosto", "dobrar", "laco", "sono",
-	"flecha_arrancada", "mordida", "teia", "raizes", "para_raios"]
+	"flecha_arrancada", "mordida", "teia", "raizes", "para_raios", "poca"]
 
 
 # --- Ganchos chamados pela Unit -------------------------------------------------
@@ -45,6 +45,8 @@ static func rapida(u: Unit) -> bool:
 			return HeroisNatureza.raizes(u)
 		"para_raios":
 			return HeroisNatureza.para_raios(u)
+		"poca":
+			return HeroisObra.poca(u)
 	return false
 
 
@@ -90,6 +92,8 @@ static func poder(u: Unit) -> void:
 			HeroisNatureza.bosque(u)
 		"relampago":
 			HeroisNatureza.relampago(u)
+		"andaime":
+			HeroisObra.andaime(u)
 
 
 ## R dos heróis com super_tipo "proprio". false = não saiu (devolve a barra).
@@ -150,6 +154,8 @@ static func super_proprio(u: Unit) -> bool:
 			return HeroisNatureza.floresta(u)
 		"tambores":
 			return HeroisNatureza.tambores(u)
+		"saideira":
+			return HeroisObra.saideira(u)
 	return false
 
 
@@ -185,6 +191,7 @@ static func tick(u: Unit, delta: float) -> void:
 			u._danca_tick = 0.5
 			_pulso_danca(u)
 	_tick_2_27(u, delta)
+	HeroisObra.tick(u, delta)
 
 
 ## Dano chegando (antes do bloqueio e do escudo). Devolve o dano que fica;
@@ -831,7 +838,8 @@ static func _apanhar_2_27(u: Unit, amount: float, attacker: Unit, elemento: Stri
 		if nivel >= 2:
 			u.prender(cfg.rede_preso)
 			FxHerois.rede(u)
-	return HeroisNatureza.apanhar(u, amount, attacker, elemento, nivel)
+	amount = HeroisNatureza.apanhar(u, amount, attacker, elemento, nivel)
+	return HeroisObra.apanhar(u, amount, attacker, elemento, nivel)
 
 
 static func _tick_2_27(u: Unit, delta: float) -> void:
@@ -912,6 +920,7 @@ static func _zerar_2_27(u: Unit) -> void:
 	u._arrastao_t = 0.0
 	u._arrastao_alvo = null
 	HeroisNatureza.zerar(u)
+	HeroisObra.zerar(u)
 
 
 ## O dash solta a peça do personagem (quiz 4B): na saída e na chegada.

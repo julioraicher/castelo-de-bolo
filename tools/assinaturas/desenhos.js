@@ -129,6 +129,14 @@ SELOS.kaminari_kozo = around(8, () => `<circle cx="60" cy="13" r="9.5" ${W}/><pa
   + `<path d="M60 22 L60 31 M60 98 L60 89" ${S(2.4)}/>`
   + `<polygon points="66,26 44,64 58,64 50,96 78,52 63,52 72,26" ${W}/>`;
 
+// --- Herói 2.30 ---
+// Garrafa de pé centrada em (60,60), do gargalo (y 8) ao fundo (y 112).
+const GARRAFA = `<path d="M54 8 H66 V34 Q76 40 76 54 V104 Q76 112 68 112 H52 Q44 112 44 104 V54 Q44 40 54 34Z" ${W}/>`;
+// Predero: capacete de obra na frente de duas garrafas cruzadas (o "brasão" da obra).
+SELOS.predero = [-34, 34].map(a => `<g transform="rotate(${a} 60 70) translate(60 58) scale(0.98) translate(-60 -60)">${GARRAFA}<rect x="48" y="62" width="24" height="22" ${K}/><path d="M53 6 H67" ${S(5)}/></g>`).join('')
+  + `<path d="M24 86 Q24 42 60 42 Q96 42 96 86Z" ${W} stroke="#000" stroke-width="6"/><rect x="12" y="82" width="96" height="12" rx="5" ${W} stroke="#000" stroke-width="5"/>`
+  + `<path d="M52 46 Q50 64 52 82 M68 46 Q70 64 68 82" ${SK(3.4)}/><polygon points="${star(5, 8, 3.4, -90, 36, 70)}" ${K}/>`;
+
 const FIGURAS = {};
 FIGURAS.pincelada = `<path d="M3 64 Q30 42 70 52 Q100 58 117 48 L111 57 L118 61 Q90 74 60 69 Q30 66 9 77 L14 67Z" ${W}/><circle cx="8" cy="50" r="2.5" ${W}/><circle cx="104" cy="74" r="3" ${W}/><circle cx="114" cy="70" r="1.8" ${W}/><path d="M24 62 Q60 54 100 60" ${SK(1.4)}/>`;
 FIGURAS.oni = `<path d="M30 40 Q30 22 60 22 Q90 22 90 40 L93 70 Q90 100 60 108 Q30 100 27 70Z" ${W}/>`
@@ -180,6 +188,10 @@ FIGURAS.arvore = `<g ${W}><circle cx="60" cy="30" r="24"/><circle cx="34" cy="42
 FIGURAS.tambores = `<path d="M10 70 A52 52 0 0 1 110 70" ${S(4)}/>`
   + [-60, -30, 0, 30, 60].map(a => `<g transform="rotate(${a} 60 112)"><circle cx="60" cy="38" r="12" ${W}/><path d="M60 31 Q67 35 62 39 Q57 42 60 46" ${SK(2.4)}/></g>`).join('')
   + `<polygon points="64,52 46,86 58,86 50,118 76,76 63,76 70,52" ${W}/>`;
+
+// --- Herói 2.30 ---
+FIGURAS.garrafa = `<g transform="rotate(28 60 60) translate(60 66) scale(0.86) translate(-60 -60)">${GARRAFA}<rect x="46" y="60" width="28" height="26" ${K}/><path d="M50 66 H70 M50 74 H66 M50 80 H70" ${S(2.2)}/></g>`
+  + `<g ${W}><circle cx="96" cy="14" r="5"/><circle cx="106" cy="26" r="4"/><circle cx="100" cy="38" r="3"/><circle cx="112" cy="10" r="2.6"/></g>`;
 
 const PECAS = {};
 PECAS.pena = `<path d="M20 2 Q31 13 27 25 L23 23 L25 31 L20 38 Q8 17 20 2Z" ${W}/><path d="M20 6 Q19 22 21 36" ${SK(1.2)}/>`;

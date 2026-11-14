@@ -721,6 +721,78 @@ def herois_2_27b():
     save("kaminari_kozo_super", super_de(tambor), 0.85)
     save("kaminari_kozo_final", mix(choque, atraso(ganho(trovao(0.7, 0.2), 0.6), 0.03)), 0.75)
 
+def herois_2_30():
+    """Herói 2.30 (Predero, o mestre de obra). Semente própria.
+    Rode: gerar_sons.py herois230"""
+    random.seed(2230)
+
+    def save(name, track, gain=0.8):
+        k = len(track)
+        ini = int(k * 0.7)
+        globals()["save"](name, [v * (1.0 if i < ini else (1 - (i - ini) / (k - ini)) ** 2) for i, v in enumerate(track)], gain)
+
+    whoosh = lambda sec, pico=0.5: noise(sec, cutoff=lambda x: 0.04 + pico * math.sin(math.pi * x) ** 2, release_pow=1.0)
+    madeira = lambda f: suave(sino(f, 0.12, ((1.0, 1.0, 45), (2.76, 0.45, 70), (5.4, 0.2, 95))), 0.0015)
+
+    def tinido(f, sec=0.18):
+        """Caco de vidro: placa fina, modos inarmônicos agudos que somem rápido."""
+        return suave(sino(f, sec, ((1.0, 1.0, 28), (2.32, 0.5, 40), (4.25, 0.3, 60))), 0.001)
+
+    def vidro_quebra(sec=0.7, forte=1.0):
+        """Garrafa estourando: o estalo da fratura (ruído largo bem curto), o
+        "crash" dos modos da casca e a chuva de cacos batendo no chão depois."""
+        estalo = noise(0.05, cutoff=lambda x: 0.95, release_pow=2.5)
+        crash = mix(*(atraso(ganho(tinido(random.uniform(2200, 6500), 0.22), random.uniform(0.4, 1.0)), random.uniform(0, 0.04)) for _ in range(10)))
+        cacos = mix(*(atraso(ganho(tinido(random.uniform(3000, 8000), 0.1), random.uniform(0.1, 0.45) * (1 - t / sec)), t)
+                      for t in sorted(random.uniform(0.06, sec * 0.8) for _ in range(int(14 * forte)))))
+        return mix(ganho(estalo, 1.3 * forte), crash, cacos)[:n(sec)]
+
+    def chua(sec=0.5, bolhas=6):
+        """Líquido caindo: ruído que escurece (o jorro abre e assenta) + bolhas
+        (senos curtos subindo: a cavidade de ar encolhendo antes de estourar)."""
+        x = noise(sec, cutoff=lambda x: 0.05 + 0.5 * (1 - x) ** 3, release_pow=1.4)
+        bs = []
+        for _ in range(bolhas):
+            f0 = random.uniform(450, 1000)
+            bs.append(atraso(ganho(tone(lambda u, f0=f0: f0 * (1 + 1.8 * u), random.uniform(0.03, 0.07), release_pow=1.5), 0.35), random.uniform(0.04, sec * 0.7)))
+        return mix(ganho(x, 1.3), *bs)
+
+    def fogo(sec=1.0):
+        """Álcool pegando fogo: "uóff" (a frente de chama varre o vapor: ruído
+        grave que incha) e o crepitar."""
+        uoff = noise(sec, cutoff=lambda x: 0.02 + 0.12 * math.sin(math.pi * min(1, x * 2.5)) ** 2, release_pow=1.0)
+        crep = [0.0] * n(sec)
+        for i in range(len(crep)):
+            if random.random() < 250 / SR * (1 - i / len(crep)):
+                a = random.choice((-1, 1)) * random.uniform(0.2, 0.8)
+                for j in range(40):
+                    if i + j < len(crep):
+                        crep[i + j] += a * math.exp(-j / SR * 3000)
+        return mix(ganho(uoff, 1.6), ganho(crep, 0.6))
+
+    def marretadas(k=4, passo=0.1):
+        return mix(*(atraso(ganho(mix(madeira(random.uniform(160, 260)), noise(0.02, cutoff=lambda x: 0.6)), random.uniform(0.7, 1.0)), passo * j) for j in range(k)))
+
+    lancar = mix(ganho(whoosh(0.22, 0.45), 0.8), atraso(ganho(tone(lambda x: 520 - 120 * x, 0.12, release_pow=1.5), 0.15), 0.02))
+    save("garrafa_lancar", lancar, 0.5)
+    quebra = vidro_quebra(0.6)
+    save("garrafa_quebra", mix(quebra, atraso(ganho(chua(0.35, 3), 0.5), 0.02)), 0.7)
+    splash = mix(chua(0.7, 9), atraso(ganho(vidro_quebra(0.5, 0.6), 0.7), 0.0))
+    save("poca_splash", splash, 0.7)
+    save("poca_fogo", fogo(1.1), 0.8)
+    sobe = mix(marretadas(5, 0.07), atraso(ganho(membrana(70, 0.4), 0.9), 0.32), atraso(ganho(madeira(330), 0.8), 0.36))
+    save("andaime_sobe", sobe, 0.75)
+    cai = mix(ganho(whoosh(0.4, 0.3), 0.5), atraso(ganho(membrana(50, 0.6, 0.2), 1.2), 0.35),
+              atraso(marretadas(6, 0.045), 0.36))
+    save("andaime_cai", cai, 0.75)
+    # Saideira: engradado chacoalhando, garrafas tilintando e a chama no fim.
+    chacoalha = mix(*(atraso(ganho(tinido(random.uniform(1500, 3200), 0.12), random.uniform(0.3, 0.7)), 0.05 * j + random.uniform(0, 0.02)) for j in range(10)))
+    saideira = mix(chacoalha, atraso(ganho(vidro_quebra(0.8), 0.9), 0.5), atraso(ganho(fogo(0.9), 0.9), 0.9))
+    save("predero_poder", mix(lancar, atraso(splash, 0.25)), 0.7)
+    save("predero_super", mix(ganho(membrana(58, 0.9), 1.1), atraso(saideira, 0.08)), 0.85)
+    save("predero_final", mix(lancar, atraso(ganho(vidro_quebra(0.7, 1.4), 1.1), 0.12)), 0.75)
+
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1:] == ["efeitos"]:
@@ -737,6 +809,8 @@ if __name__ == "__main__":
         herois_2_27()
     elif sys.argv[1:] == ["herois227b"]:
         herois_2_27b()
+    elif sys.argv[1:] == ["herois230"]:
+        herois_2_30()
     else:
         main()
         efeitos()
@@ -746,3 +820,4 @@ if __name__ == "__main__":
         assinaturas_2()
         herois_2_27()
         herois_2_27b()
+        herois_2_30()

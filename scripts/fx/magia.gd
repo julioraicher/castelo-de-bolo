@@ -41,6 +41,7 @@ const PALETAS := {
 	"seda": [Color(1.0, 1.0, 1.0), Color(0.9, 0.88, 0.97), Color(0.55, 0.47, 0.68)],
 	"bosque": [Color(0.95, 1.0, 0.85), Color(0.55, 0.88, 0.35), Color(0.24, 0.42, 0.14)],
 	"raio": [Color(1.0, 1.0, 1.0), Color(0.62, 0.82, 1.0), Color(0.38, 0.3, 0.95)],
+	"cachaca": [Color(1.0, 0.99, 0.86), Color(1.0, 0.8, 0.32), Color(0.66, 0.38, 0.08)],
 }
 
 static var _cache := {}

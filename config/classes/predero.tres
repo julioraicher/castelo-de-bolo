@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="ClassStats" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="1_w4a6i"]
+[ext_resource type="PackedScene" path="res://assets/characters/Barbarian.glb" id="2_yahb4"]
+
+[resource]
+script = ExtResource("1_w4a6i")
+id = &"predero"
+display_name = "Predero"
+epiteto = "O mestre de obra (quase)"
+descricao = "Pedreiro de mão cheia (de garrafa). Chegou na obra do castelo de capacete torto, colher no cinto e um engradado de cachaça que ele jura que é para limpar a ferramenta. Arremessa as garrafas por cima de qualquer muro, deixa o chão escorregando e levanta um andaime antes de alguém dizer \"ó o aço\". Ninguém escreve o nome dele direito, nem ele."
+model = ExtResource("2_yahb4")
+visible_meshes = PackedStringArray("Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Body", "Barbarian_Head", "Barbarian_LegLeft", "Barbarian_LegRight")
+hat_color = Color(1, 0.8, 0.18, 1)
+hat_style = "capacete"
+estilo_ninja = "_predero"
+escala_cabeca = 0.58
+escala_extremidades = 1.35
+escala_modelo = 1.04
+dash_estilo = "tropeco"
+max_hp = 130.0
+move_speed = 6.4
+attack_kind = "ranged"
+damage = 13.0
+attack_range = 11.0
+attack_cooldown = 0.75
+knockback = 3.0
+projectile_speed = 15.0
+projetil = "garrafa"
+explosao_raio = 1.6
+combo_anims = PackedStringArray()
+combo_tiros = 3
+skill = "poca"
+skill_name = "Poça de Cachaça"
+skill_cooldown = 7.0
+skill_radius = 9.0
+block_reduction = 0.55
+velocidade_obra = 1.0
+classe_base = &"construtor"
+estilo_linha = "Bagunça na obra: garrafa em arco, chão que escorrega, andaime de cobertura e a saideira pegando fogo."
+dash_peca = true
+power = "andaime"
+power_name = "Andaime Expresso"
+power_radius = 4.0
+power_value = 0.0
+power_duration = 7.0
+super_tipo = "proprio"
+super_poder = "saideira"
+super_nome = "Saideira"
+som_poder = "predero_poder"
+som_super = "predero_super"
+som_golpe_final = "predero_final"
+carry_speed_mult = 0.85
+heroi = true
+anim_attack = "Throw"

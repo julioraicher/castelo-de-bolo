@@ -101,6 +101,14 @@ static func rapida(b: BotBrain) -> bool:
 				_mirar(u, alvo.global_position)
 				return b._count(1 - u.team, alvo.global_position, Config.cfg.pararaios_raio + 1.0) >= 2 or Sorte.f() < 0.5
 			return false
+		"poca":  # Predero: poça no pé de quem leva a máscara, de quem foge ou no meio do bolo
+			if not alvo_ok or d > u.stats.skill_radius + 1.0:
+				return false
+			var adiante := alvo.global_position + Vector3(alvo.velocity.x, 0, alvo.velocity.z) * 0.5
+			_mirar(u, adiante)
+			if alvo.carried_princess != null:
+				return true
+			return b._count(1 - u.team, alvo.global_position, Config.cfg.poca_raio) >= 2 or Sorte.f() < 0.45
 	return false
 
 
@@ -202,6 +210,18 @@ static func poder(b: BotBrain) -> bool:
 				_mirar(u, alvo.global_position)
 				return _alinhados(b, alvo.global_position - me, cfg.relampago_dist, cfg.relampago_larg) >= 2 or alvo.hp_ratio() < 0.4 or Sorte.f() < 0.4
 			return false
+		"andaime":  # Predero: cobertura contra quem atira de longe, ou entre a máscara e quem persegue
+			var perseguidor := b._nearest_enemy(10.0)
+			if u.carried_princess and perseguidor:
+				_mirar(u, perseguidor.global_position)
+				return true
+			for o in b.game.units:
+				if o.alive and o.team != u.team and o.stats.attack_kind != "melee" and not o.em_voo:
+					var dd := o.global_position.distance_to(me)
+					if dd > 5.0 and dd < 14.0:
+						_mirar(u, o.global_position)
+						return u.hp_ratio() < 0.7 or b._count(u.team, me, 4.0) >= 2 or Sorte.f() < 0.35
+			return false
 	return false
 
 
@@ -251,6 +271,13 @@ static func super_r(b: BotBrain) -> bool:
 			return b._count(1 - u.team, me, cfg.floresta_raio * 0.7) >= 2 or (feridos >= 2 and b._count(1 - u.team, me, cfg.floresta_raio) >= 1)
 		"tambores":
 			return b._count(1 - u.team, me, cfg.tambores_raio) >= 2
+		"saideira":  # chuva de garrafas onde o bolo inimigo está (melhor ainda com poça dele lá)
+			var alvo := b._target
+			if alvo == null or not alvo.alive or me.distance_to(alvo.global_position) > cfg.saideira_dist:
+				return false
+			_mirar(u, alvo.global_position)
+			var n := b._count(1 - u.team, alvo.global_position, cfg.saideira_raio)
+			return n >= 2 or (n >= 1 and HeroisObra.poca_em(u, alvo.global_position) != null)
 	return false
 
 

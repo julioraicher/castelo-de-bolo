@@ -596,6 +596,10 @@ static func montar(p: Node3D, kind: String, time_cor: Color) -> Node3D:
 			if rastro:
 				_fita(p, Color(0.6, 0.8, 1.0, 0.55), 0.3, 1.5, true)
 				ps(p, Vector3.ZERO, lasca(0.2, 0.03), Color(0.8, 0.9, 1.0), 6, 0.18, {"one_shot": false, "esfera": 0.25, "dir": Vector3.UP, "spread": 180.0, "v0": 2.0, "v1": 4.0, "alinha": true, "rampa": "pisca", "local_pos": true})
+		"garrafa":
+			# Predero: garrafa de cachaça girando de ponta-cabeça (FxObra).
+			corpo.free()
+			gira = FxObra.montar_garrafa(p, time_cor, rastro)
 		_:
 			corpo.mesh = malha_bola(Color(1.2, 0.9, 2.0), 0.26)
 			p.add_child(corpo)
@@ -738,6 +742,8 @@ static func impacto(g: Node, at: Vector3, kind: String, dir: Vector3, nivel := 1
 		"trovao":  # estalo: faíscas em ziguezague e clarão azul
 			faiscas(g, at, Color(0.75, 0.88, 1.0), int(7 * k), 8.0, Vector3.UP, 120.0, 0.18)
 			brilho(g, at, Color(0.6, 0.8, 1.0), 1.2 * k, 0.1)
+		"garrafa":  # vidro estilhaçado e respingo de cachaça
+			FxObra.impacto(g, at, dir, k)
 		"terra":  # pisão/fúria: poeira e pedrinhas
 			fumaca(g, at + Vector3(0, -0.8, 0), Color(0.5, 0.42, 0.32, 0.8), 3, 0.7, 0.6, 1.0)
 			faiscas(g, at, Color(1.0, 0.45, 0.2), int(4 * k), 6.0, dir + Vector3.UP, 50.0, 0.22)

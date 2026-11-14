@@ -14,7 +14,7 @@ extends "res://tools/gerar_casas.gd"
 ## Tudo de frente para +z (a câmera do jogo olha de +z).
 
 const HEROIS := ["sumotori", "kappa", "yamabushi", "karasu_tengu", "mujina", "onmyoji", "tennin", "komuso",
-	"ochimusha", "shishimai", "jorogumo", "kodama", "kaminari_kozo"]
+	"ochimusha", "shishimai", "jorogumo", "kodama", "kaminari_kozo", "predero"]
 const PW := 1.7    # vão entre as colunas (x)
 const PD := 1.4    # (z)
 const YB := 0.36   # topo da base
@@ -250,3 +250,14 @@ func _adorno_heroi(h: String, e: float, fundo: float) -> void:
 			var amarelo := Color(1.0, 0.86, 0.3)
 			_tri(Vector3(0.02, 0.36, 0.01) * e, Vector3(-0.07, 0.2, 0.01) * e, Vector3(0.0, 0.21, 0.01) * e, amarelo, Vector3(0, 0, 1))
 			_tri(Vector3(0.0, 0.23, 0.01) * e, Vector3(0.06, 0.24, 0.01) * e, Vector3(-0.03, 0.06, 0.01) * e, amarelo, Vector3(0, 0, 1))
+		"predero":  # capacete amarelo torto com a garrafa verde encostada
+			var amarelo := Color(1.0, 0.8, 0.18)
+			var vidro := Color(0.32, 0.62, 0.36)
+			_cil(0.035 * e, 0.06 * e, 0.3 * e, 8, Vector3(0.17, 0.18, -0.03) * e, Vector3(0, 0, -16), vidro, true, Vector3(1, 1, fundo))
+			_cil(0.022 * e, 0.025 * e, 0.12 * e, 6, Vector3(0.21, 0.37, -0.03) * e, Vector3(0, 0, -16), vidro, true, Vector3(1, 1, fundo))
+			_cil(0.027 * e, 0.027 * e, 0.03 * e, 6, Vector3(0.225, 0.44, -0.03) * e, Vector3(0, 0, -16), Color(0.85, 0.2, 0.12), false, Vector3(1, 1, fundo))
+			_blocod(Vector3(0.12, 0.08, 0.01) * e, Vector3(0.175, 0.16, 0.04 * fundo) * e, Vector3(0, 0, -16), Color(0.95, 0.9, 0.75), 0.0)
+			_esfera(0.19 * e, Vector3(-0.03, 0.13, 0) * e, Vector3(1.1, 0.85, 1.0 * fundo), amarelo, false, 10, 4)
+			_cil(0.27 * e, 0.27 * e, 0.025 * e, 12, Vector3(-0.03, 0.07, 0) * e, Vector3(0, 0, 8), amarelo.darkened(0.12), false, Vector3(1, 1, fundo))
+			_blocod(Vector3(0.05, 0.05, 0.3 * fundo) * e, Vector3(-0.03, 0.29, 0) * e, Vector3(0, 0, 8), amarelo.darkened(0.2), 0.01)
+			_blocod(Vector3(0.09, 0.06, 0.01) * e, Vector3(-0.08, 0.15, 0.17 * fundo + 0.01) * e, Vector3(0, 0, 8), Color(0.1, 0.1, 0.1), 0.0)

@@ -19,11 +19,11 @@ const SH_PECA := preload("res://assets/shaders/assinatura_peca.gdshader")
 const SH_EMBLEMA := preload("res://assets/shaders/assinatura_emblema.gdshader")
 const ATLAS := preload("res://assets/fx/assinaturas/selos.png")
 const ATLAS_PECAS := preload("res://assets/fx/assinaturas/pecas.png")
-const COLS := 7   # atlas dos selos e figuras: 7 x 7 (25 selos + 21 figuras)
+const COLS := 7   # atlas dos selos e figuras: 7 x 7 (26 selos + 22 figuras)
 const PCOLS := 5  # atlas das peças: 5 x 5 (22 peças)
 ## Ordem das células: a mesma de tools/assinaturas/desenhos.js.
-const SELOS: Array[StringName] = [&"guerreiro", &"ronin_oni", &"sohei", &"arqueiro", &"arqueiro_yumi", &"kusarigama", &"kitsune", &"kitsune_luz", &"kitsune_sombria", &"construtor", &"armadilheiro", &"bombardeiro", &"sumotori", &"kappa", &"yamabushi", &"karasu_tengu", &"mujina", &"onmyoji", &"tennin", &"komuso", &"ochimusha", &"shishimai", &"jorogumo", &"kodama", &"kaminari_kozo"]
-const FIGURAS: Array[String] = ["pincelada", "oni", "sino", "sombra", "olho", "raposa", "olhos", "andaime", "explosao", "leque", "asas", "rosto", "grou", "nota", "halo", "shide", "caidos", "leao", "aranha", "arvore", "tambores"]
+const SELOS: Array[StringName] = [&"guerreiro", &"ronin_oni", &"sohei", &"arqueiro", &"arqueiro_yumi", &"kusarigama", &"kitsune", &"kitsune_luz", &"kitsune_sombria", &"construtor", &"armadilheiro", &"bombardeiro", &"sumotori", &"kappa", &"yamabushi", &"karasu_tengu", &"mujina", &"onmyoji", &"tennin", &"komuso", &"ochimusha", &"shishimai", &"jorogumo", &"kodama", &"kaminari_kozo", &"predero"]
+const FIGURAS: Array[String] = ["pincelada", "oni", "sino", "sombra", "olho", "raposa", "olhos", "andaime", "explosao", "leque", "asas", "rosto", "grou", "nota", "halo", "shide", "caidos", "leao", "aranha", "arvore", "tambores", "garrafa"]
 const PECAS: Array[String] = ["pena", "folha", "papel", "nota", "conta", "gota", "sal", "petala", "caco", "estrepe", "estrela", "elo", "shuriken", "chama", "lasca", "grou", "cinza", "confete", "fio", "nuvem", "semente", "faisca"]
 
 const RAIO_R := 7.0     # selo do super: maior que qualquer selo de E
@@ -76,6 +76,7 @@ const DADOS := {
 	&"jorogumo": {"pal": "seda", "traco": Color(0.62, 0.2, 0.38), "verbo": "tece", "peca": "fio", "peca_cor": Color(0.96, 0.94, 1.0), "giro": 0.08},
 	&"kodama": {"pal": "bosque", "traco": Color(0.42, 0.27, 0.16), "verbo": "brota", "peca": "semente", "peca_cor": Color(0.62, 0.92, 0.4), "giro": 0.02},
 	&"kaminari_kozo": {"pal": "raio", "verbo": "troveja", "peca": "faisca", "peca_cor": Color(0.82, 0.92, 1.0), "giro": 0.0, "pulso": 1.0, "flash": Color(0.86, 0.92, 1.0)},
+	&"predero": {"pal": "cachaca", "traco": Color(0.95, 0.72, 0.1), "verbo": "carimbo", "peca": "caco", "peca_cor": Color(0.62, 0.92, 0.62), "giro": 0.0},
 }
 
 ## Jeitos de a peça se mexer (chaves do FxProjetil.ps + gira, vira, tam).
@@ -441,6 +442,9 @@ static func abrir_e(u: Unit) -> void:
 		&"kaminari_kozo":  # estalo: o cabelo arrepia e as faíscas espirram
 			pecas(g, p + Vector3(0, 2.0, 0), peca, pc, 14, {"v0": 5.0, "v1": 9.0})
 			FxProjetil.faiscas(g, p + Vector3(0, 2.0, 0), Color(0.82, 0.92, 1.0), 8, 7.0, Vector3.UP, 90.0, 0.2)
+		&"predero":  # bate o capacete e os cacos de vidro espirram para a frente
+			var frente := (Vector3(u.aim_dir.x, 0, u.aim_dir.z).normalized() + Vector3.UP * 0.6).normalized()
+			pecas(g, alto, peca, pc, 12, {"mov": "espirra", "dir": frente, "spread": 40.0, "v0": 4.0, "v1": 7.5, "g": Vector3(0, -9, 0), "vida": 0.9})
 		_:
 			pecas(g, alto, peca, pc, 10)
 
@@ -657,6 +661,11 @@ static func abrir_r(u: Unit) -> void:
 					Magia.onda(g, chao, pal, 2.4, 0.3, {"banda": 0.12}))
 			pecas(g, alto, peca, pc, 26, {"v1": 11.0})
 			Magia.onda(g, p, pal, 8.0, 0.45, {"banda": 0.08})
+		&"predero":  # a garrafa gigante tomba no céu e derrama a saideira (cacos e gotas chovem)
+			var gar := figura(g, p + Vector3(0, 4.4, 0) + _fundo(g, 1.1), "garrafa", pal, Vector2(5.2, 5.2), 1.4, {"verbo": "carimbo"})
+			gar.create_tween().tween_property(gar, "rotation:z", gar.rotation.z - 0.5, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			Magia.onda(g, p, pal, 6.0, 0.5, {"banda": 0.08})
+			pecas(g, p + Vector3(0, 5.5, 0), peca, pc, 26, {"esfera": 3.5, "mov": "cai", "vida": 1.8})
 		_:
 			pecas(g, alto, peca, pc, 20)
 
