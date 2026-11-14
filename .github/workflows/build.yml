@@ -62,11 +62,20 @@ jobs:
       - name: Sincronia (mesma semente, 60 x 23 quadros/s)
         run: timeout 15m bash tools/teste_sincronia.sh 90 7 ./godot
 
-      - name: Rede de verdade (anfitrião + amigo em 127.0.0.1)
-        run: timeout 15m bash tools/teste_rede.sh 5000 ./godot
+      # Humanos de Yumi: tiro de humano acertando gente (Ciclo 2.28d: o tiro
+      # separava a partida em duas e o teste só com recruta não via).
+      - name: Rede de verdade (anfitrião + amigo em 127.0.0.1, humanos de Yumi)
+        run: timeout 15m bash tools/teste_rede.sh 5000 ./godot --classe=arqueiro_yumi
 
       - name: Conexão automática por código (WebRTC, recados por pasta)
         run: timeout 15m bash tools/teste_rtc.sh 5000 ./godot
+
+      # Ciclo 2.28d: o amigo cai e volta sozinho; a partida se separa e todos
+      # voltam para a sala com aviso. A partida seguinte tem de bater.
+      - name: Queda e dessincronia (voltar para a sala)
+        run: |
+          timeout 15m bash tools/teste_queda.sh queda 9000 ./godot
+          timeout 15m bash tools/teste_queda.sh dessinc 9000 ./godot
 
       # Pela internet de verdade (ntfy.sh + STUN): só avisa, porque depende de
       # serviço de fora; se falhar, a conexão automática pode estar quebrada.

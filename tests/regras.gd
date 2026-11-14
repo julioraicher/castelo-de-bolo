@@ -2772,8 +2772,23 @@ func _multiplayer() -> void:
 	_check(not u.humano and u.brain is BotBrain, "rede: o boneco antigo vira bot")
 	_check(game.humanos_time[0] == h0[0] and game.humanos_time[1] == h0[1] + 1, "rede: contagem de humanos por time acompanha a troca")
 	_check(game.units.size() == 16 or game.sandbox, "rede: continua 8 contra 8 depois da troca")
+	# Ciclo 2.28d: tiro de humano congela o alvo um instante (regra). Antes só
+	# valia se quem atirou era o jogador DESTE PC, e a partida online se separava.
+	var alvo = null
+	for v in game.units:
+		if v.alive and v.team != novo.team and not v.humano:
+			alvo = v
+			break
+	if alvo:
+		alvo._intocavel_t = 0.0
+		alvo._dodge_t = 0.0
+		alvo._blocking = false
+		alvo._hitstop_t = 0.0
+		alvo.take_damage(1.0, novo, Vector3.RIGHT)
+		_check(not novo.is_player and alvo._hitstop_t > 0.0, "rede: tiro do humano de outro PC também congela o alvo (igual em todos os PCs)")
 	game.humano_saiu(99)
 	_check(not novo.humano and novo.brain is BotBrain and not game.cerebros.has(99), "rede: quem sai vira bot")
+	_check(game.caidos.has("Teste") and game.dica_fim() == "", "rede: quem caiu fica anotado (a linha só aparece online)")
 	_check(game.humanos_time == h0, "rede: humanos por time voltam ao normal")
 
 

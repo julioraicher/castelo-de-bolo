@@ -46,7 +46,8 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3
 # Equilíbrio por classe (8 partidas, mortes/abates por classe): tools/sonda_equilibrio.sh
 # Multiplayer: mesma semente em 60 x 23 FPS tem de dar o mesmo SINC; e rede real local
 tools/teste_sincronia.sh 90 7      # [segundos] [semente] [godot] [--variacoes ...]
-tools/teste_rede.sh 5000           # anfitrião + amigo (127.0.0.1), compara SINC
+tools/teste_rede.sh 5000 godot --classe=arqueiro_yumi  # anfitrião + amigo (127.0.0.1), compara SINC
+tools/teste_queda.sh queda|dessinc # amigo cai/separa: voltam para a sala e a partida nova bate
 tools/baixar_webrtc.sh             # extensão WebRTC oficial (SHA-256 fixo); antes do import
 tools/teste_rtc.sh 5000            # sala por código (WebRTC, recados por pasta); "internet" = ntfy real
 # Exportar só os dados, sem templates, e inspecionar como no jogo publicado:
@@ -112,6 +113,8 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
   (`create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)`,
   `create_timer(t, false, true)`); regra não lê transform de nó visual; nada de
   regra em `_process`. Conferir com `tools/teste_sincronia.sh` (está no CI).
+  `is_player` só para câmera/HUD/som: regra que depende de "quem bateu é humano"
+  usa `humano` (2.28d: hitstop do tiro só no PC de quem atirou separava a partida).
 - Inferência `:=` falha com valores sem tipo (ex.: `surface_get_format`): tipar.
 - Script de diagnóstico `-s`: não citar `Unit`/classes do jogo nem autoloads
   (`Config`) por nome: compila antes dos autoloads e quebra o `Unit`. Use
