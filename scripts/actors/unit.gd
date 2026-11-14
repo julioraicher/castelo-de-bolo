@@ -1863,11 +1863,15 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 			Sfx.play(Projectile.SOM_ACERTO[elemento], global_position, 0.1)
 	if melee:
 		hitstop(Config.cfg.hitstop_time * (1.6 if knock_mult > 1.0 else 1.0))
-	elif attacker and attacker.is_player and amount > 0.0:
-		# Tiro do jogador acertou: micro-pausa no alvo e um toque na câmera,
-		# senão o acerto de longe parece não ter peso.
+	elif attacker and attacker.humano and amount > 0.0:
+		# Tiro de humano acertou: micro-pausa no alvo e um toque na câmera,
+		# senão o acerto de longe parece não ter peso. A pausa é REGRA (o alvo
+		# para de andar): vale para qualquer humano, em todos os PCs. Online,
+		# antes era só no PC de quem atirou e a partida se dividia em duas
+		# (Ciclo 2.28d). A câmera é enfeite: só no PC de quem atirou.
 		hitstop(Config.cfg.hitstop_time * 0.5)
-		game.camera.add_trauma(0.08)
+		if attacker.is_player:
+			game.camera.add_trauma(0.08)
 	if is_player:
 		game.camera.add_trauma(0.2 if blocked else 0.45)
 		game.camera.kick(dir, 0.15 if blocked else 0.35)

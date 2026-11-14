@@ -40,6 +40,38 @@ primeiro do bairro do Construtor (que parava no Nv5). Kit "Mestre de obra".
   com fogo (Saideira ou Yamabushi). Levante o andaime entre você e um Ninja
   atirando. As frases e o tom de humor ficaram no ponto?
 
+## Ciclo 2.28d (2026-11-14), Diretor de Jogabilidade: online sem partida "separada"
+Julio: jogando com o amigo, de repente cada um estava numa partida diferente
+sem perceber; o nome do outro continuava no placar, "congelado".
+- **Causa achada**: não foi queda, foi **dessincronia**. Tiro de longe de um
+  humano congela o alvo por ~30 ms (hitstop), mas só no PC de quem atirou
+  (`is_player`). No outro PC o alvo seguia andando e, como a briga é caótica,
+  os dois jogos se afastaram e cada PC passou a mostrar um mundo. Agora vale
+  para qualquer humano em todos os PCs (`Unit.take_damage`). O teste antigo
+  não via porque o "humano" de teste só andava pela base de recruta.
+- **Se separar de novo** (outra causa que ainda não conheço): aviso grande na
+  tela e, em 5 s, **todos voltam para a sala** com a mensagem do que houve
+  (quadro e boneco onde separou, para o Claude achar a causa). É só Começar de
+  novo. Antes aparecia uma frase por 6 s e o jogo seguia separado.
+- **Se alguém cair** (internet piscou, PC travou): quem caiu volta **sozinho**
+  para a sala pelo mesmo código; enquanto o anfitrião estiver na partida, a
+  tela dele diz "espere". O anfitrião vê "Fulano caiu: um bot joga no lugar ·
+  Esc → Voltar à sala (todos)" fixo no alto. Quem caiu sai da lista da sala;
+  quando volta, entra de novo. O amigo que fica 30 s sem nada do anfitrião
+  também é tratado como queda (antes podia ficar parado esperando).
+- Online, Configurações não mostra mais Tema e Mapa (trocar ali recarregava só
+  o seu PC e separava a partida).
+- Testes: humano de teste agora vai para cima do inimigo e mira nele; rede com
+  **todas as 26 classes** como humanos (todas batem); `tools/teste_queda.sh`
+  (queda e dessincronia: voltam para a sala e a partida nova bate) no CI;
+  rede com Yumi no CI; checagem nova em tests/regras.gd. Modo teste não muda
+  (é coisa do online).
+- **O que testar**: baixem o zip novo (os dois). Joguem de Yumi ou Ninja
+  atirando um no outro e nos bots por uns minutos: tem de continuar junto. Para
+  testar a queda, o amigo desliga o Wi-Fi uns 10 s no meio: ele cai, a tela
+  dele diz que está tentando voltar, você vê "caiu" no alto; Esc → Voltar à
+  sala (todos) e ele aparece na sala sozinho.
+
 ## Ciclo 2.29b (2026-11-14), Diretor de Jogabilidade: arena mais simples + revisão dos poderes
 Julio: o tambor gerava herói demais, o inimigo soltava poder sem parar (a
 aranha), um poder parecia bugado e às vezes o jogo dizia que não tinha inimigo

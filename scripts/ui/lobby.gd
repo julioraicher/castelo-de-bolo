@@ -33,6 +33,9 @@ func _ready() -> void:
 	Rede.sala_mudou.connect(_montar)
 	Rede.salas_lan_mudaram.connect(_montar_lan)
 	Rede.aviso.connect(_on_aviso)
+	if not Rede.aviso_pendente.is_empty():  # caiu ou separou na partida: diz o que houve
+		_on_aviso(Rede.aviso_pendente[0], Rede.aviso_pendente[1])
+		Rede.aviso_pendente = []
 	_montar()
 
 

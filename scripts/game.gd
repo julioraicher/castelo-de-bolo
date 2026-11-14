@@ -15,6 +15,7 @@ var pickups: Array[Pickup] = []
 var oficinas: Array[Oficina] = []
 var torretas: Array[Torreta] = []
 var catapultas: Array[Catapulta] = []     # [time]; vazio no mapa sem catapulta_spot
+var caidos: PackedStringArray = []      # online: quem caiu da partida (bot no lugar)
 var catapulta_alvo := Vector3.INF         # onde o jogador vai cair (minimapa)
 var catapulta_alvo_time := -1
 var torreta_estilo := ""  # --torreta=a|b|c (pranchas); vazio = game_config.torreta_estilo
@@ -1677,13 +1678,21 @@ func encerrar(time_vencedor: int) -> void:
 		other.set_physics_process(false)
 
 
-## Online, depois do fim: como voltar para a sala (revanche).
+## Linha fixa da rede no alto da tela: revanche depois do fim, ou quem caiu
+## (um bot joga no lugar; para a pessoa voltar, todos voltam à sala).
 func dica_fim() -> String:
-	if not online or not game_over:
+	if not online:
 		return ""
+	if game_over:
+		if Rede.anfitriao:
+			return "Revanche: Esc → Voltar à sala (todos)"
+		return "Esperando o anfitrião voltar para a sala (Esc → Sair da partida)"
+	if caidos.is_empty():
+		return ""
+	var quem := ", ".join(caidos)
 	if Rede.anfitriao:
-		return "Revanche: Esc → Voltar à sala (todos)"
-	return "Esperando o anfitrião voltar para a sala (Esc → Sair da partida)"
+		return "%s caiu: um bot joga no lugar  ·  para voltar a jogar junto: Esc → Voltar à sala (todos)" % quem
+	return "%s caiu: um bot joga no lugar" % quem
 
 
 ## Segundos que faltam no relógio (INF = partida sem relógio).
@@ -2598,10 +2607,26 @@ func time_tem_humano(team: int) -> bool:
 
 ## Resumo do estado para conferir que os PCs estão iguais (lockstep).
 func hash_estado() -> int:
-	var h := hash([score, madeira, Sorte.rng.state, units.size()])
+	return hash(hash_partes())
+
+
+## O resumo em pedaços: [placar/madeira/sorteio, unidade 0, unidade 1, ...].
+## Online o anfitrião compara pedaço a pedaço para dizer ONDE a partida se
+## separou (Ciclo 2.28d), e não só que se separou.
+func hash_partes() -> PackedInt64Array:
+	var r := PackedInt64Array([hash([score, madeira, Sorte.rng.state, units.size()])])
 	for u in units:
-		h = hash([h, u.global_position, u.hp, u.alive, u.power, u.team])
-	return h
+		r.append(hash([u.global_position, u.hp, u.alive, u.power, u.team, u.stats.id]))
+	return r
+
+
+## Nome do pedaço i de hash_partes() para o aviso de dessincronia.
+func descrever_parte(i: int) -> String:
+	if i <= 0 or i > units.size():
+		return "placar, madeira ou sorteio"
+	var u := units[i - 1]
+	var nome := (u.brain as RedeBrain).nome if u.brain is RedeBrain else ""
+	return "%s%s do time %s (%s)" % [u.stats.display_name, " de " + nome if nome != "" else "", Config.TEAM_NAMES[u.team], u.name]
 
 
 func _spawn_humano_online(team: int, i: int, peer: int, cfg: GameConfig) -> void:
@@ -2610,7 +2635,9 @@ func _spawn_humano_online(team: int, i: int, peer: int, cfg: GameConfig) -> void
 	var u := Unit.new()
 	u.name = "%s_%d" % [Config.TEAM_NAMES[team], i]
 	add_child(u)
-	u.setup(self, team, meu, cfg.villager)
+	# Teste de rede (--classe=ID nos dois PCs): todo humano nasce nessa classe.
+	var cls: ClassStats = load("res://config/classes/%s.tres" % _classe_jogador) if _classe_jogador != "" else cfg.villager
+	u.setup(self, team, meu, cls)
 	u.humano = true
 	u.global_position = arena.random_spawn(team, units)
 	u.reset_physics_interpolation()
@@ -2743,8 +2770,10 @@ func humano_saiu(peer: int) -> void:
 	u.set_nome_tag("")
 	humanos_time[u.team] -= 1
 	placar.renomear(u, "", false)
+	caidos.append(rb.nome)
 	if hud:
-		hud.show_big("%s saiu; um bot assumiu" % rb.nome, Color(1, 0.8, 0.5), 2.0)
+		hud.show_big("%s caiu da partida\num bot joga no lugar" % rb.nome, Color(1, 0.75, 0.45), 4.0)
+		hud.dica_rede(dica_fim())
 
 
 ## O mouse está num painel (escolha do caminho): o clique não é golpe.

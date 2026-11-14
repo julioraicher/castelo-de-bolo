@@ -488,7 +488,7 @@ func _secao_config() -> Control:
 		Settings.difficulty = i
 		Settings.apply())
 	_linha(partida, "Dificuldade dos bots", diff)
-	if Config.cfg.themes.size() > 1:
+	if Config.cfg.themes.size() > 1 and not Rede.em_partida:  # online: tema e mapa são os do anfitrião (recarregar aqui separava a partida)
 		var th := OptionButton.new()
 		for t in Config.cfg.themes:
 			th.add_item(t.display_name)
@@ -499,7 +499,7 @@ func _secao_config() -> Control:
 			get_tree().paused = false
 			get_tree().reload_current_scene())  # o mapa é montado de novo com o tema
 		_linha(partida, "Tema do mapa", th)
-	if Config.cfg.maps.size() > 1:
+	if Config.cfg.maps.size() > 1 and not Rede.em_partida:
 		var mp := OptionButton.new()
 		for m in Config.cfg.maps:
 			mp.add_item(m.display_name)
