@@ -24,7 +24,7 @@ static func _triangulos(game) -> Array:
 	var nos: Array = game.find_children("*", "MeshInstance3D", true, false)
 	nos.append_array(game.find_children("*", "MultiMeshInstance3D", true, false))
 	for no in nos:
-		if not no.is_visible_in_tree() or no.name.begins_with("Enfeite_"):
+		if not no.is_visible_in_tree() or no.name.begins_with("Enfeite_") or no.name == "CascaContorno":
 			continue
 		var pai: Node = no
 		var de_boneco := false
