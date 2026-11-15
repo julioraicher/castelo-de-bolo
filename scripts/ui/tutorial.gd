@@ -32,7 +32,7 @@ func _ready() -> void:
 		["recruta", Estilo.TEXTO_FRACO, "Caiu? Recomeça",
 			"Quem morre volta como Recruta no castelo. Pegue um chapéu no pátio para virar uma classe de novo."],
 		["losango", Estilo.OURO, "Relógio de %d minutos" % roundi(cfg.tempo_limite / 60.0),
-			"No zero, vence quem tem mais pontos. Máscara fora do castelo: PRORROGAÇÃO até ela ser entregue ou voltar (na mão, até %d s). Placar igual: MORTE SÚBITA de %d min com as máscaras leves; o primeiro ponto vence, e sem ponto decidem os pontos do Tab." % [roundi(cfg.prorrogacao_max), roundi(cfg.morte_subita_tempo / 60.0)]],
+			"No último minuto as duas máscaras ficam leves. No zero, vence quem tem mais pontos; se uma máscara fora ainda empata ou vira, PRORROGAÇÃO até ela voltar ao castelo. Placar igual: MORTE SÚBITA de %d min; o primeiro ponto vence, e sem ponto decidem os pontos do Tab." % roundi(cfg.morte_subita_tempo / 60.0)],
 	])
 	_aba("Madeira", "madeira", [
 		["martelo", Estilo.OURO, "Só o Construtor corta",

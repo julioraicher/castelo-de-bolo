@@ -185,7 +185,11 @@ func _check_stuck(delta: float) -> void:
 	# um colisor). O QA do mapa achou bots assim nos pátios do Rio.
 	var quer := unit.move_intent.length() > 0.1 and unit.alive
 	_parado_n = _parado_n + 1 if quer and moved < 0.3 else 0
-	if quer and not unit.carried_princess and ((moved < 1.5 and far) or _parado_n >= 2):
+	# Quem leva a máscara anda devagar (peso) e não pode largar o rumo à toa:
+	# só destrava parado de vez, como atrás de um andaime do Predero ou de uma
+	# árvore do Kodama que a navegação não conhece (caça aos bugs 2026-11-15).
+	var preso := _parado_n >= 2 if unit.carried_princess else ((moved < 1.5 and far) or _parado_n >= 2)
+	if quer and preso:
 		_parado_n = 0
 		_unstuck_t = 2.0
 		_unstuck_goal = me + Vector3(Sorte.r(-8, 8), 0, Sorte.r(-8, 8))

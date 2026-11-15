@@ -49,6 +49,10 @@ var prorrogacao := -1.0
 ## Ciclo 2.25: morte súbita (s já passados; -1 = não começou) e se o fim saiu
 ## pelos pontos do placar do Tab (ninguém pontuou nem na morte súbita).
 var morte_subita := -1.0
+## Ciclo 2.31: último minuto (GameConfig.ultimo_minuto_leve) aberto: as duas
+## máscaras sem peso até o fim (prorrogação e morte súbita inclusive).
+var mascaras_leves := false
+var _relogio_teste := false  # modo teste: [L] liga o relógio a 1:10 do fim
 var _teste_degrau := 1  # modo teste: último degrau de multikill mostrado com [N]
 var decidido_no_placar := false
 var vencedor := -1
@@ -85,6 +89,7 @@ var _time := 0.0
 #                       quadro (PISCA_PASSO=m no ambiente muda): salva pisca.jpg com os
 #                       pixels que mudaram de um quadro para o outro em vermelho e
 #                       imprime quantos (chão piscando: z-fighting, desenho fino demais)
+#                       PISCA_FOCO=x,z mira em outro ponto (ex.: um achado do QA do mapa)
 #   --perf=N            mede o desempenho na qualidade N (0-3): a cada 5 s imprime
 #                       ms de CPU por quadro, draw calls, triângulos e objetos
 #   --menu=inicio|pausa com --autoplay: abre essa tela por cima da partida, sem
@@ -156,6 +161,7 @@ var _filme_dir := ""
 var _pisca_dir := ""
 var _pisca_f := 0
 var _pisca_imgs: Array[Image] = []
+var _pisca_quadro := -1
 var _filme_f := -1
 var _filme_y := 0.0
 var _vitrine_dir := ""
@@ -1087,6 +1093,9 @@ func _log(msg: String) -> void:
 ## abaixo de Nyquist, ou faces no mesmo plano brigando na profundidade).
 func _pisca() -> void:
 	var foco := arena.to_world(Config.TEAM_BLUE, -4.0, 0.0)
+	if OS.has_environment("PISCA_FOCO"):  # "x,z" no mundo (conferir um achado do QA do mapa)
+		var xz := OS.get_environment("PISCA_FOCO").split(",")
+		foco = Vector3(float(xz[0]), 0.0, float(xz[1]))
 	if _pisca_f == 0:
 		player.brain = null
 		player.move_intent = Vector3.ZERO
@@ -1097,11 +1106,18 @@ func _pisca() -> void:
 		camera.set_physics_process(false)
 		camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 		camera.fov = Config.cfg.camera_fov
+	# Roda na física: no xvfb (lento) vários passos de física cabem num quadro
+	# desenhado, e capturar a cada passo comparava a MESMA imagem com ela mesma
+	# (dava 0 pixels sempre; achado na caça aos bugs 2026-11-15). Um passo de
+	# câmera por quadro desenhado: a imagem capturada é a do passo anterior.
+	if Engine.get_frames_drawn() == _pisca_quadro:
+		return
+	_pisca_quadro = Engine.get_frames_drawn()
+	if _pisca_f >= 6:  # os primeiros quadros ainda trocam de câmera e escondem a interface
+		_pisca_imgs.append(get_viewport().get_texture().get_image())
 	var passo := float(OS.get_environment("PISCA_PASSO")) if OS.has_environment("PISCA_PASSO") else 0.01
 	camera.global_position = foco + Config.cfg.camera_offset + Vector3(passo * _pisca_f, 0, 0)
 	camera.look_at(foco)
-	if _pisca_f >= 5:  # os primeiros quadros ainda trocam de câmera e escondem a interface
-		_pisca_imgs.append(get_viewport().get_texture().get_image())
 	_pisca_f += 1
 	if _pisca_imgs.size() < 6:
 		return
@@ -1368,7 +1384,7 @@ func _rules() -> void:
 				u.add_power(Config.cfg.power_per_cake)
 				u.add_super(Config.cfg.super_por_espirito)
 				if u.is_player:
-					hud.show_big("Espírito preso! Máscara mais pesada", Color(1, 0.6, 0.8), 1.2)
+					hud.show_big("Espírito preso!" if mascara_leve() else "Espírito preso! Máscara mais pesada", Color(1, 0.6, 0.8), 1.2)
 
 		# Pegar bolo (bots atacantes ignoram bolo para não se distraírem).
 		var bot := u.brain as BotBrain
@@ -1502,13 +1518,18 @@ func _regras_sandbox(hint: String) -> String:
 	if Input.is_action_just_pressed("teste_multikill") and player:
 		_teste_degrau = 2 if _teste_degrau >= 5 else _teste_degrau + 1
 		_multikill(player, _teste_degrau, Placar.bonus_degrau(_teste_degrau, Config.cfg))
+	# Ciclo 2.31: [L] liga o relógio a 1:10 do fim (último minuto leve,
+	# prorrogação e fim de verdade, como numa partida).
+	if Input.is_action_just_pressed("teste_relogio") and not _relogio_teste and not game_over:
+		_relogio_teste = true
+		tempo_partida = Config.cfg.tempo_limite - 70.0
 	if morte_subita < 0.0 and not game_over:
 		if Input.is_action_just_pressed("teste_morte_subita"):
 			abrir_morte_subita()
 		elif hint == "" and player and player.alive:
 			for p in princesses:
 				if player.global_position.distance_to(p.home) < 9.0:
-					hint = "Modo teste: [M] morte súbita  ·  [N] letreiro do multikill"
+					hint = "Modo teste: [M] morte súbita  ·  [L] último minuto do relógio  ·  [N] letreiro do multikill"
 	return hint
 
 
@@ -1713,7 +1734,7 @@ func tempo_restante() -> float:
 
 
 func relogio_ligado() -> bool:
-	return Config.cfg.tempo_limite > 0.0 and not sandbox and _vitrine_dir == "" and _clipe_dir == "" and _filme_dir == ""
+	return Config.cfg.tempo_limite > 0.0 and (not sandbox or _relogio_teste) and _vitrine_dir == "" and _clipe_dir == "" and _filme_dir == ""
 
 
 ## Alguma máscara fora do pedestal (na mão ou caída esperando voltar)?
@@ -1731,6 +1752,37 @@ func _mascara_caida() -> bool:
 	return false
 
 
+## Máscara fora que ainda decide (Ciclo 2.31, Julio): entregue, ela empata ou
+## vira para quem a roubou (ladrão empatado ou 1 atrás). Fora de casa e sem
+## chance de mudar o resultado não segura o fim. `caida`: só as largadas.
+func _mascara_decisiva(caida := false) -> bool:
+	for p in princesses:
+		if p.state == Princess.State.HOME or (caida and p.state != Princess.State.DROPPED):
+			continue
+		if score[1 - p.team] + 1 >= score[p.team]:
+			return true
+	return false
+
+
+## Máscara sem peso: último minuto (2.31) ou morte súbita (2.25). Espírito
+## entregue e alma de abate não pesam mais.
+func mascara_leve() -> bool:
+	return mascaras_leves or morte_subita >= 0.0
+
+
+## Último minuto (Ciclo 2.31, Julio): as duas máscaras soltam todo o peso.
+func abrir_ultimo_minuto() -> void:
+	if mascaras_leves or game_over:
+		return
+	mascaras_leves = true
+	for p in princesses:
+		p.zerar_peso()
+	_log("ultimo minuto: mascaras leves (t=%.0fs)" % tempo_partida)
+	if hud:
+		hud.show_big("ÚLTIMO MINUTO!\nAs máscaras ficaram leves", Estilo.OURO, 2.6)
+	Sfx.play_ui("alarm")
+
+
 ## Relógio (Ciclo 2.23, 15 min no 2.24): tique nos últimos 10 s; no zero,
 ## prorrogação enquanto alguma máscara estiver fora do castelo, senão o placar decide.
 ## Ciclo 2.25: placar igual abre a morte súbita em vez do empate.
@@ -1741,22 +1793,26 @@ func _relogio(delta: float) -> void:
 	if not relogio_ligado():
 		return
 	var resta := Config.cfg.tempo_limite - tempo_partida
+	if resta <= Config.cfg.ultimo_minuto_leve and not mascaras_leves:
+		abrir_ultimo_minuto()
 	if resta > 0.0:
 		_tique(resta)
 		return
 	if prorrogacao < 0.0:
-		if _mascara_fora():
+		if _mascara_decisiva():
 			prorrogacao = 0.0
 			_log("prorrogacao (t=%.0fs)" % tempo_partida)
 			if hud:
-				hud.show_big("PRORROGAÇÃO!\nUma máscara está fora do castelo", Estilo.OURO, 2.6)
+				hud.show_big("PRORROGAÇÃO!\nAté a máscara voltar ao castelo", Estilo.OURO, 2.6)
 			Sfx.play_ui("alarm")
 			return
 		_fim_por_tempo()
 		return
 	prorrogacao += delta
-	# Caída: espera voltar sozinha (é curto). Na mão: até prorrogacao_max.
-	if not _mascara_fora() or (prorrogacao >= Config.cfg.prorrogacao_max and not _mascara_caida()):
+	# Ciclo 2.31: segue até a máscara decisiva voltar ao castelo (entregue,
+	# devolvida ou de volta sozinha). Na mão, prorrogacao_max é só a trava
+	# contra quem foge com ela; caída, ela volta sozinha em segundos.
+	if not _mascara_decisiva() or (prorrogacao >= Config.cfg.prorrogacao_max and not _mascara_decisiva(true)):
 		_fim_por_tempo()
 
 

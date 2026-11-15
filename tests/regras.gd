@@ -43,7 +43,7 @@ func _ready() -> void:
 	_respawn_cresce()
 	_bolo_mascara_cheia()
 	await _mira()
-	_placar()
+	await _placar()
 	_reanimar()
 	_alta_dinamica()
 	await _magia()
@@ -558,27 +558,17 @@ func _placar() -> void:
 	var esperado: int = int(round(2 * cfg.pts_abates + cfg.pts_assist + 3 * cfg.pts_madeira + 2.5 * cfg.pts_obra_s))
 	_check(pl.pontos_de(l, cfg) == esperado, "placar: conta deu %d, esperado %d" % [pl.pontos_de(l, cfg), esperado])
 	# Abate de verdade: c bate, a mata -> a abate, c assistência, b morte.
-	var b = null
-	var a = null
-	var c = null
-	for u in game.units:
-		if not u.alive or u.is_player:
-			continue
-		if b == null:
-			b = u
-		elif u.team != b.team and a == null:
-			a = u
-		elif a != null and u.team == a.team and c == null:
-			c = u
-	if b == null or a == null or c == null:
-		return
+	# Bonecos novos num canto quieto (caça aos bugs 2026-11-15): com bots da
+	# partida o alvo às vezes estava intocável/no voo e não morria (1 em 5).
+	var t: int = game.time_jogador
+	var base: Vector3 = game.arena.gate_spot[t] + game.arena.forward(t) * 10.0 + Vector3.UP.cross(game.arena.forward(t)).normalized() * 24.0
+	var b = _boneco_placar(1 - t, base, 97)
+	var a = _boneco_placar(t, base + Vector3(2, 0, 0), 98)
+	var c = _boneco_placar(t, base + Vector3(-2, 0, 0), 99)
+	await get_tree().physics_frame
 	var la: Dictionary = pl.linha(a).duplicate()
 	var lb: Dictionary = pl.linha(b).duplicate()
 	var lc: Dictionary = pl.linha(c).duplicate()
-	b._dodge_t = 0.0
-	b._blocking = false
-	b._shield = 0.0
-	b.hp = b.max_hp()
 	b.take_damage(5.0, c, Vector3.RIGHT)
 	b.take_damage(b.hp + 10.0, a, Vector3.RIGHT)
 	_check(not b.alive, "placar: o alvo do teste não morreu")
@@ -587,6 +577,28 @@ func _placar() -> void:
 	_check(pl.linha(a).assist == la.assist, "placar: quem matou não ganha assistência junto")
 	_check(pl.linha(b).mortes == lb.mortes + 1, "placar: quem caiu não ganhou a morte")
 	_check(pl.linha(c).dano >= lc.dano + 5.0 - 0.01, "placar: dano de quem ajudou não contou")
+	for u in [a, b, c]:
+		pl._linhas.erase(u)
+		pl._danos.erase(u)
+		pl._corrente.erase(u)
+		game.units.erase(u)
+		if is_instance_valid(u):
+			game.reanimar.esquecer(u)
+			u.queue_free()
+
+
+func _boneco_placar(team: int, pos: Vector3, indice: int) -> Unit:
+	var u := Unit.new()
+	u.name = "Placar_%d" % indice
+	u.descartavel = true
+	game.add_child(u)
+	u.setup(game, team, false, load("res://config/classes/guerreiro.tres"))
+	u.global_position = pos
+	u.reset_physics_interpolation()
+	u.died.connect(game._on_unit_died)
+	game.units.append(u)
+	game.placar.registrar(u, team, indice, false)
+	return u
 
 
 ## Reanimar (Ciclo 2.18): o caído levanta com a classe que tinha, metade da
@@ -1736,13 +1748,28 @@ func _magia() -> void:
 	caixa.queue_free()
 
 
-## Ciclo 2.23: relógio (15 min no 2.24). No zero, mais pontos vence e igual empata;
-## máscara fora do castelo estende a partida (prorrogação).
+## Ciclo 2.23: relógio (15 min no 2.24, 20 no 2.31). No zero, mais pontos vence
+## e igual empata; máscara fora que decide estende a partida (prorrogação).
 func _relogio() -> void:
 	var cfg = get_node("/root/Config").cfg
 	_check(cfg.tempo_limite > 0.0 and game.relogio_ligado(), "relógio: deveria estar ligado na partida normal")
 	game.tempo_partida = cfg.tempo_limite - 30.0
 	_check(_perto(game.tempo_restante(), 30.0, 0.01), "relógio: tempo restante errado")
+	# Ciclo 2.31: último minuto = as duas máscaras leves; espírito e alma não pesam.
+	_check(cfg.tempo_limite == 1200.0, "relógio: a partida deveria ter 20 min (Julio, 2.31)")
+	game.tempo_partida = cfg.tempo_limite - cfg.ultimo_minuto_leve - 1.0
+	game._relogio(0.016)
+	_check(not game.mascaras_leves, "último minuto: abriu cedo demais")
+	for m in game.princesses:
+		m.fatness = 0.5
+	game.tempo_partida = cfg.tempo_limite - cfg.ultimo_minuto_leve + 1.0
+	game._relogio(0.016)
+	_check(game.mascaras_leves and game.princesses[0].fatness == 0.0 and game.princesses[1].fatness == 0.0,
+		"último minuto: as máscaras deveriam perder todo o peso")
+	game.princesses[1].pesar_alma(1.0)
+	_check(game.princesses[1].fatness == 0.0, "último minuto: alma não deveria pesar")
+	if game.princesses[1].state == Princess.State.HOME:
+		_check(game.princesses[1].feed() and game.princesses[1].fatness == 0.0, "último minuto: espírito entra mas não pesa")
 	# Máscara na mão no zero: última corrida, sem fim.
 	var p = game.princesses[0]
 	var ladrao = null
@@ -1753,6 +1780,18 @@ func _relogio() -> void:
 	game.score[0] = 1
 	game.score[1] = 1
 	game.tempo_partida = cfg.tempo_limite + 0.01
+	# Ciclo 2.31: máscara fora que não muda o resultado (ladrão 2 atrás) não segura.
+	if p.state == p.State.HOME:
+		game.score[0] = 3
+		p.state = p.State.DROPPED
+		game._relogio(0.016)
+		_check(game.game_over and game.vencedor == 0 and game.prorrogacao < 0.0,
+			"relógio: máscara fora que não empata nem vira não deveria abrir prorrogação")
+		p.state = p.State.HOME
+		game.game_over = false
+		game.vencedor = -9
+		game.prorrogacao = -1.0
+		game.score[0] = 1
 	# Ciclo 2.24: máscara caída no zero = prorrogação que espera ela voltar,
 	# mesmo passando de prorrogacao_max; de volta ao pedestal, acaba.
 	if p.state == p.State.HOME:
@@ -2025,7 +2064,7 @@ func _herois_regras() -> void:
 	var a = null
 	var b = null
 	for u in game.units:
-		if u.alive and not u.is_player and not u.carried_princess and not u.em_voo:
+		if u.alive and not u.is_player and not u.carried_princess and not u.em_voo and not u.carried_tora and u.reanimando == null:
 			if a == null:
 				a = u
 			elif b == null and u.team != a.team:
@@ -2250,7 +2289,7 @@ func _herois_2_27() -> void:
 	var b = null
 	var c = null
 	for u in game.units:
-		if u.alive and not u.is_player and not u.carried_princess and not u.em_voo:
+		if u.alive and not u.is_player and not u.carried_princess and not u.em_voo and not u.carried_tora and u.reanimando == null:
 			if a == null:
 				a = u
 			elif b == null and u.team != a.team:
@@ -2282,6 +2321,8 @@ func _herois_2_27() -> void:
 		x._intocavel_t = 0.0
 		x._preso_t = 0.0
 		x._slow_t = 0.0
+		for campo in ["_equip_t", "_spin_t", "_silence_t", "_ciranda_t", "_sono_t", "_forcado_t", "_canto_t", "_casulo_t", "_mudo_t", "_hitstop_t"]:
+			x.set(campo, 0.0)  # mãos livres (tora na mão travava o Q às vezes no CI)
 		x.hp = x.max_hp()
 		x._visual.rotation.y = atan2(olha.x, olha.z)
 		x.aim_dir = olha
@@ -2470,7 +2511,7 @@ func _herois_2_27b() -> void:
 	var c = null
 	var e = null
 	for u in game.units:
-		if u.alive and not u.is_player and not u.carried_princess and not u.em_voo:
+		if u.alive and not u.is_player and not u.carried_princess and not u.em_voo and not u.carried_tora and u.reanimando == null:
 			if a == null:
 				a = u
 			elif b == null and u.team != a.team:
@@ -2506,6 +2547,8 @@ func _herois_2_27b() -> void:
 		x._intocavel_t = 0.0
 		x._preso_t = 0.0
 		x._slow_t = 0.0
+		for campo in ["_equip_t", "_spin_t", "_silence_t", "_ciranda_t", "_sono_t", "_forcado_t", "_canto_t", "_casulo_t", "_mudo_t", "_hitstop_t"]:
+			x.set(campo, 0.0)
 		x._molhado_t = 0.0
 		x.hp = x.max_hp()
 		x._visual.rotation.y = atan2(olha.x, olha.z)
@@ -2710,7 +2753,7 @@ func _predero_2_30() -> void:
 	var b = null
 	var c = null
 	for u in game.units:
-		if u.alive and not u.is_player and not u.carried_princess and not u.em_voo:
+		if u.alive and not u.is_player and not u.carried_princess and not u.em_voo and not u.carried_tora and u.reanimando == null:
 			if a == null:
 				a = u
 			elif b == null and u.team != a.team:
@@ -2745,6 +2788,8 @@ func _predero_2_30() -> void:
 		x._intocavel_t = 0.0
 		x._preso_t = 0.0
 		x._slow_t = 0.0
+		for campo in ["_equip_t", "_spin_t", "_silence_t", "_ciranda_t", "_sono_t", "_forcado_t", "_canto_t", "_casulo_t", "_mudo_t", "_hitstop_t"]:
+			x.set(campo, 0.0)
 		x.move_intent = Vector3.ZERO
 		HeroisObra.zerar(x)
 		x.hp = x.max_hp()

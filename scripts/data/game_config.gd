@@ -18,8 +18,16 @@ extends Resource
 ## alguém ou caída no chão) a partida segue em PRORROGAÇÃO até ela ser entregue
 ## ou voltar. Na mão, no máximo prorrogacao_max s; caída, espera ela voltar
 ## sozinha (princess_return_time). Modo teste não tem relógio.
-@export var tempo_limite := 900.0
-@export var prorrogacao_max := 60.0
+## Ciclo 2.31 (Julio): 20 min (mais heróis em campo, mais vezes). A
+## prorrogação só segura a partida se a máscara fora for de quem empata ou vira
+## com ela (o time que leva ou largou a máscara está empatado ou 1 atrás) e
+## espera ela VOLTAR ao castelo (entregue, devolvida ou de volta sozinha).
+## prorrogacao_max virou só trava de segurança contra quem foge com ela na mão.
+@export var tempo_limite := 1200.0
+@export var prorrogacao_max := 180.0
+## Ciclo 2.31 (Julio): no último minuto as duas máscaras perdem todo o peso
+## (como na morte súbita), empatado ou não: o fim é corrida. 0 = desligado.
+@export var ultimo_minuto_leve := 60.0
 ## Ciclo 2.25 (Julio: "muito empate"): relógio (e prorrogação) acabando
 ## empatado abre a MORTE SÚBITA: as duas máscaras ficam leves (peso 0, e as
 ## almas param de pesar), o primeiro ponto vence. Passados estes segundos sem
