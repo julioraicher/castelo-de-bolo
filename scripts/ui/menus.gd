@@ -94,10 +94,22 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 ## Se o jogo perder o foco (outro app, aviso do Windows, saiu da tela cheia),
-## pausa na hora: ninguém morre enquanto você está fora.
+## pausa: ninguém morre enquanto você está fora.
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and not is_open() and _started and not get_tree().paused and not Rede.em_partida:
-		_abrir("pausa", "controles")
+		_pausar_se_foco_continuar_fora()
+
+
+## Plugar um cabo HDMI (ou trocar resolução) faz o Windows tirar e devolver o
+## foco da janela várias vezes seguidas; sem esta carência o jogo pausava
+## "sozinho" a cada piscada. Só pausa se o foco continuar fora após meio segundo.
+func _pausar_se_foco_continuar_fora() -> void:
+	await get_tree().create_timer(0.5).timeout
+	if is_open() or not _started or get_tree().paused or Rede.em_partida:
+		return
+	if DisplayServer.window_is_focused():
+		return
+	_abrir("pausa", "controles")
 
 
 func _abrir(modo: String, secao: String) -> void:
@@ -261,6 +273,11 @@ func _montar_nav() -> void:
 		cont.custom_minimum_size = Vector2(0, 64)
 		cont.add_theme_font_size_override("font_size", 30)
 		_nav_botao("Reiniciar partida", "", func():
+			Settings.save()
+			pular_inicio = true  # recomeça direto na partida, sem passar pela tela inicial
+			get_tree().paused = false
+			get_tree().reload_current_scene())
+		_nav_botao("Sair para o menu", "", func():
 			Settings.save()
 			get_tree().paused = false
 			get_tree().reload_current_scene())

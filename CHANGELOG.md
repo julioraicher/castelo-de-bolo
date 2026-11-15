@@ -4,6 +4,24 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.30b (2026-11-15), Diretor de Jogabilidade: pausa sozinha ao plugar HDMI + Sair para o menu
+Julio: o jogo pausou sozinho várias vezes ao plugar o cabo HDMI, e no menu de
+pausa "não dava pra sair do jogo". Causa: o jogo pausa de propósito quando a
+janela perde o foco (para ninguém morrer fora da tela), e o Windows tira e
+devolve o foco várias vezes seguidas enquanto reconfigura os monitores — cada
+piscada virava uma pausa. Não era defeito do PC.
+- **Carência de meio segundo na auto-pausa** (`menus.gd`): ao perder o foco, o
+  jogo espera 0,5 s e só pausa se o foco continuar fora. Alt-Tab de verdade
+  continua pausando; a rajada do HDMI não.
+- **Botão "Sair para o menu"** no menu de pausa: volta para a tela inicial.
+  "Reiniciar partida" agora recomeça direto na partida (antes os dois caíam na
+  tela inicial). "Sair do jogo" segue no rodapé (no .exe; a web não tem).
+- Vale igual no modo teste e na Arena (mesmo menu de pausa).
+- Testes: regras 1029/1029 ok.
+- **O que testar**: plugue/desplugue o HDMI no meio de uma partida: pode pausar
+  uma vez no máximo (se o foco ficar fora mesmo), não em sequência. No Esc,
+  confira os três caminhos: Reiniciar partida, Sair para o menu, Sair do jogo.
+
 ## Ciclo 2.30 (2026-11-14), Diretor de Jogabilidade + Visual: Predero, o herói do Construtor
 Julio: um herói de humor, o **Predero** (escrito errado de propósito, como na
 placa da obra), que joga garrafa de cachaça nos inimigos. Único herói novo e o
