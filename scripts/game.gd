@@ -252,6 +252,7 @@ func _ready() -> void:
 			placar_print = true  # prints: placar (Tab) sempre aberto
 		elif arg.begins_with("--shots="):
 			_shots_dir = arg.trim_prefix("--shots=")
+			Settings.auto_quality = false  # o xvfb é lento: sem isso o print sairia na Mínima
 		elif arg.begins_with("--menu="):
 			_menu_print = arg.trim_prefix("--menu=")
 		elif arg.begins_with("--vista="):

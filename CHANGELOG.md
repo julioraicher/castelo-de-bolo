@@ -4,6 +4,26 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.30d (2026-11-15), Diretor de Jogabilidade: caça aos bugs, lote B (antisserrilhado de verdade na Alta)
+Achado da caça aos bugs: desde o 2.19 a Alta trocou o MSAA pelo FXAA do Godot,
+mas o `Viewport.screen_space_aa` **só existe no Forward+/Mobile**. No
+Compatibility (o renderizador do jogo no .exe e na web) o Godot recusava com
+um aviso e a Alta rodava **sem antisserrilhado nenhum**.
+- **FXAA próprio** (`assets/shaders/fxaa.gdshader`, FXAA "console" de Lottes):
+  lê o brilho (luma) das 4 diagonais, acha a direção da borda e borra só ao
+  longo dela (o contorno de tinta não engorda). 9 leituras por pixel, uma
+  passada: +1 chamada de desenho e uma cópia da tela.
+- Fica numa camada de tela abaixo do HUD (`Settings._fxaa_ligado`): pega o 3D
+  já ampliado (escala 0,9); textos, barras, menus e mira continuam nítidos.
+  Só na Alta (inclusive no modo teste e na Arena); Média, Baixa e Mínima iguais.
+- `--shots` desliga a qualidade automática (no xvfb lento os prints saíam na
+  Mínima). `SEM_FXAA=1` no ambiente tira o FXAA (prints de antes/depois).
+- Print: project-files castelo-de-bolo/desempenho/2026-11-15-fxaa-antes-depois.jpg.
+- Testes: regras 1034/1034 (novo: FXAA liga só na Alta, abaixo do HUD).
+- **O que testar**: na Alta, olhe as bordas dos telhados e das muralhas: menos
+  "escadinha". Se o FPS cair perceptivelmente na Alta, me avise (a Alta
+  dinâmica continua mirando 30).
+
 ## Ciclo 2.30c (2026-11-15), Diretor de Jogabilidade: caça aos bugs, lote A (testes) + bot preso no rio
 Julio pediu uma caça a bugs e pontas soltas (quiz: project-files
 castelo-de-bolo/quiz/quiz-caca-bugs.html). Lote A = ferramentas de teste; elas
