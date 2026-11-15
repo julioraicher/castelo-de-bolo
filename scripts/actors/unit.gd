@@ -1693,13 +1693,20 @@ func _place_trap() -> void:
 		if t.owner_unit == self and not t.is_queued_for_deletion() and not t.has_meta("do_poder"):
 			mine.append(t)
 	while mine.size() >= stats.trap_max:
-		mine.pop_front().queue_free()
+		mine.pop_front().sumir()
 	var trap := Trap.new()
 	game.add_child(trap)
 	trap.setup(game, self, global_position - _facing() * 0.8)
 	_play_upper("Interact", 1.6)
-	Sfx.play("pickup", global_position, 0.1)
+	Sfx.play("mina_arma" if stats.trap_kind == "mina" else "estrepe_arma", global_position, 0.1)
 	FxPoder.q_armadilha(self, trap.global_position)
+
+
+## Espírito pego (Game._rules): o que vai na cabeça dá um pulo e acende.
+func pulso_espirito() -> void:
+	_cake_visual.scale = Vector3.ONE * 1.8
+	var tw := _cake_visual.create_tween()
+	tw.tween_property(_cake_visual, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
 func apply_slow(mult: float, duration: float) -> void:
@@ -2531,7 +2538,7 @@ func _use_power() -> bool:
 				mina.setup(game, self, global_position + Vector3(cos(a), 0, sin(a)) * stats.power_radius)
 				pontos.append(global_position + Vector3(cos(a), 0, sin(a)) * stats.power_radius)
 			FxPoder.campo_minado(self, pontos)
-			Sfx.play("pickup", global_position, 0.1)
+			Sfx.play("mina_arma", global_position, 0.1)
 		"bombardeio":
 			_bombardeio()
 		"mutirao":

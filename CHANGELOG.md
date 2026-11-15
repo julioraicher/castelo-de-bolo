@@ -4,6 +4,49 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.32 (2026-11-15), Diretor Visual: espírito, itens e armadilhas refeitos (lote D)
+Lote D da caça aos bugs: as três peças que ainda eram primitivas soltas (fora do
+princípio 13). Quiz do Julio: chama-fantasma, objetos de verdade, ferramentas de
+ninja, lote caprichado. Kit novo `scripts/fx/fx_itens.gd` (`FxItens`); prancha
+`tools/prancha_itens.gd`.
+- **Espírito (hitodama)**: gota de fogo-fátuo no shader do kit Magia (núcleo claro,
+  cauda que se rasga e ondula, borda de tinta), duas chaminhas em órbita e a chama
+  respirando. Nasce com um anel subindo; **pego** = a chama estica e se rasga, com
+  brasas, e o que vai na cabeça de quem pegou dá um pulo (`Unit.pulso_espirito`);
+  **preso na máscara** = estouro, dois anéis subindo e faíscas (a alma de abate faz
+  a versão pequena). O mesmo visual vai na cabeça, voando para a máscara e em
+  volta dela.
+- **Itens no chão** viraram objetos pintados: Poção = cabaça laqueada com vapor
+  rosa; Escudo = leque de guerra com o emblema janome e um aro de guarda girando;
+  Velocidade = tamanca geta num redemoinho de vento; Dano dobrado = duas kunais
+  com o talho em X atrás; Poder cheio = pergaminho roxo com três chaminhas de chi
+  (deixou de ser o gêmeo roxo do espírito). Caem do céu quicando, cada um espera
+  do seu jeito e, pego, se desfaz em energia na cor dele com a peça do tema.
+- **Armadilhas**: estrepes do Construtor = makibishi de ferro numa tabuinha de
+  bambu com folhas e a estaca com a fita do time; mina do Armadilheiro = panela de
+  pólvora de barro com a corda do time, selo de papel e a brasa do estopim
+  pulsando. Caem quicando (a mina balança), disparam com peças próprias
+  (makibishi espirrando, cacos de barro) e, quando vencem ou são trocadas pela
+  nova, afundam no chão em vez de sumir de estalo (`Trap.sumir`).
+- **Anel do chão** refeito (`FxItens.anel_chao`): anel de energia com filete de
+  tinta em vez do toro chapado, cor e traço próprios por peça (espírito verde
+  esfiapado, item na cor dele, armadilha tracejada na cor do time).
+- **12 sons próprios** (`gerar_sons.py itens232`): um por item, item caindo,
+  espírito pego/preso, estrepes armados/pisados, mina armada e armadilha sumindo.
+- Mais leve: estrepes custavam 8 chamadas de desenho cada (7 cones + anel), agora 2.
+- **Modo teste**: mostruário na frente do portão com os 5 itens em fila e um
+  espírito; o que for pego volta 2,5 s depois. Estrepes = Construtor, mina =
+  Armadilheiro (o Samurai de treino serve de alvo).
+- Clipes do Como jogar regravados: objetivo, Construtor e Armadilheiro.
+
+### O que testar
+- Modo teste: olhar o mostruário de perto e pegar cada item (som e efeito de cada um).
+- Pegar um espírito e levar até a máscara: a chama na cabeça, o pulo ao pegar e o
+  suspiro de faíscas ao prender.
+- Construtor (botão direito) e Armadilheiro (botão direito e R): armadilhas
+  caindo, a fita/corda na cor do time, o Samurai de treino pisando e as
+  armadilhas antigas afundando quando passam do limite.
+
 ## Ciclo 2.31 (2026-11-15), Diretor de Jogabilidade: partida de 20 min, último minuto leve
 Pedido do Julio (sem quiz, direto na main depois da caça aos bugs).
 - **Relógio de 20 min** (era 15): mais tempo para heróis Nv6 entrarem em campo.

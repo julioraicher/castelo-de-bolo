@@ -29,7 +29,10 @@ const SOUNDS := ["swing", "hit", "shoot", "magic", "heal", "pickup", "hat", "eat
 	# Heróis 2.27b
 	"kodama_poder", "kodama_super", "kodama_final", "kodama_semente", "kodama_brota", "kodama_raizes", "kodama_bosque", "kodama_cai", "kodama_floresta",
 	"predero_poder", "predero_super", "predero_final", "garrafa_lancar", "garrafa_quebra", "poca_splash", "poca_fogo", "andaime_sobe", "andaime_cai",
-	"kaminari_kozo_poder", "kaminari_kozo_super", "kaminari_kozo_final", "kaminari_choque", "kaminari_carga", "kaminari_trovao", "kaminari_relampago", "kaminari_tambor"]
+	"kaminari_kozo_poder", "kaminari_kozo_super", "kaminari_kozo_final", "kaminari_choque", "kaminari_carga", "kaminari_trovao", "kaminari_relampago", "kaminari_tambor",
+	# Ciclo 2.32 (lote D): itens no chão, espírito e armadilhas: gerar_sons.py itens232.
+	"item_pocao", "item_escudo", "item_velocidade", "item_dano", "item_medidor", "item_cai",
+	"hitodama_pega", "hitodama_preso", "estrepe_arma", "estrepe_fisga", "mina_arma", "armadilha_some"]
 const POOL_SIZE := 32
 
 const MAX_VARIACOES := 8

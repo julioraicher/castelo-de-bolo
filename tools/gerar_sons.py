@@ -793,6 +793,80 @@ def herois_2_30():
     save("predero_final", mix(lancar, atraso(ganho(vidro_quebra(0.7, 1.4), 1.1), 0.12)), 0.75)
 
 
+def itens_2_32():
+    """Ciclo 2.32 (lote D): itens no chão, espírito (hitodama) e armadilhas do
+    Construtor, cada um com som próprio. Semente própria.
+    Rode: gerar_sons.py itens232"""
+    random.seed(2232)
+
+    def save(name, track, gain=0.8):
+        k = len(track)
+        ini = int(k * 0.7)
+        globals()["save"](name, [v * (1.0 if i < ini else (1 - (i - ini) / (k - ini)) ** 2) for i, v in enumerate(track)], gain)
+
+    whoosh = lambda sec, pico=0.5: noise(sec, cutoff=lambda x: 0.04 + pico * math.sin(math.pi * x) ** 2, release_pow=1.0)
+    madeira = lambda f, sec=0.12: suave(sino(f, sec, ((1.0, 1.0, 45), (2.76, 0.45, 70), (5.4, 0.2, 95))), 0.0015)
+
+    def ferro(f, sec=0.16):
+        """Peça pequena de ferro batendo: modos de barra (1; 2,76; 5,4) secos."""
+        return suave(sino(f, sec, ((1.0, 1.0, 22), (2.76, 0.6, 30), (5.4, 0.35, 45), (8.9, 0.2, 60))), 0.001)
+
+    def bolhas(sec, k=6, f0=(380, 900)):
+        """Bolhas: seno curto subindo (a cavidade de ar encolhe antes de estourar)."""
+        out = []
+        for _ in range(k):
+            f = random.uniform(*f0)
+            out.append(atraso(ganho(tone(lambda u, f=f: f * (1 + 1.6 * u), random.uniform(0.03, 0.06), release_pow=1.4), random.uniform(0.25, 0.5)),
+                              random.uniform(0.0, sec * 0.8)))
+        return mix(*out)
+
+    def brilho(f0, sec=0.5):
+        """Brilho de pegar item: dois sininhos em quinta, o segundo um pouco depois."""
+        return mix(ganho(sino(f0, sec, ((1.0, 1.0, 7), (2.0, 0.3, 12), (3.0, 0.12, 18))), 0.5),
+                   atraso(ganho(sino(f0 * 1.5, sec * 0.8, ((1.0, 1.0, 8), (2.0, 0.25, 14))), 0.4), 0.06))
+
+    def assobio(f0, f1, sec, ar=0.5):
+        """Fantasma: seno com vibrato largo indo de f0 a f1 dentro de um sopro."""
+        tom = tone(lambda x: f0 + (f1 - f0) * x, sec, vib=0.03, release_pow=1.2)
+        sopro_ = noise(sec, cutoff=lambda x: 0.08 + 0.25 * math.sin(math.pi * x), release_pow=1.0)
+        return mix(ganho(tom, 0.45), ganho(sopro_, ar))
+
+    # Itens: o som diz o que o item faz, com o mesmo brilho de "peguei" por baixo.
+    rolha = mix(noise(0.02, cutoff=lambda x: 0.8), tone(lambda x: 900 - 500 * x, 0.04, release_pow=2.0))
+    save("item_pocao", mix(ganho(rolha, 0.8), atraso(bolhas(0.35, 7), 0.04), atraso(ganho(brilho(1320), 0.6), 0.08)), 0.7)
+    leque = mix(ganho(whoosh(0.18, 0.4), 0.6), atraso(ganho(madeira(240, 0.2), 0.9), 0.12), atraso(ganho(sino(196, 0.9, ((1.0, 1.0, 4), (2.4, 0.5, 6), (4.1, 0.2, 9))), 0.55), 0.13))
+    save("item_escudo", mix(leque, atraso(ganho(brilho(990), 0.5), 0.1)), 0.75)
+    vento = noise(0.45, cutoff=lambda x: 0.03 + 0.55 * x ** 1.5, release_pow=1.0)
+    save("item_velocidade", mix(ganho(vento, 1.1), atraso(ganho(tone(lambda x: 500 + 1400 * x, 0.35, release_pow=1.5), 0.15), 0.05),
+                                atraso(ganho(brilho(1560), 0.5), 0.2)), 0.7)
+    shing = mix(noise(0.3, cutoff=lambda x: 0.6 + 0.35 * x, release_pow=2.5),
+                ganho(sino(3100, 0.45, ((1.0, 1.0, 9), (1.47, 0.6, 12), (2.1, 0.3, 16))), 0.5))
+    save("item_dano", mix(ganho(shing, 0.8), atraso(ganho(membrana(90, 0.3), 0.6), 0.0), atraso(ganho(brilho(1175), 0.4), 0.08)), 0.75)
+    papel = mix(*(atraso(ganho(noise(0.05, cutoff=lambda x: 0.5), random.uniform(0.3, 0.7)), 0.03 * j) for j in range(7)))
+    save("item_medidor", mix(ganho(papel, 0.7), atraso(ganho(tigela(392, 1.1), 0.55), 0.18), atraso(ganho(tigela(587, 0.9), 0.35), 0.22)), 0.75)
+    queda = mix(ganho(membrana(140, 0.18, 0.2), 0.6), noise(0.04, cutoff=lambda x: 0.3), atraso(ganho(sino(2400, 0.2, ((1.0, 1.0, 20),)), 0.2), 0.02))
+    save("item_cai", queda, 0.55)
+    # Espírito: sopro fantasma subindo ao pegar; ao prender, um rin e o suspiro descendo.
+    save("hitodama_pega", mix(assobio(420, 880, 0.45), atraso(ganho(brilho(1760, 0.4), 0.35), 0.1)), 0.7)
+    save("hitodama_preso", mix(ganho(tigela(523, 1.4), 0.6), atraso(assobio(700, 330, 0.7, 0.35), 0.05), atraso(ganho(brilho(1047, 0.6), 0.35), 0.0)), 0.75)
+    # Armadilhas.
+    tilin = mix(*(atraso(ganho(ferro(random.uniform(1800, 3400)), random.uniform(0.4, 1.0)), 0.035 * j + random.uniform(0, 0.02)) for j in range(6)))
+    save("estrepe_arma", mix(ganho(noise(0.05, cutoff=lambda x: 0.35), 0.6), tilin), 0.7)
+    fisga = mix(ganho(noise(0.06, cutoff=lambda x: 0.9, release_pow=3.0), 1.2), ganho(ferro(1400, 0.25), 0.9), atraso(ganho(ferro(2600, 0.2), 0.6), 0.02),
+                atraso(ganho(membrana(110, 0.2, 0.3), 0.7), 0.0))
+    save("estrepe_fisga", fisga, 0.8)
+    barro = mix(ganho(membrana(95, 0.25, 0.15), 0.9), noise(0.05, cutoff=lambda x: 0.25))
+    chiado = [0.0] * n(0.5)
+    for i in range(len(chiado)):
+        if random.random() < 900 / SR:
+            a = random.choice((-1, 1)) * random.uniform(0.2, 0.7)
+            for j in range(25):
+                if i + j < len(chiado):
+                    chiado[i + j] += a * math.exp(-j / SR * 5000)
+    save("mina_arma", mix(barro, atraso(ganho(noise(0.45, cutoff=lambda x: 0.7, release_pow=1.0), 0.25), 0.08), atraso(ganho(chiado, 0.6), 0.08)), 0.7)
+    save("armadilha_some", mix(ganho(noise(0.35, cutoff=lambda x: 0.1 * (1 - x) + 0.02, release_pow=1.0), 1.0), ganho(membrana(70, 0.25, 0.1), 0.3)), 0.5)
+
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1:] == ["efeitos"]:
@@ -811,6 +885,8 @@ if __name__ == "__main__":
         herois_2_27b()
     elif sys.argv[1:] == ["herois230"]:
         herois_2_30()
+    elif sys.argv[1:] == ["itens232"]:
+        itens_2_32()
     else:
         main()
         efeitos()
@@ -821,3 +897,4 @@ if __name__ == "__main__":
         herois_2_27()
         herois_2_27b()
         herois_2_30()
+        itens_2_32()

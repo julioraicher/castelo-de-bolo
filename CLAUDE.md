@@ -210,6 +210,11 @@ repo: `.claude/skills/`.
   energia com ruído que se rasga (`corroi`) + filete de tinta; nunca primitiva de
   cor chapada. Receita e orçamento em docs/direcao-efeitos.md §8; conferir com
   `tools/bancada_magia.gd` e `tools/vitrine.sh SAIDA [classes]`.
+- Peças pequenas do chão (Ciclo 2.32): espírito (`Cake`), itens (`Pickup`) e
+  armadilhas (`Trap`) desenham pelo kit `FxItens` (`scripts/fx/fx_itens.gd`):
+  objeto = ArrayMesh com cor por vértice no material pintado, energia = shader
+  Magia, anel do chão = `FxItens.anel_chao`. Prancha `tools/prancha_itens.gd`;
+  no modo teste há um mostruário com os 5 itens e um espírito.
 - Assinatura por personagem (Ciclo 2.24): kit `Assinatura` (`scripts/fx/assinatura.gd`).
   Selo com silhueta e verbo próprios, figura em pé no R, partícula com forma, hanko.
   Desenhos em `tools/assinaturas/desenhos.js` (gerar: `node tools/assinaturas/gerar.js`
