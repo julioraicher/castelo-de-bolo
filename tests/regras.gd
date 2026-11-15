@@ -57,6 +57,7 @@ func _ready() -> void:
 	_multiplayer()
 	_arena_chapeus()
 	_poderes_2_29b()
+	_rio_sem_ilha()
 	_sons_proprios()
 	_relogio()  # por último: encerra a partida
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
@@ -739,6 +740,28 @@ func _alta_dinamica() -> void:
 				if m and m.next_pass:
 					dupla = true
 	_check(not dupla, "pedaços do cenário sem next_pass (contorno só na casca)")
+
+
+## Caça aos bugs 2026-11-15: o leito do rio tem malha de navegação fechada
+## pelas travas das margens. Salto/teleporte que mirava no rio deixava o bot
+## preso lá para sempre. chao_valido nunca devolve ponto sem ligação.
+func _rio_sem_ilha() -> void:
+	var u = _alvo()
+	if u == null:
+		return
+	var mapa: RID = u.get_world_3d().navigation_map
+	var meio := Vector3(0, 0, -8)
+	var ilha := NavigationServer3D.map_get_closest_point(mapa, meio)
+	if Herois._ligado(u, mapa, ilha):
+		return  # mapa sem ilha no meio: nada a conferir
+	var antes: Vector3 = u.global_position
+	u.global_position = Vector3(7, 0, -8)
+	var perto := Herois.chao_valido(u, meio)
+	var frente := Herois.chao_valido(u, meio, true)
+	_check(Herois._ligado(u, mapa, perto) and absf(perto.x) > 5.0, "rio: pouso mirando no rio deveria ir para uma margem (x=%.1f)" % perto.x)
+	_check(Herois._ligado(u, mapa, frente) and frente.x < -5.0, "rio: salto mirando no rio deveria terminar a travessia (x=%.1f)" % frente.x)
+	u.global_position = antes
+	u.reset_physics_interpolation()
 
 
 func _check(ok: bool, nome: String) -> void:

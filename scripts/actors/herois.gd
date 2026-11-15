@@ -433,7 +433,7 @@ static func _rasteira(u: Unit) -> bool:
 	var dir := _dir_mira(u)
 	var de := u.global_position
 	var ate := sem_parede(u, de, de + dir * u.stats.skill_radius)
-	ate = chao_valido(u, ate)
+	ate = chao_valido(u, ate, true)
 	FxHerois.poca(u.game, de)
 	u.global_position = ate
 	u.reset_physics_interpolation()
@@ -535,7 +535,7 @@ static func _mergulho(u: Unit) -> bool:
 	to.y = 0
 	if to.length() < 2.0:
 		to = _dir_mira(u) * 4.0
-	var p1 := chao_valido(u, u.global_position + to.limit_length(u.stats.skill_radius))
+	var p1 := chao_valido(u, u.global_position + to.limit_length(u.stats.skill_radius), true)
 	mergulhar(u, p1, u.stats.skill_value * u.damage_mult(), u.stats.explosao_raio, 0.8, Callable())
 	return true
 
@@ -568,7 +568,7 @@ static func _cadeia_corvos(u: Unit, alvos: Array, i: int) -> void:
 		return
 	var a: Unit = alvos[i]
 	var p := a.global_position if is_instance_valid(a) and a.alive else u.global_position + u._facing() * 3.0
-	var p1 := chao_valido(u, p)
+	var p1 := chao_valido(u, p, true)
 	mergulhar(u, p1, u.stats.skill_value * 1.15 * u.damage_mult(), u.stats.explosao_raio * 1.1, 0.55,
 			func() -> void: _cadeia_corvos(u, alvos, i + 1))
 
@@ -1446,12 +1446,46 @@ static func sem_parede(u: Unit, de: Vector3, ate: Vector3) -> Vector3:
 
 
 ## Ponto de pouso em chão andável (malha de navegação), na altura do chão.
-static func chao_valido(u: Unit, p: Vector3) -> Vector3:
+## O leito do rio tem malha de navegação própria, fechada pelas travas das
+## margens: quem pousa lá sai andando, mas o bot não acha caminho e fica preso
+## (caça aos bugs 2026-11-15). Ponto sem ligação com o castelo = procura o
+## chão ligado mais perto na mesma linha. `avancar` (saltos e teleportes):
+## termina a travessia na margem da frente antes de tentar voltar.
+static func chao_valido(u: Unit, p: Vector3, avancar := false) -> Vector3:
 	p = u.game.arena.clamp_to_arena(p)
 	var mapa := u.get_world_3d().navigation_map
 	if NavigationServer3D.map_get_iteration_id(mapa) > 0:
 		var q := NavigationServer3D.map_get_closest_point(mapa, p)
 		if q.distance_to(p) < 12.0:
 			p = q
+		if not _ligado(u, mapa, p):
+			p = _ponto_ligado(u, mapa, p, avancar)
 	p.y = u.game.arena.ground_y(p.x, p.z, p.y + 3.0)
 	return p
+
+
+## A malha em `p` chega ao castelo do time de `u`?
+static func _ligado(u: Unit, mapa: RID, p: Vector3) -> bool:
+	var casa := NavigationServer3D.map_get_closest_point(mapa, u.game.arena.spawn_center[u.team])
+	var path := NavigationServer3D.map_get_path(mapa, p, casa, true)
+	return not path.is_empty() and path[path.size() - 1].distance_to(casa) < 1.5
+
+
+static func _ponto_ligado(u: Unit, mapa: RID, p: Vector3, avancar: bool) -> Vector3:
+	var dir := p - u.global_position
+	dir.y = 0
+	dir = dir.normalized() if dir.length() > 0.1 else u._facing()
+	var passos: Array[float] = []
+	for k in range(1, 13):
+		if avancar:
+			passos.append(float(k))
+		else:
+			passos.append_array([float(k), -float(k)])
+	if avancar:
+		for k in range(1, 13):
+			passos.append(-float(k))
+	for d in passos:
+		var c := NavigationServer3D.map_get_closest_point(mapa, u.game.arena.clamp_to_arena(p + dir * d))
+		if _ligado(u, mapa, c):
+			return c
+	return u.global_position

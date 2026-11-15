@@ -90,6 +90,8 @@ var _time := 0.0
 #   --menu=inicio|pausa com --autoplay: abre essa tela por cima da partida, sem
 #                       pausar (prints da interface)
 #   --testes            roda os testes de regra (tests/regras.gd) e sai com 0/1
+#   --varredura-poderes Q, E e R das classes com inimigo alinhado (tests/varredura_poderes.gd), sai 0/1
+#   --varredura-aliados idem com aliado ferido, caído e distante (tests/varredura_aliados.gd), sai 0/1
 #   --qa-mapa=<pasta>   QA automático do mapa (tests/qa_mapa.gd): qa_mapa.txt
 #   --vitrine=<pasta>   com --classe: câmera parada, 3 alvos, o jogador faz 3 ataques,
 #                       o Q e o E; salva 1 PNG a cada 3 quadros (GIF antes/depois)
@@ -127,7 +129,7 @@ var _arena_prova_t := 0.0
 const ARENA_INIMIGOS_MAX := 6
 var _variacoes := false
 var _variacoes_giro := 0
-## --com-herois (com --variacoes): os 8 heróis raros entram na lista de partida
+## --com-herois (com --variacoes): os heróis raros entram na lista de partida
 ## (sonda de equilíbrio do Ciclo 2.23), espalhados pelos dois times.
 var _com_herois := false
 var _equilibrio := false
@@ -169,7 +171,8 @@ var _perf_censo := true
 ## --perf: microssegundos gastos por seção neste quadro (Unit soma aqui).
 var perf_secoes := {}
 var _testes := false  # --testes: roda tests/regras.gd e sai
-var _varredura := false  # --varredura-poderes: tests/varredura_poderes.gd
+var _varredura := false  # --varredura-poderes / --varredura-aliados
+var _varredura_script := "res://tests/varredura_poderes.gd"
 var _prancha_rean_dir := ""  # --prancha-reanimar=DIR: fotos da reanimação (prancha)
 var _qa_dir := ""
 var _shot_times: Array[float] = [4.0, 15.0, 30.0, 50.0, 75.0]
@@ -263,6 +266,12 @@ func _ready() -> void:
 			# QA (Ciclo 2.29b): Q, E e R de cada classe com inimigo alinhado
 			# (tests/varredura_poderes.gd); roda na Arena e sai 0/1.
 			_varredura = true
+			arena_pedido = true
+		elif arg == "--varredura-aliados":
+			# QA (2026-11-15): o mesmo com aliado ferido, caído e distante
+			# (tests/varredura_aliados.gd): cura, escudo, reanimar, puxão, fogo amigo.
+			_varredura = true
+			_varredura_script = "res://tests/varredura_aliados.gd"
 			arena_pedido = true
 		elif arg.begins_with("--prancha-reanimar="):
 			_prancha_rean_dir = arg.trim_prefix("--prancha-reanimar=")
@@ -367,7 +376,7 @@ func _ready() -> void:
 			u.name = "%s_%d" % [Config.TEAM_NAMES[team], i]
 			add_child(u)
 			var k := i + _variacoes_giro
-			if _com_herois:  # 20 classes, 8 por time: cada partida pega outra fatia
+			if _com_herois:  # todas as classes, 8 por time: cada partida pega outra fatia
 				k = i + _variacoes_giro * cfg.units_per_team + team * 4
 			var cls: ClassStats = cfg.villager if is_player else start_classes[k % start_classes.size()]
 			if is_player and _classe_jogador != "":
@@ -446,7 +455,7 @@ func _ready() -> void:
 		t.set("game", self)
 		add_child(t)
 	if _varredura:
-		var vr: Node = load(OS.get_environment("VARREDURA_SCRIPT") if OS.get_environment("VARREDURA_SCRIPT") != "" else "res://tests/varredura_poderes.gd").new()
+		var vr: Node = load(_varredura_script).new()
 		vr.set("game", self)
 		add_child(vr)
 	if _qa_dir != "":

@@ -176,7 +176,7 @@ static func relampago(u: Unit) -> void:
 	var cfg := Config.cfg
 	var dir := Herois._dir_mira(u)
 	var de := u.global_position
-	var ate := Herois.chao_valido(u, Herois.sem_parede(u, de, de + dir * cfg.relampago_dist))
+	var ate := Herois.chao_valido(u, Herois.sem_parede(u, de, de + dir * cfg.relampago_dist), true)
 	if Vector2(ate.x - de.x, ate.z - de.z).length() < 1.0:
 		ate = de
 	FxNatureza.relampago(u, de, ate)

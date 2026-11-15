@@ -1,11 +1,43 @@
 extends Node
-## Varredura com ALIADOS (auditoria 2026-11-15, local): para cada classe e poder,
-## monta: aliado ferido (40%) ao lado, aliado caído atrás, aliado longe (12 m),
-## inimigo perto e longe na frente. Mede o que muda nos aliados e no próprio.
+## Varredura com ALIADOS (caça aos bugs 2026-11-15): a varredura de poderes
+## (tests/varredura_poderes.gd) só põe inimigo, então não vê cura, escudo,
+## reanimar nem puxão de aliado. Aqui cada Q, E e R sai com:
+##   aliado ferido (40% da vida) a 2 m do lado, aliado caído 2,5 m atrás,
+##   aliado com 60% a 8 m do outro lado, inimigo perto (2,2 m) e longe (6 m).
+##   godot --headless --path . --fixed-fps 60 -- --autoplay --varredura-aliados
+## Confere, para TODO poder: não fere aliado (fogo amigo) e não deixa o dono
+## preso num estado (giro, canto, voo, preparo). E, para os poderes de apoio em
+## ESPERADO, que o efeito chegou no aliado. Sai 0 sem falha; 1 com.
+## Poder novo de apoio = linha em ESPERADO.
 
-var game
+var game  # Game (sem tipo: script carregado em tempo de execução)
 const ESPERA := 3.0
-var _linhas: Array[String] = []
+## "classe poder": o que tem de acontecer com os aliados.
+##   cura   = um aliado ganha vida     escudo = o ferido ganha escudo
+##   levanta = o caído levanta         puxa   = o aliado de pé chega mais perto
+##   boost / intocavel = o ferido ganha esse estado
+const ESPERADO := {
+	"kitsune Q": ["cura"],
+	"kitsune_luz Q": ["cura"],
+	"kitsune_luz E": ["cura", "escudo"],
+	"kitsune_luz R": ["cura", "escudo"],
+	"construtor E": ["boost"],
+	"construtor R": ["boost"],
+	"sohei Q": ["escudo"],
+	"sohei E": ["escudo"],
+	"sohei R": ["escudo"],
+	"shishimai R": ["levanta"],
+	"tennin Q": ["levanta"],
+	"tennin E": ["cura"],
+	"tennin R": ["intocavel"],
+	"kodama R": ["cura"],
+}
+## Rodam de novo SEM caído: o Laço da Tennin puxa o caído primeiro; sem ele,
+## puxa um aliado de pé e cura.
+const SEM_CAIDO := {
+	"tennin Q": ["puxa", "cura"],
+}
+var _falhas: Array[String] = []
 
 
 func _ready() -> void:
@@ -21,12 +53,17 @@ func _ready() -> void:
 		if not so.is_empty() and not so.has(String(cls.id)):
 			continue
 		for poder in ["Q", "E", "R"]:
-			await _testar(p, cls, poder)
-	print("ALIADOS FIM")
-	get_tree().quit(0)
+			var nome := "%s %s" % [cls.id, poder]
+			await _testar(p, cls, poder, ESPERADO.get(nome, []), true)
+			if SEM_CAIDO.has(nome):
+				await _testar(p, cls, poder, SEM_CAIDO[nome], false)
+	print("ALIADOS FIM: %d falhas" % _falhas.size())
+	for f in _falhas:
+		print("FALHA ", f)
+	get_tree().quit(0 if _falhas.is_empty() else 1)
 
 
-func _testar(p, cls, poder: String) -> void:
+func _testar(p, cls, poder: String, espera: Array, com_caido: bool) -> void:
 	var t: int = game.time_jogador
 	var fr: Vector3 = game.arena.forward(t)
 	var lado: Vector3 = Vector3.UP.cross(fr).normalized()
@@ -36,7 +73,7 @@ func _testar(p, cls, poder: String) -> void:
 	p.set_class(cls)
 	p.global_position = base
 	p.reset_physics_interpolation()
-	p.hp = p.max_hp() * 0.5
+	p.hp = p.max_hp()
 	p._quick_cd = 0.0
 	p.cargas_q = cls.cargas_q
 	p.power = 0.0
@@ -45,27 +82,29 @@ func _testar(p, cls, poder: String) -> void:
 	p.aim_dir = fr
 	p.look_at(p.global_position - fr)
 	var ferido = _boneco(t, base + lado * 2.0)
-	var caido = _boneco(t, base - fr * 2.5)
-	var distante = _boneco(t, base - lado * 12.0)
+	var caido = _boneco(t, base - fr * 2.5) if com_caido else null
+	var distante = _boneco(t, base - lado * 8.0)
 	var perto = _boneco(1 - t, base + fr * 2.2)
 	var longe = _boneco(1 - t, base + fr * 6.0)
+	var todos := [ferido, caido, distante, perto, longe].filter(func(u): return u != null)
 	for i in 3:
 		await get_tree().physics_frame
 	ferido.hp = ferido.max_hp() * 0.4
-	caido._die(null)
-	caido._respawn_t = 30.0
-	var hp_eu0: float = p.hp
+	distante.hp = distante.max_hp() * 0.6
+	if caido:
+		caido._die(null)
+		caido._respawn_t = 30.0
 	var hp_f0: float = ferido.hp
+	var hp_d0: float = distante.hp
 	var sh_f0: float = ferido._shield
-	var pos_d0: Vector3 = distante.global_position
-	var pos_p0: Vector3 = perto.global_position
+	var dist_d0: float = distante.global_position.distance_to(p.global_position)
 	p.aim_dir = fr
 	p.aim_point = longe.global_position if poder == "E" else perto.global_position
 	p.aim_unit = perto
 	match poder:
 		"Q":
 			if not p.tem_rapida():
-				_limpar([ferido, caido, distante, perto, longe])
+				_limpar(todos)
 				return
 			p.wants_quick = true
 		"E":
@@ -74,34 +113,46 @@ func _testar(p, cls, poder: String) -> void:
 		"R":
 			p.super_carga = p.POWER_MAX
 			p.wants_super = true
-	var f := 0
-	var buff_aliado := ""
 	var hp_f_min: float = hp_f0
+	var hp_d_min: float = hp_d0
+	var cura := false
+	var escudo := false
 	var levantou := false
-	var travou := false
+	var boost := false
+	var intocavel := false
+	var f := 0
 	while f < int(ESPERA * 60.0):
 		await get_tree().physics_frame
 		f += 1
 		p.aim_dir = fr
 		if is_instance_valid(ferido):
 			hp_f_min = minf(hp_f_min, ferido.hp)
-			for k in ["_boost_t", "_intocavel_t", "_fury_t", "_dmg_boost_t", "_shield_t", "_slow_t", "_preso_t", "_forcado_t", "_sono_t", "_mudo_t", "_silence_t", "_derrapa_t", "_encachacado_t", "_casulo_t", "_cego_t"]:
-				if float(ferido.get(k)) > 0.0 and not buff_aliado.contains(k):
-					buff_aliado += k + " "
-		if is_instance_valid(caido) and caido.alive:
+			cura = cura or ferido.hp > hp_f0 + 0.5
+			escudo = escudo or ferido._shield > sh_f0 + 0.1
+			boost = boost or ferido._boost_t > 0.0
+			intocavel = intocavel or ferido._intocavel_t > 0.0
+		if is_instance_valid(distante):
+			hp_d_min = minf(hp_d_min, distante.hp)
+			cura = cura or distante.hp > hp_d0 + 0.5
+		if caido and is_instance_valid(caido) and caido.alive:
 			levantou = true
-	# Travou = depois de 3 s ainda preso num estado que não deixa agir.
-	travou = p._spin_t > 0.5 or p._canto_t > 0.5 or p.em_voo or p._windup_t > 0.5 or p._equip_t > 0.5
-	var nome := "%s %s" % [cls.id, poder]
-	var hp_f: float = ferido.hp if is_instance_valid(ferido) else -1.0
-	print("ALIADOS %-24s eu_hp=%+.0f ferido_hp=%+.0f (min %+.0f) escudo_f=%+.0f levantou=%s distante_moveu=%.1f inimigo_moveu=%.1f travou=%s buffs_f=[%s]" % [
-		nome, p.hp - hp_eu0, hp_f - hp_f0, hp_f_min - hp_f0,
-		(ferido._shield - sh_f0) if is_instance_valid(ferido) else 0.0,
-		levantou,
-		distante.global_position.distance_to(pos_d0) if is_instance_valid(distante) else -1.0,
-		perto.global_position.distance_to(pos_p0) if is_instance_valid(perto) else -1.0,
-		travou, buff_aliado.strip_edges()])
-	_limpar([ferido, caido, distante, perto, longe])
+	var puxou: bool = is_instance_valid(distante) and distante.global_position.distance_to(p.global_position) < dist_d0 - 2.0
+	var travou: bool = p._spin_t > 0.5 or p._canto_t > 0.5 or p.em_voo or p._windup_t > 0.5 or p._equip_t > 0.5
+	var nome := "%s %s%s" % [cls.id, poder, "" if com_caido else " (sem caído)"]
+	var tem := {"cura": cura, "escudo": escudo, "levanta": levantou, "puxa": puxou, "boost": boost, "intocavel": intocavel}
+	var viu: Array[String] = []
+	for k in tem:
+		if tem[k]:
+			viu.append(k)
+	print("ALIADOS %-28s viu=[%s] fogo_amigo=%.0f travou=%s" % [nome, " ".join(viu), maxf(hp_f0 - hp_f_min, hp_d0 - hp_d_min), travou])
+	if hp_f_min < hp_f0 - 0.5 or hp_d_min < hp_d0 - 0.5:
+		_falhas.append(nome + ": feriu aliado (%.0f de vida)" % maxf(hp_f0 - hp_f_min, hp_d0 - hp_d_min))
+	if travou:
+		_falhas.append(nome + ": o dono ficou preso (giro %.1f, canto %.1f, voo %s, preparo %.1f, equip %.1f)" % [p._spin_t, p._canto_t, p.em_voo, p._windup_t, p._equip_t])
+	for e in espera:
+		if not tem.get(e, false):
+			_falhas.append(nome + ": devia " + e + " e não fez")
+	_limpar(todos)
 	p._spin_t = 0.0
 	p._fury_t = 0.0
 	for i in 30:
