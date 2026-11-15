@@ -1116,6 +1116,17 @@ func _poderes_q() -> void:
 	u._use_power()
 	var novas := get_tree().get_nodes_in_group("traps").size() - antes
 	_check(novas == int(u.stats.power_duration), "Campo Minado: esperadas %d minas, saíram %d" % [int(u.stats.power_duration), novas])
+	# 2.32: armadilha que some (venceu ou foi trocada) sai da regra na hora; só o
+	# visual fica afundando no chão, fora dela.
+	var uma = null
+	for t in get_tree().get_nodes_in_group("traps"):
+		if t.owner_unit == u:
+			uma = t
+	if uma:
+		var vis: Node = uma._vis
+		uma.sumir()
+		_check(not uma.is_in_group("traps") and uma.is_queued_for_deletion(), "Trap.sumir: deveria sair do grupo traps e ser apagada")
+		_check(is_instance_valid(vis) and vis.get_parent() != uma, "Trap.sumir: o visual deveria se soltar para afundar")
 	for t in get_tree().get_nodes_in_group("traps"):
 		if t.owner_unit == u:
 			t.queue_free()

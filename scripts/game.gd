@@ -711,6 +711,50 @@ func _montar_sandbox() -> void:
 	_montando_sandbox = false
 	_aliado_de_treino()
 	_inimigo_de_treino()
+	_montar_mostruario()
+
+
+## Modo teste (Ciclo 2.32): mostruário na frente do portão com os 5 itens em
+## fila e um espírito ao lado; o que for pego volta MOSTRUARIO_VOLTA s depois.
+const MOSTRUARIO_VOLTA := 2.5
+var _mostruario: Array = []  # [tipo ("espirito" ou item), posição, nó, espera]
+
+
+func _montar_mostruario() -> void:
+	var fr := arena.forward(time_jogador)
+	var lado := Vector3.UP.cross(fr).normalized()
+	var base: Vector3 = arena.gate_spot[time_jogador] + fr * 9.0
+	var tipos: Array = Pickup.KINDS.duplicate()
+	tipos.append("espirito")
+	for i in tipos.size():
+		_mostruario.append([tipos[i], base + lado * (i - 2.5) * 2.4, null, 0.0])
+
+
+func _tick_mostruario(delta: float) -> void:
+	for slot: Array in _mostruario:
+		var no: Variant = slot[2]  # pode já ter sido apagado (pego)
+		if is_instance_valid(no) and not (no as Node).is_queued_for_deletion() \
+				and (pickups.has(no) if slot[0] != "espirito" else cakes.has(no)):
+			continue
+		slot[3] -= delta
+		if slot[3] > 0.0:
+			continue
+		slot[3] = MOSTRUARIO_VOLTA
+		var p: Vector3 = slot[1]
+		p.y = arena.ground_y(p.x, p.z, p.y + 5.0)  # aqui a física já está de pé
+		slot[1] = p
+		if slot[0] == "espirito":
+			var c := Cake.new()
+			add_child(c)
+			c.global_position = slot[1]
+			cakes.append(c)
+			slot[2] = c
+		else:
+			var it := Pickup.new()
+			add_child(it)
+			it.setup(slot[0], slot[1])
+			pickups.append(it)
+			slot[2] = it
 
 
 ## Modo teste: um aliado sem cérebro, caído na frente do portão, para treinar
@@ -1395,8 +1439,8 @@ func _rules() -> void:
 				if pos.distance_to(c.global_position) < 1.8:
 					u.has_cake = true
 					cakes.erase(c)
-					Fx.burst(self, c.global_position + Vector3(0, 0.6, 0), Color(1, 0.6, 0.8), 10, 4.0)
-					Sfx.play("pickup", c.global_position)
+					FxItens.hitodama_pego(self, c.global_position)
+					u.pulso_espirito()
 					c.queue_free()
 					break
 
@@ -1513,6 +1557,7 @@ func respawn_atual() -> float:
 func _regras_sandbox(hint: String) -> String:
 	for pad in hat_pads:
 		pad.intervalo = minf(pad.intervalo, 1.0)
+	_tick_mostruario(get_physics_process_delta_time())
 	# Ciclo 2.25: o modo teste não tem relógio nem inimigos. [M] chama a morte
 	# súbita e [N] mostra o letreiro do multikill (duplo, triplo, multi ×4...).
 	if Input.is_action_just_pressed("teste_multikill") and player:

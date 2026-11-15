@@ -188,9 +188,7 @@ func feed() -> bool:
 	if not _game.mascara_leve():
 		fatness = minf(fatness + Config.cfg.fat_per_cake, 1.0)
 	_apply_fatness()
-	Fx.burst(_game, global_position + Vector3(0, 1.6, 0), Color(0.5, 1.0, 0.6), 18, 6.0)
-	Fx.ring(_game, global_position, Color(0.5, 1.0, 0.6, 0.8), 2.5)
-	Sfx.play("magic", global_position)
+	FxItens.hitodama_preso(_game, global_position, true)
 	state_changed.emit(self)
 	return true
 
@@ -206,7 +204,7 @@ func pesar_alma(fracao_espirito: float) -> void:
 		return
 	fatness = minf(fatness + Config.cfg.fat_per_cake * fracao_espirito, teto)
 	_apply_fatness()
-	Fx.burst(_game, global_position + Vector3(0, 1.6, 0), Color(0.5, 1.0, 0.6), 6, 3.0)
+	FxItens.hitodama_preso(_game, global_position, false)
 
 
 ## Morte súbita: a máscara solta todos os espíritos e fica leve.
