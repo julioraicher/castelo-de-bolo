@@ -4,6 +4,20 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.32b (2026-11-15), Diretor de Jogabilidade: 1 madeira a menos em toda construção
+Pedido do Julio: mais heróis evoluídos em campo ao mesmo tempo, um pouco mais cedo.
+Só números em `config/game_config.tres` (sem código):
+- Barraquinha Nv1→2 4 → **3**; casa do caminho (Nv3) 5 → **4** (+2 por casa que o
+  time já fez, degrau igual); Nv3→4 / Nv4→5 4/6 → **3/5**; pavilhão do herói 7 → **6**.
+- Posto da raposa (torreta) 3 → **2**; maquininha Nv2 6 → **5**.
+- Escada até o herói de um bairro: 4+5+4+6+7 = 26 → **21** madeiras (-19%).
+- **Modo teste**: já tem madeira infinita, nada muda lá; textos do Como jogar e das
+  fichas leem os custos do config e mostram os números novos.
+
+**O que testar**: numa partida de 20 min, quando aparece o 1º herói raro e quantos
+heróis cada time tem lá pelos 12-15 min. Se ficar cedo demais, é só subir de volta
+no `.tres`.
+
 ## Ciclo 2.32 (2026-11-15), Diretor Visual: espírito, itens e armadilhas refeitos (lote D)
 Lote D da caça aos bugs: as três peças que ainda eram primitivas soltas (fora do
 princípio 13). Quiz do Julio: chama-fantasma, objetos de verdade, ferramentas de
