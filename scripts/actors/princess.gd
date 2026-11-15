@@ -183,7 +183,10 @@ func return_home() -> void:
 func feed() -> bool:
 	if fatness >= 1.0:
 		return false
-	fatness = minf(fatness + Config.cfg.fat_per_cake, 1.0)
+	# Máscara leve (último minuto, morte súbita): o espírito entra (o medidor
+	# de quem entregou enche) mas não pesa.
+	if not _game.mascara_leve():
+		fatness = minf(fatness + Config.cfg.fat_per_cake, 1.0)
 	_apply_fatness()
 	Fx.burst(_game, global_position + Vector3(0, 1.6, 0), Color(0.5, 1.0, 0.6), 18, 6.0)
 	Fx.ring(_game, global_position, Color(0.5, 1.0, 0.6, 0.8), 2.5)
@@ -199,7 +202,7 @@ func feed() -> bool:
 ## só engorda com espírito entregue (feed). Na morte súbita não pesa.
 func pesar_alma(fracao_espirito: float) -> void:
 	var teto := Config.cfg.alma_teto
-	if fracao_espirito <= 0.0 or fatness >= teto or _game.morte_subita >= 0.0:
+	if fracao_espirito <= 0.0 or fatness >= teto or _game.mascara_leve():
 		return
 	fatness = minf(fatness + Config.cfg.fat_per_cake * fracao_espirito, teto)
 	_apply_fatness()

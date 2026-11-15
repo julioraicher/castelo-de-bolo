@@ -192,7 +192,8 @@ repo: `.claude/skills/`.
   `scripts/ai/bot_herois.gd`, efeitos em `fx_herois.gd`. Gerar: `tools/gerar_herois.gd`
   (.tres), `tools/gerar_pavilhao.gd` (pavilhão, adornos, emblemas); prancha
   `tools/prancha_herois.gd`; sonda `HEROIS=1 tools/sonda_equilibrio.sh`. Relógio de
-  15 min com empate e prorrogação enquanto houver máscara fora (`tempo_limite`).
+  20 min (2.31), último minuto com máscaras leves, prorrogação enquanto a máscara
+  fora ainda empata ou vira (`tempo_limite`, `ultimo_minuto_leve`).
   Heróis 2.27 (Ochimusha, Shishimai, Jorogumo; parte 2: Kodama, Kaminari-kozō):
   estados em `Herois._tick_2_27`/`_apanhar_2_27`; reações entre elementos em
   `scripts/actors/reacoes.gd` (quem solta fogo/vento chama `Reacoes.em` no impacto);

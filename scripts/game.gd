@@ -49,6 +49,10 @@ var prorrogacao := -1.0
 ## Ciclo 2.25: morte súbita (s já passados; -1 = não começou) e se o fim saiu
 ## pelos pontos do placar do Tab (ninguém pontuou nem na morte súbita).
 var morte_subita := -1.0
+## Ciclo 2.31: último minuto (GameConfig.ultimo_minuto_leve) aberto: as duas
+## máscaras sem peso até o fim (prorrogação e morte súbita inclusive).
+var mascaras_leves := false
+var _relogio_teste := false  # modo teste: [L] liga o relógio a 1:10 do fim
 var _teste_degrau := 1  # modo teste: último degrau de multikill mostrado com [N]
 var decidido_no_placar := false
 var vencedor := -1
@@ -1380,7 +1384,7 @@ func _rules() -> void:
 				u.add_power(Config.cfg.power_per_cake)
 				u.add_super(Config.cfg.super_por_espirito)
 				if u.is_player:
-					hud.show_big("Espírito preso! Máscara mais pesada", Color(1, 0.6, 0.8), 1.2)
+					hud.show_big("Espírito preso!" if mascara_leve() else "Espírito preso! Máscara mais pesada", Color(1, 0.6, 0.8), 1.2)
 
 		# Pegar bolo (bots atacantes ignoram bolo para não se distraírem).
 		var bot := u.brain as BotBrain
@@ -1514,13 +1518,18 @@ func _regras_sandbox(hint: String) -> String:
 	if Input.is_action_just_pressed("teste_multikill") and player:
 		_teste_degrau = 2 if _teste_degrau >= 5 else _teste_degrau + 1
 		_multikill(player, _teste_degrau, Placar.bonus_degrau(_teste_degrau, Config.cfg))
+	# Ciclo 2.31: [L] liga o relógio a 1:10 do fim (último minuto leve,
+	# prorrogação e fim de verdade, como numa partida).
+	if Input.is_action_just_pressed("teste_relogio") and not _relogio_teste and not game_over:
+		_relogio_teste = true
+		tempo_partida = Config.cfg.tempo_limite - 70.0
 	if morte_subita < 0.0 and not game_over:
 		if Input.is_action_just_pressed("teste_morte_subita"):
 			abrir_morte_subita()
 		elif hint == "" and player and player.alive:
 			for p in princesses:
 				if player.global_position.distance_to(p.home) < 9.0:
-					hint = "Modo teste: [M] morte súbita  ·  [N] letreiro do multikill"
+					hint = "Modo teste: [M] morte súbita  ·  [L] último minuto do relógio  ·  [N] letreiro do multikill"
 	return hint
 
 
@@ -1725,7 +1734,7 @@ func tempo_restante() -> float:
 
 
 func relogio_ligado() -> bool:
-	return Config.cfg.tempo_limite > 0.0 and not sandbox and _vitrine_dir == "" and _clipe_dir == "" and _filme_dir == ""
+	return Config.cfg.tempo_limite > 0.0 and (not sandbox or _relogio_teste) and _vitrine_dir == "" and _clipe_dir == "" and _filme_dir == ""
 
 
 ## Alguma máscara fora do pedestal (na mão ou caída esperando voltar)?
@@ -1743,6 +1752,37 @@ func _mascara_caida() -> bool:
 	return false
 
 
+## Máscara fora que ainda decide (Ciclo 2.31, Julio): entregue, ela empata ou
+## vira para quem a roubou (ladrão empatado ou 1 atrás). Fora de casa e sem
+## chance de mudar o resultado não segura o fim. `caida`: só as largadas.
+func _mascara_decisiva(caida := false) -> bool:
+	for p in princesses:
+		if p.state == Princess.State.HOME or (caida and p.state != Princess.State.DROPPED):
+			continue
+		if score[1 - p.team] + 1 >= score[p.team]:
+			return true
+	return false
+
+
+## Máscara sem peso: último minuto (2.31) ou morte súbita (2.25). Espírito
+## entregue e alma de abate não pesam mais.
+func mascara_leve() -> bool:
+	return mascaras_leves or morte_subita >= 0.0
+
+
+## Último minuto (Ciclo 2.31, Julio): as duas máscaras soltam todo o peso.
+func abrir_ultimo_minuto() -> void:
+	if mascaras_leves or game_over:
+		return
+	mascaras_leves = true
+	for p in princesses:
+		p.zerar_peso()
+	_log("ultimo minuto: mascaras leves (t=%.0fs)" % tempo_partida)
+	if hud:
+		hud.show_big("ÚLTIMO MINUTO!\nAs máscaras ficaram leves", Estilo.OURO, 2.6)
+	Sfx.play_ui("alarm")
+
+
 ## Relógio (Ciclo 2.23, 15 min no 2.24): tique nos últimos 10 s; no zero,
 ## prorrogação enquanto alguma máscara estiver fora do castelo, senão o placar decide.
 ## Ciclo 2.25: placar igual abre a morte súbita em vez do empate.
@@ -1753,22 +1793,26 @@ func _relogio(delta: float) -> void:
 	if not relogio_ligado():
 		return
 	var resta := Config.cfg.tempo_limite - tempo_partida
+	if resta <= Config.cfg.ultimo_minuto_leve and not mascaras_leves:
+		abrir_ultimo_minuto()
 	if resta > 0.0:
 		_tique(resta)
 		return
 	if prorrogacao < 0.0:
-		if _mascara_fora():
+		if _mascara_decisiva():
 			prorrogacao = 0.0
 			_log("prorrogacao (t=%.0fs)" % tempo_partida)
 			if hud:
-				hud.show_big("PRORROGAÇÃO!\nUma máscara está fora do castelo", Estilo.OURO, 2.6)
+				hud.show_big("PRORROGAÇÃO!\nAté a máscara voltar ao castelo", Estilo.OURO, 2.6)
 			Sfx.play_ui("alarm")
 			return
 		_fim_por_tempo()
 		return
 	prorrogacao += delta
-	# Caída: espera voltar sozinha (é curto). Na mão: até prorrogacao_max.
-	if not _mascara_fora() or (prorrogacao >= Config.cfg.prorrogacao_max and not _mascara_caida()):
+	# Ciclo 2.31: segue até a máscara decisiva voltar ao castelo (entregue,
+	# devolvida ou de volta sozinha). Na mão, prorrogacao_max é só a trava
+	# contra quem foge com ela; caída, ela volta sozinha em segundos.
+	if not _mascara_decisiva() or (prorrogacao >= Config.cfg.prorrogacao_max and not _mascara_decisiva(true)):
 		_fim_por_tempo()
 
 

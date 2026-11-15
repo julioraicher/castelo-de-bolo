@@ -618,7 +618,7 @@ func _atualizar_relogio(game: Game, pulso: float) -> void:
 	else:
 		var s := int(ceil(resta))
 		_relogio.text = "%d:%02d" % [s / 60, s % 60]
-		_relogio_meta.text = "até %d pontos" % Config.cfg.score_to_win
+		_relogio_meta.text = "MÁSCARAS LEVES" if game.mascaras_leves else "até %d pontos" % Config.cfg.score_to_win
 		if resta <= 60.0:
 			cor = Estilo.PERIGO.lerp(Estilo.OURO_CLARO, pulso * 0.6)
 	_cor_texto(_relogio, cor)

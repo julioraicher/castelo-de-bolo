@@ -4,6 +4,53 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.31 (2026-11-15), Diretor de Jogabilidade: partida de 20 min, último minuto leve
+Pedido do Julio (sem quiz, direto na main depois da caça aos bugs).
+- **Relógio de 20 min** (era 15): mais tempo para heróis Nv6 entrarem em campo.
+- **Último minuto: as duas máscaras perdem todo o peso**, empatado ou não
+  (`ultimo_minuto_leve` = 60 s no `game_config`). Espírito entregue e alma de
+  abate não pesam mais até o fim (o espírito ainda enche o E/R de quem entrega).
+  Letreiro "ÚLTIMO MINUTO!" e o relógio passa a dizer "MÁSCARAS LEVES".
+- **Prorrogação só quando a máscara decide**: no zero, ela abre se uma máscara
+  fora do castelo (na mão ou caída) empata ou vira o jogo para quem a roubou
+  (ladrão empatado ou 1 atrás). Segue **até a máscara voltar ao castelo**
+  (entregue, devolvida ou de volta sozinha). Máscara fora que não muda nada
+  (ladrão 2+ atrás) não segura mais o fim. Na mão, `prorrogacao_max` (60 → 180 s)
+  ficou só como trava contra quem foge com ela sem entregar.
+- Placar igual no fim: morte súbita como antes (2 min, primeiro ponto vence).
+- Como jogar, CONTROLES.md e CLAUDE.md atualizados. Regras novas em `tests/regras.gd`.
+- **Modo teste**: **[L]** liga o relógio a 1:10 do fim (último minuto leve,
+  prorrogação e fim de verdade). [M] segue chamando a morte súbita.
+
+### O que testar
+- Partida normal: relógio começa em 20:00.
+- No 1:00 aparece "ÚLTIMO MINUTO!" e as máscaras ficam sem espíritos em volta;
+  quem rouba anda rápido.
+- Empate no zero com alguém do time de trás carregando a máscara: prorrogação
+  até ela ser entregue ou voltar. Ganhando de 2 com a máscara fora: acaba na hora.
+- Modo teste: [L] e esperar 1 min e pouco.
+
+## Ciclo 2.30f (2026-11-15), Diretor de Jogabilidade: caça aos bugs, lote E (parte 2)
+- **Bot com a máscara preso**: atrás de um andaime do Predero ou de uma árvore
+  do Kodama (a navegação não conhece esses colisores) quem leva a máscara não
+  destravava nunca. Agora destrava quando fica parado de vez (6 s), como os outros.
+- **Testes instáveis no CI** (falhavam 1 em ~5): o do placar escolhia um bot da
+  partida que às vezes estava intocável; o da Ochimusha pegava um Construtor com
+  tora na mão (Q travado). Placar usa bonecos próprios; os testes de herói
+  escolhem quem está de mãos livres e zeram os estados que travam.
+- Conferido sem mudança: sincronia com heróis em campo (150 s, `--com-herois`,
+  semente 11: igual), poderes no voo da catapulta (não saem no ar; recargas
+  correm, desde o 2.26s).
+- **Diagnóstico da linha do Construtor** (sonda 8 partidas, sem mexer em número):
+  por minuto vivo, Construtor 0,23 abate e 48 de dano, Armadilheiro 0,16 / 36,
+  Bombardeiro 0,34 / 57, contra Arqueiro 1,88 / 450 e Guerreiro 2,05 / 551.
+  O Construtor passa o tempo cortando e entregando madeira (é o papel dele); as
+  duas evoluções herdam o comportamento de bot de obra e quase não brigam. Se o
+  Julio quiser, o ajuste é no cérebro (Nv3 sair para a briga), não nos números.
+
+### O que testar
+- Nada muda na tela; é robustez de bot e de teste.
+
 ## Ciclo 2.30e (2026-11-15), Diretor de Jogabilidade: caça aos bugs, lote C (mapa)
 - **Cantinhos atrás das estátuas fechados**: entre a colina do fundo, a escada
   dela e a estátua (|x| 27-35, z -48 a -44, os dois lados) o jogador entrava

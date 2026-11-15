@@ -110,13 +110,15 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
 7. **Itens no chão** aparecem de vez em quando no meio do mapa: poção, escudo,
    velocidade, kunai (dano 2x por 6 s) e chama de chi (enche o medidor).
 8. Morreu? Volta em alguns segundos como recruta no seu castelo.
-9. **Relógio de 15 minutos** no topo: no zero vence quem tem mais pontos. Com
-   alguma máscara fora do castelo no zero (na mão ou caída), a partida segue em
-   **PRORROGAÇÃO** até ela ser entregue ou voltar (na mão, no máximo 60 s).
-   Placar igual no fim abre a **MORTE SÚBITA**: 2 min com as duas máscaras leves
-   (peso 0) e o primeiro ponto vence. Ninguém pontuou nem assim: vence o time com
-   mais pontos no placar do Tab. No modo teste, **M** perto de uma máscara chama
-   a morte súbita na hora.
+9. **Relógio de 20 minutos** no topo. No **último minuto** as duas máscaras
+   perdem todo o peso (empatado ou não): o fim é corrida. No zero vence quem tem
+   mais pontos. Se uma máscara fora do castelo (na mão ou caída) ainda empata ou
+   vira o jogo para quem a roubou, a partida segue em **PRORROGAÇÃO** até ela
+   voltar ao castelo (entregue, devolvida ou de volta sozinha; na mão, trava de
+   segurança de 3 min). Placar igual no fim abre a **MORTE SÚBITA**: 2 min e o
+   primeiro ponto vence. Ninguém pontuou nem assim: vence o time com mais pontos
+   no placar do Tab. No modo teste, **M** perto de uma máscara chama a morte
+   súbita na hora e **L** liga o relógio a 1:10 do fim.
 10. **Multikill**: abate até 5 s depois do anterior continua a corrente. Abate vale
    120 no placar; duplo +50, triplo +100 e do 4º em diante +150 cada.
 
