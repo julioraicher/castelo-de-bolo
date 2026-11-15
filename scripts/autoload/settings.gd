@@ -137,11 +137,39 @@ func _apply_quality_viewport() -> void:
 	# cobertura por pixel (≈ dobro da banda de escrita, o que mais pesa na placa
 	# integrada); o FXAA é uma única passada sobre a imagem pronta e, no toon com
 	# contorno de tinta, a diferença quase não aparece.
+	# O screen_space_aa do Viewport só existe no Forward+/Mobile: no
+	# Compatibility o Godot recusa (a Alta ficou sem nada do 2.19 ao 2.30c).
+	# O FXAA é nosso: assets/shaders/fxaa.gdshader numa camada de tela abaixo
+	# do HUD (pega o 3D já ampliado; textos e barras continuam nítidos).
 	vp.msaa_3d = Viewport.MSAA_DISABLED
-	vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if quality == 3 \
-			else Viewport.SCREEN_SPACE_AA_DISABLED
+	vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
+	_fxaa_ligado(quality == 3)
 	# Renderiza o 3D numa resolução menor e amplia. Pixels pintados ∝ escala²:
 	# 0,9 -> 81%; 0,75 -> 56%; 0,5 -> 25%. Ajuda muito quando a GPU é o gargalo.
 	# A Alta usa 0,9 (invisível no estilo pintado); a Alta dinâmica baixa a 0,8.
 	var escala_alta := 0.8 if alta_ajuste >= 1 else 0.9
 	vp.scaling_3d_scale = [0.5, 0.75, 1.0, escala_alta][quality]
+
+
+var _fxaa: CanvasLayer
+
+
+## Camada de tela com o FXAA (ver _apply_quality_viewport). layer 0: depois
+## do 3D e antes do HUD (1), placar (5), menus (10) e mira (60).
+func _fxaa_ligado(ligado: bool) -> void:
+	ligado = ligado and not OS.has_environment("SEM_FXAA")  # print de antes/depois
+	if _fxaa == null:
+		if not ligado:
+			return
+		_fxaa = CanvasLayer.new()
+		_fxaa.name = "FXAA"
+		_fxaa.layer = 0
+		var r := ColorRect.new()
+		r.set_anchors_preset(Control.PRESET_FULL_RECT)
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var m := ShaderMaterial.new()
+		m.shader = load("res://assets/shaders/fxaa.gdshader")
+		r.material = m
+		_fxaa.add_child(r)
+		add_child(_fxaa)
+	_fxaa.visible = ligado

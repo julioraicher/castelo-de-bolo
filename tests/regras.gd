@@ -715,6 +715,19 @@ func _reanimar() -> void:
 ## da Alta (resolução 80% -> sem glow -> sem contorno), depois cai de nível, e
 ## para na Mínima. Também confere a casca de contorno do cenário e o FXAA.
 func _alta_dinamica() -> void:
+	# Caça aos bugs 2026-11-15: o FXAA do Viewport não existe no Compatibility;
+	# a Alta usa o nosso (camada de tela). Liga na Alta, desliga nas outras.
+	var st = get_node("/root/Settings")
+	var q0: int = st.quality
+	st.quality = 3
+	st._apply_quality_viewport()
+	_check(st._fxaa != null and st._fxaa.visible and st._fxaa.layer < 1, "Alta: FXAA próprio ligado e abaixo do HUD")
+	_check(get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_DISABLED, "Alta: sem o FXAA do Viewport (não existe no Compatibility)")
+	st.quality = 2
+	st._apply_quality_viewport()
+	_check(st._fxaa == null or not st._fxaa.visible, "Média: FXAA desligado")
+	st.quality = q0
+	st._apply_quality_viewport()
 	var aq = load("res://scripts/fx/auto_quality.gd")
 	_check(aq.degrau(3, 0) == Vector2i(3, 1), "alta dinâmica: 1º degrau é resolução 80%")
 	_check(aq.degrau(3, 1) == Vector2i(3, 2), "alta dinâmica: 2º degrau é sem glow")
