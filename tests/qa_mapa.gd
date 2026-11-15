@@ -83,7 +83,9 @@ func _passagem() -> void:
 			while z <= hd - 1.0:
 				var p := Vector3(x, 0, z)
 				var q := NavigationServer3D.map_get_closest_point(nav, p)
-				if Vector2(q.x - x, q.z - z).length() < 0.35 and q.y < 1.0 and _chao(space, p):
+				# Dentro de trava invisível (leito do rio) ninguém entra andando: a malha
+				# fechada lá não é beco (chao_valido tira saltos e teleportes de lá).
+				if Vector2(q.x - x, q.z - z).length() < 0.35 and q.y < 1.0 and _chao(space, p) and arena.ground_y(x, z) < 0.3:
 					_n_pontos += 1
 					var path := NavigationServer3D.map_get_path(nav, origem, q, true)
 					if path.is_empty() or path[path.size() - 1].distance_to(q) > 1.0:
@@ -170,18 +172,37 @@ func _presos() -> void:
 			_add("bot preso (%d vezes)" % g[1], g[0], g[1])
 
 
+## Tipos de problema na ordem do relatório: o que trava o jogo primeiro, o
+## visual por último (senão as muitas faces sobrepostas escondem o resto).
+const TIPOS := ["inalcançável", "desvio", "bot preso", "escondido", "faces sobrepostas"]
+
+
+func _tipo(texto: String) -> int:
+	for i in TIPOS.size():
+		if texto.begins_with(TIPOS[i]):
+			return i
+	return TIPOS.size()
+
+
 func _salvar() -> void:
-	_problemas.sort_custom(func(a, b): return a[2] > b[2])
+	_problemas.sort_custom(func(a, b):
+		var ta := _tipo(a[0])
+		var tb := _tipo(b[0])
+		return ta < tb if ta != tb else a[2] > b[2])
 	var linhas := PackedStringArray()
 	linhas.append("QA do mapa %s: %d problemas (%d pontos x 2 castelos, %d objetos, %d amostras de bot)" % [
 		game.arena.map.display_name, _problemas.size(), _n_pontos / 2, _n_alvos, _n_amostras])
-	for i in mini(_problemas.size(), MAX_LINHAS - 1):
+	var por_tipo := PackedStringArray()
+	for i in TIPOS.size():
+		por_tipo.append("%s %d" % [TIPOS[i], _problemas.filter(func(p): return _tipo(p[0]) == i).size()])
+	linhas.append("Por tipo: " + ", ".join(por_tipo))
+	for i in mini(_problemas.size(), MAX_LINHAS - 2):
 		var p = _problemas[i]
 		linhas.append("%d. %s  x=%.0f z=%.0f" % [i + 1, p[0], p[1].x, p[1].z])
 	var texto := "\n".join(linhas)
 	print(texto)
 	if OS.has_environment("QA_DBG"):
-		for i in range(MAX_LINHAS - 1, _problemas.size()):
+		for i in range(MAX_LINHAS - 2, _problemas.size()):
 			var p = _problemas[i]
 			print("%d. %s  x=%.0f z=%.0f" % [i + 1, p[0], p[1].x, p[1].z])
 	DirAccess.make_dir_recursive_absolute(dir)
@@ -192,7 +213,7 @@ func _salvar() -> void:
 	if DisplayServer.get_name() == "headless":
 		return
 	# Vista de cima com os pontos numerados iguais ao texto.
-	for i in mini(_problemas.size(), MAX_LINHAS - 1):
+	for i in mini(_problemas.size(), MAX_LINHAS - 2):
 		var pos: Vector3 = _problemas[i][1]
 		var bola := MeshInstance3D.new()
 		var sp := SphereMesh.new()

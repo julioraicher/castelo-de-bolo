@@ -47,6 +47,15 @@ jobs:
       - name: Testes de regra
         run: timeout 5m ./godot --headless --path . --fixed-fps 60 -- --autoplay --testes
 
+      # Q, E e R das 26 classes (caça aos bugs 2026-11-15): com inimigo
+      # alinhado e com aliado ferido, caído e distante (cura, escudo,
+      # reanimar, puxão, fogo amigo, dono preso).
+      - name: Varredura de poderes (inimigo)
+        run: timeout 15m ./godot --headless --path . --fixed-fps 60 -- --autoplay --varredura-poderes
+
+      - name: Varredura de poderes (aliados)
+        run: timeout 15m ./godot --headless --path . --fixed-fps 60 -- --autoplay --varredura-aliados
+
       - name: Partida simulada de 5 min (bots jogam por todos)
         run: |
           set -o pipefail

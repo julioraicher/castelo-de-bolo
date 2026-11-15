@@ -4,6 +4,30 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.30c (2026-11-15), Diretor de Jogabilidade: caça aos bugs, lote A (testes) + bot preso no rio
+Julio pediu uma caça a bugs e pontas soltas (quiz: project-files
+castelo-de-bolo/quiz/quiz-caca-bugs.html). Lote A = ferramentas de teste; elas
+acharam um bug de verdade, consertado junto.
+- **Bug: bot preso no rio para sempre.** O leito do rio tem malha de navegação
+  própria, fechada pelas travas das margens. Salto ou teleporte que mirava no
+  rio (Mergulho e Noite de Corvos do Karasu, Rasteira do Kappa, Relâmpago do
+  Kaminari) deixava o boneco lá dentro: o jogador sai andando, mas o bot não
+  acha caminho (6 de 6 bots ficaram presos 30 s no teste). Agora
+  `Herois.chao_valido` só devolve chão ligado ao castelo: saltos e teleportes
+  **terminam a travessia na margem da frente**; o que é plantado (árvore,
+  andaime, poça) fica na margem mais perto. Teste `_rio_sem_ilha`.
+- **Varredura de poderes com aliados** (`--varredura-aliados`,
+  `tests/varredura_aliados.gd`): aliado ferido, caído e distante; confere fogo
+  amigo, dono preso e, nos poderes de apoio, cura/escudo/reanimar/puxão/corrida/
+  intocável. As duas varreduras (inimigo e aliados) agora rodam no CI.
+- **QA do mapa**: a casca de contorno não conta mais como "chão piscando"
+  (2.359 falsos alarmes); relatório com resumo por tipo e o que trava o jogo
+  primeiro; leito do rio (dentro da trava) não conta como beco.
+- Testes: regras 1031/1031, varredura 0 suspeitos, aliados 0 falhas.
+- **O que testar**: com Karasu Tengu (Q), Kappa (Q) ou Kaminari-kozō (E), mire
+  no meio do rio: você aparece na outra margem, não dentro d'água. Na partida,
+  nenhum bot parado no rio. (No modo teste: Arena de chapéus tem os três.)
+
 ## Ciclo 2.30b (2026-11-15), Diretor de Jogabilidade: pausa sozinha ao plugar HDMI + Sair para o menu
 Julio: o jogo pausou sozinho várias vezes ao plugar o cabo HDMI, e no menu de
 pausa "não dava pra sair do jogo". Causa: o jogo pausa de propósito quando a
