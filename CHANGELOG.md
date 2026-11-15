@@ -4,6 +4,31 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.30e (2026-11-15), Diretor de Jogabilidade: caça aos bugs, lote C (mapa)
+- **Cantinhos atrás das estátuas fechados**: entre a colina do fundo, a escada
+  dela e a estátua (|x| 27-35, z -48 a -44, os dois lados) o jogador entrava
+  (cápsula fina) e nenhum bot chegava (a navegação tem raio maior); ali a
+  colina ainda tapava a câmera. Agora há parede invisível que só segura quem
+  anda (`so_passagem`, tiro passa), gerada em `tools/gerar_mapa_rio.gd`
+  (`_tampas_estatua`) e já gravada em `rio_lanternas.tres`. QA do mapa:
+  inalcançável 8 → 2 (sobram 2 pontos de 1 m entre árvores em |x| = 63).
+- **Ferramenta `--pisca` consertada**: no xvfb vários passos de física cabem num
+  quadro desenhado e ela comparava a mesma imagem com ela mesma (sempre 0
+  pixels). Agora dá um passo de câmera por quadro desenhado; `PISCA_FOCO=x,z`
+  mira em qualquer ponto. **Correção do que eu disse no quiz**: com ela
+  funcionando, telhados, chão e torre **não piscam**; o que muda de um quadro
+  para o outro são só bordas finas (serrilhado, que o FXAA do 2.30d alisa) e
+  coisas animadas. As ~475 "faces sobrepostas" do QA são invisíveis na prática.
+- **Maquininha do Construtor "escondida"**: conferida em print. A placa e o
+  tapete aparecem; a guarita da muralha cobre só o pé da barraquinha, e quem
+  fica atrás dela aparece em silhueta (raio X). Não mexi. O QA agora só conta
+  as vistas de onde dá para pisar (antes contava câmera dentro da muralha).
+
+### O que testar
+- Ir até os fundos do mapa atrás das colinas perto das estátuas (atrás do
+  pagode): o boneco para na beira, não entra mais no cantinho.
+- Nada mais muda na partida.
+
 ## Ciclo 2.30d (2026-11-15), Diretor de Jogabilidade: caça aos bugs, lote B (antisserrilhado de verdade na Alta)
 Achado da caça aos bugs: desde o 2.19 a Alta trocou o MSAA pelo FXAA do Godot,
 mas o `Viewport.screen_space_aa` **só existe no Forward+/Mobile**. No

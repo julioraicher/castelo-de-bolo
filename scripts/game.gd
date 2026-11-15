@@ -85,6 +85,7 @@ var _time := 0.0
 #                       quadro (PISCA_PASSO=m no ambiente muda): salva pisca.jpg com os
 #                       pixels que mudaram de um quadro para o outro em vermelho e
 #                       imprime quantos (chão piscando: z-fighting, desenho fino demais)
+#                       PISCA_FOCO=x,z mira em outro ponto (ex.: um achado do QA do mapa)
 #   --perf=N            mede o desempenho na qualidade N (0-3): a cada 5 s imprime
 #                       ms de CPU por quadro, draw calls, triângulos e objetos
 #   --menu=inicio|pausa com --autoplay: abre essa tela por cima da partida, sem
@@ -156,6 +157,7 @@ var _filme_dir := ""
 var _pisca_dir := ""
 var _pisca_f := 0
 var _pisca_imgs: Array[Image] = []
+var _pisca_quadro := -1
 var _filme_f := -1
 var _filme_y := 0.0
 var _vitrine_dir := ""
@@ -1087,6 +1089,9 @@ func _log(msg: String) -> void:
 ## abaixo de Nyquist, ou faces no mesmo plano brigando na profundidade).
 func _pisca() -> void:
 	var foco := arena.to_world(Config.TEAM_BLUE, -4.0, 0.0)
+	if OS.has_environment("PISCA_FOCO"):  # "x,z" no mundo (conferir um achado do QA do mapa)
+		var xz := OS.get_environment("PISCA_FOCO").split(",")
+		foco = Vector3(float(xz[0]), 0.0, float(xz[1]))
 	if _pisca_f == 0:
 		player.brain = null
 		player.move_intent = Vector3.ZERO
@@ -1097,11 +1102,18 @@ func _pisca() -> void:
 		camera.set_physics_process(false)
 		camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 		camera.fov = Config.cfg.camera_fov
+	# Roda na física: no xvfb (lento) vários passos de física cabem num quadro
+	# desenhado, e capturar a cada passo comparava a MESMA imagem com ela mesma
+	# (dava 0 pixels sempre; achado na caça aos bugs 2026-11-15). Um passo de
+	# câmera por quadro desenhado: a imagem capturada é a do passo anterior.
+	if Engine.get_frames_drawn() == _pisca_quadro:
+		return
+	_pisca_quadro = Engine.get_frames_drawn()
+	if _pisca_f >= 6:  # os primeiros quadros ainda trocam de câmera e escondem a interface
+		_pisca_imgs.append(get_viewport().get_texture().get_image())
 	var passo := float(OS.get_environment("PISCA_PASSO")) if OS.has_environment("PISCA_PASSO") else 0.01
 	camera.global_position = foco + Config.cfg.camera_offset + Vector3(passo * _pisca_f, 0, 0)
 	camera.look_at(foco)
-	if _pisca_f >= 5:  # os primeiros quadros ainda trocam de câmera e escondem a interface
-		_pisca_imgs.append(get_viewport().get_texture().get_image())
 	_pisca_f += 1
 	if _pisca_imgs.size() < 6:
 		return

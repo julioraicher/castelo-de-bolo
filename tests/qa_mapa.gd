@@ -8,7 +8,7 @@ extends Node
 ##    castelo até cada ponto. Acusa inalcançável e desvio > DESVIO_MAX
 ##    (comprimento do caminho / distância reta: beco ou passagem fechada).
 ## 2. Escondido: câmera do jogo num anel em volta de cada objeto importante;
-##    raio câmera -> objeto. Bloqueado em mais de 40% = escondido. Só vê
+##    raio câmera -> objeto (só de onde se pisa). Bloqueado em mais de 40% = escondido. Só vê
 ##    colisores (telhado sem colisão não conta).
 ## 3. Bot preso: TEMPO_PRESOS s de partida; quem quer andar e sai menos de
 ##    0,3 m em 3 s (pulado com --qa-rapido).
@@ -134,16 +134,19 @@ func _escondidos() -> void:
 	for a in alvos:
 		var alvo: Vector3 = a[1] + Vector3(0, 1.0, 0)
 		var bloq := 0
-		var n := 8
-		for i in n:
-			var ang := TAU * i / n
+		var n := 0
+		for i in 8:
+			var ang := TAU * i / 8.0
 			var foco: Vector3 = a[1] + Vector3(cos(ang), 0, sin(ang)) * 3.0
+			if not _chao(space, foco):
+				continue  # ninguém fica ali (dentro da muralha): não conta a vista
+			n += 1
 			var cam: Vector3 = foco + cfg.camera_offset
 			var q := PhysicsRayQueryParameters3D.create(cam, alvo, 1)  # LAYER_WORLD
 			var hit := space.intersect_ray(q)
 			if hit and hit.position.distance_to(alvo) > a[2]:
 				bloq += 1
-		if float(bloq) / n > BLOQUEIO_MAX:
+		if n > 0 and float(bloq) / n > BLOQUEIO_MAX:
 			_add("escondido: %s (%d/%d vistas bloqueadas)" % [a[0], bloq, n], a[1], 50)
 
 

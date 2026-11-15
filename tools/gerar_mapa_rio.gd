@@ -1571,6 +1571,20 @@ func _dois_lados(lista: Array, model: String, pos: Vector3, rot := 0.0, col := "
 	lista.append(_p(model, Vector3(-pos.x, pos.y, pos.z), 180.0 - rot if dir else rot, col, raio, alt))
 
 
+## Caça aos bugs 2026-11-15: entre a colina, a escada dela e a estátua (|x| 27-35,
+## z -48 a -44) sobrava um cantinho onde o jogador entrava (cápsula fina) mas a
+## navegação dos bots não (raio maior): escondia da câmera atrás da colina e
+## nenhum bot chegava. Fecha com parede invisível que só segura quem anda.
+func _tampas_estatua() -> Array:
+	var r: Array = []
+	for sx in [1.0, -1.0]:
+		for b in [[Vector3(32.65, 0, -46.35), Vector3(5.3, 4.0, 4.3)], [Vector3(28.25, 0, -47.0), Vector3(3.5, 4.0, 3.0)]]:
+			var t := _caixa_col(Vector3(sx * b[0].x, 0, b[0].z), 0.0, b[1], Vector3(0, 2.0, 0))
+			t.so_passagem = true
+			r.append(t)
+	return r
+
+
 func _gerar_mapa_rio() -> void:
 	_MP = load("res://scripts/data/map_prop.gd")
 	var ML: Script = load("res://scripts/data/map_layout.gd")
@@ -1791,6 +1805,7 @@ func _gerar_mapa_rio() -> void:
 	_dois_lados(_props, "arrozal.scn", Vector3(66.0, 0, -22.0), 0.0)
 	_dois_lados(_props, "poco.scn", Vector3(72.0, 0, 21.0), 0.0, "cilindro", 1.0, 2.0)
 	_dois_lados(_props, "estatua.scn", Vector3(36.0, 0, -46.0), 0.0, "cilindro", 0.8, 2.0)
+	_props.append_array(_tampas_estatua())
 	_dois_lados(_props, "arvore_alta.scn", Vector3(81.0, 0, 46.0), -1.0, "cilindro", 2.0, 4.0)
 
 	# Colisores em caixa das construções novas e das coberturas.
