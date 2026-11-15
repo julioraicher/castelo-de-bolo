@@ -446,7 +446,7 @@ func _ready() -> void:
 		t.set("game", self)
 		add_child(t)
 	if _varredura:
-		var vr: Node = load("res://tests/varredura_poderes.gd").new()
+		var vr: Node = load(OS.get_environment("VARREDURA_SCRIPT") if OS.get_environment("VARREDURA_SCRIPT") != "" else "res://tests/varredura_poderes.gd").new()
 		vr.set("game", self)
 		add_child(vr)
 	if _qa_dir != "":
