@@ -455,6 +455,7 @@ func _secao_config() -> Control:
 	var dir := VBoxContainer.new()
 	dir.add_theme_constant_override("separation", 16)
 	dir.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dir.size_flags_stretch_ratio = 1.3  # nomes de tema/mapa longos
 	h.add_child(dir)
 
 	var som := _grupo(esq, "Som")
@@ -477,13 +478,18 @@ func _secao_config() -> Control:
 		Settings.apply())
 	_linha(video, "Qualidade gráfica", qual)
 	# O que a Alta dinâmica já desligou para segurar 30 FPS (só aparece na Alta).
-	var ajuste := Label.new()
-	ajuste.add_theme_font_size_override("font_size", 13)
-	ajuste.modulate = Color(1, 1, 1, 0.6)
+	# Grade de 2 colunas: a nota vai na coluna da direita, sob a qualidade, com
+	# um vazio na esquerda (sem ele a nota ocupava uma célula e embaralhava os
+	# pares de baixo: "Tela cheia" ia parar do lado do botão de outra linha).
+	var vazio := Control.new()
+	video.add_child(vazio)
+	var ajuste := _text("", Estilo.T_MIN, Estilo.TEXTO_FRACO)
+	ajuste.custom_minimum_size.x = 160
 	video.add_child(ajuste)
 	var mostra_ajuste := func():
 		qual.selected = Settings.quality  # AutoQuality pode mudar
 		ajuste.visible = Settings.quality == 3
+		vazio.visible = ajuste.visible
 		ajuste.text = "Alta dinâmica: " + Settings.ALTA_AJUSTES[Settings.alta_ajuste]
 	Settings.changed.connect(mostra_ajuste)
 	mostra_ajuste.call()
@@ -567,6 +573,13 @@ func _linha(grid: GridContainer, rotulo: String, controle: Control) -> void:
 	grid.add_child(l)
 	if not controle is CheckButton:
 		controle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if controle is OptionButton:
+		# Sem isto a lista abre na largura do item mais longo ("Festival ao Sol
+		# (dia)") e a coluna da direita passava da moldura.
+		(controle as OptionButton).fit_to_longest_item = false
+		(controle as OptionButton).clip_text = true
+		(controle as OptionButton).text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		controle.custom_minimum_size.x = 150
 	grid.add_child(controle)
 
 

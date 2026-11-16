@@ -61,7 +61,11 @@ var _meu_time := 0
 ## bairro de uma casa no Nv2. Quem confirma é o clique (ou 1/2 no teclado).
 var _escolha: PanelContainer
 var _escolha_titulo: Label
-var _escolha_botoes: Array[Button] = []
+var _escolha_botoes: Array[PanelContainer] = []
+var _escolha_estilos: Array = []  # [normal, aceso] por cartão
+var _card_jogador: Control
+const ESCOLHA_SEP := 14.0
+const ESCOLHA_BORDA := 24.0  # folga do painel até a borda da tela
 var _escolha_of: Oficina
 var _escolha_cb: Callable
 var _escolha_rodape: Label
@@ -332,6 +336,7 @@ func _chip(team: int) -> PanelContainer:
 
 func _build_jogador(root: Control) -> void:
 	var card := PanelContainer.new()
+	_card_jogador = card
 	card.add_theme_stylebox_override("panel", Estilo.placa())
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(card)
@@ -463,29 +468,40 @@ func _build_escolha(root: Control) -> void:
 	m.add_child(v)
 	_escolha_titulo = Estilo.rotulo("", Estilo.T_GRANDE, Estilo.OURO, Estilo.TITULO)
 	_escolha_titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_escolha_titulo.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(_escolha_titulo)
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 14)
+	h.add_theme_constant_override("separation", ESCOLHA_SEP)
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(h)
+	# Cartões = PanelContainer (crescem com o texto; Button não cresce com os
+	# filhos e o texto vazava da borda, Ciclo 2.33). Clique e brilho à mão.
 	for i in 5:  # até 5 opções (caminhos = 2; heróis = 3 a 5, Heróis 2.27)
-		var b := Button.new()
-		b.custom_minimum_size = Vector2(330, 176)
-		b.focus_mode = Control.FOCUS_NONE
-		b.pressed.connect(_escolheu.bind(i))
+		var b := PanelContainer.new()
+		b.mouse_filter = Control.MOUSE_FILTER_STOP
+		b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		b.gui_input.connect(_cartao_input.bind(i))
+		b.mouse_entered.connect(_cartao_brilho.bind(i, true))
+		b.mouse_exited.connect(_cartao_brilho.bind(i, false))
 		h.add_child(b)
 		_escolha_botoes.append(b)
 	var rodape := HBoxContainer.new()
 	rodape.alignment = BoxContainer.ALIGNMENT_CENTER
 	rodape.add_theme_constant_override("separation", 8)
-	_escolha_rodape = Estilo.rotulo("Clique num caminho (ou 1 / 2). O outro fica selado até o fim.", Estilo.T_PEQUENO, Estilo.TEXTO_FRACO, Estilo.CORPO)
+	_escolha_rodape = Estilo.rotulo("", Estilo.T_PEQUENO, Estilo.TEXTO_FRACO, Estilo.CORPO)
+	_escolha_rodape.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_escolha_rodape.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_escolha_rodape.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rodape.add_child(_escolha_rodape)
-	rodape.add_child(Estilo.tecla("F", Estilo.T_PEQUENO))
-	rodape.add_child(Estilo.rotulo("fecha", Estilo.T_PEQUENO, Estilo.TEXTO, Estilo.CORPO))
+	var f := Estilo.tecla("F", Estilo.T_PEQUENO)
+	f.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	rodape.add_child(f)
+	var fecha := Estilo.rotulo("fecha", Estilo.T_PEQUENO, Estilo.TEXTO, Estilo.CORPO)
+	fecha.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	rodape.add_child(fecha)
 	v.add_child(rodape)
-	_escolha.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 96)
-	_escolha.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_escolha.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_escolha.minimum_size_changed.connect(_posicionar_escolha)
+	get_viewport().size_changed.connect(_posicionar_escolha)
 
 
 ## Abre o painel com os dois caminhos da casa `of` (ou, com heroi = true, os
@@ -495,65 +511,112 @@ func abrir_escolha(of: Oficina, cb: Callable, heroi := false) -> void:
 	_escolha_cb = cb
 	var cs: Array[ClassStats] = of.herois() if heroi else of.caminhos()
 	_escolha_n = mini(cs.size(), _escolha_botoes.size())
+	var teclas := " / ".join(range(1, _escolha_n + 1).map(func(k): return str(k)))
 	if heroi:
 		_escolha_titulo.text = "Nível 6 de %s: escolha o herói raro" % of.base.display_name
-		var teclas := " / ".join(range(1, _escolha_n + 1).map(func(k): return str(k)))
 		_escolha_rodape.text = "Clique num herói (ou %s). Um chapéu só no pavilhão: volta 20 s depois que o herói sai de campo." % teclas
 	else:
 		_escolha_titulo.text = "Casa de %s: escolha o caminho" % of.base.display_name
-		_escolha_rodape.text = "Clique num caminho (ou 1 / 2). O outro fica selado até o fim."
+		_escolha_rodape.text = "Clique num caminho (ou %s). O outro fica selado até o fim." % teclas
+	var larg := _largura_escolha()
+	_escolha_estilos.clear()
 	for i in _escolha_botoes.size():
 		_escolha_botoes[i].visible = i < _escolha_n
 	for i in _escolha_n:
 		var b := _escolha_botoes[i]
-		b.custom_minimum_size = Vector2(_largura_escolha(), 196 if heroi else 176)
+		b.custom_minimum_size = Vector2(larg, 196.0 if heroi else 176.0)
 		for c in b.get_children():
+			b.remove_child(c)
 			c.queue_free()
 		var cls: ClassStats = cs[i]
 		var cor := cls.hat_color.lightened(0.15)
-		b.add_theme_stylebox_override("normal", Estilo.placa(Color(Estilo.LACA, 0.95), cor.darkened(0.25), 12))
-		b.add_theme_stylebox_override("hover", Estilo.placa(Color(cor.darkened(0.7), 0.97), cor, 12))
-		b.add_theme_stylebox_override("pressed", Estilo.placa(Color(cor.darkened(0.55), 0.97), Estilo.OURO, 12))
-		var mc := MarginContainer.new()
-		mc.set_anchors_preset(Control.PRESET_FULL_RECT)
-		mc.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		for lado in ["left", "right", "top", "bottom"]:
-			mc.add_theme_constant_override("margin_" + lado, 12)
-		b.add_child(mc)
+		var normal := Estilo.placa(Color(Estilo.LACA, 0.95), cor.darkened(0.25), 12)
+		var acesa := Estilo.placa(Color(cor.darkened(0.7), 0.97), cor, 12)
+		for sb: StyleBoxFlat in [normal, acesa]:
+			sb.content_margin_left = 12
+			sb.content_margin_right = 12
+			sb.content_margin_top = 10
+			sb.content_margin_bottom = 10
+		_escolha_estilos.append([normal, acesa])
+		b.add_theme_stylebox_override("panel", normal)
 		var col := VBoxContainer.new()
-		col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		col.add_theme_constant_override("separation", 4)
-		mc.add_child(col)
+		b.add_child(col)
 		var topo := HBoxContainer.new()
-		topo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		topo.add_theme_constant_override("separation", 8)
-		topo.add_child(Estilo.tecla(str(i + 1), Estilo.T_PEQUENO))
+		var k := Estilo.tecla(str(i + 1), Estilo.T_PEQUENO)
+		k.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		topo.add_child(k)
 		var nome := Estilo.rotulo(cls.display_name, Estilo.T_GRANDE if _escolha_n <= 3 else Estilo.T_MEDIO, cor, Estilo.TITULO)
+		nome.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		nome.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		topo.add_child(nome)
 		col.add_child(topo)
 		var linhas := [cls.caminho_nome.to_upper() if cls.caminho_nome != "" else "", cls.epiteto,
 				"Q: %s" % cls.skill_name if cls.skill_name != "" else "",
 				"E: %s" % cls.power_name if cls.power_name != "" else ""]
 		if heroi:
+			# Q, E e R em linhas separadas: "Q · E" numa linha só quebrava no meio do nome.
 			linhas = ["★ HERÓI RARO", cls.epiteto, cls.estilo_linha,
-					"Q: %s  ·  E: %s" % [cls.skill_name, cls.power_name],
+					"Q: %s" % cls.skill_name, "E: %s" % cls.power_name,
 					"R: %s" % (cls.super_nome if cls.super_nome != "" else "Super " + cls.power_name)]
-		for k in linhas.size():
-			if linhas[k] == "":
+		for j in linhas.size():
+			if linhas[j] == "":
 				continue
-			var l := Estilo.rotulo(linhas[k], Estilo.T_PEQUENO if k > 0 else Estilo.T_MIN, Estilo.TEXTO if k > 0 else cor, Estilo.CORPO)
+			var l := Estilo.rotulo(linhas[j], Estilo.T_PEQUENO if j > 0 else Estilo.T_MIN, Estilo.TEXTO if j > 0 else cor, Estilo.CORPO)
 			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			l.custom_minimum_size.x = _largura_escolha() - 30.0
+			if heroi and j == 2:
+				l.label_settings = Estilo.ajustes(Estilo.T_PEQUENO, Estilo.TEXTO_FRACO, Estilo.CORPO)
 			col.add_child(l)
-		for n in [mc, col, topo] + col.get_children() + topo.get_children():
+		for n in [col, topo] + col.get_children() + topo.get_children():
 			if n is Control:
 				(n as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_escolha.visible = true
+	# Encolhe para o conteúdo novo (um painel de 5 heróis não deixa o de 2
+	# caminhos largo) e reposiciona quando o texto terminar de quebrar.
+	_escolha.reset_size()
+	_posicionar_escolha.call_deferred()
 
 
-## Largura de cada cartão: 5 cartões ainda cabem em 1280 px.
+## Largura de cada cartão: o que couber na tela, entre 220 e 330 px.
 func _largura_escolha() -> float:
-	return [330.0, 330.0, 330.0, 300.0, 270.0, 228.0][clampi(_escolha_n, 0, 5)]
+	var n := maxi(_escolha_n, 1)
+	var tela := get_viewport().get_visible_rect().size.x
+	var livre := tela - 2.0 * ESCOLHA_BORDA - 2.0 * (14.0 + 14.0) - ESCOLHA_SEP * (n - 1)
+	return clampf(floorf(livre / n), 220.0, 330.0)
+
+
+## Painel centrado, com o pé acima do minimapa e do cartão do jogador (o
+## cartão de 4 heróis entrava por baixo do minimapa) e sem passar do placar.
+func _posicionar_escolha() -> void:
+	if _escolha == null or not _escolha.visible:
+		return
+	var tela := get_viewport().get_visible_rect().size
+	var tam := _escolha.get_combined_minimum_size()
+	_escolha.size = tam
+	var chao := tela.y - 96.0
+	var cantos: Array[Control] = [_card_jogador]
+	for c in get_children():
+		if c is Minimapa:
+			cantos.append(c)
+	for c in cantos:
+		if c and c.visible:
+			chao = minf(chao, c.get_global_rect().position.y - 12.0)
+	var teto := 84.0  # abaixo do placar do topo
+	var y := clampf(chao - tam.y, teto, maxf(teto, tela.y - tam.y - 8.0))
+	_escolha.position = Vector2(roundf((tela.x - tam.x) * 0.5), roundf(y))
+
+
+func _cartao_input(ev: InputEvent, i: int) -> void:
+	if ev is InputEventMouseButton and (ev as InputEventMouseButton).pressed \
+			and (ev as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		get_viewport().set_input_as_handled()
+		_escolheu(i)
+
+
+func _cartao_brilho(i: int, sim: bool) -> void:
+	if i < _escolha_estilos.size():
+		_escolha_botoes[i].add_theme_stylebox_override("panel", _escolha_estilos[i][1 if sim else 0])
 
 
 func fechar_escolha() -> void:
