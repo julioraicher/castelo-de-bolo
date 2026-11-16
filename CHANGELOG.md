@@ -4,6 +4,34 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.33 (2026-11-16), Diretor de Jogabilidade: textos que vazavam dos painéis
+Print de um amigo do Julio: no painel "Nível 6 de Samurai: escolha o herói raro" o
+texto dos cartões passava da borda, o rodapé "Clique num herói... F fecha" ficava
+por cima dos cartões e o minimapa cobria o 4º herói. Não era a resolução dele:
+acontecia em qualquer tela (a tela lógica é sempre 1600x900 ou maior).
+- **Painel da escolha** (caminho Nv2→3 e herói Nv6, `Hud.abrir_escolha`): cartões
+  viraram `PanelContainer` (crescem com o texto; o `Button` antigo tinha altura fixa
+  e o texto vazava). Q, E e R em linhas separadas, rodapé com quebra de linha,
+  largura do cartão pelo que cabe na tela (220-330 px), o painel encolhe quando
+  passa de 5 heróis para 2 caminhos e fica **acima do minimapa e do cartão do
+  jogador** (antes ficava por baixo dos dois).
+- **Configurações**: a nota "Alta dinâmica" ocupava uma célula da grade e trocava
+  os pares do Vídeo ("Baixar sozinho se travar" ia para a coluna dos botões); a
+  coluna Partida passava da moldura ("Festival ao Sol (dia)"). Nota no lugar certo,
+  listas que encolhem com "..." e coluna da direita um pouco mais larga.
+- **Auditoria nova** `tools/auditoria_ui.gd` (também no CI, sem xvfb): abre HUD com
+  todos os painéis de escolha, placar, tela inicial, pausa, Com amigos, as 26 fichas
+  e as abas do Como jogar em 7 resoluções (1280x720, 1366x768, 1920x1080,
+  2560x1440, 1024x768, 1280x1024, 2560x1080) e falha se algum texto vaza da
+  moldura, sai da tela ou se dois blocos do HUD se cobrem. Antes: 72 falhas em
+  1280x720; agora 0 em todas. Antes/depois em
+  `castelo-de-bolo/interface/09-textos-que-vazavam-antes-depois.jpg`.
+- **Modo teste**: usa os mesmos painéis e menus, então já vem consertado lá.
+
+**O que testar**: no modo teste, F no bairro do Samurai no Nv5 (4 heróis) e no do
+Ninja de Shuriken (5 heróis): todo texto dentro do cartão, nada embaixo do minimapa,
+clique e teclas 1-5 escolhendo. Pausa > Configurações: cada opção do lado do seu
+botão. Se der, pedir ao amigo para abrir o mesmo painel no PC dele.
 ## Ciclo 2.32c (2026-11-15), Diretor Visual: shuriken preta
 Pedido do Julio (prancha aprovada): a shuriken do Ninja Shuriken passa a ser preta.
 - **Projétil** (`FxProjetil.malha_shuriken`): lâmina de aço preto com fio chanfrado

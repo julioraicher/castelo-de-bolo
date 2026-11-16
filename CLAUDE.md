@@ -35,6 +35,9 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3
 xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
   --rendering-method gl_compatibility --audio-driver Dummy -- --autoplay --shots=DIR
 # Prints de cada seção do menu e aba do Como jogar: --tutorial=DIR (com xvfb, como acima)
+# Interface (2.33, no CI): texto vazando/fora da tela/HUD sobreposto em 7 resoluções; sai 0/1.
+#   Com DIR e xvfb também tira prints; --res=1280x720,1024x768 filtra; UI_DEBUG=1 lista blocos.
+godot --headless --path . -s tools/auditoria_ui.gd -- --sandbox --sem-prints
 # Regravar os clipes dos menus (xvfb): tools/clipes_tutorial.sh [cena|classe:id ...]
 #   (classe nova = id em CLASSES do script; quadros importam com perda, ~12 KB cada)
 # QA do mapa (passagem, escondidos da câmera, bots presos): qa_mapa.txt (+ .jpg com tela)
@@ -103,6 +106,9 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
   conteúdo; download web 104 → 43 MB). `tools/comprimir_cenas.gd` converte os antigos.
 - Material billboard ignora escala: use `billboard_keep_scale = true`.
 - `Label` com quebra de linha dentro de `GridContainer` vira uma letra por linha.
+- Texto dentro de `Button` não faz o botão crescer: cartão com texto = `PanelContainer`
+  (+ `gui_input`). Painel ancorado não encolhe sozinho: `reset_size()` ao trocar o
+  conteúdo. Peça nova de interface: rode `tools/auditoria_ui.gd` (2.33).
 - Interpolação de física está ligada: teleporte chama `reset_physics_interpolation()`;
   nós animados em `_process`/tween usam `PHYSICS_INTERPOLATION_MODE_OFF`.
 - Música: loop vem do `.import` (`loop_mode=2`); canais em `default_bus_layout.tres`.

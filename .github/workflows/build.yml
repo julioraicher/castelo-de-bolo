@@ -47,6 +47,11 @@ jobs:
       - name: Testes de regra
         run: timeout 5m ./godot --headless --path . --fixed-fps 60 -- --autoplay --testes
 
+      # Interface (Ciclo 2.33): texto que vaza da moldura, sai da tela ou
+      # painel do HUD por cima do minimapa, em 7 resoluções.
+      - name: Auditoria da interface
+        run: timeout 15m ./godot --headless --path . -s tools/auditoria_ui.gd -- --sandbox --sem-prints
+
       # Q, E e R das 26 classes (caça aos bugs 2026-11-15): com inimigo
       # alinhado e com aliado ferido, caído e distante (cura, escudo,
       # reanimar, puxão, fogo amigo, dono preso).
