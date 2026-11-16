@@ -18,6 +18,7 @@ const RAIO_X := preload("res://assets/shaders/raio_x.gdshader")
 const NEON := preload("res://assets/shaders/neon_pecas.gdshader")
 
 const CIANO := Color(0.2, 0.95, 1.0)
+const ACO_NEGRO := Color(0.07, 0.075, 0.09)
 const MAGENTA := Color(1.0, 0.25, 0.85)
 const FANTASMA := Color(0.45, 1.0, 0.45)
 const OURO := Color(1.0, 0.78, 0.3)
@@ -346,10 +347,10 @@ func _ninja(time: Color) -> void:
 	_peca(peito, _fita(0.85, 0.24, pano, time.lightened(0.1)), Vector3(0.1, 0.62, -0.3), Vector3(-35, 180, 12), Vector3.ONE,
 			{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true, "balanco": Vector3(1.0, 0.3, 0.0)})
 	# Bandoleira com shurikens de reserva atravessada no peito
-	_peca(peito, _caixa(Vector3(0.16, 1.05, 0.06)), Vector3(0, 0.2, 0.22), Vector3(14, 0, 40), Vector3.ONE, _plano(Color(0.1, 0.1, 0.14)))
+	_peca(peito, _caixa(Vector3(0.16, 1.05, 0.06)), Vector3(0, 0.2, 0.22), Vector3(14, 0, 40), Vector3.ONE, _plano(Color(0.03, 0.03, 0.035)))
 	for i in 3:
 		var y := 0.42 - i * 0.3
-		_peca(peito, _shuriken(), Vector3(-y * 0.75, y + 0.2, 0.3), Vector3(14, 0, 0), Vector3.ONE * 0.8, _neon(CIANO, 1.5))
+		_peca(peito, _shuriken(), Vector3(-y * 0.75, y + 0.2, 0.3), Vector3(14, 0, 0), Vector3.ONE * 0.8, _plano(ACO_NEGRO))
 	# Faixas de pano nos antebraços e canelas (menos quadrado de perto)
 	for lado in [".l", ".r"]:
 		_peca("lowerarm" + lado, _cilindro(0.14, 0.16, 0.26), Vector3(0.16 * (1 if lado == ".l" else -1), 0, 0), Vector3(0, 0, 90), Vector3.ONE, _plano(pano.lightened(0.15)))
@@ -363,9 +364,9 @@ func _ninja(time: Color) -> void:
 	_peca("upperleg.r", _cone(0.045, 0.2), Vector3(-0.17, 0.02, 0.02), Vector3(180, 0, 0), Vector3(1, 1, 0.35), _neon(CIANO, 1.5))
 	# Shuriken na mão e duas nas costas
 	var mao := "handslot.r"
-	_peca(mao, _shuriken(), Vector3(0, 0.15, 0.1), Vector3(90, 0, 0), Vector3.ONE * 1.3, _neon(CIANO, 2.0))
-	_peca(peito, _shuriken(), Vector3(0.22, 0.45, -0.45), Vector3(0, 0, 20), Vector3.ONE, _neon(CIANO, 1.5))
-	_peca(peito, _shuriken(), Vector3(-0.22, 0.25, -0.45), Vector3(0, 0, -20), Vector3.ONE, _neon(CIANO, 1.5))
+	_peca(mao, _shuriken(), Vector3(0, 0.15, 0.1), Vector3(90, 0, 0), Vector3.ONE * 1.3, _plano(ACO_NEGRO))
+	for s in [-1, 1]:
+		_peca(peito, _shuriken(), Vector3(0.22 * s, 0.35 + 0.1 * s, -0.45), Vector3(0, 0, 20 * s), Vector3.ONE, _plano(ACO_NEGRO))
 
 
 func _armadilheiro(time: Color) -> void:

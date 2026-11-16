@@ -4,6 +4,21 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.32c (2026-11-15), Diretor Visual: shuriken preta
+Pedido do Julio (prancha aprovada): a shuriken do Ninja Shuriken passa a ser preta.
+- **Projétil** (`FxProjetil.malha_shuriken`): lâmina de aço preto com fio chanfrado
+  claro na borda, ponta que reluz e anel no miolo. O fio é o que faz ela aparecer
+  em chão escuro. Vale para o tiro, a shuriken cravada no chão/corpo e o Leque (E).
+- **No corpo** (`NinjaVisual._ninja`): shurikens da mão, do peito e das costas
+  pretas, sem o neon ciano; a bandoleira do peito ficou preta também.
+- Rastro de Chi do tiro um pouco mais forte (alfa 0,3 → 0,45) para seguir o voo.
+- Prancha: `tools/prancha_shuriken.gd` (projétil parado + boneco de frente/costas).
+- **Modo teste**: nada a ligar, a classe já está disponível lá com a shuriken nova.
+
+**O que testar**: jogue de Ninja Shuriken no modo teste e numa partida: dá para
+ver o tiro em voo no chão claro e no escuro? A shuriken na mão e na bandoleira
+aparecem pretas?
+
 ## Ciclo 2.32b (2026-11-15), Diretor de Jogabilidade: 1 madeira a menos em toda construção
 Pedido do Julio: mais heróis evoluídos em campo ao mesmo tempo, um pouco mais cedo.
 Só números em `config/game_config.tres` (sem código):
