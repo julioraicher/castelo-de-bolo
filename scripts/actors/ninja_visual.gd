@@ -347,8 +347,7 @@ func _ninja(time: Color) -> void:
 	_peca(peito, _fita(0.85, 0.24, pano, time.lightened(0.1)), Vector3(0.1, 0.62, -0.3), Vector3(-35, 180, 12), Vector3.ONE,
 			{"cor": Color.WHITE, "neon": false, "cor_vertice": true, "peso_uv": true, "balanco": Vector3(1.0, 0.3, 0.0)})
 	# Bandoleira com shurikens de reserva atravessada no peito
-	# (couro marrom: a shuriken preta precisa de fundo claro para aparecer)
-	_peca(peito, _caixa(Vector3(0.16, 1.05, 0.06)), Vector3(0, 0.2, 0.22), Vector3(14, 0, 40), Vector3.ONE, _plano(Color(0.34, 0.22, 0.13)))
+	_peca(peito, _caixa(Vector3(0.16, 1.05, 0.06)), Vector3(0, 0.2, 0.22), Vector3(14, 0, 40), Vector3.ONE, _plano(Color(0.03, 0.03, 0.035)))
 	for i in 3:
 		var y := 0.42 - i * 0.3
 		_peca(peito, _shuriken(), Vector3(-y * 0.75, y + 0.2, 0.3), Vector3(14, 0, 0), Vector3.ONE * 0.8, _plano(ACO_NEGRO))
@@ -365,13 +364,9 @@ func _ninja(time: Color) -> void:
 	_peca("upperleg.r", _cone(0.045, 0.2), Vector3(-0.17, 0.02, 0.02), Vector3(180, 0, 0), Vector3(1, 1, 0.35), _neon(CIANO, 1.5))
 	# Shuriken na mão e duas nas costas
 	var mao := "handslot.r"
-	# Aço enegrecido; o miolo de Chi (neon) mostra de quem é a lâmina.
 	_peca(mao, _shuriken(), Vector3(0, 0.15, 0.1), Vector3(90, 0, 0), Vector3.ONE * 1.3, _plano(ACO_NEGRO))
-	_peca(mao, _cilindro(0.06, 0.06, 0.03), Vector3(0, 0.15, 0.1), Vector3.ZERO, Vector3.ONE, _neon(CIANO, 2.0))
 	for s in [-1, 1]:
-		var pos := Vector3(0.22 * s, 0.35 + 0.1 * s, -0.45)
-		_peca(peito, _shuriken(), pos, Vector3(0, 0, 20 * s), Vector3.ONE, _plano(ACO_NEGRO))
-		_peca(peito, _cilindro(0.045, 0.045, 0.03), pos - Vector3(0, 0, 0.02), Vector3(90, 0, 0), Vector3.ONE, _neon(CIANO, 1.5))
+		_peca(peito, _shuriken(), Vector3(0.22 * s, 0.35 + 0.1 * s, -0.45), Vector3(0, 0, 20 * s), Vector3.ONE, _plano(ACO_NEGRO))
 
 
 func _armadilheiro(time: Color) -> void:
