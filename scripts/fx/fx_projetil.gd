@@ -355,23 +355,58 @@ static func malha_flecha(cor_pena: Color) -> ArrayMesh:
 		]))
 
 
-## Shuriken de aço: lâminas claras, miolo escuro (lê como metal, não magia).
+## Shuriken de aço enegrecido: lâmina preta, fio chanfrado claro na borda e
+## ponta que reluz (sem o fio ela some no chão escuro), anel claro no miolo.
 static func malha_shuriken() -> ArrayMesh:
 	return _c("shuriken", func() -> ArrayMesh:
+		const R_PONTA := 0.36
+		const R_VALE := 0.1
+		const FIO := 0.03
+		var preto := Color(0.035, 0.04, 0.05)
+		var preto_borda := Color(0.1, 0.11, 0.14)
+		var fio_dentro := Color(0.32, 0.36, 0.42)
+		var fio_fora := Color(0.85, 0.9, 0.98)
+		var reluz := Color(1.7, 1.85, 2.0)
 		var st := SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var tri := func(a: Vector3, ca: Color, b: Vector3, cb: Color, c: Vector3, cc: Color, espelho := false) -> void:
+			if espelho:  # o lado espelhado da lâmina inverte a ordem dos vértices
+				var t := b
+				b = c
+				c = t
+				var tc := cb
+				cb = cc
+				cc = tc
+			st.set_color(ca)
+			st.add_vertex(a)
+			st.set_color(cb)
+			st.add_vertex(b)
+			st.set_color(cc)
+			st.add_vertex(c)
 		for i in 4:
 			var a := TAU * i / 4.0
-			var p := Vector3(cos(a), sin(a), 0) * 0.34
-			var e := Vector3(cos(a + PI / 4), sin(a + PI / 4), 0) * 0.09
-			var d := Vector3(cos(a - PI / 4), sin(a - PI / 4), 0) * 0.09
-			for f in [[Vector3.ZERO, d, p], [Vector3.ZERO, p, e]]:
-				st.set_color(Color(0.55, 0.6, 0.68))
-				st.add_vertex(f[0])
-				st.set_color(COR_METAL * 1.25)
-				st.add_vertex(f[1])
-				st.set_color(Color(1.6, 1.9, 2.0))  # fio da lâmina brilha
-				st.add_vertex(f[2])
+			var u := Vector3(cos(a), sin(a), 0)
+			var p := u * R_PONTA
+			for s: float in [-1.0, 1.0]:
+				var v := Vector3(cos(a + s * PI / 4), sin(a + s * PI / 4), 0) * R_VALE
+				# Recuo do fio: perpendicular à aresta na base, ao longo do eixo na ponta.
+				var aresta := (p - v).normalized()
+				var dentro := Vector3(-aresta.y, aresta.x, 0) * -s
+				var meio_ang := asin(clampf(aresta.cross(-u).length(), 0.05, 1.0))
+				var p_in := p - u * (FIO / sin(meio_ang))
+				var v_in := v + dentro * FIO - v.normalized() * FIO * 0.6
+				var esp := s > 0.0
+				tri.call(Vector3.ZERO, preto, v_in, preto_borda, p_in, preto_borda, esp)
+				tri.call(v_in, fio_dentro, v, fio_fora, p, reluz, esp)
+				tri.call(v_in, fio_dentro, p, reluz, p_in, fio_dentro, esp)
+		# Anel do miolo (o furo da shuriken), em 8 lados.
+		for k in 8:
+			var a0 := TAU * k / 8.0
+			var a1 := TAU * (k + 1) / 8.0
+			var o0 := Vector3(cos(a0), sin(a0), 0.002)
+			var o1 := Vector3(cos(a1), sin(a1), 0.002)
+			tri.call(o0 * 0.03, preto, o0 * 0.05, fio_fora, o1 * 0.05, fio_fora)
+			tri.call(o0 * 0.03, preto, o1 * 0.05, fio_fora, o1 * 0.03, preto)
 		return st.commit())
 
 
@@ -431,7 +466,7 @@ static func montar(p: Node3D, kind: String, time_cor: Color) -> Node3D:
 			gira = corpo
 			if rastro:  # lascas de metal soltas pelo caminho
 				ps(p, Vector3.ZERO, lasca(0.18, 0.025), COR_METAL * 1.3, 6, 0.22, {"one_shot": false, "dir": Vector3.UP, "spread": 180.0, "flat": 0.6, "v0": 1.5, "v1": 3.0, "alinha": true, "rampa": "quente", "local_pos": true})
-				_fita(p, Color(COR_CIANO, 0.3), 0.12, 1.1)
+				_fita(p, Color(COR_CIANO, 0.45), 0.14, 1.3)
 		"bomba":
 			corpo.mesh = malha_bola(Color(0.07, 0.07, 0.1), 0.24)
 			p.add_child(corpo)
