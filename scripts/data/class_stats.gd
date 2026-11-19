@@ -36,6 +36,12 @@ extends Resource
 ## pouso), "ninja" corrida inclinada com os braços para trás, "chama" o corpo
 ## some num lampejo de fogo-raposa e reaparece no fim.
 @export var dash_estilo := ""
+## Personalidade do corpo (Ciclo 2.34, scripts/actors/personalidade.gd): jeito
+## de ficar parado, correr, pousar do dash e finalizar herói. Um de "pesado",
+## "samurai", "ninja", "atirador", "trapalhao", "curioso", "sereno", "predador".
+## Vazio = neutro (recruta). Só visual, fora o golpe de finalização (que é
+## igual para todos na regra: tempo, alcance e recompensa vêm do GameConfig).
+@export var personalidade := ""
 ## Multiplicador da animação exagerada desta classe (GameConfig.exagero_animacao).
 ## Pesados (Ronin) amassam menos; leves (Kitsune) mais.
 @export var exagero := 1.0

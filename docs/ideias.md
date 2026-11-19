@@ -63,7 +63,7 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
   seguir o personagem enquanto o super dura, para todo mundo ver quem está em super;
   (2) o emblema (hanko) também ao lado das teclas Q/E/R no HUD e no placar do Tab;
   (3) um som curto de abertura por personagem (sino, flauta, pavio, rugido), hoje só
-  alguns têm `som_super`; (4) dash com a peça do personagem (penas, folhas, sal).
+  alguns têm `som_super`. (O 4, dash com a peça do personagem, entrou no 2.34.)
 - **Torreta: "na hora certa" devolve com mais força** (Julio, quiz 2026-11-06): hoje
   qualquer escudo virado devolve o virote (dano baixo na torreta). Ideia: escudo erguido
   na janela do contra-golpe devolve ×3 e dá Chi extra.

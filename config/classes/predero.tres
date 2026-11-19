@@ -18,6 +18,7 @@ escala_cabeca = 0.58
 escala_extremidades = 1.35
 escala_modelo = 1.04
 dash_estilo = "tropeco"
+personalidade = "trapalhao"
 max_hp = 130.0
 move_speed = 6.4
 attack_kind = "ranged"

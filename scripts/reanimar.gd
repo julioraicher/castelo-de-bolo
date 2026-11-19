@@ -70,7 +70,7 @@ func ao_cair(u: Unit) -> void:
 ## Ainda dá para reanimar este corpo?
 func pode_reanimar(corpo: Unit) -> bool:
 	return cfg.reanimar_ligado and corpo != null and not corpo.alive and not corpo.em_voo \
-			and not corpo.desistiu and corpo._respawn_t > 0.0 and _tem_aliado_de_pe(corpo.team)
+			and not corpo.desistiu and not corpo.finalizado and corpo._respawn_t > 0.0 and _tem_aliado_de_pe(corpo.team)
 
 
 func _tem_aliado_de_pe(team: int) -> bool:
@@ -151,7 +151,7 @@ func segura_f(u: Unit) -> bool:
 
 func _pode_canalizar(u: Unit) -> bool:
 	return u.alive and not u.em_voo and u._dodge_t <= 0.0 and u.carried_princess == null \
-			and u.carried_tora == null and not u.is_equipping()
+			and u.carried_tora == null and not u.is_equipping() and u.finalizando == null
 
 
 func tick(delta: float) -> void:
@@ -259,6 +259,8 @@ func _tick_jogador_caido(delta: float) -> void:
 		return
 	if p.alive:
 		_desistir_t = 0.0
+		if p.finalizando:
+			return  # a barra é do Finalizar
 		if p.reanimando:
 			game.hud.reanimar_barra(p.reanimando.reanimar_prog, "REANIMANDO  ·  solte [F] para parar", Color(1.0, 0.8, 0.35))
 		else:
@@ -282,6 +284,11 @@ func _tick_jogador_caido(delta: float) -> void:
 	if _desistir_t > 0.0:
 		# O progresso do desistir aparece por cima de tudo (antes sumia atrás do "te reanimando").
 		game.hud.reanimar_barra(_desistir_t / DESISTIR_T, "DESISTINDO... continue segurando [F]", Color(0.9, 0.45, 0.4))
+	elif p.finalizado:
+		game.hud.reanimar_barra(clampf(p._respawn_t / total, 0.0, 1.0),
+				"FINALIZADO  ·  RENASCENDO NO CASTELO EM %d s" % ceili(p._respawn_t), Color(1.0, 0.42, 0.32))
+	elif p.finalizador:
+		game.hud.reanimar_barra(p.finalizador.finalizar_prog, "%s ESTÁ TE FINALIZANDO!" % _nome(p.finalizador).to_upper(), Color(1.0, 0.35, 0.25))
 	elif p.desistiu or not pode_reanimar(p):
 		game.hud.reanimar_barra(clampf(p._respawn_t / total, 0.0, 1.0),
 				"RENASCENDO NO CASTELO EM %d s" % ceili(p._respawn_t), Color(0.75, 0.72, 0.7))
@@ -313,6 +320,14 @@ func desistir(c: Unit) -> void:
 	if _visuais.has(c):
 		var pos: Vector3 = (_visuais[c].raiz as Node3D).global_position
 		Fx.burst(game, pos + Vector3(0, 1.0, 0), Config.team_color(c.team).lightened(0.3), 8, 2.5)
+	_remover_visual(c)
+
+
+## Herói finalizado (Finalizar.executar): a chama de espírito apaga de vez.
+func finalizado(c: Unit) -> void:
+	if _visuais.has(c):
+		var pos: Vector3 = (_visuais[c].raiz as Node3D).global_position
+		Fx.burst(game, pos + Vector3(0, 1.0, 0), Color(0.3, 0.28, 0.32), 10, 3.0)
 	_remover_visual(c)
 
 

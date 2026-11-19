@@ -18,6 +18,7 @@ escala_cabeca = 0.58
 escala_extremidades = 1.5
 escala_modelo = 1.18
 dash_estilo = "rolar"
+personalidade = "pesado"
 max_hp = 215.0
 move_speed = 5.8
 damage = 18.0

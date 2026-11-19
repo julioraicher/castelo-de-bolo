@@ -75,6 +75,11 @@ var reanimar_prog := 0.0     # caído: 0..1 do anel de reanimação (fica guarda
 var reanimador: Unit = null  # caído: quem está me reanimando agora
 var reanimando: Unit = null  # vivo: o corpo que estou reanimando/arrastando
 var desistiu := false        # caído: segurou [F] e vai renascer no castelo
+## Finalização de herói (Ciclo 2.34, scripts/finalizar.gd).
+var finalizado := false       # caído: herói finalizado, não levanta mais
+var finalizador: Unit = null  # caído: o inimigo que está me finalizando agora
+var finalizando: Unit = null  # vivo: o corpo de herói que estou finalizando
+var finalizar_prog := 0.0     # vivo: 0..1 do [F] segurado no corpo
 var _intocavel_t := 0.0      # acabou de ser reanimado: não leva dano
 
 ## Medidor de Glacê (0 a POWER_MAX). Cheio = poder do Q liberado.
@@ -178,7 +183,11 @@ var pecas_longe := false         # LOD (Game._lod_bonecos): longe as peças some
 var _nivel_pecas := 1            # caudas da Kitsune Luz/Sombria = nível do mago
 var _agito := 0.0                # balanço das peças: 1 no ataque/poder, -1 morto
 var _agito_visto := 0.0
-var _pose_dash: PoseDash         # braços para trás no dash "ninja"
+var _pose_dash: PoseDash         # pose por cima da animação: braços (dash "ninja"), peito e cabeça
+## Personalidade do corpo (Ciclo 2.34, Personalidade.DADOS da classe montada).
+var _pers: Dictionary = {}
+var _pouso_t := -1.0             # s desde o fim do dash (pose do pouso); < 0 = sem pouso
+var _fase_pers := 0.0            # desencontra o balanço de bonecos iguais
 var _fogo_dash_t := 0.0          # rastro de fogo-raposa enquanto a Kitsune está sumida
 var _rolo := 0.0                 # ângulo da cambalhota (dash "rolar"/"rolamento"), 0 = sem rolo
 var _rastro_dash_t := 0.0        # faíscas atrás do Bombardeiro no dash de pólvora
@@ -347,7 +356,12 @@ func _montar_modelo(cls: ClassStats, cor_time: int) -> void:
 			_pecas.visible = not pecas_longe
 	_pose_dash = null
 	_rolo = 0.0
-	if cls.dash_estilo == "ninja":
+	_pers = Personalidade.de(cls)
+	_pouso_t = -1.0
+	_fase_pers = randf() * 10.0  # visual: fase do balanço
+	if _visual:
+		_visual.rotation.z = 0.0
+	if cls.dash_estilo == "ninja" or not _pers.is_empty():
 		var sk := _model.find_child("Skeleton3D", true, false) as Skeleton3D
 		if sk:
 			_pose_dash = PoseDash.new()
@@ -806,7 +820,7 @@ func _physics_process(delta: float) -> void:
 	wants_dodge = false
 
 	if _pose_dash:
-		_pose_dash.peso = move_toward(_pose_dash.peso, 1.0 if _dodge_t > 0.0 else 0.0, delta * 9.0)
+		_pose_dash.peso = move_toward(_pose_dash.peso, 1.0 if _dodge_t > 0.0 and stats.dash_estilo == "ninja" else 0.0, delta * 9.0)
 	if _fogo_dash_t > 0.0:
 		_fogo_dash_t -= delta
 		if stats.dash_estilo in ["brota", "relampago"]:
@@ -827,7 +841,9 @@ func _physics_process(delta: float) -> void:
 			_fim_dash()
 	else:
 		var speed := current_speed()
-		if reanimando:
+		if finalizando:
+			speed = 0.0  # finalizando um herói caído: plantado no corpo
+		elif reanimando:
 			# Kitsune abençoa parada; o resto arrasta o corpo devagar.
 			speed *= 0.0 if eh_mago() else Config.cfg.reanimar_arrasto_vel
 		elif _spin_t > 0.0:
@@ -892,11 +908,12 @@ func _physics_process(delta: float) -> void:
 		if _windup_t <= 0.0:
 			if free_hands:
 				_attack_hit()
-	elif wants_attack and _attack_cd <= 0.0 and free_hands and not _blocking and _charge_t <= 0.0 and reanimando == null:
+	elif wants_attack and _attack_cd <= 0.0 and free_hands and not _blocking and _charge_t <= 0.0 and reanimando == null and finalizando == null:
 		_attack()
 	var t2 := Time.get_ticks_usec() if game._perf else 0
 	_animate(horizontal)
 	_tick_corpo(delta, horizontal)
+	_tick_personalidade(delta, horizontal)
 	_tick_aura()
 	if game._perf:
 		game.perf_secoes["animacao"] = game.perf_secoes.get("animacao", 0) + Time.get_ticks_usec() - t2
@@ -947,6 +964,8 @@ func _start_dodge() -> void:
 		_upper.stop()
 	Sfx.play("dodge", global_position)
 	_windup_t = 0.0  # o dash cancela um golpe que ainda não saiu
+	_pouso_t = -1.0
+	Personalidade.peca_dash(self, true)
 	# Personalidade do dash (ClassStats.dash_estilo): só o visual muda.
 	match stats.dash_estilo:
 		"ninja":
@@ -983,6 +1002,9 @@ func _start_dodge() -> void:
 ## Pouso do dash por personalidade.
 func _fim_dash() -> void:
 	_rastro_dash_t = 0.0
+	if not _pers.is_empty():
+		_pouso_t = 0.0  # a pose do pouso corre em _tick_personalidade
+		Personalidade.pouso(self)
 	if stats.dash_peca:
 		Herois.dash_peca(self, false)
 	match stats.dash_estilo:
@@ -2118,6 +2140,7 @@ func _die(killer: Unit) -> void:
 		_model.position = Vector3.ZERO
 	_morte_t = 0.0 if _exagero() > 0.0 else -1.0
 	_mola(7.0, 0.0)  # "boing": estica antes do pulinho
+	_soltar_pose()
 	_cancel_equip()
 	_cancel_skill()
 	_end_buffs()
@@ -2182,6 +2205,10 @@ func _voltar_a_vida() -> void:
 	reanimar_prog = 0.0
 	reanimador = null
 	desistiu = false
+	finalizado = false
+	finalizador = null
+	finalizando = null
+	finalizar_prog = 0.0
 	velocity = Vector3.ZERO
 	_knock = Vector3.ZERO
 	_move_vel = Vector3.ZERO
@@ -2811,6 +2838,12 @@ func _animate(horizontal: Vector3) -> void:
 	if _anim_lock > 0.0:
 		return
 	var moving := horizontal.length() > 0.8
+	if finalizando:
+		# Segurando [F] no herói caído: a antecipação do golpe da personalidade.
+		_play(Personalidade.anim_canal(self))
+		if _anim:
+			_anim.speed_scale = 1.0
+		return
 	if reanimando:
 		# Reanimando: a Kitsune canaliza a benção; o resto puxa de costas.
 		if eh_mago():
@@ -2983,6 +3016,57 @@ func _tick_corpo(delta: float, horizontal: Vector3, congelado := false) -> void:
 		# Tennin: boia acima do chão com um balanço lento (o corpo de colisão não sobe).
 		off.y += 0.28 + 0.07 * sin(Time.get_ticks_msec() * 0.0025 + get_instance_id() % 7)
 	_visual.position = off
+
+
+## Camada da personalidade (Ciclo 2.34) por cima de _animate/_tick_corpo:
+## peito, cabeça e braços (PoseDash), inclinação e ginga do corpo, respiração,
+## flutuar e a pose do pouso do dash. Só visual; escreve valores absolutos
+## (ou soma ao que _animate/_tick_corpo acabaram de escrever neste quadro).
+func _tick_personalidade(delta: float, horizontal: Vector3) -> void:
+	if _pers.is_empty() or _model == null or _rolo > 0.0:
+		return
+	var spd := horizontal.length()
+	var corre := clampf((spd - 0.8) / 4.0, 0.0, 1.0) if _dodge_t <= 0.0 else 0.0
+	var parado := 1.0 - clampf(spd / 1.5, 0.0, 1.0)
+	if finalizando or reanimando or _anim_lock > 0.0:
+		parado *= 0.3  # a animação da ação manda; a personalidade só tempera
+	var fase := 0.0
+	if _anim and _anim.current_animation_length > 0.0:
+		fase = TAU * _anim.current_animation_position / _anim.current_animation_length
+	var pouso := -1.0
+	if _pouso_t >= 0.0:
+		_pouso_t += delta
+		var dur := float(_pers.get("pouso_t", 0.4))
+		if _pouso_t >= dur:
+			_pouso_t = -1.0
+		else:
+			pouso = _pouso_t / dur
+	var t := Time.get_ticks_msec() * 0.001 + _fase_pers  # relógio visual
+	var p := Personalidade.pose(_pers, corre, parado, t, fase, pouso)
+	_model.rotation.x += float(p.inclina)
+	_visual.rotation.z = float(p.ginga)
+	var r: float = p.respira
+	if r != 0.0:
+		_visual.scale *= Vector3(1.0 - r * 0.5, 1.0 + r, 1.0 - r * 0.5)
+	_visual.position.y += float(p.flutua)
+	if _pose_dash:
+		_pose_dash.coluna = p.coluna
+		_pose_dash.ergue = p.ergue
+		_pose_dash.rola = p.rola
+		_pose_dash.bracos = p.bracos
+
+
+## Morreu ou trocou de corpo: a pose da personalidade volta ao neutro.
+func _soltar_pose() -> void:
+	_pouso_t = -1.0
+	if _visual:
+		_visual.rotation.z = 0.0
+	if _pose_dash:
+		_pose_dash.coluna = 0.0
+		_pose_dash.ergue = 0.0
+		_pose_dash.rola = 0.0
+		_pose_dash.bracos = 0.0
+		_pose_dash.peso = 0.0
 
 
 func _update_flash(delta: float) -> void:

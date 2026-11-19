@@ -23,6 +23,7 @@ estilo_ninja = "_samurai"
 escala_cabeca = 0.58
 escala_extremidades = 1.3
 dash_estilo = "ninja"
+personalidade = "samurai"
 max_hp = 165.0
 move_speed = 6.8
 damage = 24.0

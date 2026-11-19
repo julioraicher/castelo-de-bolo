@@ -4,6 +4,62 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até a Rodada 19 estão em `docs/changelog-antigo.md`.
 
+## Ciclo 2.34 (2026-11-19), Diretor de Jogabilidade: personalidade no corpo + finalização de herói
+Pedido do Julio: dash com personalidade (as Kitsunes e a "corrida ninja") e
+combos/finalizações com câmera lenta ao derrubar herói, tudo junto. O dash por
+estilo e as Kitsunes de 1 a 5 caudas já existiam (2.14/2.15); o problema era o
+dash durar 0,24 s (14 quadros, 4 m a 17 m/s): o olho não lê detalhe nisso. Então a
+personalidade foi para antes e depois dele (antecipação e pouso, as regras da
+animação) e para o tempo em que o boneco está parado ou correndo. O dash em si
+(tempo, distância, recarga) não mudou (princípio 5).
+- **8 personalidades** (`ClassStats.personalidade`, dados em
+  `scripts/actors/personalidade.gd`; pose do peito, cabeça e braços em `PoseDash`):
+  **pesado** (Ronin, Sumotori, Sohei, Shishimai, Kappa: peito pesado, ginga de lado,
+  pousa num pisão), **samurai** (Samurai, Ochimusha: peito estufado, queixo alto,
+  pousa embainhando com tinido), **ninja** (Shuriken, Kusarigama, Mujina, Karasu,
+  Yamabushi: curvado, **corre inclinado com os braços para trás**, pousa agachado),
+  **atirador** (Yumi, Armadilheiro, Komusō: cabeça de lado, pousa ajoelhado),
+  **trapalhão** (Construtor, Bombardeiro, Predero: olha para os lados, corre
+  quicando torto, pousa cambaleando), **curioso** (Kitsune aprendiz, Kaminari-kozō:
+  inclina a cabeça de um lado para o outro, saltita, pousa num pulinho), **sereno**
+  (Kitsune da Luz, Tennin, Onmyoji, Kodama: ereto, boia, pousa sem amassar) e
+  **predador** (Kitsune Sombria, Jorogumo: agachado, cabeça erguida vigiando, pousa
+  rastejando). O pouso segura a pose ~0,4 s **sem travar o controle**.
+- **Peça no dash para todos**: cada personagem solta a peça da sua assinatura
+  (pena, sal, folha, nota, shuriken...) no começo e no fim do dash, só perto da
+  câmera (antes só 6 heróis tinham).
+- **Finalização de herói** (`scripts/finalizar.gd`): herói Nv6 caído pode ser
+  finalizado por um inimigo colado no corpo segurando **[F] por 0,8 s** (reanimar
+  leva 3 s: vira corrida). Finalizado **não pode mais ser reanimado**; quem
+  finaliza ganha 40 de Chi, 30 de super e 150 pontos no placar. O canal não para
+  com dano (igual ao Reanimar) e para se soltar o F, dar dash ou se afastar.
+  O golpe é o da personalidade de quem bate: ESMAGADO (pisão com rachaduras),
+  CORTE IAI (o corte chega 0,24 s depois), PELAS COSTAS, À QUEIMA-ROUPA, BONK
+  (estrelinhas), CUTUCADA (boing), PURIFICADO (coluna de luz) e DEVORADO (três
+  garras). Selo de quem finalizou no chão, tinta do caído espirrando, letreiro
+  com o hanko, câmera lenta, câmera aproxima e faixas de cinema.
+- **Herói caiu**: letreiro ("Herói caiu! Segure [F] nele", "Seu X caiu! Reanime!",
+  "X inimigo caiu! Finalize!"), meio segundo de câmera lenta perto do jogador e
+  marca vermelha "FINALIZE [F]" no corpo, só para o time que pode finalizar.
+- **Online**: sem câmera lenta (mexe na física e separaria a partida); ficam o
+  congelamento do golpe (regra, igual nos dois PCs), a câmera e as faixas.
+- **Bots** vão finalizar herói inimigo caído a até 14 m (sem inimigo colado) e
+  continuam correndo para reanimar o deles.
+- **Modo teste**: herói inimigo de treino ao lado do Samurai de treino, parado e
+  com 25% da vida; derrube, segure [F] e veja o golpe. Ao voltar, vem como outro
+  herói (Sumotori, Tennin, Jorogumo, Karasu). Prancha:
+  `--prancha-finalizar=DIR` (xvfb) tira parado/correndo/golpe das 8 personalidades.
+- **Testes de regra**: finalizar (só herói, longe não começa, soltar F para, nega
+  reanimar, Chi/super/placar, renascer limpa) e toda classe com personalidade
+  válida e animações existentes.
+
+**O que testar**: no modo teste, troque de chapéu e fique parado e corra perto do
+portão (cada família tem postura e passada própria; Ninja corre com os braços para
+trás). Dê dash e repare no pouso. Derrube o herói de treino (do lado do Samurai de
+treino), segure [F] colado nele e veja o golpe de cada personalidade. Numa partida
+normal, quando um herói cair, veja o aviso e a marca vermelha, e tente finalizar
+antes que o time dele reanime.
+
 ## Ciclo 2.33 (2026-11-16), Diretor de Jogabilidade: textos que vazavam dos painéis
 Print de um amigo do Julio: no painel "Nível 6 de Samurai: escolha o herói raro" o
 texto dos cartões passava da borda, o rodapé "Clique num herói... F fecha" ficava
