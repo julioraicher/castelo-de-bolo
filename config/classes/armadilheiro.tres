@@ -17,6 +17,7 @@ estilo_ninja = "_armadilheiro"
 escala_cabeca = 0.58
 escala_extremidades = 1.3
 dash_estilo = "rolamento"
+personalidade = "atirador"
 max_hp = 100.0
 move_speed = 6.4
 damage = 12.0

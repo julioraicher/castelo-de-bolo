@@ -39,6 +39,7 @@ var minimapa: Minimapa
 var placar: Placar
 ## Reanimar aliados caídos (Ciclo 2.18): regra + chama de espírito.
 var reanimar: Reanimar
+var finalizar: Finalizar  # Ciclo 2.34: finalizar herói caído
 var placar_tela: PlacarTela
 var placar_print := false
 ## Tempo de partida mostrado no placar (para no fim; `_time` segue para efeitos).
@@ -146,6 +147,7 @@ var _poderes := false
 var _poderes_t := 2.0
 var _shots_dir := ""
 var pancada: Unit  # modo teste: inimigo de treino (Ciclo 2.26)
+var heroi_treino: Unit  # modo teste: herói inimigo para finalizar (Ciclo 2.34)
 var _mira_print := false
 var _menu_print := ""
 var _clipe_dir := ""  # --clipe=DIR --cena=NOME [--clipe-n=N]: grava um clipe do "Como jogar" (ClipeCenas)
@@ -180,6 +182,7 @@ var _testes := false  # --testes: roda tests/regras.gd e sai
 var _varredura := false  # --varredura-poderes / --varredura-aliados
 var _varredura_script := "res://tests/varredura_poderes.gd"
 var _prancha_rean_dir := ""  # --prancha-reanimar=DIR: fotos da reanimação (prancha)
+var _prancha_fin_dir := ""  # --prancha-finalizar=DIR: personalidades e finalização (Ciclo 2.34)
 var _qa_dir := ""
 var _shot_times: Array[float] = [4.0, 15.0, 30.0, 50.0, 75.0]
 
@@ -280,6 +283,10 @@ func _ready() -> void:
 			_varredura = true
 			_varredura_script = "res://tests/varredura_aliados.gd"
 			arena_pedido = true
+		elif arg.begins_with("--prancha-finalizar="):
+			_prancha_fin_dir = arg.trim_prefix("--prancha-finalizar=")
+			sandbox_pedido = true
+			_autoplay = true
 		elif arg.begins_with("--prancha-reanimar="):
 			_prancha_rean_dir = arg.trim_prefix("--prancha-reanimar=")
 			sandbox_pedido = true
@@ -367,6 +374,7 @@ func _ready() -> void:
 						start_classes.append(h)
 	placar = Placar.new(cfg)
 	reanimar = Reanimar.new(self)
+	finalizar = Finalizar.new(self)
 	for team in 2:
 		humanos_time[team] = Rede.humanos_no_time(team) if online else (1 if team == time_jogador else 0)
 	var bots_no_time := [0, 0]
@@ -512,6 +520,8 @@ func _ready() -> void:
 		_prints_tutorial.call_deferred(menus)
 	if _prancha_rean_dir != "":
 		_prancha_reanimar.call_deferred()
+	if _prancha_fin_dir != "":
+		_prancha_finalizar.call_deferred()
 	if _clipe_dir != "":
 		var cc := ClipeCenas.new()
 		cc.game = self
@@ -711,6 +721,7 @@ func _montar_sandbox() -> void:
 	_montando_sandbox = false
 	_aliado_de_treino()
 	_inimigo_de_treino()
+	_heroi_de_treino()
 	_montar_mostruario()
 
 
@@ -797,6 +808,32 @@ func _inimigo_de_treino() -> void:
 	placar.registrar(u, inimigo, 1, false)
 	units.append(u)
 	pancada = u
+
+
+## Modo teste (Ciclo 2.34): herói inimigo machucado e parado do outro lado do
+## Samurai de treino, para treinar a finalização (BrainHeroiTreino).
+func _heroi_de_treino() -> void:
+	var inimigo := 1 - time_jogador
+	var u := Unit.new()
+	u.name = "%s_heroi_treino" % Config.TEAM_NAMES[inimigo]
+	add_child(u)
+	u.setup(self, inimigo, false, load(BrainHeroiTreino.HEROIS[0]))
+	var fr := arena.forward(time_jogador)
+	var lado := Vector3.UP.cross(fr).normalized()
+	var casa: Vector3 = arena.gate_spot[time_jogador] + fr * 13.0 - lado * 5.0
+	u.global_position = casa
+	u.reset_physics_interpolation()
+	var b := BrainHeroiTreino.new()
+	b.unit = u
+	b.game = self
+	b.casa = casa
+	u.add_child(b)
+	u.brain = b
+	b.vestir()
+	u.died.connect(_on_unit_died)
+	placar.registrar(u, inimigo, 1, false)
+	units.append(u)
+	heroi_treino = u
 
 
 func _on_started() -> void:
@@ -1038,6 +1075,7 @@ func _physics_process(delta: float) -> void:
 		perf_secoes["regras"] = perf_secoes.get("regras", 0) + Time.get_ticks_usec() - t0
 	else:
 		_rules()
+	finalizar.tick(delta)  # antes do Reanimar: o [F] no herói inimigo finaliza
 	reanimar.tick(delta)
 	# O HUD não precisa de 60 atualizações por segundo: 20 Hz bastam ao olho
 	# e cada atualização mexe em vários textos e barras.
@@ -1046,6 +1084,74 @@ func _physics_process(delta: float) -> void:
 		_hud_t = 0.05
 		hud.update_state(self)
 		minimapa.alvo_guia = guia.alvo
+
+
+## --prancha-finalizar=DIR (modo teste, xvfb, Ciclo 2.34): para cada
+## personalidade o jogador (sem cérebro) fica parado ao lado do herói de treino,
+## corre de lado, derruba o herói e segura [F]; cada momento vira um JPG em DIR
+## (N-personalidade-parado/correndo/golpe.jpg).
+const PRANCHA_PERS := [["pesado", "ronin_oni"], ["samurai", "guerreiro"], ["ninja", "arqueiro"], ["atirador", "arqueiro_yumi"],
+		["trapalhao", "construtor"], ["curioso", "kitsune"], ["sereno", "kitsune_luz"], ["predador", "kitsune_sombria"]]
+
+func _prancha_finalizar() -> void:
+	DirAccess.make_dir_recursive_absolute(_prancha_fin_dir)
+	var h := heroi_treino
+	var p := player
+	p.brain = null
+	p.move_intent = Vector3.ZERO
+	p.wants_attack = false
+	p.wants_block = false
+	var off0: Vector3 = Config.cfg.camera_offset
+	Config.cfg.camera_offset = off0 * 0.42
+	var real := func(t: float) -> void:
+		await get_tree().create_timer(t, true, false, true).timeout
+	var foto := func(nome: String) -> void:
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_jpg("%s/%s.jpg" % [_prancha_fin_dir, nome], 0.88)
+	await real.call(2.2)
+	for i in PRANCHA_PERS.size():
+		var par: Array = PRANCHA_PERS[i]
+		var nome := "%d-%s" % [i + 1, par[0]]
+		if not h.alive:
+			h._respawn_t = 0.01
+		var limite := 0
+		while (not h.alive or not h.stats.heroi) and limite < 400:
+			limite += 1
+			await get_tree().physics_frame
+		await get_tree().physics_frame
+		p.set_class(load("res://config/classes/%s.tres" % par[1]))
+		p.global_position = h.global_position + Vector3(-1.5, 0, 0.5)
+		p.reset_physics_interpolation()
+		p.aim_dir = Vector3(1, 0, -0.3).normalized()
+		p.move_intent = Vector3.ZERO
+		camera.snap()
+		await real.call(1.3)
+		await foto.call(nome + "-1-parado")
+		p.move_intent = Vector3(0, 0, 1)
+		await real.call(0.75)
+		await foto.call(nome + "-2-correndo")
+		p.move_intent = Vector3.ZERO
+		p.global_position = h.global_position + Vector3(-1.3, 0, 0.4)
+		p.reset_physics_interpolation()
+		p.aim_dir = Vector3(1, 0, -0.3).normalized()
+		camera.snap()
+		h._intocavel_t = 0.0
+		h._nao_cai_usado = true
+		h.take_damage(h.hp + 999.0, p, Vector3(1, 0, 0))
+		await real.call(1.0)
+		p.wants_reanimar = true
+		limite = 0
+		while not h.finalizado and limite < 300:
+			limite += 1
+			await get_tree().physics_frame
+		await real.call(0.16)
+		await foto.call(nome + "-3-golpe")
+		p.wants_reanimar = false
+		await real.call(1.2)
+	Config.cfg.camera_offset = off0
+	camera.snap()
+	print("PRANCHA FINALIZAR OK")
+	get_tree().quit()
 
 
 ## --prancha-reanimar=DIR (modo teste, xvfb): o jogador sem cérebro reanima o
@@ -1536,6 +1642,9 @@ func _rules() -> void:
 		if caido:
 			hint = "[F] segure para reanimar %s%s" % [caido.stats.display_name,
 					"" if player.eh_mago() else "  ·  ande para arrastar"]
+		var heroi := finalizar.corpo_perto(player, Config.cfg.finalizar_raio)
+		if heroi:
+			hint = "[F] segure para FINALIZAR %s" % heroi.stats.display_name
 	if player.alive and player.carried_princess:
 		hint = "Leve-a até o SEU castelo!  ([F] soltar)"
 	elif player.has_cake:
@@ -2618,6 +2727,8 @@ func _on_unit_died(u: Unit, killer: Unit) -> void:
 	if _equilibrio:
 		print("ABATE %s %s" % [u.stats.id, killer.stats.id if killer else "nada"])
 	reanimar.ao_cair(u)
+	finalizar.ao_cair(u)
+	finalizar.heroi_caiu(u, killer)
 	if killer and killer.team != u.team:
 		_alma_de_abate(u, killer.team)
 	var assist := placar.abate(u, killer if killer and killer.team != u.team else null, _time)

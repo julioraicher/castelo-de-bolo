@@ -18,6 +18,7 @@ escala_cabeca = 0.58
 escala_extremidades = 1.35
 escala_modelo = 0.9
 dash_estilo = "relampago"
+personalidade = "curioso"
 max_hp = 110.0
 move_speed = 7.2
 attack_kind = "ranged"

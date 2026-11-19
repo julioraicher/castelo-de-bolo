@@ -20,6 +20,7 @@ estilo_ninja = "_construtor"
 escala_cabeca = 0.58
 escala_extremidades = 1.3
 dash_estilo = "tropeco"
+personalidade = "trapalhao"
 max_hp = 100.0
 move_speed = 6.6
 damage = 12.0

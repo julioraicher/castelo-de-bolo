@@ -661,6 +661,27 @@ extends Resource
 @export var reanimar_bot_raio := 10.0
 
 
+@export_group("Finalização de herói (Ciclo 2.34)")
+## Herói (Nv6) caído pode ser FINALIZADO: um inimigo vivo colado no corpo
+## segura [F] por finalizar_tempo s; aí ele não pode mais ser reanimado e quem
+## finalizou ganha Chi, super e pontos. Regra em scripts/finalizar.gd.
+@export var finalizar_ligado := true
+@export var finalizar_tempo := 0.8
+## Distância (m) do corpo para começar a finalizar.
+@export var finalizar_raio := 1.7
+## Recompensa de quem finaliza.
+@export var finalizar_chi := 40.0
+@export var finalizar_super := 30.0
+## Câmera lenta (fora do online): escala e duração em tempo real (s) ao derrubar
+## um herói perto do jogador, e ao finalizar.
+@export var heroi_caiu_lento := Vector2(0.4, 0.45)
+@export var finalizar_lento := Vector2(0.22, 0.6)
+## Jogador a até esta distância (m) vê a câmera lenta e o letreiro dos outros.
+@export var finalizar_ver_raio := 18.0
+## Bots vão finalizar um herói inimigo caído a até este raio (m).
+@export var finalizar_bot_raio := 14.0
+
+
 @export_group("Placar (Tab)")
 ## Pontos do placar estilo Battlefield (Tab, e no fim da partida): cada
 ## estatística do boneco vezes o peso daqui. O nome é sempre "pts_" + o campo
@@ -694,6 +715,8 @@ extends Resource
 @export var pts_resgates := 75.0
 ## Aliado caído reanimado (Ciclo 2.18).
 @export var pts_reanimar := 60.0
+## Finalizar um herói inimigo caído (Ciclo 2.34).
+@export var pts_finalizar := 150.0
 
 
 func hat_classes() -> Array[ClassStats]:

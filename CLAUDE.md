@@ -226,6 +226,14 @@ repo: `.claude/skills/`.
   Desenhos em `tools/assinaturas/desenhos.js` (gerar: `node tools/assinaturas/gerar.js`
   + `cinza.py`). Personagem novo ganha desenho + linha em `DADOS`; nunca reutilizar
   o selo de outro. Tabela em docs/direcao-efeitos.md §9 (atlas 7x7 desde o 2.27).
+- Personalidade e finalização (Ciclo 2.34): `ClassStats.personalidade` (8 jeitos:
+  pesado, samurai, ninja, atirador, trapalhao, curioso, sereno, predador; dados em
+  `scripts/actors/personalidade.gd`) muda parado, corrida, pouso do dash (pose
+  ~0,4 s sem travar controle; o dash em si não muda) e o golpe de finalização.
+  Pose de peito/cabeça/braços = `PoseDash` (SkeletonModifier3D). Finalizar herói
+  caído ([F] 0,8 s, nega o Reanimar) = `scripts/finalizar.gd` (roda antes do
+  Reanimar.tick). Personagem novo = escolher a personalidade no .tres.
+  Prancha: `--prancha-finalizar=DIR` (xvfb).
 - Visual: peças por código no esqueleto KayKit (`NinjaVisual`) + shader toon;
   pitaco por prancha (`tools/prancha_personagens.gd`). Ver docs/arte-personagens.md.
 

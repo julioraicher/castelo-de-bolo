@@ -17,6 +17,7 @@ estilo_ninja = "_jorogumo"
 escala_cabeca = 0.58
 escala_extremidades = 1.3
 dash_estilo = "ninja"
+personalidade = "predador"
 max_hp = 105.0
 move_speed = 7.0
 attack_kind = "ranged"

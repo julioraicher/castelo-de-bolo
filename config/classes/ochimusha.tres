@@ -17,6 +17,7 @@ estilo_ninja = "_ochimusha"
 escala_cabeca = 0.58
 escala_extremidades = 1.3
 dash_estilo = "fantasma"
+personalidade = "samurai"
 max_hp = 135.0
 move_speed = 6.6
 damage = 16.0

@@ -54,6 +54,7 @@ var _planta: Planta = null
 var _tatica_t := Sorte.f() * 0.2
 var _bloqueio_t := 0.0  # segurando o bloqueio por mais estes segundos
 var _reanimar_alvo: Unit = null  # aliado caído que este bot foi reanimar
+var _finalizar_alvo: Unit = null  # herói inimigo caído que este bot foi finalizar (Ciclo 2.34)
 
 const TATICA_INTERVALO := 0.2
 
@@ -68,6 +69,7 @@ func tick(delta: float) -> void:
 	_steer(delta)
 	_combat()
 	_reanimar()
+	_finalizar()
 	_tatica(delta)
 	_check_stuck(delta)
 
@@ -80,7 +82,7 @@ func _tatica(delta: float) -> void:
 		unit.wants_block = true
 		unit.wants_attack = false
 	_tatica_t -= delta
-	if _tatica_t > 0.0 or not unit.alive or unit.reanimando:
+	if _tatica_t > 0.0 or not unit.alive or unit.reanimando or unit.finalizando:
 		return
 	_tatica_t = TATICA_INTERVALO * (Settings.bot_reaction_mult() if not game.time_tem_humano(unit.team) else 1.0)
 	var me := unit.global_position
@@ -200,6 +202,7 @@ func _think() -> void:
 	_target = null
 	_torreta = null
 	_reanimar_alvo = null
+	_finalizar_alvo = null
 	if _unstuck_t > 0.0:
 		_goal = _unstuck_goal
 		return
@@ -258,6 +261,15 @@ func _think() -> void:
 	if item and _nearest_enemy(5.0) == null and (item.kind != "pocao" or unit.hp_ratio() < 0.8):
 		_goal = item.global_position
 		return
+
+	# Herói inimigo caído por perto (Ciclo 2.34): finalizar antes que o time
+	# dele o reanime vale mais que reanimar e que a briga do lado.
+	if game.finalizar and _nearest_enemy(4.0) == null:
+		var heroi: Unit = game.finalizar.corpo_para_bot(unit)
+		if heroi:
+			_finalizar_alvo = heroi
+			_goal = heroi.global_position
+			return
 
 	# Aliado caído por perto: reanimar vale mais que a briga do lado (sem
 	# inimigo colado em quem vai; o canal não para com dano, então é aposta).
@@ -353,6 +365,21 @@ func _think() -> void:
 ## Kitsunes (e as variações): ficam atrás dos guerreiros.
 func eh_mago() -> bool:
 	return unit.eh_mago()
+
+
+## Finalizando (Ciclo 2.34): colado no herói caído, segura [F] parado. Roda
+## depois do _reanimar (que zera o wants_reanimar a cada quadro).
+func _finalizar() -> void:
+	if _finalizar_alvo == null or not is_instance_valid(_finalizar_alvo) or not game.finalizar.pode_finalizar(_finalizar_alvo):
+		_finalizar_alvo = null
+		return
+	var c := _finalizar_alvo
+	if unit.finalizando != c and unit.global_position.distance_to(c.global_position) > Config.cfg.finalizar_raio - 0.2:
+		return  # ainda chegando (o _steer leva até o _goal)
+	unit.wants_reanimar = true
+	unit.wants_attack = false
+	unit.wants_block = false
+	unit.move_intent = Vector3.ZERO
 
 
 ## Reanimando: colado no corpo segura [F]; quem não é mago puxa o corpo para

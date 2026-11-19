@@ -221,6 +221,47 @@ func golpe_forte(k: float, dir := Vector3.ZERO) -> void:
 	tw.parallel().tween_property(_golpe, "position", Vector2.ZERO, 0.35)
 
 
+## Faixas de cinema (finalização, Ciclo 2.34): duas tarjas pretas entram por
+## cima e por baixo, seguram `dur` s de tempo real e saem. Fora disso ficam
+## escondidas (não contam para a auditoria da interface).
+var _faixas: Array[ColorRect] = []
+var _faixas_tw: Tween
+
+func cinema(dur: float) -> void:
+	if _faixas.is_empty():
+		for lado in 2:
+			var f := ColorRect.new()
+			f.color = Color(0.02, 0.01, 0.04, 0.92)
+			f.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			f.set_anchors_preset(Control.PRESET_TOP_WIDE if lado == 0 else Control.PRESET_BOTTOM_WIDE)
+			f.visible = false
+			add_child(f)
+			_faixas.append(f)
+	var h := get_viewport().get_visible_rect().size.y * 0.075
+	if _faixas_tw:
+		_faixas_tw.kill()
+	for f in _faixas:
+		f.visible = true
+		f.custom_minimum_size.y = 0.0
+		f.size.y = 0.0
+	_faixas[1].position.y = get_viewport().get_visible_rect().size.y
+	_faixas_tw = create_tween().set_ignore_time_scale(true).set_parallel()
+	_faixas_tw.tween_method(_altura_faixas, 0.0, h, 0.14).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	_faixas_tw.chain().tween_interval(maxf(dur - 0.4, 0.1))
+	_faixas_tw.chain().tween_method(_altura_faixas, h, 0.0, 0.26).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
+	_faixas_tw.chain().tween_callback(func() -> void:
+		for f in _faixas:
+			f.visible = false)
+
+
+func _altura_faixas(h: float) -> void:
+	var alto := get_viewport().get_visible_rect().size.y
+	_faixas[0].position = Vector2(0, 0)
+	_faixas[0].size = Vector2(get_viewport().get_visible_rect().size.x, h)
+	_faixas[1].position = Vector2(0, alto - h)
+	_faixas[1].size = Vector2(get_viewport().get_visible_rect().size.x, h)
+
+
 ## Clarão rápido na tela (cor com alfa inicial), some em dur segundos.
 func flash(color: Color, dur := 0.25) -> void:
 	_flash.color = color

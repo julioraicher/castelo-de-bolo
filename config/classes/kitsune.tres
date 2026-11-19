@@ -24,6 +24,7 @@ escala_cabeca = 0.58
 escala_extremidades = 1.3
 escala_modelo = 0.96
 dash_estilo = "chama"
+personalidade = "curioso"
 max_hp = 80.0
 move_speed = 6.6
 attack_kind = "healer"

@@ -16,6 +16,11 @@ const KICK_ZETA := 0.45
 var _kick_x := Vector3.ZERO
 var _kick_v := Vector3.ZERO
 var _fov_punch := 0.0
+# Foco de cinema (finalização, Ciclo 2.34): puxa o foco e fecha o zoom.
+var _cine_t := 0.0
+var _cine_dur := 0.0
+var _cine_pos := Vector3.ZERO
+var _cine_zoom := 0.0
 
 
 func _ready() -> void:
@@ -57,6 +62,17 @@ func punch_fov(deg: float) -> void:
 	_fov_punch = maxf(_fov_punch, deg)
 
 
+## Foco de cinema: por `dur` s de tempo real a câmera puxa o foco para `pos`
+## (60% do caminho) e fecha `zoom` graus, entrando e saindo suave.
+func cinema(pos: Vector3, zoom: float, dur: float) -> void:
+	if not Settings.camera_shake:
+		return  # quem desliga o tremor também não quer a câmera puxando sozinha
+	_cine_pos = pos
+	_cine_zoom = zoom
+	_cine_dur = maxf(dur, 0.1)
+	_cine_t = _cine_dur
+
+
 ## Tremor de algo que aconteceu em pos (explosão, poder de bot): cai com a
 ## distância como 1/(1 + (d/8)²), parecido com a intensidade de uma onda.
 func shake_at(pos: Vector3, amount: float) -> void:
@@ -83,13 +99,20 @@ func _process(delta: float) -> void:
 		_kick_x += _kick_v * h
 	_kick_x = _kick_x.limit_length(1.5)
 	_fov_punch = move_toward(_fov_punch, 0.0, delta * 30.0)
-	fov = Config.cfg.camera_fov - _fov_punch
+	var cine := 0.0
+	if _cine_t > 0.0:
+		_cine_t = maxf(_cine_t - delta, 0.0)
+		var k := 1.0 - _cine_t / _cine_dur
+		cine = smoothstep(0.0, 0.15, k) * (1.0 - smoothstep(0.7, 1.0, k))
+	fov = Config.cfg.camera_fov - _fov_punch - _cine_zoom * cine
 	var cfg := Config.cfg
 	# Adianta um pouco o foco na direção do mouse para ver mais à frente.
 	var target_pos := target.get_global_transform_interpolated().origin
 	var lead := (mouse_ground_point() - target_pos)
 	lead.y = 0
 	var desired := target_pos + lead.limit_length(12.0) / 12.0 * cfg.camera_lead
+	if cine > 0.0:
+		desired = desired.lerp(_cine_pos, cine * 0.6)
 	# Suavização independente de FPS: 1 - e^(-k·dt).
 	_focus = _focus.lerp(desired, 1.0 - exp(-cfg.camera_smooth * delta))
 	var shake := _trauma * _trauma
