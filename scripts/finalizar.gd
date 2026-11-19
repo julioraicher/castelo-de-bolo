@@ -167,9 +167,8 @@ func _espetaculo(u: Unit, c: Unit) -> void:
 	game.camera.add_trauma(0.45 if envolvido else 0.2)
 	game.hud.cinema(lento.y + 0.5)
 	if u == p:
-		game.hud.show_big("Finalizou %s!" % c.stats.display_name, Assinatura.cor(u).lightened(0.3), 1.4)
+		game.hud.show_big("Finalizou %s!  +%d" % [c.stats.display_name, int(cfg.pts_finalizar)], Assinatura.cor(u).lightened(0.3), 1.4)
 		game.hud.flash(Color(Assinatura.cor_flash(u), 0.3), 0.35)
-		Fx.damage_number(game, u.global_position + Vector3(0, 0.6, 0), "+%d" % int(cfg.pts_finalizar), Estilo.OURO_CLARO)
 	elif c == p:
 		game.hud.show_big("Finalizado por %s" % _nome(u), Color(1.0, 0.45, 0.35), 1.6)
 		game.hud.flash(Color(0.6, 0.05, 0.05, 0.35), 0.4)

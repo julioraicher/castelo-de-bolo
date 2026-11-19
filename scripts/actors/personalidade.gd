@@ -302,7 +302,7 @@ static func golpe(u: Unit, c: Unit) -> void:
 			Sfx.play("magia_estouro", corpo, 0.04, 1.4, -4.0)
 		"sereno":
 			Magia.anel_sobe(g, corpo, pal, 1.4, 2.6, 1.2)
-			Fx.pillar(g, corpo, pal[1], 0.9)
+			Magia.anel_sobe(g, corpo, pal, 0.8, 1.8, 0.9, 0.12)
 			var d := Assinatura.de(u)
 			Assinatura.pecas(g, peito, String(d.get("peca", "petala")), d.get("peca_cor", pal[1]), 12, {"mov": "sobe"})
 			Sfx.play("magia_luz", corpo, 0.04)
@@ -328,9 +328,9 @@ static func _letreiro(u: Unit, c: Unit) -> void:
 	var l := Label3D.new()
 	l.text = verbo(u) + "!"
 	l.font = Estilo.TITULO
-	l.font_size = 92 if perto else 54
+	l.font_size = 58 if perto else 40  # menor que o nome do poder: o golpe é que tem de aparecer
 	l.pixel_size = 0.011
-	l.outline_size = 22 if perto else 15
+	l.outline_size = 16 if perto else 12
 	l.outline_modulate = Estilo.TINTA
 	l.modulate = Assinatura.cor(u).lightened(0.15)
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -338,7 +338,7 @@ static func _letreiro(u: Unit, c: Unit) -> void:
 	l.render_priority = 3
 	l.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
 	g.add_child(l)
-	l.global_position = c.global_position + Vector3(0, 2.6, 0)
+	l.global_position = c.global_position + Vector3(0, 3.0, 0)
 	l.scale = Vector3.ONE * 0.35
 	Assinatura.hanko(l, u)
 	var tw := l.create_tween()
