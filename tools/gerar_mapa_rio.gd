@@ -1,7 +1,7 @@
 extends "res://tools/gerar_cenario_ninja.gd"
 ## Gera o mapa "Rio das Lanternas" (rio com 3 pontes + vila neon dos dois
 ## lados + colinas + castelos com muralha de passarela) e os modelos dele, nos
-## dois temas. Rode depois de tools/gerar_cenario_ninja.gd:
+## quatro temas. Rode depois de tools/gerar_cenario_ninja.gd (ordem: tools/gerar_tudo.sh):
 ##   godot --headless --path . -s tools/gerar_mapa_rio.gd
 ## Tudo aqui é dado: posições em metros (x liga os castelos, z é a profundidade).
 

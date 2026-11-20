@@ -31,8 +31,20 @@ var tutorial_visto := false  # "Como jogar" abre sozinho só na 1ª partida
 var nome_online := ""         # apelido na sala com amigos (Ciclo 2.28)
 var alta_ajuste := 0         # índice em ALTA_AJUSTES (zera ao escolher qualidade no menu)
 
+## Salva um instante depois da última mudança (caça 2026-11-19, UI-05): antes só
+## salvava ao fechar o menu, então mexer nas Configurações, jogar e fechar a aba
+## ou o X da janela perdia volume, qualidade e dificuldade. A espera junta os
+## vários apply() de um slider arrastado numa gravação só.
+var _salvar_t: Timer
+
 
 func _ready() -> void:
+	_salvar_t = Timer.new()
+	_salvar_t.one_shot = true
+	_salvar_t.wait_time = 0.4
+	_salvar_t.process_mode = Node.PROCESS_MODE_ALWAYS  # salva também com o jogo pausado
+	_salvar_t.timeout.connect(save)
+	add_child(_salvar_t)
 	# Os canais vêm de res://default_bus_layout.tres (carregado antes de tudo,
 	# inclusive no navegador). Criar aqui é só um plano B.
 	_ensure_bus("Musica")
@@ -42,6 +54,12 @@ func _ready() -> void:
 		fullscreen = false  # o navegador só deixa entrar em tela cheia com um clique/tecla
 		_web_setup_escape_lock()
 	apply()
+	_salvar_t.stop()  # acabou de carregar: nada novo para gravar
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and _salvar_t and not _salvar_t.is_stopped():
+		save()
 
 
 ## Liga/desliga a tela cheia (tecla F, F11 ou o menu).
@@ -96,9 +114,13 @@ func apply() -> void:
 		if DisplayServer.window_get_mode() != want:
 			DisplayServer.window_set_mode(want)
 	changed.emit()
+	if _salvar_t:
+		_salvar_t.start()
 
 
 func save() -> void:
+	if _salvar_t:
+		_salvar_t.stop()
 	var f := ConfigFile.new()
 	for key in KEYS:
 		f.set_value("jogo", key, get(key))

@@ -4,22 +4,17 @@ extends "res://tools/gerar_cenario_ninja.gd"
 ##   tora                             tora para carregar (centro na origem, eixo x)
 ##   maquina_chapeu                   maquininha: Prensa, Gira_engrenagem, Molde, Brilho,
 ##                                    Vapor, Enfeite, Estoque_1..4 e a animação "fabricar"
-##   maquina_<classe>                 maquininha própria da classe (mesmos nós; ver MAQUINAS) + nível 2:
-##                                    nós N2_* (escondidos) e a animação "subir_nivel"
+##   (maquina_<classe> das 4 classes do pátio é do tools/gerar_casas.gd desde o 2.21:
+##    a barraquinha usa _maquina_classe() daqui. Antes este script também gravava
+##    maquina_<classe> e, rodado depois das casas, voltava a máquina antiga: TL-02.)
 ##   emblema_<classe>                 enfeite da frente da máquina (nome do .tres da classe; armadilheiro e
 ##                                    bombardeiro = ramos do Construtor no Ciclo 2.4)
-## Rode depois de tools/gerar_cenario_ninja.gd:
+## Ordem certa de todos os geradores: tools/gerar_tudo.sh (este vem depois do
+## cenário e ANTES das casas):
 ##   godot --headless --path . -s tools/gerar_economia.gd
 ## Tudo de frente para +z (a câmera do jogo olha de +z).
 
 const FABRICAR := 2.0  # duração da animação "fabricar" (s)
-## Maquininha própria de cada classe (nome do .tres): maquina_<classe>.scn, com os
-## mesmos nós e a mesma animação da maquina_chapeu (que fica de reserva).
-## Só as classes com maquininha no pátio (GameConfig.hat_class_list): o jogo
-## nunca carrega as outras. Os desenhos de ronin_oni, arqueiro_yumi e das
-## kitsunes luz/sombria continuam em _maquina_classe(): ponha o nome aqui se
-## uma delas ganhar maquininha.
-const MAQUINAS := ["guerreiro", "arqueiro", "kitsune", "construtor"]
 
 var _cor_brilho := Color(-1, 0, 0)  # brilho do molde da próxima máquina (-1 = luz1 do tema)
 var _cor_vapor := Color(-1, 0, 0)
@@ -46,8 +41,6 @@ func _init() -> void:
 		_tora(Vector3.ZERO, 0.0); _salvar("tora")
 		_deposito(); _salvar("deposito_madeira"); _completar("deposito_madeira", false)
 		_maquina(); _salvar("maquina_chapeu"); _completar("maquina_chapeu", true)
-		for c in MAQUINAS:
-			_maquina_classe(c); _salvar("maquina_" + c); _completar("maquina_" + c, true)
 		for c in ["guerreiro", "arqueiro", "construtor", "kitsune", "ronin_oni", "arqueiro_yumi", "armadilheiro", "bombardeiro", "kitsune_luz", "kitsune_sombria"]:
 			_emblema(c); _salvar("emblema_" + c)
 	_ligar_temas()

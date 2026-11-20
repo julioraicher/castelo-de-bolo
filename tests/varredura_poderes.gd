@@ -32,6 +32,7 @@ var _suspeitos: Array[String] = []
 
 
 func _ready() -> void:
+	var erros = load("res://tests/contador_erros.gd").instalar()  # erro de script também reprova
 	await get_tree().create_timer(0.6).timeout
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--varredura-perto="):
@@ -48,6 +49,8 @@ func _ready() -> void:
 			continue
 		for poder in ["Q", "E", "R"]:
 			await _testar(p, cls, poder)
+	if erros.relatar("VARREDURA") > 0:
+		_suspeitos.append("erro de script/motor durante a varredura (veja acima)")
 	print("VARREDURA FIM: %d suspeitos" % _suspeitos.size())
 	for s in _suspeitos:
 		print("SUSPEITO ", s)

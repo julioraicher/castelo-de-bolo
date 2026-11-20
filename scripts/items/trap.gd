@@ -14,6 +14,12 @@ const RADIUS := 1.4
 const LIFETIME := 40.0
 
 var owner_unit: Unit
+## Time e números guardados na hora de pôr (caça 2026-11-19, IT-01): na Arena de
+## chapéus o dono pode ser liberado (queue_free) com estrepes ainda no chão.
+var _time := 0
+var _dano := 0.0
+var _lento := 1.0
+var _lento_t := 0.0
 var _game: Game
 var _life := LIFETIME
 var _mina := false
@@ -25,6 +31,10 @@ var _blink_t := 0.0
 func setup(game: Game, p_owner: Unit, pos: Vector3) -> void:
 	_game = game
 	owner_unit = p_owner
+	_time = p_owner.team
+	_dano = p_owner.stats.trap_damage
+	_lento = p_owner.stats.trap_slow
+	_lento_t = p_owner.stats.trap_slow_time
 	add_to_group("traps")
 	global_position = pos
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # parada; só aparece com tween
@@ -69,24 +79,28 @@ func _physics_process(delta: float) -> void:
 		sumir()
 		return
 	for u in _game.units:
-		if not u.alive or u.team == owner_unit.team:
+		if not u.alive or u.team == _time:
 			continue
 		var d := u.global_position - global_position
 		if absf(d.y) > 1.5:
 			continue
 		d.y = 0
 		if d.length() <= RADIUS:
-			var s := owner_unit.stats
 			if _mina:
 				_explode()
 				queue_free()
 				return
 			var dir := d.normalized() if d.length() > 0.1 else Vector3.FORWARD
-			u.take_damage(s.trap_damage, owner_unit, dir, 0.3)
-			u.apply_slow(s.trap_slow, s.trap_slow_time)
+			u.take_damage(_dano, dono(), dir, 0.3)
+			u.apply_slow(_lento, _lento_t)
 			FxItens.estrepes_fisga(_game, global_position, dir)
 			queue_free()
 			return
+
+
+## Dono vivo no jogo, ou null se ele já foi liberado (o dano segue sem autor).
+func dono() -> Unit:
+	return owner_unit if is_instance_valid(owner_unit) else null
 
 
 ## Some sem disparar (venceu o tempo ou foi trocada pela nova): a regra tira
@@ -109,16 +123,16 @@ func _explode() -> void:
 	FxProjetil.explosao(_game, global_position, r)
 	FxProjetil.anel_chao(_game, global_position, Color(1.0, 0.55, 0.15, 0.8), r)
 	FxItens.mina_estoura(_game, global_position)
-	Reacoes.em(_game, global_position, r, "bomba", owner_unit.team)
+	Reacoes.em(_game, global_position, r, "bomba", _time)
 	Sfx.play("explosao", global_position, 0.1, 1.1)
 	_game.camera.shake_at(global_position, 0.5)
 	for u in _game.units:
-		if not u.alive or u.team == owner_unit.team:
+		if not u.alive or u.team == _time:
 			continue
 		var d := u.global_position - global_position
 		if absf(d.y) > 1.5:
 			continue
 		d.y = 0
 		if d.length() <= r:
-			u.take_damage(owner_unit.stats.trap_damage, owner_unit, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 1.5)
+			u.take_damage(_dano, dono(), d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 1.5)
 			u.launch(6.0)

@@ -97,7 +97,7 @@ extends Resource
 ## varrida = giro da naginata que acerta só a faixa entre alcance_min e skill_radius
 ## e dá escudo aos aliados perto (Sohei); gancho = corrente que PUXA o primeiro
 ## inimigo na linha até skill_radius m (Kusarigama).
-@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho", "agarrao", "rasteira", "rajada", "mergulho", "roubar_rosto", "dobrar", "laco", "sono", "flecha_arrancada", "mordida", "teia", "raizes", "para_raios") var skill := "nenhum"
+@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho", "agarrao", "rasteira", "rajada", "mergulho", "roubar_rosto", "dobrar", "laco", "sono", "flecha_arrancada", "mordida", "teia", "raizes", "para_raios", "poca") var skill := "nenhum"
 ## Nome mostrado no HUD ao lado da tecla Q.
 @export var skill_name := ""
 ## Recarga do Q em s (cura usa heal_cooldown e armadilha usa trap_cooldown).
@@ -177,7 +177,7 @@ extends Resource
 ## muralha = Muralha de Fé do Sohei (aliados em volta ganham escudo e pressa,
 ## inimigos na borda são empurrados para fora); ciranda = a Kusarigama gira a
 ## corrente em volta (pulsos que acertam só a ponta e arremessam).
-@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "furia", "leque", "selo", "coluna_fogo", "mutirao", "campo_minado", "bombardeio", "muralha", "ciranda", "pisao_grande", "jato", "redemoinho_longe", "revoada", "susto", "grou", "danca", "hipnose", "onibi", "arrastao", "puxar_fios", "bosque", "relampago") var power := "nenhum"
+@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "furia", "leque", "selo", "coluna_fogo", "mutirao", "campo_minado", "bombardeio", "muralha", "ciranda", "pisao_grande", "jato", "redemoinho_longe", "revoada", "susto", "grou", "danca", "hipnose", "onibi", "arrastao", "puxar_fios", "bosque", "relampago", "andaime") var power := "nenhum"
 @export var power_name := ""
 ## Raio de efeito (m).
 @export var power_radius := 3.0

@@ -41,6 +41,7 @@ var _falhas: Array[String] = []
 
 
 func _ready() -> void:
+	var erros = load("res://tests/contador_erros.gd").instalar()  # erro de script também reprova
 	await get_tree().create_timer(0.6).timeout
 	var p = game.player
 	if p.brain:
@@ -57,6 +58,8 @@ func _ready() -> void:
 			await _testar(p, cls, poder, ESPERADO.get(nome, []), true)
 			if SEM_CAIDO.has(nome):
 				await _testar(p, cls, poder, SEM_CAIDO[nome], false)
+	if erros.relatar("ALIADOS") > 0:
+		_falhas.append("erro de script/motor durante a varredura (veja acima)")
 	print("ALIADOS FIM: %d falhas" % _falhas.size())
 	for f in _falhas:
 		print("FALHA ", f)
