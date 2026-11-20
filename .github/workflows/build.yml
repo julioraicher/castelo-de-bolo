@@ -46,13 +46,6 @@ jobs:
         with:
           persist-credentials: false
 
-      # TEMPORÁRIO (sai antes do merge): a preparação do job baixa toda Action citada,
-      # mesmo com if: false. Confere no branch o SHA da que só roda na main.
-      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa  # v3
-        if: ${{ false }}
-        with:
-          path: build/web
-
       - name: Godot (conferido) e import
         run: bash tools/ci_preparar_godot.sh
 
