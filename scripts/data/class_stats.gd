@@ -33,8 +33,10 @@ extends Resource
 @export var escala_modelo := 1.0
 ## Jeito do dash (só o visual; distância, tempo e recarga são os mesmos para
 ## todos): "" cambalhota padrão, "rolar" cambalhota pesada (pó e tremor no
-## pouso), "ninja" corrida inclinada com os braços para trás, "chama" o corpo
-## some num lampejo de fogo-raposa e reaparece no fim.
+## pouso), "rolamento", "ninja" corrida inclinada com os braços para trás,
+## "chama" o corpo some num lampejo de fogo-raposa e reaparece no fim,
+## "fantasma", "brota", "relampago", "polvora", "tropeco" (Unit._start_dodge e
+## _fim_dash; cada estilo novo entra nos dois).
 @export var dash_estilo := ""
 ## Personalidade do corpo (Ciclo 2.34, scripts/actors/personalidade.gd): jeito
 ## de ficar parado, correr, pousar do dash e finalizar herói. Um de "pesado",
@@ -161,10 +163,10 @@ extends Resource
 ## O corpo flutua um pouco acima do chão, balançando (só visual).
 @export var flutua := false
 ## Heróis 2.27. Não cai de primeira (Ochimusha): o golpe que mataria deixa 1 de
-## vida e vira fantasma por GameConfig.fantasma_tempo s; abate nesse tempo volta.
+## vida e vira fantasma por HeroisConfig.fantasma_tempo s; abate nesse tempo volta.
 @export var nao_cai := false
 ## Golpe final do combo deixa um risco no chão que corta de novo (fração do dano)
-## GameConfig.eco_atraso s depois, no mesmo lugar (Ochimusha). 0 = sem eco.
+## HeroisConfig.eco_atraso s depois, no mesmo lugar (Ochimusha). 0 = sem eco.
 @export_range(0.0, 2.0) var eco_corte := 0.0
 ## Q com cargas (flechas nas costas do Ochimusha): cada uma volta em
 ## skill_cooldown s. 0 = Q comum de recarga única.
@@ -176,7 +178,7 @@ extends Resource
 @export var carga_estatica := false
 
 @export_group("Poder de Chi (E)")
-## Poder especial, liberado quando o medidor de Glacê enche.
+## Poder do E (Chi), liberado quando o medidor de Chi enche.
 ## muralha = Muralha de Fé do Sohei (aliados em volta ganham escudo e pressa,
 ## inimigos na borda são empurrados para fora); ciranda = a Kusarigama gira a
 ## corrente em volta (pulsos que acertam só a ponta e arremessam).
@@ -197,7 +199,9 @@ extends Resource
 ## maior = o poder E em versão gigante (raio, dano e duração maiores);
 ## sombra = invisível por pouco tempo, mais rápido, golpe de surpresa.
 @export_enum("maior", "sombra", "proprio") var super_tipo := "maior"
-## super_tipo "proprio" (heróis raros): qual R sai (lista em Herois.super_proprio).
+## super_tipo "proprio" (heróis raros): qual R sai. Hoje: dohyo, mergulho3,
+## carga_caidos, festa_vila, mil_grous, casulo, requiem, veu, tambores, floresta,
+## saideira (despacho em Herois.super_proprio; a IA em BotHerois.super_r).
 @export var super_poder := ""
 ## Nome no HUD. Vazio = "Super " + power_name.
 @export var super_nome := ""

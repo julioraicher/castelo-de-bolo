@@ -24,7 +24,7 @@ static func tick(u: Unit, delta: float) -> void:
 		# Triboelétrico: correr esfrega o ar e acumula carga (mais rápido, mais carga).
 		var v := Vector2(u.velocity.x, u.velocity.z).length()
 		if v > 2.0:
-			somar_carga(u, Config.cfg.carga_correr * delta * minf(v / 6.0, 1.3))
+			somar_carga(u, Config.cfg.herois.carga_correr * delta * minf(v / 6.0, 1.3))
 	if u._tambores_t > 0.0:
 		_tick_tambores(u, delta)
 	if u._floresta_t > 0.0:
@@ -46,19 +46,19 @@ static func apanhar(u: Unit, amount: float, attacker: Unit, elemento: String, ni
 	if elemento == "agua":
 		if u._molhado_t <= 0.0:
 			FxNatureza.molhado(u)
-		u._molhado_t = cfg.molhado_tempo
+		u._molhado_t = cfg.herois.molhado_tempo
 	if elemento == "semente" and nivel >= 2 and attacker != null:
-		u.prender(cfg.broto_preso)
+		u.prender(cfg.herois.broto_preso)
 		FxNatureza.broto(u)
 	if elemento in RAIO and u._molhado_t > 0.0:
-		amount *= cfg.molhado_dano
+		amount *= cfg.herois.molhado_dano
 		FxNatureza.conduziu(u)
 	if attacker != null and attacker != u and attacker.team != u.team and attacker.stats.carga_estatica \
 			and attacker.carga >= 1.0 and not elemento in SEM_DESCARGA and amount > 0.0:
 		attacker.carga = 0.0
 		_marca_carga(attacker)
-		amount += cfg.descarga_dano * attacker.damage_mult() * (cfg.molhado_dano if u._molhado_t > 0.0 else 1.0)
-		u.prender(cfg.descarga_preso)
+		amount += cfg.herois.descarga_dano * attacker.damage_mult() * (cfg.herois.molhado_dano if u._molhado_t > 0.0 else 1.0)
+		u.prender(cfg.herois.descarga_preso)
 		FxNatureza.descarga(attacker, u)
 		_cadeia(attacker, u)
 	return amount
@@ -96,9 +96,9 @@ static func _cadeia(k: Unit, primeiro: Unit) -> void:
 	var cfg := Config.cfg
 	var atingidos: Array[Unit] = [primeiro]
 	var de := primeiro
-	var dano := cfg.descarga_dano * k.damage_mult() * 0.8
-	for i in cfg.descarga_n:
-		var alcance := cfg.descarga_raio * (cfg.molhado_alcance if de._molhado_t > 0.0 else 1.0)
+	var dano := cfg.herois.descarga_dano * k.damage_mult() * 0.8
+	for i in cfg.herois.descarga_n:
+		var alcance := cfg.herois.descarga_raio * (cfg.herois.molhado_alcance if de._molhado_t > 0.0 else 1.0)
 		var prox: Unit = null
 		var melhor := alcance
 		for o in Herois._inimigos(k, de.global_position, alcance):
@@ -120,12 +120,12 @@ static func _cadeia(k: Unit, primeiro: Unit) -> void:
 		dir.y = 0
 		prox.take_damage(dano, k, dir.normalized() if dir.length() > 0.1 else Vector3.FORWARD, 0.3, false, "descarga", 3)
 		if prox.alive:
-			prox.prender(cfg.descarga_preso)
+			prox.prender(cfg.herois.descarga_preso)
 		atingidos.append(prox)
 		de = prox
 	for n in k.get_tree().get_nodes_in_group("para_raios"):
 		var pr := n as ParaRaios
-		if pr and pr.dono == k and not pr.indo and pr.global_position.distance_to(k.global_position) <= cfg.pararaios_puxa:
+		if pr and pr.dono == k and not pr.indo and pr.global_position.distance_to(k.global_position) <= cfg.herois.pararaios_puxa:
 			pr.descarregar(dano)
 
 
@@ -133,7 +133,7 @@ static func _cadeia(k: Unit, primeiro: Unit) -> void:
 ## `k` cai nela). null se não houver.
 static func arvore_para_raios(k: Unit, pos: Vector3) -> ArvoreKodama:
 	var melhor: ArvoreKodama = null
-	var dist := Config.cfg.arvore_pararaios
+	var dist := Config.cfg.herois.arvore_pararaios
 	for n in k.get_tree().get_nodes_in_group("arvores_kodama"):
 		var a := n as ArvoreKodama
 		if a == null or a.indo or a.time == k.team:
@@ -160,7 +160,7 @@ static func para_raios(u: Unit) -> bool:
 		if pr and pr.dono == u and not pr.indo:
 			meus.append(pr)
 	meus.sort_custom(func(a: ParaRaios, b: ParaRaios) -> bool: return a.nasceu < b.nasceu)
-	while meus.size() >= cfg.pararaios_max:
+	while meus.size() >= cfg.herois.pararaios_max:
 		(meus.pop_front() as ParaRaios).sumir()
 	var pr := ParaRaios.new()
 	u.game.add_child(pr)
@@ -176,7 +176,7 @@ static func relampago(u: Unit) -> void:
 	var cfg := Config.cfg
 	var dir := Herois._dir_mira(u)
 	var de := u.global_position
-	var ate := Herois.chao_valido(u, Herois.sem_parede(u, de, de + dir * cfg.relampago_dist), true)
+	var ate := Herois.chao_valido(u, Herois.sem_parede(u, de, de + dir * cfg.herois.relampago_dist), true)
 	if Vector2(ate.x - de.x, ate.z - de.z).length() < 1.0:
 		ate = de
 	FxNatureza.relampago(u, de, ate)
@@ -190,23 +190,23 @@ static func relampago(u: Unit) -> void:
 	var seg := ate - de
 	seg.y = 0
 	var dano := u.stats.power_value * cfg.dano_poder_mult * u.damage_mult()
-	for o in Herois._inimigos(u, de + seg * 0.5, seg.length() * 0.5 + cfg.relampago_larg + 0.5):
+	for o in Herois._inimigos(u, de + seg * 0.5, seg.length() * 0.5 + cfg.herois.relampago_larg + 0.5):
 		var p := o.global_position - de
 		p.y = 0
 		var tt := clampf(p.dot(seg) / maxf(seg.length_squared(), 0.01), 0.0, 1.0)
-		if (p - seg * tt).length() > cfg.relampago_larg:
+		if (p - seg * tt).length() > cfg.herois.relampago_larg:
 			continue
 		o.take_damage(dano, u, dir, 0.6, false, "relampago", 3)
-	somar_carga(u, cfg.carga_relampago)
+	somar_carga(u, cfg.herois.carga_relampago)
 
 
 ## R Tambores do Trovão: tambores_tempo s; a cada tambores_cada s um raio cai no
 ## inimigo mais perto (a até tambores_raio m dele ou de um para-raios dele).
 static func tambores(u: Unit) -> bool:
-	u._tambores_t = Config.cfg.tambores_tempo
+	u._tambores_t = Config.cfg.herois.tambores_tempo
 	u._tambores_tick = 0.15
 	u._play_upper("Spellcast_Raise", 1.3)
-	FxNatureza.tambores(u, Config.cfg.tambores_tempo)
+	FxNatureza.tambores(u, Config.cfg.herois.tambores_tempo)
 	return true
 
 
@@ -216,7 +216,7 @@ static func _tick_tambores(u: Unit, delta: float) -> void:
 	u._tambores_tick -= delta
 	if u._tambores_tick > 0.0 or not u.alive:
 		return
-	u._tambores_tick = cfg.tambores_cada
+	u._tambores_tick = cfg.herois.tambores_cada
 	var alvo := _alvo_tambor(u)
 	if alvo:
 		raio_do_ceu(u, alvo)
@@ -232,7 +232,7 @@ static func _alvo_tambor(u: Unit) -> Unit:
 	var melhor: Unit = null
 	var dist := INF
 	for c in centros:
-		for o in Herois._inimigos(u, c, cfg.tambores_raio):
+		for o in Herois._inimigos(u, c, cfg.herois.tambores_raio):
 			if o.na_sombra_para(u):
 				continue
 			var d := o.global_position.distance_to(c)
@@ -255,12 +255,12 @@ static func raio_do_ceu(u: Unit, alvo: Unit) -> void:
 	var dir := alvo.global_position - u.global_position
 	dir.y = 0
 	var molhado := alvo._molhado_t > 0.0
-	alvo.take_damage(cfg.tambores_dano * u.damage_mult(), u, dir.normalized() if dir.length() > 0.1 else Vector3.FORWARD, 0.3, false, "tambor", 3)
+	alvo.take_damage(cfg.herois.tambores_dano * u.damage_mult(), u, dir.normalized() if dir.length() > 0.1 else Vector3.FORWARD, 0.3, false, "tambor", 3)
 	if alvo.alive:
-		alvo.prender(cfg.tambores_preso)
+		alvo.prender(cfg.herois.tambores_preso)
 	if molhado:
 		var prox: Unit = null
-		var melhor := cfg.descarga_raio * cfg.molhado_alcance
+		var melhor := cfg.herois.descarga_raio * cfg.herois.molhado_alcance
 		for o in Herois._inimigos(u, alvo.global_position, melhor):
 			if o == alvo:
 				continue
@@ -270,7 +270,7 @@ static func raio_do_ceu(u: Unit, alvo: Unit) -> void:
 				prox = o
 		if prox:
 			FxNatureza.raio(u.game, alvo.global_position + Vector3(0, 1.2, 0), prox.global_position + Vector3(0, 1.2, 0), 0.4)
-			prox.take_damage(cfg.tambores_dano * u.damage_mult() * 0.7, u, dir, 0.2, false, "tambor", 3)
+			prox.take_damage(cfg.herois.tambores_dano * u.damage_mult() * 0.7, u, dir, 0.2, false, "tambor", 3)
 
 
 # --- Kodama do Shinboku -------------------------------------------------------------
@@ -281,20 +281,20 @@ static func raizes(u: Unit) -> bool:
 	var cfg := Config.cfg
 	var dir := Herois._dir_mira(u)
 	var de := u.global_position
-	var ate := Herois.sem_parede(u, de, de + dir * cfg.raizes_comp)
+	var ate := Herois.sem_parede(u, de, de + dir * cfg.herois.raizes_comp)
 	var comp := maxf(Vector2(ate.x - de.x, ate.z - de.z).length(), 2.0)
 	u._play_upper("Spellcast_Raise", 1.6)
 	u._mola(-2.0, 0.0)
 	FxNatureza.raizes(u, de, dir, comp)
-	for o in Herois._inimigos(u, de + dir * comp * 0.5, comp * 0.5 + cfg.raizes_larg + 0.5):
+	for o in Herois._inimigos(u, de + dir * comp * 0.5, comp * 0.5 + cfg.herois.raizes_larg + 0.5):
 		var p := o.global_position - de
 		p.y = 0
 		var ao_longo := p.dot(dir)
-		if ao_longo < -0.5 or ao_longo > comp + 0.5 or (p - dir * ao_longo).length() > cfg.raizes_larg:
+		if ao_longo < -0.5 or ao_longo > comp + 0.5 or (p - dir * ao_longo).length() > cfg.herois.raizes_larg:
 			continue
 		o.take_damage(u.stats.skill_value * u.damage_mult(), u, dir, 0.0, false, "raiz", 2)
 		if o.alive:
-			o.prender(cfg.raizes_preso)
+			o.prender(cfg.herois.raizes_preso)
 			FxNatureza.raiz_prende(o)
 	return true
 
@@ -307,14 +307,14 @@ static func bosque(u: Unit) -> void:
 	to.y = 0
 	if to.length() < 2.5:
 		to = Herois._dir_mira(u) * 4.0
-	var centro := Herois.chao_valido(u, Herois.sem_parede(u, u.global_position, u.global_position + to.limit_length(cfg.bosque_dist)))
+	var centro := Herois.chao_valido(u, Herois.sem_parede(u, u.global_position, u.global_position + to.limit_length(cfg.herois.bosque_dist)))
 	u._play_upper("Spellcast_Raise", 1.3)
 	FxNatureza.bosque(u, centro)
 	var a0 := Sorte.f() * TAU
-	for i in cfg.bosque_n:
-		var a := a0 + TAU * i / maxf(cfg.bosque_n, 1)
+	for i in cfg.herois.bosque_n:
+		var a := a0 + TAU * i / maxf(cfg.herois.bosque_n, 1)
 		var p := Herois.chao_valido(u, centro + Vector3(cos(a), 0, sin(a)) * 1.7)
-		plantar(u, p, cfg.bosque_tempo, false)
+		plantar(u, p, cfg.herois.bosque_tempo, false)
 
 
 ## Uma árvore do Kodama em `p` (empurra para fora quem estiver no lugar).
@@ -341,20 +341,20 @@ static func plantar(u: Unit, p: Vector3, tempo: float, grande: bool) -> ArvoreKo
 static func floresta(u: Unit) -> bool:
 	var cfg := Config.cfg
 	var c := u.global_position
-	u._floresta_t = cfg.floresta_tempo
+	u._floresta_t = cfg.herois.floresta_tempo
 	u._floresta_tick = 0.6
 	u._floresta_centro = c
 	u._play_upper("Spellcast_Long", 1.1)
 	u._mola(-5.0, 0.0)
 	u.game.camera.shake_at(c, 0.4)
-	FxNatureza.floresta(u, c, cfg.floresta_raio)
-	for i in cfg.floresta_n:
-		var a := TAU * i / maxf(cfg.floresta_n, 1)
-		var alvo := c + Vector3(cos(a), 0, sin(a)) * cfg.floresta_raio
+	FxNatureza.floresta(u, c, cfg.herois.floresta_raio)
+	for i in cfg.herois.floresta_n:
+		var a := TAU * i / maxf(cfg.herois.floresta_n, 1)
+		var alvo := c + Vector3(cos(a), 0, sin(a)) * cfg.herois.floresta_raio
 		var p := Herois.sem_parede(u, c, alvo)
 		if Vector2(p.x - alvo.x, p.z - alvo.z).length() > 1.5:
 			continue  # parede no caminho: ali o anel é a própria parede
-		var arv := plantar(u, Herois.chao_valido(u, p), cfg.floresta_tempo, true)
+		var arv := plantar(u, Herois.chao_valido(u, p), cfg.herois.floresta_tempo, true)
 		arv.atraso_nascer(0.04 * i)
 	return true
 
@@ -365,24 +365,24 @@ static func _tick_floresta(u: Unit, delta: float) -> void:
 	u._floresta_tick -= delta
 	if u._floresta_tick > 0.0 or u._floresta_t <= 0.0:
 		return
-	u._floresta_tick = cfg.floresta_cada
+	u._floresta_tick = cfg.herois.floresta_cada
 	var c := u._floresta_centro
 	for o in u.game.units:
 		if not o.alive or o.em_voo:
 			continue
 		var d := o.global_position - c
 		d.y = 0
-		if d.length() > cfg.floresta_raio - 0.3:
+		if d.length() > cfg.herois.floresta_raio - 0.3:
 			continue
 		if o.team == u.team:
-			if o.heal(cfg.floresta_cura * cfg.floresta_cada, u) > 0.0:
+			if o.heal(cfg.herois.floresta_cura * cfg.herois.floresta_cada, u) > 0.0:
 				FxNatureza.sombra_cura(o)
 		elif not o.na_sombra_para(u):
-			o.take_damage(cfg.floresta_dano * u.damage_mult(), u, -d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.0, false, "raiz", 2)
+			o.take_damage(cfg.herois.floresta_dano * u.damage_mult(), u, -d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.0, false, "raiz", 2)
 			if o.alive:
-				o.prender(cfg.floresta_preso)
+				o.prender(cfg.herois.floresta_preso)
 				FxNatureza.raiz_prende(o)
-	FxNatureza.floresta_pulso(u, c, cfg.floresta_raio)
+	FxNatureza.floresta_pulso(u, c, cfg.herois.floresta_raio)
 
 
 ## Construtor (qualquer lenhador) cortando: a árvore do Kodama mais perto no

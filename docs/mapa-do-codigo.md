@@ -29,6 +29,32 @@ arquitetura geral; leia daqui a seção do sistema em que vai mexer.
    em `tests/regras/<sistema>.gd` para a regra que importa. Rodar `tools/checar.sh tudo`.
 9. Sandbox: o personagem precisa aparecer no modo teste na mesma entrega.
 
+## Partida e boneco (revisão 3a)
+
+- `scripts/game.gd`: monta a partida e aplica as regras por distância (`_rules()`;
+  raios em `cfg.raio_*`, grupo "Raios das regras").
+- `scripts/partida/modo_teste.gd` (`ModoTeste`, `Game.modo_teste`): tudo que só
+  existe no modo teste (torretas de pé, aliado/Samurai/herói de treino,
+  mostruário, teclas [M] [L] [N] em `regras()`) e na Arena de chapéus (fileiras,
+  tambores, `nivel_arena`, `--arena-prova`). Peça nova no sandbox = aqui.
+- `scripts/dev/ferramentas.gd` (`Ferramentas`): prints, filmes, vitrine, pisca,
+  pranchas de reanimar/finalizar, `--perf` e CENSO. O Game só cria quando um
+  desses argumentos aparece; modo novo de print = aqui, nunca no game.gd.
+- Números: `GameConfig` (`config/game_config.tres`) para as regras gerais;
+  `HeroisConfig` (`config/herois_regras.tres`, lido como `cfg.herois.X`) para
+  os heróis raros.
+- `Unit.yaw`: direção do corpo (regra; guardada em float32 para bater com o
+  Node3D). O visual só copia; teste e regra mexem em `yaw`, nunca em
+  `_visual.rotation`.
+- Travas de ação: tabela `Unit.TRAVAS` (campo do estado -> `Trava.MAOS|Q|ER|DASH`)
+  e `travado(acao)`. Estado novo que prende o boneco = uma linha na tabela
+  (o teste `_travas` confere a tabela).
+- Registro de poderes: enum de `class_stats.gd`, ramo da regra e ramo do bot
+  conferidos pelo teste `_registro_poderes` (poder sem regra ou sem bot reprova).
+- Canal no corpo caído ([F] segurado): `scripts/canal_no_corpo.gd`
+  (`CanalNoCorpo`) é a base de `Reanimar` e `Finalizar` (busca, reserva de bot,
+  anel e letreiro); a filha responde só o que muda.
+
 ## Cenário
 
 `tools/gerar_cenario_ninja.gd` (+ `gerar_mapa_rio.gd`) gera temas e peças com o

@@ -101,19 +101,19 @@ static func super_proprio(u: Unit) -> bool:
 	var cfg := Config.cfg
 	match u.stats.super_poder:
 		"dohyo":
-			u._dohyo_t = cfg.dohyo_tempo
+			u._dohyo_t = cfg.herois.dohyo_tempo
 			u._dohyo_pos = u.global_position
 			var dentro: Array = []
-			for o in _inimigos(u, u.global_position, cfg.dohyo_raio):
+			for o in _inimigos(u, u.global_position, cfg.herois.dohyo_raio):
 				dentro.append(o)
 			u.set_meta("dohyo_dentro", dentro)
 			u._play_once("2H_Melee_Attack_Chop", 0.5)
 			u._mola(-6.0, 0.0)
 			u.game.camera.shake_at(u.global_position, 0.5)
-			FxHerois.dohyo(u, cfg.dohyo_raio, cfg.dohyo_tempo)
+			FxHerois.dohyo(u, cfg.herois.dohyo_raio, cfg.herois.dohyo_tempo)
 			return true
 		"mergulho3":
-			var alvos := _mais_perto(u, cfg.mergulho3_raio, cfg.mergulho3_alvos)
+			var alvos := _mais_perto(u, cfg.herois.mergulho3_raio, cfg.herois.mergulho3_alvos)
 			if alvos.is_empty():
 				return false
 			_cadeia_corvos(u, alvos, 0)
@@ -121,24 +121,24 @@ static func super_proprio(u: Unit) -> bool:
 		"mil_grous":
 			u._play_upper("Spellcast_Raise", 1.2)
 			var base := _dir_mira(u)
-			var n := cfg.mil_grous_n
+			var n := cfg.herois.mil_grous_n
 			for i in n:
-				var a := deg_to_rad(lerpf(-cfg.mil_grous_graus * 0.5, cfg.mil_grous_graus * 0.5, float(i) / maxf(n - 1, 1)))
+				var a := deg_to_rad(lerpf(-cfg.herois.mil_grous_graus * 0.5, cfg.herois.mil_grous_graus * 0.5, float(i) / maxf(n - 1, 1)))
 				_grou(u, base.rotated(Vector3.UP, a))
 			return true
 		"veu":
 			u._play_upper("Spellcast_Raise", 1.2)
-			FxHerois.veu(u, cfg.veu_raio)
+			FxHerois.veu(u, cfg.herois.veu_raio)
 			for o in u.game.units:
-				if o.alive and o.team == u.team and o.global_position.distance_to(u.global_position) <= cfg.veu_raio:
-					o._intocavel_t = maxf(o._intocavel_t, cfg.veu_tempo)
-					FxHerois.veu_em(o, cfg.veu_tempo)
+				if o.alive and o.team == u.team and o.global_position.distance_to(u.global_position) <= cfg.herois.veu_raio:
+					o._intocavel_t = maxf(o._intocavel_t, cfg.herois.veu_tempo)
+					FxHerois.veu_em(o, cfg.herois.veu_tempo)
 			return true
 		"requiem":
 			u._play_upper("Spellcast_Long", 1.0)
-			FxHerois.requiem(u, cfg.requiem_raio)
-			for o in _inimigos(u, u.global_position, cfg.requiem_raio):
-				o._mudo_t = maxf(o._mudo_t, cfg.requiem_tempo)
+			FxHerois.requiem(u, cfg.herois.requiem_raio)
+			for o in _inimigos(u, u.global_position, cfg.herois.requiem_raio):
+				o._mudo_t = maxf(o._mudo_t, cfg.herois.requiem_tempo)
 				o._cancel_skill()
 				o._spin_t = 0.0
 				Fx.letreiro(u.game, o.global_position + Vector3(0, 0.5, 0), "SILÊNCIO", Color(0.6, 0.95, 0.9))
@@ -339,13 +339,13 @@ static func _agarrao(u: Unit) -> bool:
 	FxHerois.agarrao(u, alvo)
 	Sfx.play("swing", u.global_position, 0.1, 0.7)
 	var tw := u.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-	tw.tween_interval(cfg.agarrao_segura)
+	tw.tween_interval(cfg.herois.agarrao_segura)
 	tw.tween_callback(func() -> void:
 		if is_instance_valid(u) and u.alive:
 			u._play_upper("Throw", 1.4)
 			u._mola(2.0, 8.0))
 	VooHeroi.lancar(u.game, alvo, alvo.global_position, destino, 0.55, 2.8,
-			func() -> void: _pouso_agarrao(u, alvo, destino, dano, dir), u, cfg.agarrao_segura)
+			func() -> void: _pouso_agarrao(u, alvo, destino, dano, dir), u, cfg.herois.agarrao_segura)
 	if u.is_player:
 		u.game.camera.add_trauma(0.25)
 	return true
@@ -354,23 +354,23 @@ static func _agarrao(u: Unit) -> bool:
 static func _pouso_agarrao(u: Unit, alvo: Unit, onde: Vector3, dano: float, dir: Vector3) -> void:
 	var cfg := Config.cfg
 	var g := alvo.game
-	FxHerois.pouso_pesado(g, onde, cfg.agarrao_respingo_raio)
+	FxHerois.pouso_pesado(g, onde, cfg.herois.agarrao_respingo_raio)
 	Sfx.play("explosao", onde, 0.1, 1.4, -4.0)
 	g.camera.shake_at(onde, 0.45)
 	var quem: Unit = u if is_instance_valid(u) else null
 	if alvo.alive:
 		alvo.take_damage(dano, quem, dir, 0.3, true, "terra", 2)
 		if alvo.alive:
-			alvo.prender(cfg.agarrao_chao)
-			alvo._play_once("Lie_StandUp", cfg.agarrao_chao, 1.2)
+			alvo.prender(cfg.herois.agarrao_chao)
+			alvo._play_once("Lie_StandUp", cfg.herois.agarrao_chao, 1.2)
 	if quem == null:
 		return
-	for o in _inimigos(quem, onde, cfg.agarrao_respingo_raio):
+	for o in _inimigos(quem, onde, cfg.herois.agarrao_respingo_raio):
 		if o == alvo:
 			continue
 		var d := o.global_position - onde
 		d.y = 0
-		o.take_damage(cfg.agarrao_respingo * quem.damage_mult(), quem, d.normalized() if d.length() > 0.1 else dir, 1.3, true, "terra", 2)
+		o.take_damage(cfg.herois.agarrao_respingo * quem.damage_mult(), quem, d.normalized() if d.length() > 0.1 else dir, 1.3, true, "terra", 2)
 
 
 ## E Pisão do Santuário: onda grande que derruba (preso power_duration s).
@@ -396,7 +396,7 @@ static func _pisao_grande(u: Unit) -> void:
 
 ## R Dohyō: quem estava dentro não sai, quem estava fora não entra (aliados passam).
 static func _tick_dohyo(u: Unit) -> void:
-	var r := Config.cfg.dohyo_raio
+	var r := Config.cfg.herois.dohyo_raio
 	var dentro: Array = u.get_meta("dohyo_dentro", [])
 	for o in u.game.units:
 		if not o.alive or o.team == u.team or o.em_voo:
@@ -498,13 +498,13 @@ static func _rajada(u: Unit) -> bool:
 	FxHerois.rajada(u, dir, r)
 	Sfx.play("swing", u.global_position, 0.1, 0.6)
 	Reacoes.em(u.game, u.global_position + dir * r * 0.5, r * 0.6, "vento", u.team)
-	for o in _inimigos(u, u.global_position, r, dir, cfg.rajada_cone):
+	for o in _inimigos(u, u.global_position, r, dir, cfg.herois.rajada_cone):
 		var d := o.global_position - u.global_position
 		d.y = 0
 		var dn := d.normalized() if d.length() > 0.1 else dir
 		o.take_damage(u.stats.skill_value * u.damage_mult(), u, dn, 0.0, false, "vento", 2)
 		if o.alive and not o.stats.knock_imune:
-			o._knock = dn * cfg.rajada_empurrao
+			o._knock = dn * cfg.herois.rajada_empurrao
 	var devolvidos := 0
 	for n in u.get_tree().get_nodes_in_group("projeteis"):
 		var p := n as Projectile
@@ -514,7 +514,7 @@ static func _rajada(u: Unit) -> bool:
 		d.y = 0
 		if d.length() > r + 1.0:
 			continue
-		if d.length() > 0.6 and rad_to_deg(dir.angle_to(d.normalized())) > cfg.rajada_cone * 0.5:
+		if d.length() > 0.6 and rad_to_deg(dir.angle_to(d.normalized())) > cfg.herois.rajada_cone * 0.5:
 			continue
 		var volta := (dir * 0.6 + d.normalized() * 0.4).normalized() if d.length() > 0.6 else dir
 		p.rebater(u, volta)
@@ -632,7 +632,7 @@ static func _susto(u: Unit) -> void:
 ## bonecos como talismãs que caçam o inimigo mais fraco perto.
 static func _dobrar(u: Unit) -> bool:
 	var cfg := Config.cfg
-	if u.shikigami < cfg.shikigami_max:
+	if u.shikigami < cfg.herois.shikigami_max:
 		u.shikigami += 1
 		atualizar_shikigami(u)
 		u._play_upper("Interact", 1.8)
@@ -717,7 +717,7 @@ static func _laco(u: Unit) -> bool:
 			caido.reset_physics_interpolation()
 			if g.reanimar.pode_reanimar(caido):
 				g.reanimar.levantar(caido, u)
-				caido.hp = maxf(caido.hp, caido.max_hp() * Config.cfg.laco_vida)
+				caido.hp = maxf(caido.hp, caido.max_hp() * Config.cfg.herois.laco_vida)
 				caido._update_hp_bar())
 		return true
 	var aliado: Unit = null
@@ -829,14 +829,14 @@ static func _apanhar_2_27(u: Unit, amount: float, attacker: Unit, elemento: Stri
 			amount *= 2.0
 			FxHerois.sorte_dobra(attacker, u)
 	if u._casulo_t > 0.0:
-		amount *= cfg.casulo_dano
+		amount *= cfg.herois.casulo_dano
 	if elemento == "fio" and attacker != null:
-		u._fio_n = mini(u._fio_n + 1, cfg.fio_max)
-		u._fio_t = cfg.fio_tempo
+		u._fio_n = mini(u._fio_n + 1, cfg.herois.fio_max)
+		u._fio_t = cfg.herois.fio_tempo
 		u._fio_dono = attacker
-		u.apply_slow(1.0 - cfg.fio_lento * u._fio_n, cfg.fio_tempo)
+		u.apply_slow(1.0 - cfg.herois.fio_lento * u._fio_n, cfg.herois.fio_tempo)
 		if nivel >= 2:
-			u.prender(cfg.rede_preso)
+			u.prender(cfg.herois.rede_preso)
 			FxHerois.rede(u)
 	amount = HeroisNatureza.apanhar(u, amount, attacker, elemento, nivel)
 	return HeroisObra.apanhar(u, amount, attacker, elemento, nivel)
@@ -873,11 +873,11 @@ static func _tick_2_27(u: Unit, delta: float) -> void:
 		u._festa_tick -= delta
 		_festa_levanta(u)
 		if u._festa_tick <= 0.0:
-			u._festa_tick = cfg.festa_sorte_cada
+			u._festa_tick = cfg.herois.festa_sorte_cada
 			for o in u.game.units:
-				if o.alive and o.team == u.team and not o.em_voo and o.global_position.distance_to(u.global_position) <= cfg.festa_sorte_raio:
-					dar_sorte(o, cfg.sorte_tempo)
-			FxHerois.festa_pulso(u, cfg.festa_sorte_raio)
+				if o.alive and o.team == u.team and not o.em_voo and o.global_position.distance_to(u.global_position) <= cfg.herois.festa_sorte_raio:
+					dar_sorte(o, cfg.herois.sorte_tempo)
+			FxHerois.festa_pulso(u, cfg.herois.festa_sorte_raio)
 	if u._fio_t > 0.0:
 		u._fio_t -= delta
 		if u._fio_t <= 0.0:
@@ -944,14 +944,14 @@ static func nao_cai(u: Unit, attacker: Unit) -> bool:
 	if u.carried_princess:
 		u.drop_princess()
 	u.hp = 1.0
-	u._fantasma_t = cfg.fantasma_tempo
+	u._fantasma_t = cfg.herois.fantasma_tempo
 	u._fantasma_quem = attacker if attacker != u else null
 	u._aplicar_sombra(true, false)
 	u._update_hp_bar()
-	FxHerois.fantasma(u, cfg.fantasma_tempo)
+	FxHerois.fantasma(u, cfg.herois.fantasma_tempo)
 	Sfx.play("ochimusha_fantasma", u.global_position, 0.05)
 	if u.is_player:
-		u.game.hud.show_big("NÃO CAIU! Derrube alguém em %d s" % int(cfg.fantasma_tempo), Color(0.65, 0.85, 1.0), 1.4)
+		u.game.hud.show_big("NÃO CAIU! Derrube alguém em %d s" % int(cfg.herois.fantasma_tempo), Color(0.65, 0.85, 1.0), 1.4)
 	return true
 
 
@@ -959,7 +959,7 @@ static func _fim_fantasma(u: Unit, voltou: bool) -> void:
 	u._fantasma_t = 0.0
 	u._aplicar_sombra(false)
 	if voltou:
-		u.hp = maxf(u.hp, u.max_hp() * Config.cfg.fantasma_volta)
+		u.hp = maxf(u.hp, u.max_hp() * Config.cfg.herois.fantasma_volta)
 		u._update_hp_bar()
 		u._fantasma_quem = null
 		FxHerois.fantasma_volta(u)
@@ -982,7 +982,7 @@ static func abateu(killer: Unit, _vitima: Unit) -> void:
 ## no mesmo lugar, eco_atraso s depois.
 static func eco(u: Unit, dir: Vector3, alcance: float, arco: float, dano: float) -> void:
 	var at := u.global_position
-	var atraso := Config.cfg.eco_atraso
+	var atraso := Config.cfg.herois.eco_atraso
 	FxHerois.eco_marca(u, at, dir, alcance, atraso)
 	var tw := u.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_interval(atraso)
@@ -1001,7 +1001,7 @@ static func eco(u: Unit, dir: Vector3, alcance: float, arco: float, dano: float)
 static func _flecha_arrancada(u: Unit) -> bool:
 	var cfg := Config.cfg
 	var dir := _dir_mira(u)
-	var alvo := alvo_toque(u, cfg.flecha_alcance, cfg.flecha_cone)
+	var alvo := alvo_toque(u, cfg.herois.flecha_alcance, cfg.herois.flecha_cone)
 	if alvo == null:
 		u._quick_cd = 0.25
 		if u.is_player:
@@ -1016,15 +1016,15 @@ static func _flecha_arrancada(u: Unit) -> bool:
 	Sfx.play("ochimusha_flecha", u.global_position, 0.08)
 	alvo.take_damage(u.stats.skill_value * u.damage_mult(), u, dn, 0.5, true, "flecha", 2)
 	if alvo.alive:
-		alvo.apply_slow(cfg.flecha_lenta, cfg.flecha_lenta_t)
-		FxProjetil.cravar(alvo, alvo.global_position + Vector3(0, 1.25, 0) - dn * 0.15, dn, "flecha", cfg.flecha_lenta_t)
+		alvo.apply_slow(cfg.herois.flecha_lenta, cfg.herois.flecha_lenta_t)
+		FxProjetil.cravar(alvo, alvo.global_position + Vector3(0, 1.25, 0) - dn * 0.15, dn, "flecha", cfg.herois.flecha_lenta_t)
 	return true
 
 
 ## E Onibi: três fogos-fantasma giram em volta; cada um explode no primeiro
 ## inimigo que encosta (dano + susto curto: ele corre para longe).
 static func _onibi(u: Unit) -> void:
-	u._onibi_n = Config.cfg.onibi_n
+	u._onibi_n = Config.cfg.herois.onibi_n
 	u._onibi_t = u.stats.power_duration
 	u.set_meta("onibi_cd", 0.3)
 	u._play_upper("Spellcast_Raise", 1.4)
@@ -1039,7 +1039,7 @@ static func _tick_onibi(u: Unit, delta: float) -> void:
 		return
 	var espera: float = u.get_meta("onibi_cd", 0.0) - delta
 	if espera <= 0.0:
-		for o in _inimigos(u, u.global_position, Config.cfg.onibi_toque):
+		for o in _inimigos(u, u.global_position, Config.cfg.herois.onibi_toque):
 			espera = 0.3
 			_estoura_onibi(u, o)
 			break
@@ -1056,7 +1056,7 @@ static func _estoura_onibi(u: Unit, o: Unit) -> void:
 	Reacoes.em(u.game, o.global_position, 1.5, "onibi", u.team)
 	o.take_damage(u.stats.power_value * cfg.dano_poder_mult * u.damage_mult(), u, dn, 0.6, false, "onibi", 3)
 	if o.alive:
-		forcar_andar(o, u.global_position, cfg.onibi_susto, true)
+		forcar_andar(o, u.global_position, cfg.herois.onibi_susto, true)
 	if u._onibi_n <= 0:
 		_fim_onibi(u)
 	else:
@@ -1066,7 +1066,7 @@ static func _estoura_onibi(u: Unit, o: Unit) -> void:
 static func _atualizar_onibi(u: Unit) -> void:
 	if u._onibi_no and is_instance_valid(u._onibi_no):
 		u._onibi_no.queue_free()
-	u._onibi_no = FxHerois.onibi(u, u._onibi_n, Config.cfg.onibi_orbita) if u._onibi_n > 0 else null
+	u._onibi_no = FxHerois.onibi(u, u._onibi_n, Config.cfg.herois.onibi_orbita) if u._onibi_n > 0 else null
 
 
 static func _fim_onibi(u: Unit) -> void:
@@ -1084,14 +1084,14 @@ static func _carga_caidos(u: Unit) -> bool:
 	var cfg := Config.cfg
 	var dir := _dir_mira(u)
 	var de := u.global_position
-	var ate := sem_parede(u, de, de + dir * cfg.caidos_comp)
+	var ate := sem_parede(u, de, de + dir * cfg.herois.caidos_comp)
 	var comp := maxf(Vector2(ate.x - de.x, ate.z - de.z).length(), 3.0)
-	var meia := cfg.caidos_larg * 0.5
+	var meia := cfg.herois.caidos_larg * 0.5
 	u._play_once("2H_Melee_Attack_Chop", 0.4)
 	u._mola(-5.0, 4.0)
-	FxHerois.carga_caidos(u, de, dir, comp, cfg.caidos_larg, cfg.caidos_tempo, cfg.caidos_n)
+	FxHerois.carga_caidos(u, de, dir, comp, cfg.herois.caidos_larg, cfg.herois.caidos_tempo, cfg.herois.caidos_n)
 	u.game.camera.shake_at(de, 0.45)
-	var dano := cfg.caidos_dano * u.damage_mult()
+	var dano := cfg.herois.caidos_dano * u.damage_mult()
 	for o in _inimigos(u, de + dir * comp * 0.5, comp * 0.5 + meia + 1.0):
 		var p := o.global_position - de
 		p.y = 0
@@ -1099,7 +1099,7 @@ static func _carga_caidos(u: Unit) -> bool:
 		if ao_longo < -0.6 or ao_longo > comp + 0.6 or (p - dir * ao_longo).length() > meia + 0.4:
 			continue
 		var tw := u.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-		tw.tween_interval(clampf(ao_longo / comp, 0.0, 1.0) * cfg.caidos_tempo)
+		tw.tween_interval(clampf(ao_longo / comp, 0.0, 1.0) * cfg.herois.caidos_tempo)
 		tw.tween_callback(func() -> void:
 			if o.alive:
 				o.take_damage(dano, u, dir, 1.6, true, "caidos", 3)
@@ -1127,7 +1127,7 @@ static func _mordida(u: Unit) -> bool:
 			continue
 		d.y = 0
 		var dist := d.length()
-		if dist > cfg.mordida_alcance + RAIO_CORPO:
+		if dist > cfg.herois.mordida_alcance + RAIO_CORPO:
 			continue
 		# A frente vale mais: fora do cone de 70°, a distância conta 2,5 ×.
 		var nota := dist * (2.5 if dist > 0.8 and rad_to_deg(dir.angle_to(d / dist)) > 35.0 else 1.0)
@@ -1146,12 +1146,12 @@ static func _mordida(u: Unit) -> bool:
 	var aliado := alvo.team == u.team
 	FxHerois.mordida(u, alvo, aliado)
 	if aliado:
-		alvo.heal(alvo.max_hp() * cfg.mordida_cura, u)
-		dar_sorte(alvo, cfg.sorte_tempo)
+		alvo.heal(alvo.max_hp() * cfg.herois.mordida_cura, u)
+		dar_sorte(alvo, cfg.herois.sorte_tempo)
 	else:
 		alvo.take_damage(u.stats.skill_value * u.damage_mult(), u, dn, 0.6, true, "mordida", 2)
 		if alvo.alive:
-			dar_azar(alvo, cfg.azar_tempo)
+			dar_azar(alvo, cfg.herois.azar_tempo)
 	return true
 
 
@@ -1192,9 +1192,9 @@ static func _arrastao(u: Unit) -> void:
 	var cfg := Config.cfg
 	var dir := _dir_mira(u)
 	var de := u.global_position
-	var ate := sem_parede(u, de, de + dir * cfg.arrastao_dist)
+	var ate := sem_parede(u, de, de + dir * cfg.herois.arrastao_dist)
 	var dist := Vector2(ate.x - de.x, ate.z - de.z).length()
-	if dist < cfg.arrastao_dist - 0.1:
+	if dist < cfg.herois.arrastao_dist - 0.1:
 		dist -= 0.9  # parede: sobra lugar para quem vai na boca
 	dist = maxf(dist, 1.0)
 	var v := sqrt(2.0 * Unit.KNOCK_DECAY * dist)
@@ -1239,18 +1239,18 @@ static func _tick_arrastao(u: Unit, delta: float) -> void:
 	if a and is_instance_valid(a) and a.alive:
 		a.take_damage(u.stats.power_value * cfg.dano_poder_mult * u.damage_mult(), u, u._arrastao_dir, 0.8, true, "mordida", 3)
 		if a.alive:
-			a.prender(cfg.arrastao_preso)
-			dar_azar(a, cfg.azar_tempo)
+			a.prender(cfg.herois.arrastao_preso)
+			dar_azar(a, cfg.herois.azar_tempo)
 
 
 ## R Festa da Vila: vira o leão gigante por festa_tempo s; a cada festa_sorte_cada
 ## s os aliados perto ganham Sorte; aliado caído que ele alcança levanta.
 static func _festa(u: Unit) -> void:
 	var cfg := Config.cfg
-	u._festa_t = cfg.festa_tempo
+	u._festa_t = cfg.herois.festa_tempo
 	u._festa_tick = 0.0
 	u._play_once("Cheer", 0.6)
-	FxHerois.festa(u, cfg.festa_tempo)
+	FxHerois.festa(u, cfg.herois.festa_tempo)
 
 
 static func _festa_levanta(u: Unit) -> void:
@@ -1262,7 +1262,7 @@ static func _festa_levanta(u: Unit) -> void:
 			continue
 		var d := c.global_position - u.global_position
 		d.y = 0
-		if d.length() <= Config.cfg.festa_levanta:
+		if d.length() <= Config.cfg.herois.festa_levanta:
 			FxHerois.festa_levanta(u, c)
 			g.reanimar.levantar(c, u)
 
@@ -1284,7 +1284,7 @@ static func _teia(u: Unit) -> bool:
 		if t and t.dona == u and not t.indo:
 			minhas.append(t)
 	minhas.sort_custom(func(a: Teia, b: Teia) -> bool: return a.nasceu < b.nasceu)
-	while minhas.size() >= cfg.teia_max:
+	while minhas.size() >= cfg.herois.teia_max:
 		(minhas.pop_front() as Teia).sumir()
 	var teia := Teia.new()
 	u.game.add_child(teia)
@@ -1300,13 +1300,13 @@ static func _teia(u: Unit) -> bool:
 static func _puxar_fios(u: Unit) -> void:
 	var cfg := Config.cfg
 	var alvos: Array[Unit] = []
-	for o in _inimigos(u, u.global_position, cfg.puxar_raio):
+	for o in _inimigos(u, u.global_position, cfg.herois.puxar_raio):
 		if o._fio_dono == u and o._fio_t > 0.0:
 			alvos.append(o)
 	if alvos.is_empty():
-		alvos = _inimigos(u, u.global_position, cfg.puxar_raio * 0.5)
+		alvos = _inimigos(u, u.global_position, cfg.herois.puxar_raio * 0.5)
 	u._play_upper("Spellcast_Raise", 1.5)
-	FxHerois.puxar(u, alvos, cfg.puxar_raio)
+	FxHerois.puxar(u, alvos, cfg.herois.puxar_raio)
 	for o in alvos:
 		var de := u.global_position - o.global_position
 		de.y = 0
@@ -1314,10 +1314,10 @@ static func _puxar_fios(u: Unit) -> void:
 		o.take_damage(u.stats.power_value * cfg.dano_poder_mult * u.damage_mult(), u, dn, 0.0, false, "fios", 3)
 		if not o.alive:
 			continue
-		var puxa := minf(cfg.puxar_dist, maxf(de.length() - 1.4, 0.0))
+		var puxa := minf(cfg.herois.puxar_dist, maxf(de.length() - 1.4, 0.0))
 		if puxa > 0.05 and not o.stats.knock_imune:
 			o._knock = dn * sqrt(2.0 * Unit.KNOCK_DECAY * puxa)
-		o.prender(cfg.puxar_preso)
+		o.prender(cfg.herois.puxar_preso)
 
 
 ## R Casulo: até casulo_n inimigos perto viram casulo por casulo_tempo s (não
@@ -1325,19 +1325,19 @@ static func _puxar_fios(u: Unit) -> void:
 ## com casulo_golpes golpes (corpo a corpo ou tiro).
 static func _casulo(u: Unit) -> bool:
 	var cfg := Config.cfg
-	var alvos := _mais_perto(u, cfg.casulo_raio, cfg.casulo_n)
+	var alvos := _mais_perto(u, cfg.herois.casulo_raio, cfg.herois.casulo_n)
 	if alvos.is_empty():
 		return false
 	u._play_upper("Spellcast_Raise", 1.2)
 	FxHerois.casulo_lanca(u, alvos)
 	for o in alvos:
-		enrolar(o, u, cfg.casulo_tempo)
+		enrolar(o, u, cfg.herois.casulo_tempo)
 	return true
 
 
 static func enrolar(o: Unit, u: Unit, t: float) -> void:
 	o._casulo_t = t * (0.5 if o.carried_princess else 1.0)
-	o._casulo_vida = Config.cfg.casulo_golpes
+	o._casulo_vida = Config.cfg.herois.casulo_golpes
 	o._fio_dono = u
 	o._fio_t = maxf(o._fio_t, o._casulo_t)
 	o._cancel_skill()

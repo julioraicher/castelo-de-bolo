@@ -93,7 +93,7 @@ func _physics_process(delta: float) -> void:
 func acender() -> void:
 	if indo or _acesa_t > 0.0 or _atraso > 0.0:
 		return
-	_acesa_t = Config.cfg.poca_fogo_tempo
+	_acesa_t = Config.cfg.herois.poca_fogo_tempo
 	_fogo_tick = 0.0
 	_fogo_no = FxObra.poca_acesa(self, raio, _acesa_t)
 	Reacoes.em(_game, global_position, raio, "brasa", time)
@@ -113,7 +113,7 @@ func _tick_fogo(delta: float) -> void:
 				continue
 			var d := u.global_position - global_position
 			d.y = 0
-			u.take_damage(cfg.poca_fogo_dano * 0.5 * (dono.damage_mult() if quem else 1.0), quem,
+			u.take_damage(cfg.herois.poca_fogo_dano * 0.5 * (dono.damage_mult() if quem else 1.0), quem,
 					d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.2, false, "brasa", 1)
 	if _acesa_t <= 0.0:
 		secar(true)

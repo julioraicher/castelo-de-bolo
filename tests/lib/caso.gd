@@ -70,7 +70,7 @@ func _por(x, p: Vector3, olha: Vector3) -> void:
 	x.move_intent = Vector3.ZERO
 	HeroisObra.zerar(x)
 	x.hp = x.max_hp()
-	x._visual.rotation.y = atan2(olha.x, olha.z)
+	x.yaw = atan2(olha.x, olha.z)
 	x.aim_dir = olha
 	x.reset_physics_interpolation()
 

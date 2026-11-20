@@ -172,7 +172,7 @@ func _arena_chapeus() -> void:
 		vistos[c.id] = true
 	# Fileiras: cada uma centrada, com espaço entre vizinhos e avanços crescentes.
 	var tams: Array[int] = [5, 8, 7, 6]
-	var fileiras: Array = Game.fileiras_arena(tams)
+	var fileiras: Array = ModoTeste.fileiras_arena(tams)
 	_check(fileiras.size() == 4, "arena: uma fileira por grupo")
 	var avanco_ant := -1.0
 	for f in fileiras.size():
@@ -188,8 +188,8 @@ func _arena_chapeus() -> void:
 		avanco_ant = (linha[0] as Vector2).x
 	# O nível da arena: base veste 1, caminho veste o máximo, herói um acima.
 	var base: ClassStats = cfg.hat_classes()[0]
-	_check(game._nivel_arena(base.id) == 1, "arena: classe base veste nível 1")
+	_check(game.modo_teste.nivel_arena(base.id) == 1, "arena: classe base veste nível 1")
 	if base.caminhos.size() > 0:
-		_check(game._nivel_arena(base.caminhos[0].id) == cfg.mago_nivel_max, "arena: caminho veste o nível máximo")
+		_check(game.modo_teste.nivel_arena(base.caminhos[0].id) == cfg.mago_nivel_max, "arena: caminho veste o nível máximo")
 	if base.herois.size() > 0:
-		_check(game._nivel_arena(base.herois[0].id) == cfg.mago_nivel_max + 1, "arena: herói veste um nível acima do máximo")
+		_check(game.modo_teste.nivel_arena(base.herois[0].id) == cfg.mago_nivel_max + 1, "arena: herói veste um nível acima do máximo")

@@ -21,7 +21,7 @@ func setup(game: Game, p_dono: Unit, pos: Vector3) -> void:
 	dono = p_dono
 	time = p_dono.team
 	nasceu = Sorte.ms()
-	_vida = Config.cfg.pararaios_tempo
+	_vida = Config.cfg.herois.pararaios_tempo
 	add_to_group("para_raios")
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	global_position = pos
@@ -42,8 +42,8 @@ func _physics_process(delta: float) -> void:
 	_tick -= delta
 	if _tick > 0.0:
 		return
-	_tick = Config.cfg.pararaios_cada
-	_choque(Config.cfg.pararaios_dano * dono.damage_mult(), "para_raios")
+	_tick = Config.cfg.herois.pararaios_cada
+	_choque(Config.cfg.herois.pararaios_dano * dono.damage_mult(), "para_raios")
 
 
 ## Choque em todos do outro time a até pararaios_raio m.
@@ -56,7 +56,7 @@ func _choque(dano: float, elemento: String) -> int:
 		if absf(d.y) > 2.0:
 			continue
 		d.y = 0
-		if d.length() > Config.cfg.pararaios_raio:
+		if d.length() > Config.cfg.herois.pararaios_raio:
 			continue
 		FxNatureza.raio(_game, topo(), u.global_position + Vector3(0, 1.1, 0), 0.25)
 		u.take_damage(dano, dono, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.1, false, elemento, 2)

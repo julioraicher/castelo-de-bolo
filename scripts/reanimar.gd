@@ -1,5 +1,5 @@
 class_name Reanimar
-extends RefCounted
+extends CanalNoCorpo
 ## Reanimar aliados caídos (Ciclo 2.18, estilo Battlefield 6).
 ##
 ## Quem morre fica CAÍDO no chão enquanto conta a espera de renascer. Um aliado
@@ -19,20 +19,14 @@ extends RefCounted
 ## a regra e o visual (chama de espírito + anel no chão) moram aqui.
 
 const CHAMA := preload("res://assets/shaders/chama_espirito.gdshader")
-const ANEL := preload("res://assets/shaders/anel_reanimar.gdshader")
 ## Segurar [F] caído por este tempo = desistir e ir para o castelo.
 const DESISTIR_T := 0.5
 ## Bot caído sem aliado por perto desiste depois deste tempo no chão.
 const BOT_DESISTE_T := 1.5
 
-var game: Game
-var cfg: GameConfig
-## Corpo -> {raiz, chama, anel} (visual só para o time do jogador).
-var _visuais := {}
+# _visuais (CanalNoCorpo): corpo -> {raiz, chama, anel, placa}, só para o time do jogador.
 ## Corpo -> espera total no instante da morte (para a chama encolher).
 var _espera_total := {}
-## Corpo -> bot que está indo reanimar (um por corpo).
-var _reservas := {}
 var _desistir_t := 0.0
 ## Online (Ciclo 2.28): o "segurar F" de cada humano caído vem no comando dele
 ## (wants_reanimar), e a conta roda igual em todos os PCs.
@@ -40,17 +34,36 @@ var _desistindo := {}
 ## Modo teste: aliado de treino que espera caído para sempre.
 var boneco_treino: Unit = null
 var _treino_t := -1.0
-var _efeito_t := 0.0
 static var _mat_chama: ShaderMaterial
-static var _mat_anel: ShaderMaterial
-
-
-func _init(g: Game) -> void:
-	game = g
-	cfg = Config.cfg
 
 
 # --- Regra ----------------------------------------------------------------------
+
+func _ligado() -> bool:
+	return cfg.reanimar_ligado
+
+
+## Aliado caído de `u` que ainda dá para reanimar.
+func _vale(c: Unit, u: Unit) -> bool:
+	return c != u and c.team == u.team and pode_reanimar(c)
+
+
+func _dono(c: Unit) -> Unit:
+	return c.reanimador
+
+
+func _no_outro_canal(u: Unit) -> bool:
+	return u.finalizando != null
+
+
+## A Kitsune enxerga corpo mais longe (é ela quem reanima mais rápido).
+func _raio_bot(u: Unit) -> float:
+	return cfg.reanimar_bot_raio * (2.0 if u.eh_mago() else 1.0)
+
+
+func _livre_para_bot(c: Unit, u: Unit) -> bool:
+	return not (c.reanimador and c.reanimador != u)
+
 
 ## Chamado na morte (Game._on_unit_died).
 func ao_cair(u: Unit) -> void:
@@ -89,7 +102,7 @@ func esquecer(u: Unit) -> void:
 	_remover_visual(u)
 
 
-## Modo teste: deixa `u` caído para treinar (Game._aliado_de_treino).
+## Modo teste: deixa `u` caído para treinar (ModoTeste._aliado_de_treino).
 func treino(u: Unit) -> void:
 	boneco_treino = u
 	u._die(null)
@@ -128,30 +141,9 @@ func velocidade(u: Unit) -> float:
 	return lerpf(cfg.reanimar_mago_mult, cfg.reanimar_mago_mult_max, k)
 
 
-## Corpo aliado reanimável mais perto de `u`, dentro de `raio`.
-func corpo_perto(u: Unit, raio: float) -> Unit:
-	var melhor: Unit = null
-	var dmin := raio
-	for c in game.units:
-		if c == u or c.team != u.team or not pode_reanimar(c):
-			continue
-		if c.reanimador != null and c.reanimador != u:
-			continue
-		var d := u.global_position.distance_to(c.global_position)
-		if d < dmin:
-			dmin = d
-			melhor = c
-	return melhor
-
-
 ## [F] do jogador fica com a reanimação quando há corpo ao alcance.
 func segura_f(u: Unit) -> bool:
 	return cfg.reanimar_ligado and (u.reanimando != null or corpo_perto(u, cfg.reanimar_raio) != null)
-
-
-func _pode_canalizar(u: Unit) -> bool:
-	return u.alive and not u.em_voo and u._dodge_t <= 0.0 and u.carried_princess == null \
-			and u.carried_tora == null and not u.is_equipping() and u.finalizando == null
 
 
 func tick(delta: float) -> void:
@@ -247,11 +239,6 @@ func levantar(c: Unit, quem: Unit) -> void:
 		game.camera.add_trauma(0.15)
 
 
-func _nome(u: Unit) -> String:
-	var l := game.placar.linha(u)
-	return String(l.get("nome", u.stats.display_name))
-
-
 ## Jogador caído: barra da espera, quem está reanimando e [F] para desistir.
 func _tick_jogador_caido(delta: float) -> void:
 	var p := game.player
@@ -331,32 +318,6 @@ func finalizado(c: Unit) -> void:
 	_remover_visual(c)
 
 
-# --- Bots -----------------------------------------------------------------------
-
-## Corpo que o bot `u` deve ir reanimar (ou null). Um bot por corpo.
-func corpo_para_bot(u: Unit) -> Unit:
-	if not cfg.reanimar_ligado or u.carried_princess or u.carried_tora:
-		return null
-	var raio := cfg.reanimar_bot_raio * (2.0 if u.eh_mago() else 1.0)
-	var melhor: Unit = null
-	var dmin := raio
-	for c in game.units:
-		if c.team != u.team or not pode_reanimar(c):
-			continue
-		var r: Unit = _reservas.get(c)
-		if r and r != u and is_instance_valid(r) and r.alive:
-			continue
-		if c.reanimador and c.reanimador != u:
-			continue
-		var d := u.global_position.distance_to(c.global_position)
-		if d < dmin:
-			dmin = d
-			melhor = c
-	if melhor:
-		_reservas[melhor] = u
-	return melhor
-
-
 # --- Visual: chama de espírito + anel no chão ---------------------------------------
 
 func _criar_visual(u: Unit) -> void:
@@ -365,12 +326,7 @@ func _criar_visual(u: Unit) -> void:
 	if _mat_chama == null:
 		_mat_chama = ShaderMaterial.new()
 		_mat_chama.shader = CHAMA
-		_mat_anel = ShaderMaterial.new()
-		_mat_anel.shader = ANEL
-	var raiz := Node3D.new()
-	raiz.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	game.add_child(raiz)
-	raiz.global_position = u.global_position
+	var raiz := _raiz_marca(u)
 	var chama := MeshInstance3D.new()
 	var q := QuadMesh.new()
 	q.size = Vector2(1.25, 1.25)
@@ -380,47 +336,17 @@ func _criar_visual(u: Unit) -> void:
 	chama.position = Vector3(0, 1.2, 0)
 	chama.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	raiz.add_child(chama)
-	var anel := MeshInstance3D.new()
-	var pl := PlaneMesh.new()
-	var lado := cfg.reanimar_raio * 2.0
-	pl.size = Vector2(lado, lado)
-	anel.mesh = pl
-	anel.material_override = _mat_anel
-	anel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	anel.position = Vector3(0, 0.07, 0)
-	anel.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	raiz.add_child(anel)
+	var anel := _anel(raiz, cfg.reanimar_raio, 0.07)
 	var cor := Config.team_color(u.team)
 	chama.set_instance_shader_parameter("cor", cor)
 	anel.set_instance_shader_parameter("cor", cor)
 	# Letreiro: deixa claro que está CAÍDO (vira "REANIMANDO 40%" no canal).
-	var placa := Label3D.new()
-	placa.text = "CAÍDO"
-	placa.font = Estilo.LETREIRO
-	placa.font_size = 44
-	placa.outline_size = 14
-	placa.pixel_size = 0.006
-	placa.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	placa.no_depth_test = true
-	placa.fixed_size = false
-	placa.modulate = cor.lightened(0.45)
-	placa.outline_modulate = Color(0.05, 0.04, 0.08, 0.9)
-	placa.position = Vector3(0, 2.05, 0)
-	placa.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	raiz.add_child(placa)
+	var placa := _placa(raiz, "CAÍDO", cor.lightened(0.45))
 	# Entrada: a chama sai do corpo com um "puf" e cresce.
 	chama.scale = Vector3.ONE * 0.2
 	var tw := chama.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_property(chama, "scale", Vector3.ONE, 0.5).set_delay(0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_visuais[u] = {"raiz": raiz, "chama": chama, "anel": anel, "placa": placa}
-
-
-func _remover_visual(u: Unit) -> void:
-	if not _visuais.has(u):
-		return
-	var v: Dictionary = _visuais[u]
-	(v.raiz as Node3D).queue_free()
-	_visuais.erase(u)
 
 
 func _tick_visuais() -> void:

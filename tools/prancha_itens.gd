@@ -61,7 +61,7 @@ func _rodar() -> void:
 	cam = root.get_viewport().get_camera_3d()
 	cam.set_process(false)
 	cam.set_physics_process(false)
-	var slots: Array = g._mostruario
+	var slots: Array = g.modo_teste._mostruario
 	var p0: Vector3 = slots[0][1]
 	var fr: Vector3 = g.arena.forward(g.player.team)
 	# O jogador e os bonecos de treino ficam longe do mostruário.

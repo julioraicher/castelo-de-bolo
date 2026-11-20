@@ -485,7 +485,7 @@ static func saideira(u: Unit, centro: Vector3, pts: Array, cada: float) -> void:
 		Magia.estouro(g, topo, "cachaca", 1.4, 0.3)
 		Assinatura.pecas(g, topo, "lasca", MADEIRA.lightened(0.15), 8, {"tam": 0.8})
 		caixa.queue_free())
-	Magia.selo(g, centro, "cachaca", Config.cfg.saideira_raio, SAIDEIRA_VOO + cada * pts.size() + 0.3)
+	Magia.selo(g, centro, "cachaca", Config.cfg.herois.saideira_raio, SAIDEIRA_VOO + cada * pts.size() + 0.3)
 	Sfx.play("garrafa_lancar", de, 0.05, 0.7)
 	for i in pts.size():
 		var chega := SAIDEIRA_VOO + cada * i

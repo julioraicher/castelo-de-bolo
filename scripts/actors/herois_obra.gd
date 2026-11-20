@@ -51,9 +51,9 @@ static func apanhar(u: Unit, amount: float, _attacker: Unit, elemento: String, _
 	if elemento == "garrafa":
 		if u._encachacado_t <= 0.0:
 			FxObra.encachacado(u)
-		u._encachacado_t = cfg.encachacado_tempo
+		u._encachacado_t = cfg.herois.encachacado_tempo
 	elif u._encachacado_t > 0.0 and Reacoes.tipo(elemento) == "fogo" and amount > 0.0:
-		amount *= cfg.encachacado_fogo
+		amount *= cfg.herois.encachacado_fogo
 		FxObra.arde(u)
 	return amount
 
@@ -86,10 +86,10 @@ static func poca(u: Unit) -> bool:
 		if p and p.dono == u and not p.indo and not p.pequena:
 			minhas.append(p)
 	minhas.sort_custom(func(a: PocaCachaca, b: PocaCachaca) -> bool: return a.nasceu < b.nasceu)
-	while minhas.size() >= cfg.poca_max:
+	while minhas.size() >= cfg.herois.poca_max:
 		(minhas.pop_front() as PocaCachaca).secar()
 	var voo := clampf(Vector2(at.x - u.global_position.x, at.z - u.global_position.z).length() / 18.0, 0.15, 0.45)
-	criar_poca(u, at, cfg.poca_raio, cfg.poca_tempo, voo, false)
+	criar_poca(u, at, cfg.herois.poca_raio, cfg.herois.poca_tempo, voo, false)
 	u._play_upper("Throw", 1.5)
 	FxObra.garrafao(u, at, voo)
 	return true
@@ -106,8 +106,8 @@ static func criar_poca(u: Unit, at: Vector3, raio: float, tempo: float, atraso: 
 static func pisou(o: Unit, dono: Unit) -> void:
 	var cfg := Config.cfg
 	var novo := o._derrapa_t <= 0.0
-	o._derrapa_t = maxf(o._derrapa_t, cfg.poca_derrapa)
-	o._encachacado_t = maxf(o._encachacado_t, cfg.poca_derrapa + 0.4)
+	o._derrapa_t = maxf(o._derrapa_t, cfg.herois.poca_derrapa)
+	o._encachacado_t = maxf(o._encachacado_t, cfg.herois.poca_derrapa + 0.4)
 	if novo and o.velocity.length() > 2.0 and Sorte.ms() - int(o.get_meta("escorregou_ms", -5000)) > 2500:
 		o.set_meta("escorregou_ms", Sorte.ms())
 		FxObra.escorregou(o, dono)
@@ -118,7 +118,7 @@ static func pisou(o: Unit, dono: Unit) -> void:
 static func andaime(u: Unit) -> void:
 	var cfg := Config.cfg
 	var dir := Herois._dir_mira(u)
-	var at := Herois.chao_valido(u, Herois.sem_parede(u, u.global_position, u.global_position + dir * cfg.andaime_dist))
+	var at := Herois.chao_valido(u, Herois.sem_parede(u, u.global_position, u.global_position + dir * cfg.herois.andaime_dist))
 	var a := Andaime.new()
 	u.game.add_child(a)
 	a.setup(u.game, u, at, dir)
@@ -141,7 +141,7 @@ static func _abrir_espaco(u: Unit, a: Andaime, at: Vector3, dir: Vector3) -> voi
 		if absf(d.y) > 2.0:
 			continue
 		var frente := d.dot(dir)
-		if absf(d.dot(lado)) > cfg.andaime_larg * 0.5 + 0.5 or absf(frente) > a.meia_prof() + 0.7:
+		if absf(d.dot(lado)) > cfg.herois.andaime_larg * 0.5 + 0.5 or absf(frente) > a.meia_prof() + 0.7:
 			continue
 		var sinal := 1.0 if o.team != u.team else -1.0
 		if absf(frente) > 0.05 and o.team != u.team:
@@ -161,7 +161,7 @@ static func cortar_andaime(by: Unit, dir: Vector3, alcance: float, arco: float) 
 			continue
 		var to := a.global_position - by.global_position
 		to.y = 0
-		var d := maxf(to.length() - Config.cfg.andaime_larg * 0.5, 0.0)
+		var d := maxf(to.length() - Config.cfg.herois.andaime_larg * 0.5, 0.0)
 		if d > dist:
 			continue
 		if d > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > arco * 0.5:
@@ -182,26 +182,26 @@ static func saideira(u: Unit) -> bool:
 	to.y = 0
 	if to.length() < 2.0:
 		to = Herois._dir_mira(u) * 5.0
-	var centro := Herois.chao_valido(u, Herois.sem_parede(u, u.global_position, u.global_position + to.limit_length(cfg.saideira_dist)))
+	var centro := Herois.chao_valido(u, Herois.sem_parede(u, u.global_position, u.global_position + to.limit_length(cfg.herois.saideira_dist)))
 	# Onde cada garrafa cai: espiral de fora para dentro, a última (acesa) no meio.
 	var pts: Array[Vector3] = []
 	var a0 := Sorte.f() * TAU
-	for i in cfg.saideira_n:
-		if i == cfg.saideira_n - 1:
+	for i in cfg.herois.saideira_n:
+		if i == cfg.herois.saideira_n - 1:
 			pts.append(centro)
 			continue
-		var k := float(i) / maxf(cfg.saideira_n - 1, 1)
+		var k := float(i) / maxf(cfg.herois.saideira_n - 1, 1)
 		var a := a0 + i * 2.4
-		var r := cfg.saideira_raio * lerpf(0.95, 0.35, k) * (0.85 + 0.3 * Sorte.f())
+		var r := cfg.herois.saideira_raio * lerpf(0.95, 0.35, k) * (0.85 + 0.3 * Sorte.f())
 		pts.append(Herois.chao_valido(u, centro + Vector3(cos(a), 0, sin(a)) * r))
 	u.set_meta("saideira_pts", pts)
 	u._saideira_centro = centro
 	u._saideira_n = 0
 	u._saideira_tick = FxObra.SAIDEIRA_VOO
-	u._saideira_t = FxObra.SAIDEIRA_VOO + cfg.saideira_cada * cfg.saideira_n + 0.2
+	u._saideira_t = FxObra.SAIDEIRA_VOO + cfg.herois.saideira_cada * cfg.herois.saideira_n + 0.2
 	u._play_upper("Throw", 1.2)
 	u._mola(4.0, 6.0)
-	FxObra.saideira(u, centro, pts, cfg.saideira_cada)
+	FxObra.saideira(u, centro, pts, cfg.herois.saideira_cada)
 	return true
 
 
@@ -211,7 +211,7 @@ static func _tick_saideira(u: Unit, delta: float) -> void:
 	u._saideira_tick -= delta
 	var pts: Array = u.get_meta("saideira_pts", [])
 	while u._saideira_tick <= 0.0 and u._saideira_n < pts.size():
-		u._saideira_tick += cfg.saideira_cada
+		u._saideira_tick += cfg.herois.saideira_cada
 		var at: Vector3 = pts[u._saideira_n]
 		var ultima := u._saideira_n == pts.size() - 1
 		u._saideira_n += 1
@@ -226,18 +226,18 @@ static func _garrafa_cai(u: Unit, at: Vector3, ultima: bool) -> void:
 	var cfg := Config.cfg
 	var r := u.stats.explosao_raio * (1.4 if ultima else 1.0)
 	FxObra.estilhaco(u.game, at, r, ultima)
-	var dano := cfg.saideira_dano * u.damage_mult()
+	var dano := cfg.herois.saideira_dano * u.damage_mult()
 	for o in Herois._inimigos(u, at, r):
 		var d := o.global_position - at
 		d.y = 0
 		var f := 1.0 - 0.4 * d.length() / r
 		o.take_damage(dano * f, u, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.6 * f, false, "garrafa", 2)
 	if not ultima:
-		criar_poca(u, at, cfg.poca_raio * 0.6, cfg.poca_tempo * 0.6, 0.0, true)
+		criar_poca(u, at, cfg.herois.poca_raio * 0.6, cfg.herois.poca_tempo * 0.6, 0.0, true)
 		return
-	Reacoes.em(u.game, at, cfg.saideira_raio + 1.0, "brasa", u.team)
+	Reacoes.em(u.game, at, cfg.herois.saideira_raio + 1.0, "brasa", u.team)
 	for n in u.get_tree().get_nodes_in_group("pocas_cachaca"):
 		var p := n as PocaCachaca
-		if p and p.dono == u and not p.indo and p.global_position.distance_to(at) <= cfg.saideira_raio + p.raio:
+		if p and p.dono == u and not p.indo and p.global_position.distance_to(at) <= cfg.herois.saideira_raio + p.raio:
 			p.acender()
 	FxObra.fala(u, "Ó O FOGO!")

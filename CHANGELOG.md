@@ -4,6 +4,42 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até o Ciclo 2.29b (2026-11-14) estão em `docs/changelog-antigo.md`.
 
+## Revisão 3a (2026-11-20), Diretor de Jogabilidade: núcleo do código arrumado
+Lote 3a do relatório de 2026-11-19 (mesmo pedido do 3e: lotes grandes que não
+mudam o jogo). **Nada muda no jogo nem no modo teste.** Prova: o resumo da
+partida (SINC) ficou idêntico, quadro a quadro, ao de antes em 6 partidas
+(sementes 7 e 1234, três com variações e heróis, uma na Arena de chapéus), e
+os 12 modos de print/filme/prancha geram os mesmos arquivos.
+
+**Código**
+- `game.gd` de 3.005 para 2.084 linhas. As ferramentas de print, filme, vitrine,
+  pisca, pranchas, `--perf` e CENSO foram para `scripts/dev/ferramentas.gd`
+  (`Ferramentas`, só existe quando um desses argumentos aparece); modo teste e
+  Arena de chapéus foram para `scripts/partida/modo_teste.gd` (`ModoTeste`) (NU-11).
+- Números dos heróis raros saíram do `GameConfig` para `HeroisConfig`
+  (`config/herois_regras.tres`, lido como `cfg.herois.X`); o `GameConfig` voltou
+  a ter só regras da partida, com os grupos em ordem (NU-16).
+- Números mágicos viraram campos: raios de pontuar, pegar máscara, resgatar,
+  alimentar, pegar espírito e item (grupo "Raios das regras"), Fúria ×1,8,
+  preso ×0,1 e a gravidade (NU-18).
+- O que cada estado trava (mãos, Q, E/R, dash) está numa tabela só,
+  `Unit.TRAVAS`, com teste. Mesmo comportamento de hoje, inclusive o preso que
+  ainda usa E e R (decisão sua pendente: agora é mudar uma linha) (NU-06).
+- Direção do corpo virou regra (`Unit.yaw`); antes as regras de bloqueio e de
+  golpe pelas costas liam a rotação do modelo 3D (NU-08).
+- Reanimar e Finalizar dividem uma base (`CanalNoCorpo`): busca do corpo, bot
+  reservado, anel e letreiro numa cópia só (NU-15).
+- Teste novo `_registro_poderes`: todo Q/E/R do enum tem regra, toda regra está
+  no enum e todo herói tem o poder também na IA dos bots (NU-14).
+- Comentários do esquema corrigidos (Chi é do E, listas de dash e super
+  completas) e o texto do Q em Controles não lista mais só 6 classes (NU-10).
+- Ficou de fora: a consulta espacial única (NU-13). Ela troca a ordem em que as
+  regras olham os bonecos, e isso muda a partida; precisa de uma rodada própria.
+
+**O que testar**
+- Nada no jogo. Modo teste e Arena de chapéus iguais (tambores, mostruário,
+  [M] [L] [N]). Se o CI ficar verde, está certo.
+
 ## Revisão 3e (2026-11-20), Diretor de Jogabilidade: testes e ferramentas
 Lote 3e do relatório de 2026-11-19 (pedido do Julio: gastar o limite em lotes
 grandes que não mudam o jogo). **Nada muda no jogo** nem no modo teste; muda como

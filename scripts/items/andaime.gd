@@ -22,8 +22,8 @@ func setup(game: Game, p_dono: Unit, pos: Vector3, frente: Vector3) -> void:
 	_game = game
 	dono = p_dono
 	time = p_dono.team
-	_vida = cfg.andaime_tempo
-	_golpes = cfg.andaime_golpes
+	_vida = cfg.herois.andaime_tempo
+	_golpes = cfg.herois.andaime_golpes
 	add_to_group("andaimes")
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	global_position = pos
@@ -35,16 +35,16 @@ func setup(game: Game, p_dono: Unit, pos: Vector3, frente: Vector3) -> void:
 	_corpo.collision_mask = 0
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = Vector3(cfg.andaime_larg, cfg.andaime_alt, PROF)
+	sh.size = Vector3(cfg.herois.andaime_larg, cfg.herois.andaime_alt, PROF)
 	cs.shape = sh
-	cs.position.y = cfg.andaime_alt * 0.5
+	cs.position.y = cfg.herois.andaime_alt * 0.5
 	_corpo.add_child(cs)
 	add_child(_corpo)
-	_visual = FxObra.andaime(self, cfg.andaime_larg, cfg.andaime_alt, Config.team_color(time))
+	_visual = FxObra.andaime(self, cfg.herois.andaime_larg, cfg.herois.andaime_alt, Config.team_color(time))
 	_visual.scale = Vector3(1.0, 0.05, 1.0)
 	var tw := _visual.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tw.tween_property(_visual, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	FxObra.andaime_sobe(game, global_position, cfg.andaime_larg, global_basis.x)
+	FxObra.andaime_sobe(game, global_position, cfg.herois.andaime_larg, global_basis.x)
 
 
 func meia_prof() -> float:
@@ -79,7 +79,7 @@ func cair() -> void:
 	if _corpo:
 		_corpo.queue_free()
 		_corpo = null
-	FxObra.andaime_cai(_game, global_position, Config.cfg.andaime_larg, global_basis.x)
+	FxObra.andaime_cai(_game, global_position, Config.cfg.herois.andaime_larg, global_basis.x)
 	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).set_parallel(true)
 	if _visual:
 		tw.tween_property(_visual, "rotation:x", -1.35, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)

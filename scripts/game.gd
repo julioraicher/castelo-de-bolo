@@ -54,7 +54,6 @@ var morte_subita := -1.0
 ## máscaras sem peso até o fim (prorrogação e morte súbita inclusive).
 var mascaras_leves := false
 var _relogio_teste := false  # modo teste: [L] liga o relógio a 1:10 do fim
-var _teste_degrau := 1  # modo teste: último degrau de multikill mostrado com [N]
 var decidido_no_placar := false
 var vencedor := -1
 var _tique_s := -1
@@ -66,9 +65,12 @@ var _cake_t := 2.0
 var _pickup_t := 8.0
 var _time := 0.0
 
-# Modo de desenvolvimento (linha de comando, depois de "--"):
+# Modo de desenvolvimento (linha de comando, depois de "--"). Os de print, filme,
+# vitrine, pisca, --perf, pranchas e fotos dos menus moram em scripts/dev/ferramentas.gd
+# (revisão 3a, NU-11); aqui ficam os que mudam a partida:
 #   --autoplay          o jogador também é controlado pela IA
-#   --shots=<pasta>     salva prints em alguns momentos e fecha o jogo
+#   --semente=N         sorteio fixo (testes reproduzíveis)   --sinc  imprime o SINC a cada 60 quadros
+#   --sandbox / --arena / --arena-prova=N / --time=vermelho   modos da tela inicial
 #   --variacoes         bots começam com todas as variações (teste visual/poderes)
 #   --variacoes=N       idem, girando as classes N posições (cada classe pega outro papel)
 #   --com-herois        com --variacoes: os heróis raros também começam em campo
@@ -77,31 +79,12 @@ var _time := 0.0
 #   --poderes           medidor de todo mundo enche a cada 4 s (vitrine de poderes)
 #   --tema=N            usa o tema N de GameConfig.themes (prints de cada tema)
 #   --mapa=N            usa o mapa N de GameConfig.maps
-#   --vista=mapa|alto|patio  câmera parada vendo o mapa todo / o castelo de cima /
-#                       o pátio azul no ângulo da câmera do jogo (prints)
-#   --vista=px,py,pz,ax,ay,az  câmera parada em p olhando para a (prints)
-#   --print-poder[=s]   com --shots: os prints saem s segundos (0,15) depois de cada poder do jogador
-#   --mira              com --shots: mostra a mira do jogador no print (segue a mira do bot)
-#   --classe=<nome>     o jogador começa nessa classe (config/classes/<nome>.tres), para prints
-#   --filme=<pasta>     roteiro fixo com o jogador (golpe, dash, pulo, pancada,
-#                       morte) salvando um quadro a cada 2: prancha de animação
-#                       (com --classe=<nome>, filma essa classe; senão o Samurai)
-#   --pisca=<pasta>     câmera do jogo sobre a praça do pátio azul andando 1 cm por
-#                       quadro (PISCA_PASSO=m no ambiente muda): salva pisca.jpg com os
-#                       pixels que mudaram de um quadro para o outro em vermelho e
-#                       imprime quantos (chão piscando: z-fighting, desenho fino demais)
-#                       PISCA_FOCO=x,z mira em outro ponto (ex.: um achado do QA do mapa)
-#   --perf=N            mede o desempenho na qualidade N (0-3): a cada 5 s imprime
-#                       ms de CPU por quadro, draw calls, triângulos e objetos
-#   --menu=inicio|pausa com --autoplay: abre essa tela por cima da partida, sem
-#                       pausar (prints da interface)
+#   --classe=<nome>     o jogador (e, online, todo humano) começa nessa classe
+#   --torreta=<estilo>  visual da torreta (prancha)
 #   --testes            roda os testes de regra (tests/regras.gd) e sai com 0/1
 #   --varredura-poderes Q, E e R das classes com inimigo alinhado (tests/varredura_poderes.gd), sai 0/1
 #   --varredura-aliados idem com aliado ferido, caído e distante (tests/varredura_aliados.gd), sai 0/1
-#   --qa-mapa=<pasta>   QA automático do mapa (tests/qa_mapa.gd): qa_mapa.txt
-#   --vitrine=<pasta>   com --classe: câmera parada, 3 alvos, o jogador faz 3 ataques,
-#                       o Q e o E; salva 1 PNG a cada 3 quadros (GIF antes/depois)
-#                       (até 30 linhas) e, com tela, qa_mapa.jpg; implica --autoplay
+#   --qa-mapa=<pasta>   QA automático do mapa (tests/qa_mapa.gd): qa_mapa.txt; implica --autoplay
 # Ex.: godot --path . -- --autoplay --shots=/tmp/prints
 var _autoplay := false
 ## Modo teste (sandbox): só o jogador no mapa, todas as oficinas prontas e,
@@ -124,15 +107,8 @@ var time_jogador := Config.TEAM_BLUE
 var sandbox := false
 var arena_chapeus := false
 var _montando_sandbox := false
-## Arena de chapéus: o tambor, os inimigos gerados vivos e um id por inimigo.
-## [0] = Tambor de Desafio (classes base), [1] = Tambor dos Heróis (caminhos e heróis).
-var botoes_arena: Array[BotaoArena] = []
-var inimigos_arena: Array[Unit] = []
-var _inimigo_arena_n := 0
-var _arena_prova := 0.0  # --arena-prova=N: QA, tambor sozinho a cada N s
-var _arena_prova_t := 0.0
-## Teto de inimigos gerados vivos ao mesmo tempo (PC fraco aguenta).
-const ARENA_INIMIGOS_MAX := 6
+## Modo teste e Arena de chapéus (scripts/partida/modo_teste.gd).
+var modo_teste: ModoTeste
 var _variacoes := false
 var _variacoes_giro := 0
 ## --com-herois (com --variacoes): os heróis raros entram na lista de partida
@@ -145,46 +121,19 @@ var _eq_t := 0.0
 var _letreiros_t := 0.0
 var _poderes := false
 var _poderes_t := 2.0
-var _shots_dir := ""
 var pancada: Unit  # modo teste: inimigo de treino (Ciclo 2.26)
 var heroi_treino: Unit  # modo teste: herói inimigo para finalizar (Ciclo 2.34)
-var _mira_print := false
-var _menu_print := ""
-var _clipe_dir := ""  # --clipe=DIR --cena=NOME [--clipe-n=N]: grava um clipe do "Como jogar" (ClipeCenas)
-var _clipe_max := 40
-var _clipe_cena := ""
-var _tutorial_dir := ""  # --tutorial=DIR: print de cada aba do "Como jogar" e sai
-var _vista := ""
-var _print_poder := false
-var _print_atraso := 0.15
 var _classe_jogador := ""
 var _perf := false
-var _filme_dir := ""
-var _pisca_dir := ""
-var _pisca_f := 0
-var _pisca_imgs: Array[Image] = []
-var _pisca_quadro := -1
-var _filme_f := -1
-var _filme_y := 0.0
-var _vitrine_dir := ""
-var _vitrine_f := -1
-var _vitrine_p0 := Vector3.ZERO
-var _vitrine_alvos: Array[Unit] = []
 var _hud_t := 0.0
-var _perf_acc := {}
-var _perf_n := 0
-var _perf_t := 0.0
-var _perf_t0 := 0
-var _perf_censo := true
 ## --perf: microssegundos gastos por seção neste quadro (Unit soma aqui).
 var perf_secoes := {}
+## Modos de ferramenta (prints, filme, pranchas, --perf): null sem argumento deles.
+var ferramentas: Ferramentas
 var _testes := false  # --testes: roda tests/regras.gd e sai
 var _varredura := false  # --varredura-poderes / --varredura-aliados
 var _varredura_script := "res://tests/varredura_poderes.gd"
-var _prancha_rean_dir := ""  # --prancha-reanimar=DIR: fotos da reanimação (prancha)
-var _prancha_fin_dir := ""  # --prancha-finalizar=DIR: personalidades e finalização (Ciclo 2.34)
 var _qa_dir := ""
-var _shot_times: Array[float] = [4.0, 15.0, 30.0, 50.0, 75.0]
 
 ## Painel da escolha do caminho: só abre (e fica aberto) sem inimigo a esta distância.
 const ESCOLHA_BRIGA_R := 9.0
@@ -196,6 +145,8 @@ func _ready() -> void:
 	Engine.time_scale = 1.0  # reinício no meio de uma câmera lenta
 	randomize()
 	var semente := randi()
+	var resto: Array[String] = []  # argumentos das ferramentas (prints, filmes, pranchas)
+	modo_teste = ModoTeste.new(self)
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--autoplay":
 			_autoplay = true
@@ -212,7 +163,7 @@ func _ready() -> void:
 			# QA: com --autoplay --arena, bate no tambor a cada N s (prova o
 			# sorteio, a briga e o sumiço do inimigo sem ninguém no teclado).
 			arena_pedido = true
-			_arena_prova = maxf(float(arg.trim_prefix("--arena-prova=")), 1.0)
+			modo_teste.arena_prova = maxf(float(arg.trim_prefix("--arena-prova=")), 1.0)
 		elif arg.begins_with("--time="):
 			time_pedido = Config.TEAM_RED if arg.trim_prefix("--time=").begins_with("v") else Config.TEAM_BLUE
 		elif arg == "--variacoes":
@@ -226,46 +177,10 @@ func _ready() -> void:
 			_com_herois = true
 		elif arg == "--poderes":
 			_poderes = true
-		elif arg.begins_with("--perf="):
-			_perf = true
-			Settings.auto_quality = false
-			Settings.quality = int(arg.trim_prefix("--perf="))
-		elif arg.begins_with("--print-poder"):
-			_print_poder = true
-			if arg.contains("="):
-				_print_atraso = float(arg.get_slice("=", 1))
-		elif arg == "--mira":
-			_mira_print = true
 		elif arg.begins_with("--classe="):
 			_classe_jogador = arg.trim_prefix("--classe=")
 		elif arg.begins_with("--torreta="):
 			torreta_estilo = arg.trim_prefix("--torreta=")
-		elif arg.begins_with("--filme="):
-			_filme_dir = arg.trim_prefix("--filme=")
-		elif arg.begins_with("--pisca="):
-			_pisca_dir = arg.trim_prefix("--pisca=")
-			Settings.auto_quality = false
-		elif arg.begins_with("--vitrine="):
-			_vitrine_dir = arg.trim_prefix("--vitrine=")
-			Settings.auto_quality = false  # o xvfb é lento: sem isso cairia para a Mínima
-			Settings.quality = 2
-		elif arg.begins_with("--clipe="):
-			_clipe_dir = arg.trim_prefix("--clipe=")
-		elif arg.begins_with("--cena="):
-			_clipe_cena = arg.trim_prefix("--cena=")
-		elif arg.begins_with("--clipe-n="):
-			_clipe_max = int(arg.trim_prefix("--clipe-n="))
-		elif arg.begins_with("--tutorial="):
-			_tutorial_dir = arg.trim_prefix("--tutorial=")
-		elif arg == "--placar":
-			placar_print = true  # prints: placar (Tab) sempre aberto
-		elif arg.begins_with("--shots="):
-			_shots_dir = arg.trim_prefix("--shots=")
-			Settings.auto_quality = false  # o xvfb é lento: sem isso o print sairia na Mínima
-		elif arg.begins_with("--menu="):
-			_menu_print = arg.trim_prefix("--menu=")
-		elif arg.begins_with("--vista="):
-			_vista = arg.trim_prefix("--vista=")
 		elif arg.begins_with("--mapa="):
 			Settings.mapa = int(arg.trim_prefix("--mapa="))
 		elif arg.begins_with("--tema="):
@@ -283,19 +198,14 @@ func _ready() -> void:
 			_varredura = true
 			_varredura_script = "res://tests/varredura_aliados.gd"
 			arena_pedido = true
-		elif arg.begins_with("--prancha-finalizar="):
-			_prancha_fin_dir = arg.trim_prefix("--prancha-finalizar=")
-			sandbox_pedido = true
-			_autoplay = true
-		elif arg.begins_with("--prancha-reanimar="):
-			_prancha_rean_dir = arg.trim_prefix("--prancha-reanimar=")
-			sandbox_pedido = true
-			_autoplay = true
-			Settings.auto_quality = false
-			Settings.quality = 2
 		elif arg.begins_with("--qa-mapa="):
 			_qa_dir = arg.trim_prefix("--qa-mapa=")
 			_autoplay = true
+		else:
+			resto.append(arg)
+	ferramentas = Ferramentas.criar(self, resto)
+	if ferramentas:
+		add_child(ferramentas)
 	if OS.has_feature("web"):
 		var busca := str(JavaScriptBridge.eval("window.location.search", true))
 		if busca.contains("sandbox"):
@@ -318,8 +228,6 @@ func _ready() -> void:
 	Sorte.tick = 0
 	if _testes or _varredura:  # falha de teste reproduzível (caça 2026-11-19, TS-02)
 		print("SEMENTE: %d (repita com -- --semente=%d)" % [semente, semente])
-	if _print_poder:
-		_shot_times = [1e9, 1e9, 1e9, 1e9, 1e9, 1e9]  # quem marca a hora é o poder
 	arena = Arena.new()
 	arena.name = "Arena"
 	arena.leve = sandbox
@@ -433,39 +341,14 @@ func _ready() -> void:
 		Rede.iniciar_partida(self)
 		print("REDE partida: %d humanos, atraso %d quadros, eu = %d" % [Rede.jogadores().size(), Rede.atraso, Rede.id()])
 	if arena_chapeus:
-		_montar_arena_chapeus()
+		modo_teste.montar_arena_chapeus()
 	camera = CameraRig.new()
 	add_child(camera)
 	camera.target = player
 	camera.snap()
 	Fx.prewarm(self, player.global_position)
-	if _vista != "":
-		camera.set_process(false)
-		camera.set_physics_process(false)
-		camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-		if _vista == "mapa":
-			camera.fov = 50
-			camera.position = Vector3(0, 95, 62)
-			camera.look_at(Vector3(0, 0, 2))
-		elif _vista == "patio":
-			var cx := -arena.map.castle_distance
-			camera.fov = 42
-			camera.position = Vector3(cx, 0, 0) + Vector3(0, 21, 19) * 1.55
-			camera.look_at(Vector3(cx, 0, 0))
-		elif _vista == "torreta" and not torretas.is_empty():  # a 1ª torreta azul, com a câmera do jogo
-			var tp: Vector3 = torretas[0].global_position
-			camera.fov = 42
-			camera.position = tp + Config.cfg.camera_offset * 0.55
-			camera.look_at(tp + Vector3(0, 1.2, 0))
-		elif _vista.count(",") == 5:  # --vista=px,py,pz,ax,ay,az: câmera em p olhando para a
-			var v := _vista.split_floats(",")
-			camera.fov = 42
-			camera.position = Vector3(v[0], v[1], v[2])
-			camera.look_at(Vector3(v[3], v[4], v[5]))
-		else:
-			camera.fov = 45
-			camera.position = Vector3(-22, 22, 26)
-			camera.look_at(Vector3(-40, 2, 0))
+	if ferramentas:
+		ferramentas.depois_da_camera()
 
 	if _testes:
 		var t: Node = load("res://tests/regras.gd").new()
@@ -498,344 +381,31 @@ func _ready() -> void:
 	mira = Mira.new()
 	add_child(mira)
 	mira.setup(self)
-	mira.para_print = _mira_print
 	guia = GuiaConstrutor.new()
 	add_child(guia)
 	guia.setup(self)
 	var auto_q := AutoQuality.new()
 	auto_q.hud = hud
-	if _vista != "":
-		hud.visible = false
+	if ferramentas:
+		ferramentas.depois_do_hud()
 	add_child(auto_q)
 	if sandbox and not arena_chapeus:
-		_montar_sandbox()
+		modo_teste.montar_sandbox()
 	var menus := Menus.new()
 	add_child(menus)
 	menus.started.connect(_on_started)
 	if _autoplay:
 		_on_started()
-		if _menu_print != "":
-			menus.mostrar_para_print(_menu_print)
 	else:
 		menus.show_start()
-	if _tutorial_dir != "":
-		_prints_tutorial.call_deferred(menus)
-	if _prancha_rean_dir != "":
-		_prancha_reanimar.call_deferred()
-	if _prancha_fin_dir != "":
-		_prancha_finalizar.call_deferred()
-	if _clipe_dir != "":
-		var cc := ClipeCenas.new()
-		cc.game = self
-		cc.dir = _clipe_dir
-		cc.cena = _clipe_cena
-		cc.max_quadros = _clipe_max
-		add_child(cc)
-
-
-## --tutorial=DIR: fotografa cada seção do menu (tela inicial, Controles,
-## Configurações, Classes e cada aba do Como jogar) e sai.
-func _prints_tutorial(menus: Menus) -> void:
-	menus.mostrar_para_print("inicio")
-	var n := 0
-	for secao in ["jogar", "controles", "config", "classes"]:
-		menus._mostrar(secao)
-		for f in 20:
-			await get_tree().process_frame
-		get_viewport().get_texture().get_image().save_jpg("%s/menu_%d_%s.jpg" % [_tutorial_dir, n, secao], 0.85)
-		n += 1
-	# Com amigos: a entrada e uma sala cheia (amigos de mentira, só para o print).
-	menus._mostrar("amigos")
-	for f in 20:
-		await get_tree().process_frame
-	get_viewport().get_texture().get_image().save_jpg("%s/amigos_entrada.jpg" % _tutorial_dir, 0.85)
-	if Rede.criar_sala("Julio"):
-		for i in 4:
-			Rede._adicionar(100 + i, ["Pedro", "Ana", "Lucas", "Bia"][i])
-		Rede.jogadores()[100].pronto = true
-		Rede.jogadores()[102].pronto = true
-		Rede.sala_mudou.emit()
-		for f in 20:
-			await get_tree().process_frame
-		get_viewport().get_texture().get_image().save_jpg("%s/amigos_sala.jpg" % _tutorial_dir, 0.85)
-		Rede.sair()
-	# Uma ficha por classe (barras, textos e quadros de cada uma).
-	menus._mostrar("classes")
-	for s in PaginaClasses.lista():
-		menus._classes._mostrar(s)
-		for f in 20:
-			await get_tree().process_frame
-		get_viewport().get_texture().get_image().save_jpg("%s/classe_%s.jpg" % [_tutorial_dir, s.id], 0.85)
-	menus._mostrar("como_jogar")
-	var tabs: TabContainer = menus._tutorial._tabs
-	for i in tabs.get_tab_count():
-		tabs.current_tab = i
-		for f in 20:
-			await get_tree().process_frame
-		get_viewport().get_texture().get_image().save_jpg("%s/tutorial_%d.jpg" % [_tutorial_dir, i], 0.85)
-	get_tree().quit()
-
-
-## Arena de chapéus (Ciclo 2.29): fileiras com o chapéu de cada classe na
-## frente do portão do time do jogador (bases, depois caminhos, depois os
-## heróis raros em duas fileiras) e o Tambor de Desafio no meio do caminho.
-## O jogador nasce de frente para tudo.
-func _montar_arena_chapeus() -> void:
-	var t := time_jogador
-	var fr := arena.forward(t)
-	var lado := Vector3.UP.cross(fr).normalized()
-	var origem: Vector3 = arena.gate_spot[t]
-	var bases := Config.cfg.hat_classes()
-	var caminhos: Array[ClassStats] = []
-	for c in Config.cfg.todas_classes():
-		if c not in bases:
-			caminhos.append(c)
-	var herois: Array[ClassStats] = []
-	for c in bases:
-		for h in c.herois:
-			if h not in herois:
-				herois.append(h)
-	var meio := ceili(herois.size() / 2.0)
-	var fileiras: Array = [bases, caminhos, herois.slice(0, meio), herois.slice(meio)]
-	var tams: Array[int] = []
-	for f: Array in fileiras:
-		tams.append(f.size())
-	var posicoes := fileiras_arena(tams)
-	for f in fileiras.size():
-		for i in (fileiras[f] as Array).size():
-			var pv: Vector2 = posicoes[f][i]
-			var pad := HatPad.new()
-			add_child(pad)
-			pad.setup(t, fileiras[f][i], arena.clamp_to_arena(origem + fr * pv.x + lado * pv.y))
-			hat_pads.append(pad)
-	# Dois tambores, um de cada lado do caminho: o vermelho chama classe base
-	# (briga simples), o dourado chama caminho ou herói raro.
-	for k in 2:
-		var b := BotaoArena.new()
-		b.heroi = k == 1
-		add_child(b)
-		b.position = arena.clamp_to_arena(origem + fr * 3.0 + lado * (6.0 if k == 0 else -6.0))
-		b.look_at(b.position - fr)  # baquetas para as fileiras, frente para quem chega
-		botoes_arena.append(b)
-	if player:
-		player.global_position = arena.clamp_to_arena(origem + fr * 1.0)
-		player.reset_physics_interpolation()
-
-
-## Arena de chapéus: posições (avanço, lado) das fileiras de pads, cada uma
-## centrada no eixo do portão. Separada para o teste de regra conferir.
-## Números medidos no Rio das Lanternas: o portão fica a 21,5 m do castelo e
-## o rio começa em |x| = 9; com primeira = 7 e entre = 5,75 a última fileira
-## para a ~5 m da margem.
-static func fileiras_arena(tamanhos: Array[int], espaco := 4.5, primeira := 7.0, entre := 5.75) -> Array:
-	var out := []
-	for f in tamanhos.size():
-		var linha := []
-		for i in tamanhos[f]:
-			linha.append(Vector2(primeira + entre * f, (i - (tamanhos[f] - 1) * 0.5) * espaco))
-		out.append(linha)
-	return out
-
-
-## Arena de chapéus: [F] no tambor. Nasce um inimigo de classe sorteada
-## (qualquer uma, heróis inclusive) a 6 m na direção da mira do jogador.
-## Ele briga (BotBrain ATTACK) e, quando a espera de renascer acaba, some
-## em vez de voltar (Unit.descartavel).
-func _gerar_inimigo_arena(heroi := false) -> void:
-	var pool := Config.cfg.classes_arena_herois() if heroi else Config.cfg.hat_classes()
-	var cls: ClassStats = pool[Sorte.i() % pool.size()]
-	var inimigo := 1 - time_jogador
-	var dir: Vector3 = player.aim_dir
-	dir.y = 0.0
-	if dir.length() < 0.1:
-		dir = arena.forward(time_jogador)
-	dir = dir.normalized()
-	var pos := arena.clamp_to_arena(player.global_position + dir * 6.0)
-	var u := Unit.new()
-	_inimigo_arena_n += 1
-	u.name = "%s_arena_%d" % [Config.TEAM_NAMES[inimigo], _inimigo_arena_n]
-	u.descartavel = true
-	add_child(u)
-	u.setup(self, inimigo, false, cls)
-	u.global_position = pos
-	u.reset_physics_interpolation()
-	var bot := BotBrain.new()
-	bot.unit = u
-	bot.game = self
-	bot.role = BotBrain.Role.ATTACK
-	u.add_child(bot)
-	u.brain = bot
-	u.died.connect(_on_unit_died)
-	units.append(u)
-	inimigos_arena.append(u)
-	_log("arena inimigo %s (%d em campo, t=%.0fs)" % [cls.id, inimigos_arena_vivos(), _time])
-	var b := botoes_arena[1 if heroi else 0] if botoes_arena.size() == 2 else null
-	if b:
-		b.acionar()
-	Fx.pillar(self, pos, Config.team_color(inimigo), 2.2)
-	Fx.burst(self, pos + Vector3(0, 1.2, 0), Config.team_color(inimigo).lightened(0.3), 18, 6.0)
-	Sfx.play("renascer", pos, 0.04)
-	if hud:
-		hud.show_big("DUELO: %s!" % cls.display_name, Config.team_color(inimigo).lightened(0.35), 1.4)
-
-
-## Arena de chapéus: nível que cada classe veste na arena (base = 1,
-## caminho = nível máximo do mago, herói = um acima). Montado uma vez.
-var _arena_niveis := {}
-
-
-func _nivel_arena(id: StringName) -> int:
-	if _arena_niveis.is_empty():
-		for c in Config.cfg.hat_class_list:
-			_arena_niveis[c.id] = 1
-			for e in c.caminhos:
-				_arena_niveis[e.id] = Config.cfg.mago_nivel_max
-			for h in c.herois:
-				_arena_niveis[h.id] = Config.cfg.mago_nivel_max + 1
-	return int(_arena_niveis.get(id, 1))
+	if ferramentas:
+		ferramentas.depois_dos_menus(menus)
 
 
 ## Modo teste/arena: quem ganha Chi, Super e Q rápidos. O inimigo gerado
 ## pelo tambor fica no ritmo normal (senão soltava poder sem parar).
 func recarga_rapida(u: Unit) -> bool:
 	return sandbox and not u.descartavel
-
-
-## Inimigos do tambor ainda em campo (vivos ou caídos esperando sumir).
-func inimigos_arena_vivos() -> int:
-	var n := 0
-	for u in inimigos_arena:
-		if is_instance_valid(u):
-			n += 1
-	return n
-
-
-## Modo teste: todas as casas do time do jogador prontas (no primeiro
-## caminho; [F] sobe o nível e, no máximo, troca o caminho) e as
-## barraquinhas no nível 2.
-func _montar_sandbox() -> void:
-	_montando_sandbox = true
-	# Ciclo 2.22: casas do zero (barraquinhas no Nv1, madeira infinita, obra
-	# sandbox_obra_mult × mais rápida); a escolha do caminho vale (F5 = outra).
-	# Torretas dos dois lados de pé: a inimiga serve de treino de escudo.
-	for t in torretas:
-		t.concluir_ja()
-	_montando_sandbox = false
-	_aliado_de_treino()
-	_inimigo_de_treino()
-	_heroi_de_treino()
-	_montar_mostruario()
-
-
-## Modo teste (Ciclo 2.32): mostruário na frente do portão com os 5 itens em
-## fila e um espírito ao lado; o que for pego volta MOSTRUARIO_VOLTA s depois.
-const MOSTRUARIO_VOLTA := 2.5
-var _mostruario: Array = []  # [tipo ("espirito" ou item), posição, nó, espera]
-
-
-func _montar_mostruario() -> void:
-	var fr := arena.forward(time_jogador)
-	var lado := Vector3.UP.cross(fr).normalized()
-	var base: Vector3 = arena.gate_spot[time_jogador] + fr * 9.0
-	var tipos: Array = Pickup.KINDS.duplicate()
-	tipos.append("espirito")
-	for i in tipos.size():
-		_mostruario.append([tipos[i], base + lado * (i - 2.5) * 2.4, null, 0.0])
-
-
-func _tick_mostruario(delta: float) -> void:
-	for slot: Array in _mostruario:
-		var no: Variant = slot[2]  # pode já ter sido apagado (pego)
-		if is_instance_valid(no) and not (no as Node).is_queued_for_deletion() \
-				and (pickups.has(no) if slot[0] != "espirito" else cakes.has(no)):
-			continue
-		slot[3] -= delta
-		if slot[3] > 0.0:
-			continue
-		slot[3] = MOSTRUARIO_VOLTA
-		var p: Vector3 = slot[1]
-		p.y = arena.ground_y(p.x, p.z, p.y + 5.0)  # aqui a física já está de pé
-		slot[1] = p
-		if slot[0] == "espirito":
-			var c := Cake.new()
-			add_child(c)
-			c.global_position = slot[1]
-			cakes.append(c)
-			slot[2] = c
-		else:
-			var it := Pickup.new()
-			add_child(it)
-			it.setup(slot[0], slot[1])
-			pickups.append(it)
-			slot[2] = it
-
-
-## Modo teste: um aliado sem cérebro, caído na frente do portão, para treinar
-## a reanimação (Reanimar.treino: não renasce sozinho e cai de novo 4 s
-## depois de levantar).
-func _aliado_de_treino() -> void:
-	var u := Unit.new()
-	u.name = "%s_treino" % Config.TEAM_NAMES[time_jogador]
-	add_child(u)
-	u.setup(self, time_jogador, false, load("res://config/classes/guerreiro.tres"))
-	u.global_position = arena.gate_spot[time_jogador] + arena.forward(time_jogador) * 13.0
-	u.reset_physics_interpolation()
-	u.died.connect(_on_unit_died)
-	placar.registrar(u, time_jogador, 1, false)
-	units.append(u)
-	reanimar.treino(u)
-
-
-## Modo teste (Ciclo 2.26): Samurai inimigo de treino (BrainPancada) ao lado
-## do aliado caído: defende, bate e fica parado em ciclo, para treinar a guarda
-## que quebra, o rastro da barra, a borda do golpe forte e o respingo.
-func _inimigo_de_treino() -> void:
-	var inimigo := 1 - time_jogador
-	var u := Unit.new()
-	u.name = "%s_pancada" % Config.TEAM_NAMES[inimigo]
-	add_child(u)
-	u.setup(self, inimigo, false, load("res://config/classes/guerreiro.tres"))
-	var fr := arena.forward(time_jogador)
-	var lado := Vector3.UP.cross(fr).normalized()
-	var casa: Vector3 = arena.gate_spot[time_jogador] + fr * 13.0 + lado * 5.0
-	u.global_position = casa
-	u.reset_physics_interpolation()
-	var b := BrainPancada.new()
-	b.unit = u
-	b.game = self
-	b.casa = casa
-	u.add_child(b)
-	u.brain = b
-	u.died.connect(_on_unit_died)
-	placar.registrar(u, inimigo, 1, false)
-	units.append(u)
-	pancada = u
-
-
-## Modo teste (Ciclo 2.34): herói inimigo machucado e parado do outro lado do
-## Samurai de treino, para treinar a finalização (BrainHeroiTreino).
-func _heroi_de_treino() -> void:
-	var inimigo := 1 - time_jogador
-	var u := Unit.new()
-	u.name = "%s_heroi_treino" % Config.TEAM_NAMES[inimigo]
-	add_child(u)
-	u.setup(self, inimigo, false, load(BrainHeroiTreino.HEROIS[0]))
-	var fr := arena.forward(time_jogador)
-	var lado := Vector3.UP.cross(fr).normalized()
-	var casa: Vector3 = arena.gate_spot[time_jogador] + fr * 13.0 - lado * 5.0
-	u.global_position = casa
-	u.reset_physics_interpolation()
-	var b := BrainHeroiTreino.new()
-	b.unit = u
-	b.game = self
-	b.casa = casa
-	u.add_child(b)
-	u.brain = b
-	b.vestir()
-	u.died.connect(_on_unit_died)
-	placar.registrar(u, inimigo, 1, false)
-	units.append(u)
-	heroi_treino = u
 
 
 func _on_started() -> void:
@@ -852,115 +422,10 @@ func _on_started() -> void:
 	Sfx.start_music()
 
 
-func _process(delta: float) -> void:
-	if _perf:
-		_measure(delta)
 
 
-## --perf: média por quadro dos monitores do motor, impressa a cada 10 s.
-func _measure(delta: float) -> void:
-	var keys := {
-		"cpu_ms": Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
-		"fisica_ms": Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0,
-		"draw_calls": Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
-		"tris_mil": Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME) / 1000.0,
-		"objetos": Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME),
-		"nos": Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
-	}
-	for k in keys:
-		_perf_acc[k] = _perf_acc.get(k, 0.0) + keys[k]
-	_perf_n += 1
-	_perf_t += delta
-	if _perf_t >= 5.0:
-		if _perf_censo:
-			_perf_censo = false
-			_censo()
-		# FPS pelo relógio real (com --fixed-fps o delta é sempre 1/60).
-		var real := (Time.get_ticks_usec() - _perf_t0) / 1e6
-		_perf_t0 = Time.get_ticks_usec()
-		var out := "PERF t=%d fps=%.1f" % [int(_time), _perf_n / real]
-		for k in _perf_acc:
-			out += " %s=%.1f" % [k, _perf_acc[k] / _perf_n]
-		print(out)
-		_perf_acc.clear()
-		_perf_n = 0
-		_perf_t = 0.0
 
 
-## --perf: uma vez, conta o que a cena desenha, agrupado pelo dono (classe do
-## script do ancestral mais próximo com script): instâncias, superfícies,
-## passes (next_pass) e quem projeta sombra. Serve para achar quem come as
-## chamadas de desenho.
-func _censo() -> void:
-	var grupos := {}
-	var fila: Array[Node] = [get_tree().root]
-	while not fila.is_empty():
-		var n: Node = fila.pop_back()
-		fila.append_array(n.get_children())
-		var gi := n as GeometryInstance3D
-		if gi == null or not gi.is_visible_in_tree():
-			continue
-		var dono := n
-		while dono and dono.get_script() == null:
-			dono = dono.get_parent()
-		var nome := "?"
-		if dono:
-			var scr: Script = dono.get_script()
-			nome = scr.get_global_name() if scr.get_global_name() != "" else scr.resource_path.get_file()
-		nome += "/" + n.get_class()
-		var surfs := 1
-		var passes := 0
-		var mats: Array[Material] = []
-		if n is MeshInstance3D and (n as MeshInstance3D).mesh:
-			var mi := n as MeshInstance3D
-			surfs = mi.mesh.get_surface_count()
-			for si in surfs:
-				mats.append(mi.get_active_material(si))
-		elif n is MultiMeshInstance3D and (n as MultiMeshInstance3D).multimesh and (n as MultiMeshInstance3D).multimesh.mesh:
-			var mm := (n as MultiMeshInstance3D).multimesh
-			surfs = mm.mesh.get_surface_count()
-			for si in surfs:
-				mats.append(gi.material_override if gi.material_override else mm.mesh.surface_get_material(si))
-		else:
-			mats.append(gi.material_override)
-		for m in mats:
-			var mm: Material = gi.material_override if gi.material_override else m
-			var k := 1
-			while mm and mm.next_pass:
-				k += 1
-				mm = mm.next_pass
-			passes += k
-		var tris := 0
-		if n is MeshInstance3D and (n as MeshInstance3D).mesh:
-			tris = _tris_da_malha((n as MeshInstance3D).mesh)
-		elif n is MultiMeshInstance3D and (n as MultiMeshInstance3D).multimesh and (n as MultiMeshInstance3D).multimesh.mesh:
-			var mmx := (n as MultiMeshInstance3D).multimesh
-			tris = _tris_da_malha(mmx.mesh) * (mmx.visible_instance_count if mmx.visible_instance_count >= 0 else mmx.instance_count)
-		if nome.get_slice("/", 0) in OS.get_environment("CENSO_DETALHE").split(","):
-			print("CENSO.  %-50s surf=%d passes=%d tris=%d sombra=%s" % [String(n.get_path()).right(60), surfs, passes, tris,
-					gi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF])
-		var g: Dictionary = grupos.get(nome, {"inst": 0, "surf": 0, "passes": 0, "sombra": 0, "tris": 0})
-		g.inst += 1
-		g.surf += surfs
-		g.passes += passes
-		g.tris += tris * maxi(passes / maxi(surfs, 1), 1)
-		g.sombra += surfs if gi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF else 0
-		grupos[nome] = g
-	var chaves := grupos.keys()
-	chaves.sort_custom(func(a, b): return grupos[a].passes > grupos[b].passes)
-	print("CENSO (visíveis): dono/tipo  instâncias  superfícies  passes(=chamadas)  superfícies com sombra  mil tris×passes")
-	for k in chaves:
-		var g: Dictionary = grupos[k]
-		print("CENSO %-44s %5d %5d %5d %5d %7.1f" % [k, g.inst, g.surf, g.passes, g.sombra, g.tris / 1000.0])
-
-
-func _tris_da_malha(me: Mesh) -> int:
-	var tris := 0
-	for si in me.get_surface_count():
-		var arr := me.surface_get_arrays(si)
-		var idx = arr[Mesh.ARRAY_INDEX]
-		tris += (idx.size() if idx != null else (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()) / 3
-	return tris
 
 
 ## Começo calmo (inicio_calmo s): bots ficam na própria metade.
@@ -1001,31 +466,11 @@ func _physics_process(delta: float) -> void:
 	if _sinc and (_tick - 1) % 60 == 0:
 		# Estado depois do quadro anterior (o mesmo instante que a Rede compara).
 		print("SINC %d %d" % [_tick - 1, hash_estado()])
-	if _perf:
-		for k in perf_secoes:
-			_perf_acc["us_" + k] = _perf_acc.get("us_" + k, 0.0) + perf_secoes[k]
-			perf_secoes[k] = 0
 	if not game_over:
 		tempo_partida += delta  # relógio do placar: para no fim da partida
 		_relogio(delta)
-	# Print do HUD novo (Ciclo 2.25): HUD_TESTE=1 com --sandbox --shots=DIR abre
-	# a morte súbita aos 2 s e mostra um triplo aos 14,6 s (print dos 15 s).
-	if _shots_dir != "" and sandbox and OS.get_environment("HUD_TESTE") != "":
-		if _time >= 2.0 and _time - delta < 2.0:
-			abrir_morte_subita()
-		if _time >= 14.6 and _time - delta < 14.6:
-			_multikill(player, 3, Placar.bonus_degrau(3, Config.cfg))
-	# Print da porrada (Ciclo 2.26): PORRADA_TESTE=1 com --sandbox --shots=DIR.
-	if _shots_dir != "" and sandbox and OS.get_environment("PORRADA_TESTE") != "" and pancada:
-		_porrada_teste(delta)
-	if _shots_dir != "" and not _shot_times.is_empty() and _time >= _shot_times[0]:
-		_take_shot()
-	if _filme_dir != "" and _time >= 3.0:
-		_filme()
-	if _pisca_dir != "" and _time >= 1.0:
-		_pisca()
-	if _vitrine_dir != "" and _time >= 1.0:
-		_vitrine()
+	if ferramentas:
+		ferramentas.quadro_fisica(delta)  # prints, filme, vitrine, pisca, --perf
 	if Input.is_action_just_pressed("restart") and not online:
 		get_tree().reload_current_scene()
 		return
@@ -1056,13 +501,8 @@ func _physics_process(delta: float) -> void:
 			_poderes_t = 4.0
 			for u in units:
 				u.fill_power()
-	if arena_chapeus and _arena_prova > 0.0 and not game_over:
-		# QA (--arena-prova=N): o tambor toca sozinho de N em N segundos.
-		_arena_prova_t -= delta
-		if _arena_prova_t <= 0.0:
-			_arena_prova_t = _arena_prova
-			if inimigos_arena_vivos() < ARENA_INIMIGOS_MAX:
-				_gerar_inimigo_arena(_inimigo_arena_n % 2 == 1)
+	if arena_chapeus and modo_teste.arena_prova > 0.0 and not game_over:
+		modo_teste.tick_arena_prova(delta)
 	if sandbox:
 		# Modo teste: Chi e Super enchem rápido para testar E e R toda hora
 		# (só para quem testa: o inimigo da arena carrega no ritmo normal).
@@ -1088,127 +528,9 @@ func _physics_process(delta: float) -> void:
 		minimapa.alvo_guia = guia.alvo
 
 
-## --prancha-finalizar=DIR (modo teste, xvfb, Ciclo 2.34): para cada
-## personalidade o jogador (sem cérebro) fica parado ao lado do herói de treino,
-## corre de lado, derruba o herói e segura [F]; cada momento vira um JPG em DIR
-## (N-personalidade-parado/correndo/golpe.jpg).
-const PRANCHA_PERS := [["pesado", "ronin_oni"], ["samurai", "guerreiro"], ["ninja", "arqueiro"], ["atirador", "arqueiro_yumi"],
-		["trapalhao", "construtor"], ["curioso", "kitsune"], ["sereno", "kitsune_luz"], ["predador", "kitsune_sombria"]]
-
-func _prancha_finalizar() -> void:
-	DirAccess.make_dir_recursive_absolute(_prancha_fin_dir)
-	var h := heroi_treino
-	var p := player
-	p.brain = null
-	p.move_intent = Vector3.ZERO
-	p.wants_attack = false
-	p.wants_block = false
-	var off0: Vector3 = Config.cfg.camera_offset
-	Config.cfg.camera_offset = off0 * 0.42
-	var real := func(t: float) -> void:
-		await get_tree().create_timer(t, true, false, true).timeout
-	var foto := func(nome: String) -> void:
-		await RenderingServer.frame_post_draw
-		get_viewport().get_texture().get_image().save_jpg("%s/%s.jpg" % [_prancha_fin_dir, nome], 0.88)
-	await real.call(2.2)
-	for i in PRANCHA_PERS.size():
-		var par: Array = PRANCHA_PERS[i]
-		var nome := "%d-%s" % [i + 1, par[0]]
-		if not h.alive:
-			h._respawn_t = 0.01
-		var limite := 0
-		while (not h.alive or not h.stats.heroi) and limite < 400:
-			limite += 1
-			await get_tree().physics_frame
-		await get_tree().physics_frame
-		p.set_class(load("res://config/classes/%s.tres" % par[1]))
-		p.global_position = h.global_position + Vector3(-1.5, 0, 0.5)
-		p.reset_physics_interpolation()
-		p.aim_dir = Vector3(1, 0, -0.3).normalized()
-		p.move_intent = Vector3.ZERO
-		camera.snap()
-		await real.call(1.3)
-		await foto.call(nome + "-1-parado")
-		p.move_intent = Vector3(0, 0, 1)
-		await real.call(0.75)
-		await foto.call(nome + "-2-correndo")
-		p.move_intent = Vector3.ZERO
-		p.global_position = h.global_position + Vector3(-1.3, 0, 0.4)
-		p.reset_physics_interpolation()
-		p.aim_dir = Vector3(1, 0, -0.3).normalized()
-		camera.snap()
-		h._intocavel_t = 0.0
-		h._nao_cai_usado = true
-		h.take_damage(h.hp + 999.0, p, Vector3(1, 0, 0))
-		await real.call(1.0)
-		p.wants_reanimar = true
-		limite = 0
-		while not h.finalizado and limite < 300:
-			limite += 1
-			await get_tree().physics_frame
-		await real.call(0.16)
-		await foto.call(nome + "-3-golpe")
-		p.wants_reanimar = false
-		await real.call(1.2)
-	Config.cfg.camera_offset = off0
-	camera.snap()
-	print("PRANCHA FINALIZAR OK")
-	get_tree().quit()
 
 
-## --prancha-reanimar=DIR (modo teste, xvfb): o jogador sem cérebro reanima o
-## aliado de treino num roteiro fixo e cada momento vira um JPG em DIR:
-## caído esperando, arrastando, Kitsune abençoando, levantando, câmera do jogo.
-func _prancha_reanimar() -> void:
-	DirAccess.make_dir_recursive_absolute(_prancha_rean_dir)
-	var c := reanimar.boneco_treino
-	var p := player
-	p.brain = null
-	p.move_intent = Vector3.ZERO
-	p.wants_attack = false
-	p.wants_block = false
-	var off0: Vector3 = Config.cfg.camera_offset
-	Config.cfg.camera_offset = off0 * 0.42
-	p.set_class(load("res://config/classes/guerreiro.tres"))
-	p.global_position = c.global_position + Vector3(-1.3, 0, 0.5)
-	p.reset_physics_interpolation()
-	p.aim_dir = Vector3(1, 0, 0)
-	camera.snap()
-	var foto := func(nome: String) -> void:
-		await RenderingServer.frame_post_draw
-		get_viewport().get_texture().get_image().save_jpg("%s/%s.jpg" % [_prancha_rean_dir, nome], 0.88)
-	await get_tree().create_timer(2.2).timeout
-	await foto.call("1-caido-esperando")
-	p.wants_reanimar = true
-	await get_tree().create_timer(0.2).timeout
-	p.move_intent = Vector3(-1, 0, -0.3).normalized()
-	await get_tree().create_timer(1.2).timeout
-	await foto.call("2-arrastando")
-	await get_tree().create_timer(1.25).timeout
-	p.move_intent = Vector3.ZERO
-	var limite := 0
-	while not c.alive and limite < 400:
-		limite += 1
-		await get_tree().physics_frame
-	p.wants_reanimar = false
-	await get_tree().create_timer(0.3).timeout
-	await foto.call("4-levantando")
-	limite = 0
-	while c.alive and limite < 400:
-		limite += 1
-		await get_tree().physics_frame
-	p.set_class(load("res://config/classes/kitsune_luz.tres"))
-	p.global_position = c.global_position + Vector3(-1.2, 0, 0.6)
-	p.reset_physics_interpolation()
-	await get_tree().create_timer(1.2).timeout
-	p.wants_reanimar = true
-	await get_tree().create_timer(1.0).timeout
-	await foto.call("3-kitsune-abencoando")
-	Config.cfg.camera_offset = off0
-	camera.snap()
-	await get_tree().create_timer(0.25).timeout
-	await foto.call("5-camera-do-jogo")
-	get_tree().quit()
+
 
 
 ## Partida simulada: a cada 30 s, o ciclo da madeira de cada time (para
@@ -1237,239 +559,21 @@ func _log(msg: String) -> void:
 		print(msg)
 
 
-## --filme: o jogador (sem cérebro) faz um roteiro fixo, de lado para a
-## câmera, e cada 2 quadros vira um PNG.
-## --pisca=DIR: mede o "chão piscando". Com a câmera andando 1 cm por quadro
-## (~0,3 px na tela), só bordas e desenhos mais finos que ~3 px mudam de cor de um
-## quadro para o outro: é o que o olho vê como piscar/tremer ao andar (desenho
-## abaixo de Nyquist, ou faces no mesmo plano brigando na profundidade).
-func _pisca() -> void:
-	var foco := arena.to_world(Config.TEAM_BLUE, -4.0, 0.0)
-	if OS.has_environment("PISCA_FOCO"):  # "x,z" no mundo (conferir um achado do QA do mapa)
-		var xz := OS.get_environment("PISCA_FOCO").split(",")
-		foco = Vector3(float(xz[0]), 0.0, float(xz[1]))
-	if _pisca_f == 0:
-		player.brain = null
-		player.move_intent = Vector3.ZERO
-		player.visible = false
-		hud.visible = false
-		mira.visible = false
-		camera.set_process(false)
-		camera.set_physics_process(false)
-		camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-		camera.fov = Config.cfg.camera_fov
-	# Roda na física: no xvfb (lento) vários passos de física cabem num quadro
-	# desenhado, e capturar a cada passo comparava a MESMA imagem com ela mesma
-	# (dava 0 pixels sempre; achado na caça aos bugs 2026-11-15). Um passo de
-	# câmera por quadro desenhado: a imagem capturada é a do passo anterior.
-	if Engine.get_frames_drawn() == _pisca_quadro:
-		return
-	_pisca_quadro = Engine.get_frames_drawn()
-	if _pisca_f >= 6:  # os primeiros quadros ainda trocam de câmera e escondem a interface
-		_pisca_imgs.append(get_viewport().get_texture().get_image())
-	var passo := float(OS.get_environment("PISCA_PASSO")) if OS.has_environment("PISCA_PASSO") else 0.01
-	camera.global_position = foco + Config.cfg.camera_offset + Vector3(passo * _pisca_f, 0, 0)
-	camera.look_at(foco)
-	_pisca_f += 1
-	if _pisca_imgs.size() < 6:
-		return
-	var base: Image = _pisca_imgs[0].duplicate()
-	var w := base.get_width()
-	var h := base.get_height()
-	var mudou := 0
-	var marca := Image.create(w, h, false, Image.FORMAT_L8)
-	for i in range(1, _pisca_imgs.size()):
-		var ant: Image = _pisca_imgs[i - 1]
-		var img: Image = _pisca_imgs[i]
-		for y in h:
-			for x in w:
-				if marca.get_pixel(x, y).r > 0.5:
-					continue
-				var a := ant.get_pixel(x, y)
-				var b := img.get_pixel(x, y)
-				if absf(a.r - b.r) + absf(a.g - b.g) + absf(a.b - b.b) > 0.12:
-					marca.set_pixel(x, y, Color.WHITE)
-					mudou += 1
-	for y in h:
-		for x in w:
-			if marca.get_pixel(x, y).r > 0.5:
-				base.set_pixel(x, y, Color(1, 0.1, 0.1))
-	DirAccess.make_dir_recursive_absolute(_pisca_dir)
-	base.save_jpg(_pisca_dir.path_join("pisca.jpg"), 0.85)
-	if OS.has_environment("PISCA_TUDO"):
-		for i in _pisca_imgs.size():
-			_pisca_imgs[i].save_png(_pisca_dir.path_join("pisca_%d.png" % i))
-	print("PISCA: %d pixels de %d mudaram com a câmera andando %.0f mm por quadro (%.2f%%)" % [mudou, w * h, passo * 1000, 100.0 * mudou / (w * h)])
-	get_tree().quit()
 
 
-func _filme() -> void:
-	_filme_f += 1
-	var f := _filme_f
-	var p := player
-	var lado := Vector3(-1, 0, 0)
-	if f == 0:
-		p.brain = null
-		p.move_intent = Vector3.ZERO
-		p.aim_dir = lado
-		p.set_class(load("res://config/classes/%s.tres" % (_classe_jogador if _classe_jogador != "" else "guerreiro")))
-		p.fill_power()
-		# Câmera parada, baixa e de lado, perto do boneco.
-		hud.visible = false
-		camera.set_process(false)
-		camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-		camera.fov = 30
-		camera.near = 6.5  # corta o que estiver entre a câmera e o boneco
-		_filme_y = p.global_position.y
-	# A câmera acompanha o boneco de lado só no chão (o pulo aparece), sem
-	# suavizar, para comparar quadros.
-	var foco := Vector3(p.global_position.x, _filme_y, p.global_position.z)
-	camera.global_position = foco + Vector3(0, 3.5, 9.0)
-	camera.look_at(foco + Vector3(0, 1.2, 0))
-
-	match f:
-		10:
-			p._attack()
-		50:
-			p.move_intent = lado
-			p._start_dodge()
-		66:
-			p.move_intent = Vector3.ZERO
-		100:
-			p.launch(9.0)
-		160:
-			p.take_damage(4.0, null, -lado, 1.5, true)
-		200:
-			p.take_damage(9999.0, null, -lado, 1.0, true)
-		270:
-			get_tree().quit()
-	if f % 2 == 0:
-		get_viewport().get_texture().get_image().save_png("%s/f_%03d.png" % [_filme_dir, f])
 
 
-## --vitrine: o mesmo roteiro para qualquer classe (3 ataques, Q, E) com
-## câmera fixa e alvos parados que não morrem. Rodar no commit antigo e no
-## novo dá o GIF antes/depois de cada poder.
-func _vitrine() -> void:
-	_vitrine_f += 1
-	var f := _vitrine_f
-	var p := player
-	var frente := Vector3(1, 0, 0)
-	var corpo := p.stats.attack_kind == "melee"
-	if f == 0:
-		_vitrine_p0 = Vector3(-24, 0, 0)
-		_vitrine_p0.y = arena.ground_y(_vitrine_p0.x, _vitrine_p0.z, 10.0)
-		hud.visible = false
-		camera.set_process(false)
-		camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-		camera.fov = 42
-		var aliado: Unit = null
-		for u in units:
-			if u == p:
-				continue
-			if u.team != p.team and _vitrine_alvos.size() < 3:
-				u.brain = null
-				_vitrine_alvos.append(u)
-			elif u.team == p.team and aliado == null:
-				aliado = u  # aliado ferido (cura, bênção, corrida)
-			else:
-				u.process_mode = Node.PROCESS_MODE_DISABLED
-				u.global_position = Vector3(0, -40, 0)
-				u.visible = false
-		aliado.brain = null
-		_vitrine_alvos.append(aliado)
-		p.brain = null
-	if f == 0 or f == 150 or f == 290:
-		p.global_position = _vitrine_p0
-		p.reset_physics_interpolation()
-		var perto := 2.2 if corpo else 8.0
-		var lugares := [Vector3(perto, 0, -0.9), Vector3(perto + 0.6, 0, 1.0), Vector3(perto + 2.0, 0, 0.1), Vector3(-1.6, 0, 1.8)]
-		for i in _vitrine_alvos.size():
-			var u := _vitrine_alvos[i]
-			u.global_position = _vitrine_p0 + lugares[i]
-			u.reset_physics_interpolation()
-			u.move_intent = Vector3.ZERO
-			u.aim_dir = -frente if i < 3 else frente
-	var foco := _vitrine_p0 + frente * (1.6 if corpo else 4.6)
-	# VITRINE_LONGE=1: a câmera da partida (confere tamanho e leitura de longe).
-	camera.global_position = foco + (Config.cfg.camera_offset if OS.get_environment("VITRINE_LONGE") != "" else Vector3(0, 6.2, 8.0))
-	camera.look_at(foco + Vector3(0, 0.8, 0))
-	p.move_intent = Vector3.ZERO
-	p.aim_dir = frente
-	p.aim_point = _vitrine_p0 + frente * (3.0 if corpo else 9.0)
-	for i in _vitrine_alvos.size():
-		var u := _vitrine_alvos[i]
-		if not u.alive:
-			continue
-		u.hp = maxf(u.hp, u.max_hp() * (0.5 if i == 3 else 0.6))
-		if i == 3 and f < 150:
-			u.hp = u.max_hp() * 0.4
-	match f:
-		20, 70, 120:  # 50 quadros: cabe a recarga de qualquer classe e o combo não zera
-			p.wants_attack = true
-		21, 71, 121:
-			p.wants_attack = false
-		165:
-			p.wants_quick = true
-		300:
-			p.fill_power()
-			p.wants_power = true
-		470:  # depois do E acabar (o Redemoinho segura o super enquanto gira)
-			p.super_carga = p.POWER_MAX
-			p.wants_super = true
-		600:
-			p.wants_attack = p.stats.super_tipo == "sombra"  # golpe saindo da sombra
-		601:
-			p.wants_attack = false
-		700:
-			get_tree().quit()
-
-	if f % 3 == 0 and f >= 6:
-		get_viewport().get_texture().get_image().save_png("%s/f_%03d.png" % [_vitrine_dir, f / 3])
 
 
-## Roteiro do print da porrada: jogador na frente do Samurai de treino; quebra
-## a guarda dele, respinga tinta e leva um golpe forte (borda vermelha).
-func _porrada_teste(delta: float) -> void:
-	var u := pancada
-	var a := func(t: float) -> bool: return _time >= t and _time - delta < t
-	if a.call(1.5):
-		_shot_times = [4.4, 6.45]
-		player.brain = null  # parado: quem mexe é o roteiro
-		player.move_intent = Vector3.ZERO
-		player.wants_attack = false
-		u.guarda = 0.0
-		player.global_position = u.global_position - arena.forward(time_jogador) * 1.6
-		player.reset_physics_interpolation()
-		camera.snap()
-	var dir := (u.global_position - player.global_position)
-	dir.y = 0.0
-	dir = dir.normalized()
-	for k in 4:
-		if a.call(2.6 + k * 0.35):
-			u._visual.rotation.y = atan2(-dir.x, -dir.z)
-			u._blocking = u._guarda_trava_t <= 0.0
-			u._block_t = 5.0
-			u.take_damage(u.max_hp() * 0.19, player, dir, 1.0, true)
-	for k in 3:
-		if a.call(4.05 + k * 0.1):
-			u.take_damage(u.max_hp() * 0.08, player, (dir + Vector3(Sorte.r(-0.6, 0.6), 0, 0)).normalized(), 1.0, true)
-	if a.call(6.35):
-		player.take_damage(30.0, u, -dir, 1.4, true)
 
 
-func _take_shot() -> void:
-	var t: float = _shot_times.pop_front()
-	var img := get_viewport().get_texture().get_image()
-	img.save_png("%s/shot_%03d.png" % [_shots_dir, int(t)])
-	if _shot_times.is_empty():
-		get_tree().quit()
 
 
 # --- Regras -------------------------------------------------------------------
 
 func _rules() -> void:
 	var hint := ""
+	var cfg := Config.cfg
 	# Jogador na mão da catapulta: F lança (o corpo é da catapulta até cair).
 	for cat in catapultas:
 		var pas: Unit = cat.passageiro
@@ -1499,7 +603,7 @@ func _rules() -> void:
 		var own_p := princesses[u.team]
 
 		# Marcar ponto: chegar ao próprio pedestal carregando a princesa inimiga.
-		if u.carried_princess and pos.distance_to(arena.princess_spot[u.team]) < 4.5:
+		if u.carried_princess and pos.distance_to(arena.princess_spot[u.team]) < cfg.raio_pontuar:
 			_score_point(u)
 			return
 
@@ -1511,7 +615,7 @@ func _rules() -> void:
 		# Pegar a princesa inimiga: bots pegam sozinhos, o jogador aperta F.
 		# Arena de chapéus: inimigo do tambor fica na briga, não rouba máscara.
 		if not u.carried_princess and enemy_p.can_be_taken() and not u.descartavel \
-				and pos.distance_to(enemy_p.global_position) < 2.8:
+				and pos.distance_to(enemy_p.global_position) < cfg.raio_pegar_mascara:
 			if u.is_player:
 				hint = "[F] pegar a máscara!"
 			if not u.humano or wants_interact:
@@ -1522,14 +626,14 @@ func _rules() -> void:
 
 		# Devolver a própria princesa caída: ficar ao lado dela por um tempo,
 		# sem inimigo perto (disputa: aí o resgate para).
-		if own_p.state == Princess.State.DROPPED and pos.distance_to(own_p.global_position) < 2.5 \
+		if own_p.state == Princess.State.DROPPED and pos.distance_to(own_p.global_position) < cfg.raio_resgate \
 				and not _contested(own_p):
 			own_p.rescue(get_physics_process_delta_time())
 			if own_p.state == Princess.State.HOME:
 				placar.somar(u, "resgates")
 
 		# Alimentar a própria princesa.
-		if u.has_cake and own_p.state == Princess.State.HOME and pos.distance_to(own_p.global_position) < 4.0:
+		if u.has_cake and own_p.state == Princess.State.HOME and pos.distance_to(own_p.global_position) < cfg.raio_alimentar:
 			if own_p.feed():
 				u.has_cake = false
 				placar.somar(u, "almas")
@@ -1544,7 +648,7 @@ func _rules() -> void:
 				or (bot.role != BotBrain.Role.ATTACK and own_p.fatness < 1.0)
 		if takes_cake and not u.has_cake and not u.carried_princess:
 			for c in cakes:
-				if pos.distance_to(c.global_position) < 1.8:
+				if pos.distance_to(c.global_position) < cfg.raio_pegar_espirito:
 					u.has_cake = true
 					cakes.erase(c)
 					FxItens.hitodama_pego(self, c.global_position)
@@ -1558,7 +662,7 @@ func _rules() -> void:
 
 		# Itens no chão: qualquer um que encosta pega.
 		for it in pickups:
-			if pos.distance_to(it.global_position) < 1.6:
+			if pos.distance_to(it.global_position) < cfg.raio_pegar_item:
 				it.apply_to(u)
 				u.add_super(Config.cfg.super_por_item)
 				pickups.erase(it)
@@ -1593,21 +697,21 @@ func _rules() -> void:
 		# Arena de chapéus: [F] no Tambor de Desafio gera um inimigo aleatório.
 		var tambor: BotaoArena = null
 		if arena_chapeus and u.is_player and pad == null:
-			for b in botoes_arena:
+			for b in modo_teste.botoes_arena:
 				if pos.distance_to(b.global_position) < BotaoArena.RAIO:
 					tambor = b
 		if tambor:
-			var vivos := inimigos_arena_vivos()
+			var vivos := modo_teste.inimigos_arena_vivos()
 			hint = "[F] %s: inimigo %s  (%d/%d em campo)" % [tambor.nome(),
-					"de caminho ou herói raro" if tambor.heroi else "de classe base", vivos, ARENA_INIMIGOS_MAX]
+					"de caminho ou herói raro" if tambor.heroi else "de classe base", vivos, ModoTeste.ARENA_INIMIGOS_MAX]
 			if wants_interact:
-				if vivos >= ARENA_INIMIGOS_MAX:
+				if vivos >= ModoTeste.ARENA_INIMIGOS_MAX:
 					hud.show_big("Arena cheia: derrube um inimigo primeiro", Color(1, 0.6, 0.55), 1.5)
 				else:
-					_gerar_inimigo_arena(tambor.heroi)
+					modo_teste.gerar_inimigo_arena(tambor.heroi)
 
 	if sandbox:
-		hint = _regras_sandbox(hint)
+		hint = modo_teste.regras(hint)
 	_vigiar_escolha()
 
 	# Bairro da classe: tapetes (escolha do caminho), obra e níveis da casa.
@@ -1661,32 +765,6 @@ func respawn_atual() -> float:
 		return Config.cfg.respawn_time
 	return minf(Config.cfg.respawn_time + Config.cfg.respawn_cresce * _time / 60.0,
 			Config.cfg.respawn_max)
-
-
-## Modo teste: maquininhas repõem o chapéu em 1 s (as casas sobem pela
-## escada normal, com madeira infinita: Game.gastar_madeira).
-func _regras_sandbox(hint: String) -> String:
-	for pad in hat_pads:
-		pad.intervalo = minf(pad.intervalo, 1.0)
-	_tick_mostruario(get_physics_process_delta_time())
-	# Ciclo 2.25: o modo teste não tem relógio nem inimigos. [M] chama a morte
-	# súbita e [N] mostra o letreiro do multikill (duplo, triplo, multi ×4...).
-	if Input.is_action_just_pressed("teste_multikill") and player:
-		_teste_degrau = 2 if _teste_degrau >= 5 else _teste_degrau + 1
-		_multikill(player, _teste_degrau, Placar.bonus_degrau(_teste_degrau, Config.cfg))
-	# Ciclo 2.31: [L] liga o relógio a 1:10 do fim (último minuto leve,
-	# prorrogação e fim de verdade, como numa partida).
-	if Input.is_action_just_pressed("teste_relogio") and not _relogio_teste and not game_over:
-		_relogio_teste = true
-		tempo_partida = Config.cfg.tempo_limite - 70.0
-	if morte_subita < 0.0 and not game_over:
-		if Input.is_action_just_pressed("teste_morte_subita"):
-			abrir_morte_subita()
-		elif hint == "" and player and player.alive:
-			for p in princesses:
-				if player.global_position.distance_to(p.home) < 9.0:
-					hint = "Modo teste: [M] morte súbita  ·  [L] último minuto do relógio  ·  [N] letreiro do multikill"
-	return hint
 
 
 ## Obra e entrega de madeira das casas: mais rápidas no modo teste.
@@ -1890,7 +968,8 @@ func tempo_restante() -> float:
 
 
 func relogio_ligado() -> bool:
-	return Config.cfg.tempo_limite > 0.0 and (not sandbox or _relogio_teste) and _vitrine_dir == "" and _clipe_dir == "" and _filme_dir == ""
+	return Config.cfg.tempo_limite > 0.0 and (not sandbox or _relogio_teste) \
+			and (ferramentas == null or not ferramentas.sem_relogio())
 
 
 ## Alguma máscara fora do pedestal (na mão ou caída esperando voltar)?
@@ -2562,7 +1641,7 @@ func on_mago_nivel(of: Oficina) -> void:
 ## sem casa pronta = 2; classe do pátio = 1.
 func nivel_visual_mago(team: int, id: StringName) -> int:
 	if arena_chapeus:
-		return 5 if _nivel_arena(id) >= Config.cfg.mago_nivel_max else 1
+		return 5 if modo_teste.nivel_arena(id) >= Config.cfg.mago_nivel_max else 1
 	var evoluida := false
 	for of in oficinas:
 		if of.team != team:
@@ -2585,7 +1664,7 @@ func bonus_mago(team: int, id: StringName) -> int:
 	# Arena de chapéus: caminho veste no nível máximo e herói com o bônus
 	# cheio, para testar a forma final de cada classe.
 	if arena_chapeus:
-		var n := _nivel_arena(id)
+		var n := modo_teste.nivel_arena(id)
 		if n > Config.cfg.mago_nivel_max:
 			return Config.cfg.heroi_bonus_niveis
 		return maxi(mini(n, Config.cfg.mago_nivel_max) - 2, 0)
@@ -2614,7 +1693,7 @@ func nivel_casa(team: int, id: StringName) -> int:
 ## Super (R) travado: a casa da classe ainda abaixo de super_nivel_min (Ciclo
 ## 2.22). Fora de partida (vitrine, clipes, prints) nunca trava.
 func super_travado(team: int, id: StringName) -> bool:
-	if _vitrine_dir != "" or _clipe_dir != "" or _poderes:
+	if _poderes or (ferramentas and ferramentas.super_livre()):
 		return false
 	var n := nivel_casa(team, id)
 	return n > 0 and n < Config.cfg.super_nivel_min
@@ -2789,8 +1868,8 @@ func _alma_de_abate(morto: Unit, team: int) -> void:
 
 ## Chamado quando o jogador usa o poder (para o print do --print-poder).
 func on_player_power() -> void:
-	if _print_poder and _shots_dir != "" and not _shot_times.is_empty():
-		_shot_times[0] = _time + _print_atraso
+	if ferramentas:
+		ferramentas.on_player_power()
 
 
 var _slowmo_id := 0

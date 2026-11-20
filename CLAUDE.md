@@ -33,10 +33,13 @@ que importa = um `_check` em `tests/regras/<sistema>.gd`.
 ## Arquitetura
 
 - `scripts/game.gd`: monta tudo e aplica as regras por distância em `_rules()`.
+  Prints/filmes/pranchas = `scripts/dev/ferramentas.gd`; modo teste e arena =
+  `scripts/partida/modo_teste.gd` (nada disso volta para o game.gd).
 - `scripts/actors/unit.gd`: corpo do soldado. `PlayerBrain`/`BotBrain` só
   preenchem `move_intent`, `aim_dir`, `wants_*` (princípio 4).
 - Conteúdo é dado (`config/*.tres`, esquema em `scripts/data/*.gd`):
   - `game_config.tres`: regras, lista de classes do pátio, temas, mapa.
+  - `herois_regras.tres` (`HeroisConfig`): números dos heróis raros (`cfg.herois.X`).
   - `classes/*.tres` (`ClassStats`): modelo, partes, chapéu, números, textos dos
     poderes. Personagem novo: checklist em `docs/mapa-do-codigo.md` (não é só o .tres).
   - `temas/*.tres` (`ThemeConfig`): luz, céu, neblina, chão, modelos (`{cor}`
@@ -142,7 +145,7 @@ conversa a partir deste arquivo.
   teste" na tela inicial, `?sandbox` na web, `--sandbox`. Lá tudo fica disponível
   o tempo inteiro: oficinas prontas, maquininhas no nível 2, torretas de pé,
   catapultas, chapéu em 1 s, Q/E/R/catapulta recarregando rápido (grupo "Modo
-  teste" do `game_config.gd`; `Game._montar_sandbox`, `_regras_sandbox`). Feature
+  teste" do `game_config.gd`; `scripts/partida/modo_teste.gd`: `montar_sandbox`, `regras`). Feature
   nova na `main` = na mesma entrega, pronta no sandbox, e o CHANGELOG diz isso.
 - Fase 1 = polimento (bugs, sensação, equilíbrio, desempenho). Features novas
   (recursos, oficinas, catapulta) são Fase 2, uma conversa por feature.

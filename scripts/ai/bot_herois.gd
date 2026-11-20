@@ -50,7 +50,7 @@ static func rapida(b: BotBrain) -> bool:
 				return me.distance_to(casa_inimiga) < 45.0 or Sorte.f() < 0.3
 			return false
 		"dobrar":
-			if u.shikigami < Config.cfg.shikigami_max:
+			if u.shikigami < Config.cfg.herois.shikigami_max:
 				return b._nearest_enemy(7.0) == null or u.shikigami == 0
 			return alvo_ok and (alvo.hp_ratio() < 0.5 or Sorte.f() < 0.3)
 		"laco":
@@ -70,17 +70,17 @@ static func rapida(b: BotBrain) -> bool:
 				return b._nearest_enemy(2.5) == null  # parado tocando: não com alguém colado
 			return false
 		"flecha_arrancada":  # Ochimusha: cada carga é uma flecha; só gasta com alguém no cone
-			if alvo_ok and d <= Config.cfg.flecha_alcance + 0.3:
+			if alvo_ok and d <= Config.cfg.herois.flecha_alcance + 0.3:
 				_mirar(u, alvo.global_position)
 				return true
 			return false
 		"mordida":  # Shishimai: aliado ferido ganha Sorte; senão morde o inimigo da frente
 			for o in b.game.units:
 				if o != u and o.alive and o.team == u.team and o.hp_ratio() < 0.55 \
-						and o.global_position.distance_to(me) < Config.cfg.mordida_alcance:
+						and o.global_position.distance_to(me) < Config.cfg.herois.mordida_alcance:
 					_mirar(u, o.global_position)
 					return true
-			if alvo_ok and d < Config.cfg.mordida_alcance:
+			if alvo_ok and d < Config.cfg.herois.mordida_alcance:
 				_mirar(u, alvo.global_position)
 				return Sorte.f() < 0.7
 			return false
@@ -91,15 +91,15 @@ static func rapida(b: BotBrain) -> bool:
 				return alvo.carried_princess != null or Sorte.f() < 0.55
 			return false
 		"raizes":  # Kodama: a linha de raízes onde pega dois, ou quem leva a máscara
-			var comp := Config.cfg.raizes_comp
+			var comp := Config.cfg.herois.raizes_comp
 			if alvo_ok and d < comp + 0.5:
 				_mirar(u, alvo.global_position)
-				return _alinhados(b, alvo.global_position - me, comp, Config.cfg.raizes_larg) >= 2 or alvo.carried_princess != null or Sorte.f() < 0.6
+				return _alinhados(b, alvo.global_position - me, comp, Config.cfg.herois.raizes_larg) >= 2 or alvo.carried_princess != null or Sorte.f() < 0.6
 			return false
 		"para_raios":  # Kaminari-kozō: crava no meio de quem ele vai bater
 			if alvo_ok and d < u.stats.skill_radius + 3.0:
 				_mirar(u, alvo.global_position)
-				return b._count(1 - u.team, alvo.global_position, Config.cfg.pararaios_raio + 1.0) >= 2 or Sorte.f() < 0.5
+				return b._count(1 - u.team, alvo.global_position, Config.cfg.herois.pararaios_raio + 1.0) >= 2 or Sorte.f() < 0.5
 			return false
 		"poca":  # Predero: poça no pé de quem leva a máscara, de quem foge ou no meio do bolo
 			if not alvo_ok or d > u.stats.skill_radius + 1.0:
@@ -108,7 +108,7 @@ static func rapida(b: BotBrain) -> bool:
 			_mirar(u, adiante)
 			if alvo.carried_princess != null:
 				return true
-			return b._count(1 - u.team, alvo.global_position, Config.cfg.poca_raio) >= 2 or Sorte.f() < 0.45
+			return b._count(1 - u.team, alvo.global_position, Config.cfg.herois.poca_raio) >= 2 or Sorte.f() < 0.45
 	return false
 
 
@@ -170,7 +170,7 @@ static func poder(b: BotBrain) -> bool:
 			if not alvo_ok:
 				return false
 			var da := me.distance_to(alvo.global_position)
-			if da < 1.5 or da > Config.cfg.arrastao_dist * 0.8:
+			if da < 1.5 or da > Config.cfg.herois.arrastao_dist * 0.8:
 				return false
 			_mirar(u, alvo.global_position)
 			return alvo.carried_princess != null or Sorte.f() < 0.55
@@ -178,9 +178,9 @@ static func poder(b: BotBrain) -> bool:
 			var presos := 0
 			for o in b.game.units:
 				if o.alive and o.team != u.team and o._fio_t > 0.0 and o._fio_dono == u \
-						and o.global_position.distance_to(me) < Config.cfg.puxar_raio:
+						and o.global_position.distance_to(me) < Config.cfg.herois.puxar_raio:
 					presos += 1
-			return presos >= 1 or b._count(1 - u.team, me, Config.cfg.puxar_raio * 0.5) >= 2
+			return presos >= 1 or b._count(1 - u.team, me, Config.cfg.herois.puxar_raio * 0.5) >= 2
 		"bosque":  # árvores: entre ele e quem persegue a máscara, ou sombra para os feridos
 			var cfg := Config.cfg
 			var perseguidor := b._nearest_enemy(10.0)
@@ -194,7 +194,7 @@ static func poder(b: BotBrain) -> bool:
 			if feridos >= 2:
 				u.aim_point = me + u.aim_dir * 2.5
 				return true
-			if alvo_ok and me.distance_to(alvo.global_position) < cfg.bosque_dist and alvo.carried_princess != null:
+			if alvo_ok and me.distance_to(alvo.global_position) < cfg.herois.bosque_dist and alvo.carried_princess != null:
 				u.aim_point = alvo.global_position + Vector3(alvo.velocity.x, 0, alvo.velocity.z) * 0.8
 				return true
 			return alvo_ok and me.distance_to(alvo.global_position) < 6.0 and Sorte.f() < 0.3
@@ -206,9 +206,9 @@ static func poder(b: BotBrain) -> bool:
 			if u.carried_princess:
 				_mirar(u, b.game.arena.princess_spot[u.team])
 				return true
-			if alvo_ok and me.distance_to(alvo.global_position) < cfg.relampago_dist:
+			if alvo_ok and me.distance_to(alvo.global_position) < cfg.herois.relampago_dist:
 				_mirar(u, alvo.global_position)
-				return _alinhados(b, alvo.global_position - me, cfg.relampago_dist, cfg.relampago_larg) >= 2 or alvo.hp_ratio() < 0.4 or Sorte.f() < 0.4
+				return _alinhados(b, alvo.global_position - me, cfg.herois.relampago_dist, cfg.herois.relampago_larg) >= 2 or alvo.hp_ratio() < 0.4 or Sorte.f() < 0.4
 			return false
 		"andaime":  # Predero: cobertura contra quem atira de longe, ou entre a máscara e quem persegue
 			var perseguidor := b._nearest_enemy(10.0)
@@ -231,9 +231,9 @@ static func super_r(b: BotBrain) -> bool:
 	var cfg := Config.cfg
 	match u.stats.super_poder:
 		"dohyo":
-			return b._count(1 - u.team, me, cfg.dohyo_raio * 0.8) >= 2 and b._count(u.team, me, cfg.dohyo_raio) >= 2
+			return b._count(1 - u.team, me, cfg.herois.dohyo_raio * 0.8) >= 2 and b._count(u.team, me, cfg.herois.dohyo_raio) >= 2
 		"mergulho3":
-			return b._count(1 - u.team, me, cfg.mergulho3_raio) >= 2
+			return b._count(1 - u.team, me, cfg.herois.mergulho3_raio) >= 2
 		"mil_grous":
 			var alvo := b._target
 			if alvo == null or not alvo.alive or me.distance_to(alvo.global_position) > u.stats.power_radius:
@@ -243,40 +243,40 @@ static func super_r(b: BotBrain) -> bool:
 		"veu":
 			var fracos := 0
 			for o in b.game.units:
-				if o.alive and o.team == u.team and o.hp_ratio() < 0.5 and o.global_position.distance_to(me) <= cfg.veu_raio:
+				if o.alive and o.team == u.team and o.hp_ratio() < 0.5 and o.global_position.distance_to(me) <= cfg.herois.veu_raio:
 					fracos += 1
 			return fracos >= 3
 		"requiem":
-			return b._count(1 - u.team, me, cfg.requiem_raio) >= 3
+			return b._count(1 - u.team, me, cfg.herois.requiem_raio) >= 3
 		"carga_caidos":  # a linha de fantasmas: mira onde cabem dois ou mais
 			var alvo := b._target
-			if alvo == null or not alvo.alive or me.distance_to(alvo.global_position) > cfg.caidos_comp:
+			if alvo == null or not alvo.alive or me.distance_to(alvo.global_position) > cfg.herois.caidos_comp:
 				return false
 			_mirar(u, alvo.global_position)
-			return _alinhados(b, alvo.global_position - me, cfg.caidos_comp, cfg.caidos_larg * 0.5) >= 2 or alvo.carried_princess != null
+			return _alinhados(b, alvo.global_position - me, cfg.herois.caidos_comp, cfg.herois.caidos_larg * 0.5) >= 2 or alvo.carried_princess != null
 		"festa_vila":  # leão gigante: briga grande ou aliado caído para levantar
 			var caidos := 0
 			if b.game.reanimar:
 				for c in b.game.units:
 					if c.team == u.team and not c.alive and b.game.reanimar.pode_reanimar(c) and c.global_position.distance_to(me) < 6.0:
 						caidos += 1
-			return b._count(1 - u.team, me, 6.0) >= 2 and (caidos >= 1 or b._count(u.team, me, cfg.festa_sorte_raio) >= 2)
+			return b._count(1 - u.team, me, 6.0) >= 2 and (caidos >= 1 or b._count(u.team, me, cfg.herois.festa_sorte_raio) >= 2)
 		"casulo":
-			return b._count(1 - u.team, me, cfg.casulo_raio) >= 2
+			return b._count(1 - u.team, me, cfg.herois.casulo_raio) >= 2
 		"floresta":  # anel de gigantes: briga grande em volta ou o time ferido junto
 			var feridos := 0
 			for o in b.game.units:
-				if o.alive and o.team == u.team and o.hp_ratio() < 0.6 and o.global_position.distance_to(me) < cfg.floresta_raio * 0.8:
+				if o.alive and o.team == u.team and o.hp_ratio() < 0.6 and o.global_position.distance_to(me) < cfg.herois.floresta_raio * 0.8:
 					feridos += 1
-			return b._count(1 - u.team, me, cfg.floresta_raio * 0.7) >= 2 or (feridos >= 2 and b._count(1 - u.team, me, cfg.floresta_raio) >= 1)
+			return b._count(1 - u.team, me, cfg.herois.floresta_raio * 0.7) >= 2 or (feridos >= 2 and b._count(1 - u.team, me, cfg.herois.floresta_raio) >= 1)
 		"tambores":
-			return b._count(1 - u.team, me, cfg.tambores_raio) >= 2
+			return b._count(1 - u.team, me, cfg.herois.tambores_raio) >= 2
 		"saideira":  # chuva de garrafas onde o bolo inimigo está (melhor ainda com poça dele lá)
 			var alvo := b._target
-			if alvo == null or not alvo.alive or me.distance_to(alvo.global_position) > cfg.saideira_dist:
+			if alvo == null or not alvo.alive or me.distance_to(alvo.global_position) > cfg.herois.saideira_dist:
 				return false
 			_mirar(u, alvo.global_position)
-			var n := b._count(1 - u.team, alvo.global_position, cfg.saideira_raio)
+			var n := b._count(1 - u.team, alvo.global_position, cfg.herois.saideira_raio)
 			return n >= 2 or (n >= 1 and HeroisObra.poca_em(u, alvo.global_position) != null)
 	return false
 
