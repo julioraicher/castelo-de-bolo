@@ -1,5 +1,5 @@
 class_name Teia
-extends Node3D
+extends PecaDoMundo
 ## Teia da Jorogumo (Q, Heróis 2.27): fica no chão HeroisConfig.teia_tempo s.
 ## Inimigo que pisa fica preso teia_preso s (a mesma teia espera teia_espera s
 ## para prender a mesma pessoa de novo; quem está no dash passa). A dona em
@@ -7,30 +7,17 @@ extends Node3D
 ## Visual (FxHerois.malha_teia): raios e espiral de seda numa malha só, tecida
 ## do centro para fora ao nascer, com gotas de orvalho na cor do time.
 
-var dona: Unit
-var time := 0
 var raio := 2.1
-var nasceu := 0
-var indo := false
-var _game: Game
-var _vida := 10.0
 var _espera := {}  # Unit -> s até esta teia poder prender de novo
 
 
-func setup(game: Game, p_dona: Unit, pos: Vector3) -> void:
-	_game = game
-	dona = p_dona
-	time = p_dona.team
+func setup(game: Game, p_dono: Unit, pos: Vector3) -> void:
 	raio = Config.cfg.herois.teia_raio
-	_vida = Config.cfg.herois.teia_tempo
-	nasceu = Sorte.ms()
-	add_to_group("teias")
-	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	global_position = pos + Vector3(0, 0.05, 0)
+	_iniciar(game, p_dono, &"teias", Config.cfg.herois.teia_tempo, pos + Vector3(0, 0.05, 0))
 	rotation.y = Sorte.f() * TAU
 	FxHerois.malha_teia(self, raio, Config.team_color(time))
 	scale = Vector3(0.1, 1, 0.1)
-	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	var tw := _tween_fisica()
 	tw.tween_property(self, "scale", Vector3.ONE, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	FxHerois.teia_nasce(game, global_position, raio)
 
@@ -39,8 +26,8 @@ func _physics_process(delta: float) -> void:
 	if indo:
 		return
 	_vida -= delta
-	if _vida <= 0.0 or not is_instance_valid(dona):
-		sumir()
+	if _vida <= 0.0 or not is_instance_valid(dono):
+		sair()
 		return
 	for k in _espera.keys():
 		_espera[k] -= delta
@@ -56,25 +43,23 @@ func _physics_process(delta: float) -> void:
 		d.y = 0
 		if d.length() > raio:
 			continue
-		if u == dona:
+		if u == dono:
 			u._teia_t = 0.15
 			continue
 		if u.team == time or u._dodge_t > 0.0 or _espera.has(u):
 			continue
 		_espera[u] = cfg.herois.teia_espera
 		u.prender(cfg.herois.teia_preso)
-		u._fio_dono = dona
+		u._fio_dono = dono
 		u._fio_t = maxf(u._fio_t, cfg.herois.teia_preso + 0.6)
 		FxHerois.teia_prende(u)
 
 
 ## Some sozinha (tempo, troca por uma nova): os fios afrouxam e afundam.
-func sumir() -> void:
-	if indo:
+func sair() -> void:
+	if not _saindo():
 		return
-	indo = true
-	remove_from_group("teias")
-	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	var tw := _tween_fisica()
 	tw.tween_property(self, "scale", Vector3(1.15, 0.1, 1.15), 0.35)
 	tw.tween_callback(queue_free)
 
@@ -84,7 +69,7 @@ func queimar() -> void:
 	if indo:
 		return
 	FxHerois.teia_queima(_game, global_position, raio)
-	sumir()
+	sair()
 
 
 ## Vento: os fios arrebentam e voam.
@@ -92,4 +77,4 @@ func rasgar() -> void:
 	if indo:
 		return
 	FxHerois.teia_rasga(_game, global_position, raio)
-	sumir()
+	sair()

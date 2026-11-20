@@ -8,7 +8,7 @@ extends Node3D
 ## Silhueta própria (princípio 13): tambor com tachas douradas e duas
 ## baquetas cruzadas atrás; o botão afunda e volta ao ser apertado.
 
-## Distância para acionar (igual ao raio de pegar chapéu).
+## Distância para acionar ([F] perto do tambor).
 const RAIO := 2.6
 
 ## true = Tambor dos Heróis (definir antes de entrar na árvore).

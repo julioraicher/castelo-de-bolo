@@ -1,5 +1,5 @@
 class_name PocaCachaca
-extends Node3D
+extends PecaDoMundo
 ## Poça de cachaça do Predero (Herói 2.30): nasce do Q (garrafão, até poca_max
 ## por dono) ou das garrafas da Saideira (pocinha, não conta no limite).
 ## Inimigo do dono que pisa derrapa (HeroisObra.pisou: atrito × poca_atrito) e
@@ -8,14 +8,8 @@ extends Node3D
 ## a cachaça evapora. Garrafa do dono que cai nela espalha o estilhaço pela poça.
 ## Visual em FxObra.poca (mancha âmbar brilhando, bolhinhas; acesa: chamas).
 
-var dono: Unit
-var time := 0
 var raio := 2.6
 var pequena := false
-var indo := false
-var nasceu := 0
-var _game: Game
-var _vida := 8.0
 var _atraso := 0.0
 var _acesa_t := 0.0
 var _fogo_tick := 0.0
@@ -24,17 +18,10 @@ var _fogo_no: Node3D
 
 
 func setup(game: Game, p_dono: Unit, pos: Vector3, p_raio: float, tempo: float, atraso: float, p_pequena: bool) -> void:
-	_game = game
-	dono = p_dono
-	time = p_dono.team
 	raio = p_raio
 	pequena = p_pequena
-	_vida = tempo
 	_atraso = atraso
-	nasceu = Sorte.ms()
-	add_to_group("pocas_cachaca")
-	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	global_position = pos
+	_iniciar(game, p_dono, &"pocas_cachaca", tempo, pos)
 	_visual = FxObra.poca(self, raio, Config.team_color(time))
 	if _atraso > 0.0:
 		_visual.visible = false
@@ -78,7 +65,7 @@ func _physics_process(delta: float) -> void:
 		_tick_fogo(delta)
 		return
 	if _vida <= 0.0:
-		secar()
+		sair()
 		return
 	var tem_dono := is_instance_valid(dono)
 	for u in _game.units:
@@ -116,17 +103,15 @@ func _tick_fogo(delta: float) -> void:
 			u.take_damage(cfg.herois.poca_fogo_dano * 0.5 * (dono.damage_mult() if quem else 1.0), quem,
 					d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.2, false, "brasa", 1)
 	if _acesa_t <= 0.0:
-		secar(true)
+		sair(true)
 
 
 ## Acaba: seca (ou evapora queimada) e some.
-func secar(queimada := false) -> void:
-	if indo:
+func sair(queimada := false) -> void:
+	if not _saindo():
 		return
-	indo = true
-	remove_from_group("pocas_cachaca")
 	FxObra.poca_seca(self, raio, queimada)
-	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	var tw := _tween_fisica()
 	if _visual:
 		tw.tween_property(_visual, "scale", Vector3(0.2, 1.0, 0.2), 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	else:

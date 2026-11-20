@@ -241,3 +241,7 @@ func state_text() -> String:
 		_:
 			return "caída no chão"
 
+
+## Resumo para o SINC (Game.hash_partes, revisão 3b, IT-08): só estado de regra.
+func hash_estado() -> int:
+	return hash([global_position, state, fatness, _game.idx_unit(carrier), rescue_progress, _drop_t])

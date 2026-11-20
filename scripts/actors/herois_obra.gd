@@ -80,14 +80,8 @@ static func poca(u: Unit) -> bool:
 	if to.length() < 1.5:
 		to = Herois._dir_mira(u) * 3.0
 	var at := Herois.chao_valido(u, Herois.sem_parede(u, u.global_position, u.global_position + to.limit_length(u.stats.skill_radius)))
-	var minhas: Array = []
-	for n in u.get_tree().get_nodes_in_group("pocas_cachaca"):
-		var p := n as PocaCachaca
-		if p and p.dono == u and not p.indo and not p.pequena:
-			minhas.append(p)
-	minhas.sort_custom(func(a: PocaCachaca, b: PocaCachaca) -> bool: return a.nasceu < b.nasceu)
-	while minhas.size() >= cfg.herois.poca_max:
-		(minhas.pop_front() as PocaCachaca).secar()
+	PecaDoMundo.limitar(u.get_tree(), u, &"pocas_cachaca", cfg.herois.poca_max,
+			func(p: PecaDoMundo) -> bool: return not (p as PocaCachaca).pequena)
 	var voo := clampf(Vector2(at.x - u.global_position.x, at.z - u.global_position.z).length() / 18.0, 0.15, 0.45)
 	criar_poca(u, at, cfg.herois.poca_raio, cfg.herois.poca_tempo, voo, false)
 	u._play_upper("Throw", 1.5)
@@ -153,21 +147,9 @@ static func _abrir_espaco(u: Unit, a: Andaime, at: Vector3, dir: Vector3) -> voi
 
 ## Lenhador de outro time golpeando: o andaime mais perto no arco leva a machadada.
 static func cortar_andaime(by: Unit, dir: Vector3, alcance: float, arco: float) -> bool:
-	var melhor: Andaime = null
-	var dist := alcance + 0.5
-	for n in by.get_tree().get_nodes_in_group("andaimes"):
-		var a := n as Andaime
-		if a == null or a.indo or a.time == by.team:
-			continue
-		var to := a.global_position - by.global_position
-		to.y = 0
-		var d := maxf(to.length() - Config.cfg.herois.andaime_larg * 0.5, 0.0)
-		if d > dist:
-			continue
-		if d > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > arco * 0.5:
-			continue
-		dist = d
-		melhor = a
+	var melhor := Game.mais_perto_no_arco(by.get_tree().get_nodes_in_group("andaimes"), by, dir, alcance + 0.5, arco,
+			func(a: Andaime, d: float) -> float:
+				return INF if a.indo or a.time == by.team else maxf(d - Config.cfg.herois.andaime_larg * 0.5, 0.0)) as Andaime
 	if melhor == null:
 		return false
 	melhor.golpe(by)

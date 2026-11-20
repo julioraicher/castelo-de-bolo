@@ -721,7 +721,7 @@ func _rules() -> void:
 	# Construtor perto de uma maquininha nível 1: ela sobe com madeira.
 	if player.alive and hint == "" and player.lenhador() and not player.carried_tora:
 		for pad in hat_pads:
-			if pad.team == player.team and pad.nivel == 1 and pad.aceita_madeira and player.global_position.distance_to(pad.global_position) < HatPad.OBRA_RAIO:
+			if pad.team == player.team and pad.nivel == 1 and pad.aceita_madeira and player.global_position.distance_to(pad.global_position) < Config.cfg.raio_obra_maquina:
 				hint = "Nível 2 da maquininha de %s: faltam %d madeiras  ·  fique perto" % [pad.stats.display_name, pad.faltam_n2()]
 				break
 
@@ -765,6 +765,22 @@ func respawn_atual() -> float:
 		return Config.cfg.respawn_time
 	return minf(Config.cfg.respawn_time + Config.cfg.respawn_cresce * _time / 60.0,
 			Config.cfg.respawn_max)
+
+
+## Σ velocidade_obra dos Construtores do time a menos de `raio` m de `pos` (com
+## parado_vel > 0, só os quase parados), marcando-os construindo. Revisão 3b
+## (IT-02): torreta, maquininha e bairro tinham uma cópia cada. O raio, o
+## "parado" e o acelerador do modo teste continuam de cada peça (igualar muda
+## regra: decisão do Julio).
+func ritmo_obra(team: int, pos: Vector3, raio: float, parado_vel := 0.0) -> float:
+	var rate := 0.0
+	for u in units:
+		if u.alive and u.team == team and u.lenhador() and not u.carried_princess and not u.carried_tora \
+				and u.global_position.distance_to(pos) < raio \
+				and (parado_vel <= 0.0 or Vector2(u.velocity.x, u.velocity.z).length() < parado_vel):
+			rate += u.stats.velocidade_obra
+			u.building_t = 0.25
+	return rate
 
 
 ## Obra e entrega de madeira das casas: mais rápidas no modo teste.
@@ -1257,18 +1273,31 @@ func golpear_plantas(u: Unit, dir: Vector3, alcance: float, arco_deg: float) -> 
 
 ## Planta cortável (jovem ou adulta) mais perto, dentro do alcance e do arco.
 func planta_no_alcance(u: Unit, dir: Vector3, alcance: float, arco_deg: float) -> Planta:
-	var melhor: Planta = null
-	var melhor_d := alcance
-	for p in plantas:
-		var to := p.global_position - u.global_position
+	return mais_perto_no_arco(plantas, u, dir, alcance, arco_deg,
+			func(p: Planta, d: float) -> float: return INF if p.estagio == Planta.Estagio.BROTO else d) as Planta
+
+
+## Golpe no arco (revisão 3b, IT-06): `to` (sem altura) cai dentro de arco_deg em
+## volta de `dir`, ou está tão perto (até `encostado` m) que qualquer ângulo vale.
+static func no_arco(dir: Vector3, to: Vector3, d: float, arco_deg: float, encostado: float) -> bool:
+	return d <= encostado or rad_to_deg(dir.angle_to(to.normalized())) <= arco_deg / 2.0
+
+
+## A peça de `nos` mais perto de `u` no arco do golpe (plantas, árvore do Kodama,
+## andaime). `borda(n, d)` devolve a distância até a borda da peça (d = até o
+## centro, sem altura) ou INF para pular; dentro de 0,8 m vale qualquer ângulo.
+## No empate fica a última da lista (como era em cada cópia).
+static func mais_perto_no_arco(nos: Array, u: Unit, dir: Vector3, limite: float, arco_deg: float, borda: Callable) -> Node3D:
+	var melhor: Node3D = null
+	var dist := limite
+	for n: Node3D in nos:
+		var to := n.global_position - u.global_position
 		to.y = 0
-		var d := to.length()
-		if d > melhor_d or p.estagio == Planta.Estagio.BROTO:
+		var d: float = borda.call(n, to.length())
+		if d > dist or not no_arco(dir, to, d, arco_deg, 0.8):
 			continue
-		if d > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > arco_deg / 2.0:
-			continue
-		melhor = p
-		melhor_d = d
+		dist = d
+		melhor = n
 	return melhor
 
 
@@ -1334,7 +1363,7 @@ func _regras_madeira(u: Unit) -> String:
 			return ""
 		# A tora também serve direto numa torreta do time que ainda falta madeira.
 		for tor in torretas:
-			if tor.team == u.team and tor.faltam() > 0 and pos.distance_to(tor.global_position) < Torreta.RAIO_OBRA:
+			if tor.team == u.team and tor.faltam() > 0 and pos.distance_to(tor.global_position) < Config.cfg.raio_obra_torreta:
 				tor.receber_tora(u)
 				placar.somar(u, "madeira")
 				return ""
@@ -1482,9 +1511,7 @@ func golpear_torretas(u: Unit, dir: Vector3, alcance: float, arco_deg: float, da
 			continue
 		var to := t.global_position - u.global_position
 		to.y = 0
-		if to.length() > alcance + Torreta.RAIO_CORPO:
-			continue
-		if to.length() > 1.2 and rad_to_deg(dir.angle_to(to.normalized())) > arco_deg / 2.0:
+		if to.length() > alcance + Torreta.RAIO_CORPO or not no_arco(dir, to, to.length(), arco_deg, 1.2):
 			continue
 		t.take_hit(dano, u.team)
 		acertou = true
@@ -1920,11 +1947,48 @@ func hash_partes() -> PackedInt64Array:
 	var r := PackedInt64Array([hash([score, madeira, Sorte.rng.state, units.size()])])
 	for u in units:
 		r.append(hash([u.global_position, u.hp, u.alive, u.power, u.team, u.stats.id]))
+	# Revisão 3b (IT-08): as estruturas também, um pedaço por tipo (PARTES_MUNDO).
+	# Antes uma obra, torreta ou poça separada só aparecia quando mexia num boneco.
+	r.append(_hash_de(princesses))
+	r.append(hash([_hash_de(torretas), _hash_de(catapultas)]))
+	r.append(hash([_hash_de(oficinas), _hash_de(hat_pads)]))
+	var chao: Array[int] = [_hash_de(plantas), _hash_de(toras)]
+	for c in cakes:
+		chao.append(hash(c.global_position))
+	for p in pickups:
+		chao.append(hash([p.global_position, p.kind]))
+	r.append(hash(chao))
+	var pecas: Array[int] = []
+	for g in PecaDoMundo.GRUPOS:
+		pecas.append(_hash_de(get_tree().get_nodes_in_group(g)))
+	r.append(hash(pecas))
+	r.append(_hash_de(get_tree().get_nodes_in_group("projeteis")))
 	return r
+
+
+## Pedaços de hash_partes() depois das unidades, na ordem.
+const PARTES_MUNDO := ["as máscaras", "as torretas ou catapultas", "as casas ou maquininhas",
+		"plantas, toras, espíritos ou itens no chão", "teias, poças, árvores, andaimes ou armadilhas", "os tiros no ar"]
+
+
+## Resumo de uma lista de peças com hash_estado(), na ordem dela.
+func _hash_de(lista: Array) -> int:
+	var hs: Array[int] = []
+	for n in lista:
+		if not n.is_queued_for_deletion():
+			hs.append(n.hash_estado())
+	return hash(hs)
+
+
+## Índice de `u` em units (-1 = ninguém), para os resumos: o nome do nó não serve.
+func idx_unit(u: Unit) -> int:
+	return units.find(u) if is_instance_valid(u) else -1
 
 
 ## Nome do pedaço i de hash_partes() para o aviso de dessincronia.
 func descrever_parte(i: int) -> String:
+	if i > units.size() and i - units.size() - 1 < PARTES_MUNDO.size():
+		return PARTES_MUNDO[i - units.size() - 1]
 	if i <= 0 or i > units.size():
 		return "placar, madeira ou sorteio"
 	var u := units[i - 1]

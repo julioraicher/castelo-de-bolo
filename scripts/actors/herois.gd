@@ -1278,14 +1278,7 @@ static func _teia(u: Unit) -> bool:
 	if to.length() < 1.5:
 		to = _dir_mira(u) * 3.0
 	var at := chao_valido(u, u.global_position + to.limit_length(u.stats.skill_radius))
-	var minhas: Array = []
-	for n in u.get_tree().get_nodes_in_group("teias"):
-		var t := n as Teia
-		if t and t.dona == u and not t.indo:
-			minhas.append(t)
-	minhas.sort_custom(func(a: Teia, b: Teia) -> bool: return a.nasceu < b.nasceu)
-	while minhas.size() >= cfg.herois.teia_max:
-		(minhas.pop_front() as Teia).sumir()
+	PecaDoMundo.limitar(u.get_tree(), u, &"teias", cfg.herois.teia_max)
 	var teia := Teia.new()
 	u.game.add_child(teia)
 	teia.setup(u.game, u, at)

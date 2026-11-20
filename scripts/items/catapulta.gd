@@ -317,3 +317,8 @@ class Voo:
 	var h := 0.0          # altura do ápice acima da corda p0-p1
 	var brilho: Node3D
 	var rastro_t := 0.0
+
+
+## Resumo para o SINC (Game.hash_partes, revisão 3b, IT-08): só estado de regra.
+func hash_estado() -> int:
+	return hash([_game.idx_unit(passageiro), _game.idx_unit(reservado), forca, _recarga_t, _subindo, _voo.size()])

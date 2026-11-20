@@ -193,3 +193,52 @@ func _arena_chapeus() -> void:
 		_check(game.modo_teste.nivel_arena(base.caminhos[0].id) == cfg.mago_nivel_max, "arena: caminho veste o nível máximo")
 	if base.herois.size() > 0:
 		_check(game.modo_teste.nivel_arena(base.herois[0].id) == cfg.mago_nivel_max + 1, "arena: herói veste um nível acima do máximo")
+
+
+## Revisão 3b: peças do mundo com base comum e no resumo da partida (IT-06/08/10).
+func _pecas_do_mundo() -> void:
+	# Resumo: placar + uma parte por boneco + uma por tipo de estrutura, cada uma com nome.
+	var partes: PackedInt64Array = game.hash_partes()
+	_check(partes.size() == 1 + game.units.size() + Game.PARTES_MUNDO.size(),
+			"SINC: %d pedaços (esperado placar + %d bonecos + %d tipos de peça)" % [partes.size(), game.units.size(), Game.PARTES_MUNDO.size()])
+	_check(game.descrever_parte(game.units.size() + 1) == Game.PARTES_MUNDO[0], "SINC: o pedaço depois dos bonecos tem nome")
+	_check(game.hash_partes() == partes, "SINC: o resumo não muda se nada mudou")
+	if game.torretas.size() > 0:
+		var t: Torreta = game.torretas[0]
+		var hp0 := t.hp
+		t.hp += 1.0
+		var i := 1 + game.units.size() + 1  # torretas e catapultas
+		_check(game.hash_partes()[i] != partes[i], "SINC: vida de torreta entra no resumo")
+		t.hp = hp0
+	# Todo grupo de PecaDoMundo vem de uma filha e entra no resumo.
+	var u = _lenhador()
+	if u == null:
+		_check(false, "peças do mundo: faltou boneco")
+		return
+	var teia := Teia.new()
+	game.add_child(teia)
+	teia.setup(game, u, u.global_position + Vector3(30, 0, 0))
+	_check(teia is PecaDoMundo and teia.is_in_group(&"teias") and PecaDoMundo.GRUPOS.has(&"teias"), "peças: teia é PecaDoMundo no grupo do resumo")
+	_check(game.hash_partes()[1 + game.units.size() + 4] != partes[1 + game.units.size() + 4], "SINC: teia nova entra no resumo")
+	teia.sair()
+	_check(teia.indo and not teia.is_in_group(&"teias"), "peças: sair() tira do grupo na hora")
+	teia.sair()  # a segunda vez não faz nada
+	# limitar: a mais antiga sai primeiro, as outras ficam.
+	PecaDoMundo.limitar(get_tree(), u, &"traps", 1)  # tira as que o boneco já tinha
+	var velhas: Array = []
+	for k in 3:
+		var tr := Trap.new()
+		game.add_child(tr)
+		tr.setup(game, u, u.global_position + Vector3(30, 0, 3.0 * k))
+		tr.nasceu = k  # ordem conhecida
+		velhas.append(tr)
+	PecaDoMundo.limitar(get_tree(), u, &"traps", 2)
+	_check(velhas[0].indo and velhas[1].indo and not velhas[2].indo, "peças: limitar(2) deixa só a mais nova antes da próxima")
+	for tr in velhas:
+		if not tr.indo:
+			tr.sair()
+	# Golpe no arco: de frente vale, de costas não, encostado vale qualquer ângulo.
+	var fr := Vector3(0, 0, 1)
+	_check(Game.no_arco(fr, Vector3(0.2, 0, 2), 2.0, 90.0, 0.8), "arco: alvo na frente acerta")
+	_check(not Game.no_arco(fr, Vector3(0, 0, -2), 2.0, 90.0, 0.8), "arco: alvo atrás não acerta")
+	_check(Game.no_arco(fr, Vector3(0, 0, -0.5), 0.5, 90.0, 0.8), "arco: encostado acerta de qualquer lado")

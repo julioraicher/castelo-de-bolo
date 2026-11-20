@@ -23,7 +23,7 @@ extends Node3D
 ##              Só o herói é Nv6; barraquinha e casa param no 5.
 ##
 ## Obra: d(progresso)/dt = Σ velocidade_obra / oficina_build_time, somando os
-## Construtores do time a menos de BUILD_RADIUS do centro do bairro, mas o
+## Construtores do time a menos de raio_obra_bairro (game_config) do centro do bairro, mas o
 ## progresso não passa de madeira_entregue / oficina_custo_madeira (Ciclo 2.3).
 ## Quem está no bairro puxa 1 madeira do estoque a cada oficina_puxar_intervalo
 ## / Σv s. Pronta, a casa É a maquininha da classe evoluída (HatPad pad, modelo
@@ -43,13 +43,9 @@ const BARRACA := Vector3(0, 0, 3.0)
 const TAPETES := [Vector3(-3.7, 0, 0.3), Vector3(3.7, 0, 0.3)]
 const BANDEIRA := Vector3(4.3, 0, -3.3)
 const TAPETE_R := 1.3
-## Construtor a menos disto do centro trabalha na casa (obra e níveis).
-const BUILD_RADIUS := 4.8
 ## Raio do chão pintado do bairro (QA do mapa, minimapa).
 const RAIO := 5.4
 const ESCOLHA_T := 0.5
-## Construtor mais lento que isto (m/s) conta como parado trabalhando.
-const PARADO_VEL := 1.5
 const FANTASMA_ESC := 0.56
 const SHADER_FANTASMA := preload("res://assets/shaders/casa_fantasma.gdshader")
 
@@ -307,14 +303,7 @@ func add_progress(frac: float, by: Unit) -> void:
 ## construindo). Parado: quem só passa pelo bairro (indo ao depósito) não
 ## puxa madeira para a casa sem querer.
 func _ritmo_obra() -> float:
-	var rate := 0.0
-	for u in _game.units:
-		if u.alive and u.team == team and u.lenhador() and not u.carried_princess \
-				and not u.carried_tora and u.global_position.distance_to(global_position) < BUILD_RADIUS \
-				and Vector2(u.velocity.x, u.velocity.z).length() < PARADO_VEL:
-			rate += u.stats.velocidade_obra
-			u.building_t = 0.25
-	return rate
+	return _game.ritmo_obra(team, global_position, Config.cfg.raio_obra_bairro, Config.cfg.obra_parado_vel)
 
 
 ## Bot Construtor do time parado no tapete i? (Passar por cima não escolhe.)
@@ -324,7 +313,7 @@ func _construtor_no_tapete(i: int) -> bool:
 		if u.alive and u.team == team and u.lenhador() and not u.carried_princess \
 				and u.brain is BotBrain \
 				and not u.carried_tora and tapete_sob(u.global_position) == i \
-				and Vector2(u.velocity.x, u.velocity.z).length() < PARADO_VEL:
+				and Vector2(u.velocity.x, u.velocity.z).length() < Config.cfg.obra_parado_vel:
 			return true
 	return false
 
@@ -463,17 +452,10 @@ func subir_nivel() -> void:
 	_game.on_mago_nivel(self)
 
 
-## Um nível acima do 2 numa maquininha do bairro: +1 de estoque (ganha o chapéu
-## na hora), fabrica mais rápido e mostra a peça do nível.
+## Um nível acima do 2 numa maquininha do bairro (HatPad.subir_degrau).
 func _degrau_pad(p: HatPad) -> void:
-	if p == null:
-		return
-	p.estoque_max += 1
-	p.intervalo *= Config.cfg.mago_pad_intervalo_mult
-	if p.estoque < p.estoque_max:
-		p.estoque += 1
-		p._fabricou()
-	p.mostrar_nivel(nivel)
+	if p:
+		p.subir_degrau(nivel)
 
 
 func _obra_nivel(delta: float) -> void:
@@ -512,7 +494,7 @@ func heroi_em_campo() -> bool:
 	if h == null:
 		return false
 	for u in _game.units:
-		if u.team == team and (u.stats == h or u._equip_stats == h or u._stats_normal == h):
+		if u.team == team and u.veste(h):
 			return true
 	return false
 
@@ -986,7 +968,7 @@ func _update_label() -> void:
 	# jogador Construtor perto); grande para quem joga de Construtor.
 	var p := _game.player
 	var construtor := p != null and p.team == team and p.lenhador()
-	var perto := construtor and p.global_position.distance_to(global_position) < BUILD_RADIUS + 2.0
+	var perto := construtor and p.global_position.distance_to(global_position) < Config.cfg.raio_obra_bairro + 2.0
 	if estado == Estado.OBRA:
 		_contador.visible = true
 		_contador.position = CASA
@@ -1000,3 +982,9 @@ func _update_label() -> void:
 		_contador.mostrar(faltam_nivel(), custo_nivel(), construtor, falta_madeira)
 	else:
 		_contador.visible = false
+
+
+## Resumo para o SINC (Game.hash_partes, revisão 3b, IT-08): só estado de regra.
+func hash_estado() -> int:
+	return hash([estado, progresso, madeira_entregue, nivel, madeira_nivel, caminho, selada, _puxar_t, _custo,
+			heroi, heroi_pronto, _retorno_t, _heroi_t, _tapete_t])

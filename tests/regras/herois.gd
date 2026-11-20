@@ -446,7 +446,7 @@ func _herois_elementos() -> void:
 	_check(Herois._teia(a) and get_tree().get_nodes_in_group("teias").size() == antes_t + 1, "Jorogumo: Q tece uma teia")
 	var teia = null
 	for n in get_tree().get_nodes_in_group("teias"):
-		if n.dona == a:
+		if n.dono == a:
 			teia = n
 	if teia:
 		_por(b, Vector3(teia.global_position.x, centro.y, teia.global_position.z), -dx)
@@ -458,7 +458,7 @@ func _herois_elementos() -> void:
 		Herois._teia(a)
 		var t2 = null
 		for n in get_tree().get_nodes_in_group("teias"):
-			if n.dona == a and not n.indo:
+			if n.dono == a and not n.indo:
 				t2 = n
 		_check(t2 != null, "Jorogumo: segunda teia")
 		if t2:
@@ -471,12 +471,12 @@ func _herois_elementos() -> void:
 		Herois._teia(a)
 	var vivas := 0
 	for n in get_tree().get_nodes_in_group("teias"):
-		if n.dona == a and not n.indo:
+		if n.dono == a and not n.indo:
 			vivas += 1
 	_check(vivas == cfg.herois.teia_max, "Jorogumo: no máximo %d teias (tem %d)" % [cfg.herois.teia_max, vivas])
 	for n in get_tree().get_nodes_in_group("teias"):
-		if n.dona == a:
-			n.sumir()
+		if n.dono == a:
+			n.sair()
 	# Casulo: segura o inimigo, a seda segura parte do dano e o aliado dele quebra.
 	_por(b, centro + dx * 3.0, -dx)
 	_check(Herois._casulo(a) and b._casulo_t > 0.0 and not b.maos_livres(), "Jorogumo: Casulo enrola o inimigo perto")

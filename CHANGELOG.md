@@ -4,6 +4,39 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até o Ciclo 2.29b (2026-11-14) estão em `docs/changelog-antigo.md`.
 
+## Revisão 3b (2026-11-20), Diretor de Jogabilidade: peças do mundo
+Lote 3b do relatório de 2026-11-19. **Nada muda no jogo nem no modo teste.**
+Prova: o resumo antigo da partida (SINC) ficou idêntico, quadro a quadro, nas
+mesmas 6 partidas do 3a; os testes de rede e de sincronia (60 × 23 FPS) passam
+com o resumo novo.
+
+**Código**
+- Base comum `PecaDoMundo` para teia, para-raios, poça, andaime, árvore do
+  Kodama, estrepes e mina: dono, time, hora em que nasceu, grupo, vida e saída
+  numa cópia só; `sair()` no lugar de sumir/secar/cair; "passou do máximo, a mais
+  antiga some" numa função (`limitar`, era escrita 4 vezes) (IT-01/09/10).
+- **Estruturas no resumo da partida (SINC)**: máscaras, torretas, catapultas,
+  casas, maquininhas, plantas, toras, espíritos, itens, peças no chão e tiros.
+  Online, se uma obra ou uma poça se separar entre os PCs, o aviso aparece na
+  hora e diz o que foi (antes só aparecia quando chegava num boneco) (IT-08).
+- Mira da torreta virou regra (`Torreta.mira_y`); antes o tiro lia o giro do
+  modelo 3D (IT-04).
+- "Golpe no arco" numa função (`Game.mais_perto_no_arco`, era escrito 4 vezes:
+  plantas, árvore, andaime, torreta) e "Construtores em volta da obra" numa conta
+  (`Game.ritmo_obra`, 3 cópias) (IT-02/06).
+- Raios de obra e da armadilha saíram do código para o `game_config`
+  (`raio_obra_*`, `obra_parado_vel`, `armadilha_raio`, `armadilha_vida`) (IT-12).
+- As peças não mexem mais nos campos internos do boneco e da maquininha
+  (`defende_de`, `escondido`, `em_casulo`, `veste`, `HatPad.subir_degrau`) (IT-11).
+
+**Achados para decidir (não mudei):** o virote da torreta volta no escudo mesmo
+com a guarda quebrada (o golpe não volta); obra de torreta e maquininha não pede
+"parado" nem acelera no modo teste, a da casa pede. Catapulta ainda lê a mão do
+modelo para soltar o passageiro (trocar muda o ponto de lançamento em milímetros).
+
+**O que testar**
+- Nada no jogo. Se o CI ficar verde, está certo.
+
 ## Revisão 3a (2026-11-20), Diretor de Jogabilidade: núcleo do código arrumado
 Lote 3a do relatório de 2026-11-19 (mesmo pedido do 3e: lotes grandes que não
 mudam o jogo). **Nada muda no jogo nem no modo teste.** Prova: o resumo da

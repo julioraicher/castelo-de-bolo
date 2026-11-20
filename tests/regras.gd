@@ -68,6 +68,7 @@ const ORDEM := [
 	["partida", "_menos_empate"],
 	["sistema", "_multiplayer"],
 	["sistema", "_arena_chapeus"],
+	["sistema", "_pecas_do_mundo"],
 	["poderes", "_poderes_revisados"],
 	["poderes", "_registro_poderes"],
 	["dados", "_rio_sem_ilha"],
