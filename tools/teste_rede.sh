@@ -5,7 +5,7 @@
 # parte online tem de bater nos dois. Sai 1 se divergir ou não conectar.
 # Uso: tools/teste_rede.sh [quadros=5000] [godot=godot] [extra...]
 #   extra vai para os dois PCs (ex.: --classe=arqueiro_yumi: todo humano nasce Yumi)
-Q=${1:-5000}; GODOT=${2:-godot}; shift 2 2>/dev/null; EXTRA="$*"
+Q=${1:-5000}; GODOT=${2:-godot}; shift $(( $# < 2 ? $# : 2 )); EXTRA="$*"  # shift 2 com menos de 2 args não tirava nada (TL-13)
 cd "$(dirname "$0")/.."
 timeout 900 "$GODOT" --headless --path . --fixed-fps 60 --quit-after "$Q" -- --autoplay --sinc --hospedar-teste=2 --nome=Anfitriao $EXTRA > /tmp/rede_h.txt 2>&1 &
 H=$!

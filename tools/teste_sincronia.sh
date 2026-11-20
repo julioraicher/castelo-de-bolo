@@ -5,7 +5,7 @@
 # (SINC) bate quadro a quadro. Diferença = algo nas regras depende do FPS, do
 # relógio de parede ou de sorteio fora de Sorte. Sai 1 se divergir.
 # Uso: tools/teste_sincronia.sh [segundos=90] [semente=7] [godot=godot] [extra...]
-S=${1:-90}; SEM=${2:-7}; GODOT=${3:-godot}; shift 3 2>/dev/null; EXTRA="$*"
+S=${1:-90}; SEM=${2:-7}; GODOT=${3:-godot}; shift $(( $# < 3 ? $# : 3 )); EXTRA="$*"  # shift 3 com menos de 3 args não tirava nada (TL-13)
 cd "$(dirname "$0")/.."
 run() { timeout 1200 "$GODOT" --headless --path . --fixed-fps "$1" --quit-after $(( $1 * S )) -- --autoplay --semente="$SEM" --sinc $EXTRA 2>&1 | grep "^SINC " > "/tmp/sinc_$2.txt"; }
 run 60 a & run 23 b & wait

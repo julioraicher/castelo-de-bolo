@@ -1,5 +1,7 @@
-"""Gera todos os efeitos sonoros e a música do jogo por síntese, sem
+"""Gera por síntese a música e os efeitos sonoros originais do jogo, sem
 nenhum arquivo externo. Rode com:  python3 tools/gerar_sons.py
+Vários sons de hoje vieram da biblioteca (Kenney, IA) por tools/sons/trocar_som.sh:
+confira em assets/audio/biblioteca/CREDITOS.md antes de regravar por cima.
 
 Técnicas usadas (todas com só a biblioteca padrão do Python):
 - osciladores (seno, quadrada) com envelope ADSR simplificado

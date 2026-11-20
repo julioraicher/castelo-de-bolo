@@ -12,7 +12,7 @@ leitura sugerida está no fim.
 
 Sem instalar nada: o link da versão web fica em *Settings > Pages* do
 repositório, e o .exe fica em *Releases > Última versão*. Os dois são gerados
-sozinhos a cada push (veja `.github/workflows/build.yml`).
+sozinhos a cada push na `main` que passa nas checagens (veja `.github/workflows/build.yml`).
 
 **Modo de teste automático:** `godot --path . -- --autoplay --shots=/tmp/prints`
 faz o seu soldado também ser controlado pela IA e salva prints aos 4, 15, 30,
@@ -28,7 +28,7 @@ Foi assim que o jogo foi testado e balanceado.
 | **Nós e cenas** | Tudo é uma árvore de nós (`Node3D`, `Camera3D`, `Label`...). Uma cena é uma árvore salva em arquivo. | `scenes/main.tscn` tem um nó só; o resto é criado por código em `game.gd`. |
 | **Recursos** | Arquivos de dados (`.tres`) editáveis no Inspector. | `config/` guarda TODOS os números de balanceamento. |
 | **Sinais** | Eventos: um nó emite, outros escutam (`died.connect(...)`). | `Unit.died`, `Princess.state_changed`. |
-| **Autoload** | Script global acessível de qualquer lugar. | `Config` (regras) e `Sfx` (sons). |
+| **Autoload** | Script global acessível de qualquer lugar. | `Config` (regras), `Settings` (preferências), `Sfx` (sons) e `Rede` (multiplayer). |
 | **Corpo cinemático** | `CharacterBody3D` + `move_and_slide()`: você define a velocidade, o motor resolve colisões. | `Unit` (soldados). |
 | **Navegação** | Uma malha de caminhos gerada a partir dos colisores; `NavigationAgent3D` acha a rota. | `Arena._bake_navigation()` e `BotBrain._steer()`. |
 
@@ -61,10 +61,13 @@ scripts/
   autoload/config.gd      carrega o config, registra as teclas e a lista CONTROLS
   autoload/settings.gd    preferências do jogador, salvas em disco
   autoload/sfx.gd         toca sons
+  rede/                   multiplayer: sala, conexão, quadros (autoload Rede), RedeBrain
   data/*.gd               definem os campos dos arquivos .tres
-tests/regras.gd           testes de regra (rodam no CI); qa_mapa.gd = QA do mapa
-tools/gerar_*.gd          geram cenário, mapa e peças por código; prancha_*.gd = imagens de pitaco
-tools/gerar_sons.py       sintetiza todos os sons e a música (Python puro)
+tests/regras.gd           testes de regra; varredura_*.gd = Q/E/R de todas as classes; qa_mapa.gd = QA do mapa
+tools/checar.sh           todas as checagens em grupos (o CI roda este script)
+tools/gerar_*.gd          geram cenário, mapa e peças por código (tools/gerar_tudo.sh roda todos na ordem); prancha_*.gd = imagens de pitaco
+tools/gerar_sons.py       sintetiza a música e os sons originais (Python puro)
+tools/sons/               biblioteca de sons (Kenney, IA): ouvir, trocar, gerar
 assets/                   corpos KayKit (CC0), cenário ninja gerado (.scn), sons, fontes, shaders
 .claude/skills/           manuais de Godot e game design para o Claude
 ```
@@ -73,8 +76,8 @@ assets/                   corpos KayKit (CC0), cenário ninja gerado (.scn), son
 
 **Cérebro decide, corpo executa.** `PlayerBrain` e `BotBrain` só preenchem
 `move_intent`, `aim_dir` e `wants_attack` na `Unit`; a `Unit` não sabe se
-quem a controla é humano ou bot. Por isso trocar um bot por um jogador
-online, no futuro, é trocar só o cérebro.
+quem a controla é humano ou bot. Foi assim que o multiplayer (Ciclo 2.28)
+entrou: o amigo é um `RedeBrain` que recebe as intenções pela rede.
 
 ## 5. Onde mexer para mudar X
 
@@ -82,7 +85,7 @@ online, no futuro, é trocar só o cérebro.
 |---|---|---|
 | Guerreiro mais forte | `config/classes/guerreiro.tres` | `damage`, `max_hp` |
 | Partida mais longa | `config/game_config.tres` | `score_to_win` |
-| Bolo engordar mais | `config/game_config.tres` | `fat_per_cake`, `fat_slowdown` |
+| Espírito pesar mais na máscara | `config/game_config.tres` | `fat_per_cake`, `fat_slowdown` (nomes antigos: bolo = espírito) |
 | Mais/menos soldados | `config/game_config.tres` | `units_per_team` |
 | Bots mais fáceis | `config/game_config.tres` | aumente `bot_think_interval` (ou só use Esc > Configurações > Dificuldade) |
 | Câmera mais longe | `config/game_config.tres` | `camera_offset` |
@@ -90,10 +93,10 @@ online, no futuro, é trocar só o cérebro.
 | Nova opção de configuração | `scripts/autoload/settings.gd` + `scripts/ui/menus.gd` | variável + `_linha(...)` em `_secao_config()` |
 | Clipe novo no Como jogar ou ficha de classe | `scripts/ui/clipe_cenas.gd` + `tools/clipes_tutorial.sh` | cena `_prep_X`/`_cena_X`; quadros em `assets/tutorial/X/` |
 | Mapa diferente | `config/mapas/rio_lanternas.tres` (gerado por `tools/gerar_mapa_rio.gd`) | tamanho, muralhas, torres e `middle_props` |
-| Classe nova (ex.: Espadachim) | copie `config/classes/guerreiro.tres`, mude nome, `visible_meshes` (ex.: `2H_Sword`), números e `hat_style`; adicione em `game_config.tres > hat_class_list` e um ponto em `mapas/rio_lanternas.tres > hat_spots` |
+| Classe ou herói novo | checklist completo em `docs/mapa-do-codigo.md` (o .tres é o começo; também corpo, assinatura, sons, casa, clipe e testes) |
 | Clima novo (ex.: neve) | copie `config/temas/luar.tres`, mude cores/modelos e adicione em `game_config.tres > themes` |
 | Outro tipo de castelo | `config/temas/*.tres > Modelos` (quais modelos) e `config/mapas/rio_lanternas.tres > Castelo` (posições) |
-| Novo som | `tools/gerar_sons.py` + nome em `Sfx.SOUNDS` |
+| Novo som | skill `efeitos-sonoros` (`tools/sons/`) ou `tools/gerar_sons.py`; nome em `Sfx.SOUNDS` |
 
 Dica: os `.tres` abrem no **Inspector** do Godot com campos agrupados
 (Visual, Atributos, Animações). Mude, salve, F5.
@@ -111,8 +114,8 @@ Dica: os `.tres` abrem no **Inspector** do Godot com campos agrupados
   (um `lerp(a, b, 0.1)` fixo dependeria).
 - **Screen shake**: amplitude ∝ trauma², com ruído coerente (Perlin) em vez de
   aleatório puro, para tremer sem "pular".
-- **Peso da princesa**: velocidade do carregador = `v · c · (1 - g·f)`, com
-  `f ∈ [0,1]` a gordura e `g = fat_slowdown`.
+- **Peso da máscara**: velocidade do carregador = `v · c · (1 - g·f)`, com
+  `f ∈ [0,1]` o peso acumulado pelos espíritos e `g = fat_slowdown`.
 - **Karplus-Strong** (em `gerar_sons.py`): um buffer de ruído realimentado
   com a média de amostras vizinhas é um filtro passa-baixa em loop; o
   período do buffer define a frequência fundamental, como uma corda.
@@ -134,7 +137,7 @@ quando a tarefa pede. Peça coisas como "adicione uma classe de mago de
 fogo" ou "faça os bots desviarem de flechas".
 
 Regras que não mudam: `docs/principios.md`. Para conferir que nada quebrou:
-`godot --headless --path . --fixed-fps 60 -- --autoplay --testes` (testes de
-regra em `tests/regras.gd`; o CI roda em todo push). Suas skills pessoais
+`tools/checar.sh tudo` (as mesmas checagens que o CI roda em todo push; lista
+de comandos em `docs/comandos.md`). Suas skills pessoais
 (`rodada-de-playtest`, `forjar-ideia`, `estagiario-de-ideias`,
 `contexto-do-projeto`) valem em qualquer projeto.

@@ -229,3 +229,19 @@ extends Resource
 @export var anim_idle := "Idle"
 @export var anim_run := "Running_A"
 @export var anim_attack := "1H_Melee_Attack_Chop"
+
+
+## Recarga do Q em segundos, com os multiplicadores da regra (sem o do modo teste).
+## Fonte única: Unit.quick_cooldown e a ficha do menu Classes leem daqui
+## (revisão 2026-11-19: a ficha mostrava a da cura e a da armadilha erradas).
+func recarga_q(cfg: Resource) -> float:
+	var base := skill_cooldown
+	match skill:
+		"cura":
+			base = heal_cooldown
+		"armadilha":
+			base = trap_cooldown
+	var m: float = cfg.rapida_cooldown_mult
+	if heroi:
+		m *= cfg.heroi_recarga_mult
+	return base * m

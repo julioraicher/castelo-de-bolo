@@ -1452,17 +1452,10 @@ func tem_rapida() -> bool:
 
 
 func quick_cooldown() -> float:
-	var m := Config.cfg.rapida_cooldown_mult
-	if stats.heroi:
-		m *= Config.cfg.heroi_recarga_mult
+	var t := stats.recarga_q(Config.cfg)
 	if game and game.recarga_rapida(self):
-		m *= Config.cfg.sandbox_q_mult  # modo teste: Q toda hora
-	match stats.skill:
-		"cura":
-			return stats.heal_cooldown * m
-		"armadilha":
-			return stats.trap_cooldown * m
-	return stats.skill_cooldown * m
+		t *= Config.cfg.sandbox_q_mult  # modo teste: Q toda hora
+	return t
 
 
 func quick_ready() -> bool:

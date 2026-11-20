@@ -14,7 +14,7 @@ graça). Então o custo cresce com **tamanho do contexto × número de mensagens
 |---|---|
 | Thread longa e velha | Toda resposta relê o histórico; depois de ~1 h parada o cache esfria e relê a preço cheio |
 | Mensagens entre threads | Cada aviso acorda outra thread, que relê todo o contexto dela |
-| Ler arquivo grande inteiro | `unit.gd` (1.469 linhas), `gerar_mapa_rio.gd` (1.833), `gerar_cenario_ninja.gd` (1.258) |
+| Ler arquivo grande inteiro | `unit.gd` e `game.gd` (~3.000 linhas cada), `gerar_mapa_rio.gd`, `gerar_cenario_ninja.gd` (`wc -l` antes de abrir) |
 | Log inteiro de partida no contexto | Milhares de linhas "mascara -> no castelo" |
 | Modelo grande em tarefa simples | Opus/Fable custam várias vezes o Sonnet/Haiku |
 | Esforço alto sem precisar | Raciocínio é cobrado como saída |

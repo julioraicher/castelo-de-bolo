@@ -240,7 +240,7 @@ func _mostrar(s: ClassStats) -> void:
 		ch.queue_free()
 	var linhas := []
 	if s.skill != "nenhum":
-		linhas.append(["Q", s.skill_name, s.skill_desc, "recarga %.0f s" % (s.skill_cooldown * cfg.rapida_cooldown_mult * (cfg.heroi_recarga_mult if s.heroi else 1.0)) if s.skill != "armadilha" else "recarga %.0f s" % s.trap_cooldown])
+		linhas.append(["Q", s.skill_name, s.skill_desc, "recarga %s s" % ("%.1f" % s.recarga_q(cfg)).replace(".", ",").trim_suffix(",0")])
 	if s.power != "nenhum":
 		linhas.append(["E", s.power_name, s.power_desc, "quando o Chi enche"])
 		var super_txt: String = s.super_desc  # vazio: monta pelo tipo

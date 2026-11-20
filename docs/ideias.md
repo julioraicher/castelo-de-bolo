@@ -6,7 +6,7 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 
 ## A — próxima
 - **Heróis raros, sobras** (Ciclo 2.23 entrou na main; clipes feitos no 2.23b):
-  ícone ★ por cima do herói em campo, contador de shikigami no HUD, e reequilibrar depois do playtest
+  ícone de estrela por cima do herói em campo, contador de shikigami no HUD, e reequilibrar depois do playtest
   (`HEROIS=1 tools/sonda_equilibrio.sh`).
 - **Casinhas 2.0, sobras** (Ciclo 2.21): planta do pátio no placar [Tab] (quiz 5D,
   ficou só o minimapa) e ajustar Sohei/Kusarigama depois
@@ -17,16 +17,6 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
   telhados escondem a briga, textos se sobrepõem no mundo, time pinta o corpo todo
   (classe pouco legível). Feitos no 2.10: 1, 2, 3, 4, 6, 9. Item 5 em thread própria;
   item 7 com prancha esperando pitaco; abertos: 8, 10, 11, 12.
-- **Lote de feedback 2026-11-06, parte 2** (precisa de pitaco antes; thread própria):
-  **Super poder** (3ª tecla, enche devagar; abates, dano e poderzinho entregue à máscara
-  adiantam), **invisibilidade curta** do Samurai (2-3 s, pode virar o super dele),
-  **torretas** do Construtor perto da base e **barraquinhas subindo de nível** (como os
-  magos) em vez de trocar de classe. Custos em
-  `castelo-de-bolo/jogabilidade/lote-feedback-2026-11-06.md` (pasta do projeto).
-- **Efeitos sonoros novos** (thread de pesquisa): recursos prontos (Hugging Face, ElevenLabs,
-  pacotes CC0 como Kenney/Sonniss) no lugar dos sons sintetizados de `tools/gerar_sons.py`.
-- **Ciclo 2.3: Economia do Construtor** (2026-10-31): `docs/direcao-ciclo-2.3.md`.
-  Depois dele, o Ciclo 2.4: habilidade "uau" por personagem + interface nova.
 - As ideias de cenário abaixo seguem o estilo pintado e o tom sombrio do
   Ciclo 2.2 (`docs/direcao-ciclo-2.2.md`).
 - **Peças do Rio das Lanternas**: prancha `cenario/06-pecas-rio.png`; o Julio
@@ -46,11 +36,6 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
 - **Sensação de porrada, sobras** (o 2.26 fez rastro na barra, borda do golpe forte,
   guarda que quebra e respingo de tinta; o 2.25 fez o multikill): som em camadas por
   golpe (assobio + baque + estalo) e um som por arma; hoje é um "hit" só com tom variando.
-- **Superpoder especial** (pedido do Julio, 2026-10-31; só anotado): um terceiro
-  poder, mais raro que o E, com medidor próprio (ex.: enche com abates e capturas)
-  e tecla própria (R ou a roda do mouse; o R hoje reinicia a partida). Cada classe
-  com um golpe de "virar a luta" (ex.: Samurai corta todos em linha num traço só).
-
 ## B — depois
 
 - **Multiplayer, próximos passos** (Ciclo 2.28, 2026-11-13): (1) **rollback**
@@ -75,23 +60,23 @@ a ideia sai daqui e entra no ROADMAP/CHANGELOG.
   levar, upar casinhas), e cada casinha upada deixa guerreiros, arqueiros etc.
   mais fortes aos poucos ao longo da partida (progressão do time em vez de
   variações). Avaliar depois de jogar com o pátio novo e o tutorial.
-- **Dividir `scripts/actors/unit.gd`** (1.469 linhas) em partes: movimento,
-  combate, animação/corpo, aura/poder. Antes, ampliar `tests/regras.gd` para
-  cobrir combo, bloqueio e poderes, que protegem a mudança (Jogabilidade).
+- **Dividir `scripts/actors/unit.gd`** (~3.200 linhas; `game.gd` ~3.000) em partes:
+  movimento, combate, animação/corpo, aura/poder. É o lote 3a da revisão completa
+  de 2026-11-19 (pasta do projeto `revisao/revisao-completa-2026-11-19/`); a
+  checagem é o mesmo SINC com a mesma semente antes e depois.
 - **Bonecos mais leves** (frente Visual, medido na Rodada 19): cada boneco tem
   ~11 mil triângulos com o contorno (16 = ~180 mil por quadro). LOD simples
   (versão de menos polígonos de longe) e contorno desligado na qualidade Mínima.
-- **Hora do Caos** (avaliado na Rodada 12, Jogabilidade): relógio de partida
-  (ex.: 8 min) e, nos 2 últimos, chi enche 2x, espíritos caem em dobro e a
-  música acelera. Barato (só regras + HUD) e resolve partidas que não terminam
-  (capturas raras). Precisa do relógio no placar primeiro.
-- **Gatilhos de poder** (avaliado na Rodada 12): segundo poder por variação,
+- **Hora do Caos** (avaliado na Rodada 12, Jogabilidade): o relógio de 20 min e o
+  último minuto com máscaras leves já existem (Ciclo 2.31). Falta o resto: nos 2
+  últimos minutos, chi enche 2x, espíritos caem em dobro e a música acelera.
+- **Gatilhos de poder** (avaliado na Rodada 12; o SUPER na tecla R, Ciclo 2.8, já
+  cobre "poder carregado por feito"): segundo poder por variação,
   carregado por um feito (3 abates sem morrer, roubar a máscara, terminar uma
   obra) em vez do medidor. Mais complexo: 12 poderes novos + ícones; fazer
   depois de o Julio aprovar os poderes atuais.
 - Outros mapas da prancha `cenario/03-ideias-de-mapa.png` (Bambuzal de Três
   Trilhas, Templo Central) usando as peças do Rio.
-- Segundo poder por variação (o "forte", com gatilho), (gatilho: sequência de abates, ao morrer ou Hora do Caos).
 - Efeito de chão por clima: poças que refletem o neon, pétalas caindo, névoa baixa.
 - Animação de vitória do time (todos comemoram em volta da máscara).
 - Sons próprios por poder (shuriken, talismã, fogo-raposa, explosão de pólvora).
