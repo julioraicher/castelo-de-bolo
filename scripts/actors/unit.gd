@@ -1387,7 +1387,7 @@ func damage_mult() -> float:
 func silence(t: float) -> void:
 	_silence_t = maxf(_silence_t, t)
 	_cancel_skill()
-	Fx.damage_number(game, global_position + Vector3(0, 0.5, 0), "SELADO", Color(0.7, 0.95, 1.0))
+	Fx.letreiro(game, global_position + Vector3(0, 0.5, 0), "SELADO", Color(0.7, 0.95, 1.0))
 
 
 func give_damage_boost(t: float) -> void:
@@ -1660,7 +1660,7 @@ func prender(t: float) -> void:
 	if _dodge_t > 0.0:
 		_dodge_t = 0.0
 		_fim_dash()
-	Fx.damage_number(game, global_position + Vector3(0, 0.5, 0), "PRESO", Color(0.75, 0.8, 1.0))
+	Fx.letreiro(game, global_position + Vector3(0, 0.5, 0), "PRESO", Color(0.75, 0.8, 1.0))
 
 
 ## Arco translúcido na cor do time na frente do corpo enquanto defende:
@@ -2022,7 +2022,7 @@ func _esquiva_perfeita(attacker: Unit) -> void:
 	# O texto só quando o jogador está na jogada: bot contra bot já tem
 	# número de dano demais na tela.
 	if is_player or attacker.is_player:
-		Fx.damage_number(game, global_position + Vector3(0, 0.5, 0), "ESQUIVA!", Color(0.55, 1.0, 1.0))
+		Fx.letreiro(game, global_position + Vector3(0, 0.5, 0), "ESQUIVA!", Color(0.55, 1.0, 1.0))
 	Fx.burst(game, global_position + Vector3(0, 1.0, 0), Color(0.55, 1.0, 1.0), 10, 4.0)
 	Sfx.play("dodge", global_position, 0.2)
 	if is_player:
@@ -2071,7 +2071,7 @@ func _quebrar_guarda(attacker: Unit, dir: Vector3) -> void:
 	Fx.burst(game, p, Config.team_color(team).lightened(0.5), 18, 8.0)
 	Fx.burst(game, p, Color(1.0, 0.45, 0.15), 10, 5.0)
 	Fx.ring(game, global_position, Color(1.0, 0.5, 0.2, 0.85), 1.6)
-	Fx.damage_number(game, global_position + Vector3(0, 0.6, 0), "GUARDA QUEBRADA!", Color(1.0, 0.55, 0.25), 1.7)
+	Fx.letreiro(game, global_position + Vector3(0, 0.6, 0), "GUARDA QUEBRADA!", Color(1.0, 0.55, 0.25), 1.7)
 	Sfx.play("block", global_position, 0.05, 0.6, 3.0)
 	Sfx.play("hit", global_position, 0.1, 0.75)
 	if attacker:
@@ -2115,7 +2115,7 @@ func _contra_golpe(attacker: Unit, dir: Vector3) -> void:
 	var p := global_position + Vector3(0, 1.4, 0) - dir * 0.7
 	Fx.burst(game, p, Color(1.0, 0.95, 0.7), 22, 9.0)
 	Fx.ring(game, global_position, Color(1.0, 0.9, 0.5, 0.9), 2.2)
-	Fx.damage_number(game, global_position + Vector3(0, 0.6, 0), "CONTRA!", Color(1.0, 0.85, 0.3), 2.0)
+	Fx.letreiro(game, global_position + Vector3(0, 0.6, 0), "CONTRA!", Color(1.0, 0.85, 0.3), 2.0)
 	Sfx.play("block", global_position, 0.05)
 	Sfx.play("hit", global_position, 0.1)
 	_play_upper("Block_Hit", 1.8)

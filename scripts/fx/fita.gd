@@ -12,9 +12,13 @@ var a := Vector3.ZERO           # pontos no espaço do alvo
 var b := Vector3(0, 1, 0)
 var pontos := 12
 var passo := 0.016              # segundos entre amostras
+## Caça 2026-11-19 (FX-03): a fita mede o comprimento em TEMPO (pontos × passo,
+## ~0,2 s), não em quadros. Antes guardava 1 amostra por quadro: a 10 FPS os 12
+## pontos cobriam 1,2 s (fita 6× mais comprida) e a cauda demorava 1,2 s a sumir.
 var _pa: PackedVector3Array = []
 var _pb: PackedVector3Array = []
-var _t := 0.0
+var _idade: PackedFloat32Array = []  # instante (em _agora) de cada amostra
+var _agora := 0.0
 var _solta := false
 var _im := ImmediateMesh.new()
 
@@ -38,33 +42,38 @@ func soltar() -> void:
 
 func _process(delta: float) -> void:
 	var vivo := is_instance_valid(alvo) and alvo.is_inside_tree() and not _solta
-	_t += delta
-	if _t >= passo:
-		_t = 0.0
-		if vivo:
-			var x := alvo.global_transform
-			_pa.insert(0, x * a)
-			_pb.insert(0, x * b)
-		if _pa.size() > pontos or (not vivo and _pa.size() > 0):
-			_pa.remove_at(_pa.size() - 1)
-			_pb.remove_at(_pb.size() - 1)
-	if not vivo and _pa.size() < 2:
+	_agora += delta
+	var janela := pontos * passo
+	# A lâmina e o projétil são desenhados interpolados (física a 60 Hz, tela a
+	# qualquer taxa): ler a posição interpolada para a fita não descolar (FX-29).
+	var x := alvo.get_global_transform_interpolated() if vivo else Transform3D.IDENTITY
+	if vivo and (_idade.is_empty() or _agora - _idade[0] >= passo):
+		_pa.insert(0, x * a)
+		_pb.insert(0, x * b)
+		_idade.insert(0, _agora)
+	# Guarda uma amostra além da janela (a ponta da cauda) enquanto a seguinte
+	# ainda estiver dentro: com FPS baixo a fita não fica mais curta.
+	while _idade.size() >= 2 and _agora - _idade[_idade.size() - 2] > janela:
+		_pa.remove_at(_pa.size() - 1)
+		_pb.remove_at(_pb.size() - 1)
+		_idade.remove_at(_idade.size() - 1)
+	if not vivo and (_pa.size() < 2 or _agora - _idade[0] > janela):
 		queue_free()
 		return
 	_im.clear_surfaces()
 	var n := _pa.size()
-	if n < 2:
+	if n < 2 and not (vivo and n == 1):
 		return
 	_im.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
 	# A cabeça acompanha o alvo neste quadro (sem degrau entre amostras).
 	if vivo:
-		var x := alvo.global_transform
 		_im.surface_set_uv(Vector2(0, 0))
 		_im.surface_add_vertex(x * a)
 		_im.surface_set_uv(Vector2(1, 0))
 		_im.surface_add_vertex(x * b)
 	for i in n:
-		var v := float(i + 1) / float(pontos)
+		# V = idade da amostra na janela: 0 na cabeça, 1 na ponta da cauda.
+		var v := clampf((_agora - _idade[i]) / janela, 0.0, 1.0)
 		_im.surface_set_uv(Vector2(0, v))
 		_im.surface_add_vertex(_pa[i])
 		_im.surface_set_uv(Vector2(1, v))

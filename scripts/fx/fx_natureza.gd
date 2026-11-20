@@ -311,7 +311,7 @@ static func tocha(arv: Node3D, escala: float, t: float) -> Node3D:
 	Magia.aura_brasas(no, Color(1.0, 0.6, 0.2), t, 14, 1.1 * escala)
 	FxProjetil.fumaca(g, arv.global_position + Vector3(0, 3.4 * escala, 0), Color(0.2, 0.17, 0.16, 0.7), 6, 1.4 * escala, 1.4, 1.6)
 	Magia.clarao(g, arv.global_position, Color(1.0, 0.6, 0.25), 9.0, t, 2.0)
-	Fx.damage_number(g, arv.global_position + Vector3(0, 2.0, 0), "PEGOU FOGO!", Color(1.0, 0.6, 0.25), 0.9)
+	Fx.letreiro(g, arv.global_position + Vector3(0, 2.0, 0), "PEGOU FOGO!", Color(1.0, 0.6, 0.25), 0.9)
 	Sfx.play("fogo", arv.global_position, 0.1)
 	return no
 
@@ -396,7 +396,7 @@ static func broto(u: Unit) -> void:
 	var g := _g(u)
 	_tufo(g, u.global_position, 0.7, Config.cfg.broto_preso + 0.1)
 	Assinatura.pecas(g, u.global_position + Vector3(0, 0.5, 0), "semente", FOLHA, 6, {"tam": 0.7})
-	Fx.damage_number(g, u.global_position + Vector3(0, 0.9, 0), "BROTOU!", FOLHA, 0.8)
+	Fx.letreiro(g, u.global_position + Vector3(0, 0.9, 0), "BROTOU!", FOLHA, 0.8)
 	Sfx.play("kodama_brota", u.global_position, 0.1)
 
 
@@ -438,72 +438,10 @@ static func sombra_cura(o: Unit) -> void:
 
 # --- Kaminari-kozō: o raio ---------------------------------------------------------------
 
-## Pontos de um zigue-zague de a até b (pontas fixas).
-static func _zigue(a: Vector3, b: Vector3, n: int, amp: float) -> Array:
-	var d := b - a
-	var e1 := d.cross(Vector3.UP if absf(d.normalized().y) < 0.95 else Vector3.RIGHT).normalized()
-	var e2 := d.cross(e1).normalized()
-	var pts := [a]
-	for i in range(1, n):
-		var t := float(i) / n
-		pts.append(a + d * t + e1 * randf_range(-amp, amp) + e2 * randf_range(-amp, amp) * 0.6)
-	pts.append(b)
-	return pts
-
-
-## Fita em cruz ao longo dos pontos (U atravessa, V corre de 0 a 1).
-static func _fita_raio(st: SurfaceTool, pts: Array, larg: float) -> void:
-	var total := 0.0
-	for i in pts.size() - 1:
-		total += (pts[i + 1] - pts[i]).length()
-	var corrido := 0.0
-	for i in pts.size() - 1:
-		var a: Vector3 = pts[i]
-		var b: Vector3 = pts[i + 1]
-		var d := (b - a).normalized()
-		var v0 := corrido / total
-		corrido += (b - a).length()
-		var v1 := corrido / total
-		var w0 := larg * (0.55 + 0.45 * sin(v0 * PI))
-		var w1 := larg * (0.55 + 0.45 * sin(v1 * PI))
-		var e1 := d.cross(Vector3.UP if absf(d.y) < 0.95 else Vector3.RIGHT).normalized()
-		var e2 := d.cross(e1).normalized()
-		for e: Vector3 in [e1, e2]:
-			var q := [[a - e * w0 * 0.5, Vector2(0, v0)], [a + e * w0 * 0.5, Vector2(1, v0)], [b + e * w1 * 0.5, Vector2(1, v1)], [b - e * w1 * 0.5, Vector2(0, v1)]]
-			for k in [0, 1, 2, 0, 2, 3]:
-				st.set_uv(q[k][1])
-				st.add_vertex(q[k][0])
-
-
 ## Um raio de `de` até `ate`: zigue-zague com um galho, pisca uma vez e se rasga.
 static func raio(g: Node, de: Vector3, ate: Vector3, vida := 0.3, larg := 0.22) -> void:
-	if g == null or not is_instance_valid(g):
-		return
-	var d := ate - de
-	var comp := d.length()
-	if comp < 0.1:
-		return
-	var n := Magia._no(g, de)
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var pts := _zigue(Vector3.ZERO, d, clampi(int(comp / 1.1), 3, 9), minf(comp * 0.1, 0.9))
-	_fita_raio(st, pts, larg)
-	if comp > 2.5:
-		var i := pts.size() / 2
-		var p: Vector3 = pts[i]
-		var desvio := d.normalized().cross(Vector3.UP).normalized() * (1.0 if randf() < 0.5 else -1.0)
-		_fita_raio(st, _zigue(p, p + (d.normalized() * 0.6 + desvio).normalized() * comp * 0.25, 3, comp * 0.04), larg * 0.55)
-	var m := Magia.mat("raio", {"escala": Vector2(1.0, maxf(comp * 0.3, 1.0)), "rola": Vector2(0.0, -7.0), "forca": 0.5,
-			"base": 1.0, "topo": 1.0, "lados": 1.0, "tinta": 0.1})
-	var mi := Magia._malha(n, st.commit(), m)
-	var tw := n.create_tween()
-	tw.tween_interval(vida * 0.22)
-	tw.tween_callback(func() -> void: mi.visible = false)
-	tw.tween_interval(0.035)
-	tw.tween_callback(func() -> void: mi.visible = true)
-	tw.tween_method(func(v: float) -> void: m.set_shader_parameter("corroi", v), 0.0, 1.0, vida * 0.7)
-	tw.tween_callback(n.queue_free)
-	FxProjetil.brilho(g, ate, Color(0.7, 0.85, 1.0), 0.8 + larg * 2.0, 0.12)
+	if Magia.raio(g, de, ate, "raio", larg, vida, {"galho": true}) != null:
+		FxProjetil.brilho(g, ate, Color(0.7, 0.85, 1.0), 0.8 + larg * 2.0, 0.12)
 
 
 ## Raio do céu num ponto do chão (Tambores, descarga num para-raios).
@@ -539,13 +477,13 @@ static func trovao_estoura(g: Node, at: Vector3, r: float) -> void:
 static func conduziu(o: Unit) -> void:
 	var g := _g(o)
 	FxProjetil.faiscas(g, o.global_position + Vector3(0, 1.0, 0), AGUA, 6, 5.0, Vector3.UP, 180.0, 0.2)
-	Fx.damage_number(g, o.global_position + Vector3(0, 1.4, 0), "CONDUZIU!", AGUA, 0.7)
+	Fx.letreiro(g, o.global_position + Vector3(0, 1.4, 0), "CONDUZIU!", AGUA, 0.7)
 
 
 ## Água do Kappa (ou qualquer "agua"): pinga enquanto está molhado.
 static func molhado(u: Unit) -> void:
 	var g := _g(u)
-	Fx.damage_number(g, u.global_position + Vector3(0, 0.9, 0), "MOLHADO", AGUA, 0.7)
+	Fx.letreiro(g, u.global_position + Vector3(0, 0.9, 0), "MOLHADO", AGUA, 0.7)
 	if not Magia.enfeite():
 		return
 	var p := FxProjetil.ps(u, Vector3(0, 1.4, 0), FxProjetil._gota(), AGUA, 6, 0.5, {"one_shot": false, "local_pos": true,
@@ -567,7 +505,7 @@ static func carga_cheia(u: Unit) -> void:
 	var g := _g(u)
 	Magia.estouro(g, u.global_position + Vector3(0, 1.9, 0), "raio", 1.0, 0.25)
 	FxProjetil.faiscas(g, u.global_position + Vector3(0, 2.0, 0), Color(0.8, 0.92, 1.0), 8, 6.0, Vector3.UP, 70.0, 0.2)
-	Fx.damage_number(g, u.global_position + Vector3(0, 1.2, 0), "CARREGADO!", Color(0.75, 0.88, 1.0), 0.8)
+	Fx.letreiro(g, u.global_position + Vector3(0, 1.2, 0), "CARREGADO!", Color(0.75, 0.88, 1.0), 0.8)
 	Sfx.play("kaminari_carga", u.global_position, 0.05)
 
 
@@ -596,7 +534,7 @@ static func descarga(k: Unit, alvo: Unit) -> void:
 	Magia.onda(g, alvo.global_position, "raio", 2.4, 0.35, {"banda": 0.12})
 	Assinatura.pecas(g, alvo.global_position + Vector3(0, 1.1, 0), "faisca", Color(0.8, 0.92, 1.0), 10)
 	Magia.clarao(g, alvo.global_position, RAIO_COR, 9.0, 0.22, 4.0)
-	Fx.damage_number(g, alvo.global_position + Vector3(0, 1.6, 0), "DESCARGA!", Color(0.75, 0.88, 1.0), 1.0)
+	Fx.letreiro(g, alvo.global_position + Vector3(0, 1.6, 0), "DESCARGA!", Color(0.75, 0.88, 1.0), 1.0)
 	_shake(g, alvo.global_position, 0.3)
 	Sfx.play("kaminari_trovao", alvo.global_position, 0.05)
 

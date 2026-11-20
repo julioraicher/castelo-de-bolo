@@ -316,6 +316,8 @@ func _ready() -> void:
 	time_jogador = time_pedido
 	Sorte.semear(semente)
 	Sorte.tick = 0
+	if _testes or _varredura:  # falha de teste reproduzível (caça 2026-11-19, TS-02)
+		print("SEMENTE: %d (repita com -- --semente=%d)" % [semente, semente])
 	if _print_poder:
 		_shot_times = [1e9, 1e9, 1e9, 1e9, 1e9, 1e9]  # quem marca a hora é o poder
 	arena = Arena.new()
@@ -2733,7 +2735,7 @@ func _on_unit_died(u: Unit, killer: Unit) -> void:
 		_alma_de_abate(u, killer.team)
 	var assist := placar.abate(u, killer if killer and killer.team != u.team else null, _time)
 	if player in assist:
-		Fx.damage_number(self, player.global_position + Vector3(0, 0.6, 0), "ASSISTÊNCIA +%d" % int(Config.cfg.pts_assist), Color(0.6, 0.9, 1.0))
+		Fx.letreiro(self, player.global_position + Vector3(0, 0.6, 0), "ASSISTÊNCIA +%d" % int(Config.cfg.pts_assist), Color(0.6, 0.9, 1.0))
 	if placar.ultimo_degrau >= 2 and killer and killer.team != u.team:
 		_multikill(killer, placar.ultimo_degrau, placar.ultimo_bonus)
 	if u == player:
@@ -2761,7 +2763,7 @@ func _multikill(killer: Unit, degrau: int, bonus: float) -> void:
 		Sfx.play_ui("corte_critico")
 	else:
 		var cor := Estilo.OURO_CLARO if player and killer.team == player.team else Config.team_color(killer.team).lightened(0.35)
-		Fx.damage_number(self, killer.global_position + Vector3(0, 2.4, 0), nome, cor, 1.3)
+		Fx.letreiro(self, killer.global_position + Vector3(0, 2.4, 0), nome, cor, 1.3)
 
 
 ## A alma do abatido voa até a máscara do time de quem matou e a deixa mais

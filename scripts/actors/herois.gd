@@ -141,7 +141,7 @@ static func super_proprio(u: Unit) -> bool:
 				o._mudo_t = maxf(o._mudo_t, cfg.requiem_tempo)
 				o._cancel_skill()
 				o._spin_t = 0.0
-				Fx.damage_number(u.game, o.global_position + Vector3(0, 0.5, 0), "SILÊNCIO", Color(0.6, 0.95, 0.9))
+				Fx.letreiro(u.game, o.global_position + Vector3(0, 0.5, 0), "SILÊNCIO", Color(0.6, 0.95, 0.9))
 			return true
 		"carga_caidos":
 			return _carga_caidos(u)
@@ -172,7 +172,7 @@ static func tick(u: Unit, delta: float) -> void:
 	if u._sono_t > 0.0:
 		u._sono_t -= delta
 		if fmod(u._sono_t, 0.6) < delta:
-			Fx.damage_number(u.game, u.global_position + Vector3(0.3, 1.2, 0), "z", Color(0.75, 0.9, 1.0), 0.6)
+			Fx.letreiro(u.game, u.global_position + Vector3(0.3, 1.2, 0), "z", Color(0.75, 0.9, 1.0), 0.6)
 		if u._sono_t <= 0.0:
 			acordar(u)
 	if u._disfarce_t > 0.0:
@@ -220,7 +220,7 @@ static func ao_apanhar(u: Unit, amount: float, attacker: Unit, dir: Vector3, _me
 		u._canto_t = 0.0
 		u._canto_alvos.clear()
 		u._stop_upper("Spellcasting")
-		Fx.damage_number(u.game, u.global_position + Vector3(0, 0.6, 0), "INTERROMPIDO", Color(0.9, 0.9, 0.9), 0.7)
+		Fx.letreiro(u.game, u.global_position + Vector3(0, 0.6, 0), "INTERROMPIDO", Color(0.9, 0.9, 0.9), 0.7)
 	if u._disfarce_t > 0.0:
 		tirar_rosto(u)
 	return amount
@@ -302,7 +302,7 @@ static func dormir(o: Unit, t: float) -> void:
 	o._cancel_skill()
 	o._windup_t = 0.0
 	o._play_once("Lie_Idle" if o._anim and o._anim.has_animation("Lie_Idle") else "Idle", o._sono_t)
-	Fx.damage_number(o.game, o.global_position + Vector3(0, 0.6, 0), "ZZZ", Color(0.75, 0.9, 1.0))
+	Fx.letreiro(o.game, o.global_position + Vector3(0, 0.6, 0), "ZZZ", Color(0.75, 0.9, 1.0))
 	FxHerois.sono_em(o)
 
 
@@ -520,7 +520,7 @@ static func _rajada(u: Unit) -> bool:
 		p.rebater(u, volta)
 		devolvidos += 1
 	if devolvidos > 0:
-		Fx.damage_number(u.game, u.global_position + Vector3(0, 0.8, 0), "DEVOLVEU!" if devolvidos == 1 else "DEVOLVEU %d!" % devolvidos, Color(1.0, 0.75, 0.4))
+		Fx.letreiro(u.game, u.global_position + Vector3(0, 0.8, 0), "DEVOLVEU!" if devolvidos == 1 else "DEVOLVEU %d!" % devolvidos, Color(1.0, 0.75, 0.4))
 		Sfx.play("tinido", u.global_position, 0.1)
 	if u.is_player:
 		u.game.camera.add_trauma(0.2)
@@ -580,7 +580,7 @@ static func _roubar_rosto(u: Unit) -> bool:
 	var alvo := alvo_toque(u, u.stats.skill_radius, 360.0)
 	if alvo == null:
 		u._quick_cd = u.quick_cooldown() * 0.15
-		Fx.damage_number(u.game, u.global_position + Vector3(0, 0.6, 0), "NINGUÉM PERTO", Color(0.8, 0.7, 1.0), 0.6)
+		Fx.letreiro(u.game, u.global_position + Vector3(0, 0.6, 0), "NINGUÉM PERTO", Color(0.8, 0.7, 1.0), 0.6)
 		return false
 	u._play_upper("Interact", 1.8)
 	FxHerois.rosto(u, alvo)
@@ -623,7 +623,7 @@ static func _susto(u: Unit) -> void:
 		d.y = 0
 		o.take_damage(u.stats.power_value * u.damage_mult(), u, d.normalized() if d.length() > 0.1 else dir, 0.4, false, "sombra", 3)
 		if forcar_andar(o, u.global_position, u.stats.power_duration, true):
-			Fx.damage_number(u.game, o.global_position + Vector3(0, 0.6, 0), "SUSTO!", Color(0.85, 0.6, 1.0))
+			Fx.letreiro(u.game, o.global_position + Vector3(0, 0.6, 0), "SUSTO!", Color(0.85, 0.6, 1.0))
 
 
 # --- Onmyoji --------------------------------------------------------------------
@@ -732,7 +732,7 @@ static func _laco(u: Unit) -> bool:
 	if aliado == null:
 		u._quick_cd = u.quick_cooldown() * 0.2
 		if u.is_player:
-			Fx.damage_number(u.game, u.global_position + Vector3(0, 0.6, 0), "NENHUM ALIADO LONGE", Color(0.95, 0.85, 1.0), 0.6)
+			Fx.letreiro(u.game, u.global_position + Vector3(0, 0.6, 0), "NENHUM ALIADO LONGE", Color(0.95, 0.85, 1.0), 0.6)
 		return false
 	FxHerois.laco(u, aliado)
 	var de := u.global_position - aliado.global_position
@@ -794,7 +794,7 @@ static func _tick_canto(u: Unit, delta: float) -> void:
 			n += 1
 		FxHerois.canto_fim(u, dir, r)
 		if n > 0 and u.is_player:
-			Fx.damage_number(u.game, u.global_position + Vector3(0, 0.8, 0), "DORMIRAM %d" % n, Color(0.75, 0.9, 1.0))
+			Fx.letreiro(u.game, u.global_position + Vector3(0, 0.8, 0), "DORMIRAM %d" % n, Color(0.75, 0.9, 1.0))
 
 
 ## E Hipnose: inimigos perto andam até ele por power_duration s, sem atacar.
@@ -803,7 +803,7 @@ static func _hipnose(u: Unit) -> void:
 	FxHerois.hipnose(u, u.stats.power_radius)
 	for o in _inimigos(u, u.global_position, u.stats.power_radius):
 		if forcar_andar(o, u.global_position, u.stats.power_duration, false):
-			Fx.damage_number(u.game, o.global_position + Vector3(0, 0.6, 0), "HIPNOSE", Color(0.6, 0.95, 0.9))
+			Fx.letreiro(u.game, o.global_position + Vector3(0, 0.6, 0), "HIPNOSE", Color(0.6, 0.95, 0.9))
 			FxHerois.hipnose_em(o, u.stats.power_duration)
 
 
@@ -1005,7 +1005,7 @@ static func _flecha_arrancada(u: Unit) -> bool:
 	if alvo == null:
 		u._quick_cd = 0.25
 		if u.is_player:
-			Fx.damage_number(u.game, u.global_position + Vector3(0, 0.6, 0), "NINGUÉM NA FRENTE", Color(0.7, 0.85, 1.0), 0.6)
+			Fx.letreiro(u.game, u.global_position + Vector3(0, 0.6, 0), "NINGUÉM NA FRENTE", Color(0.7, 0.85, 1.0), 0.6)
 		return false
 	var to := alvo.global_position - u.global_position
 	to.y = 0
@@ -1349,7 +1349,7 @@ static func enrolar(o: Unit, u: Unit, t: float) -> void:
 	if o._casulo_no and is_instance_valid(o._casulo_no):
 		o._casulo_no.queue_free()
 	o._casulo_no = FxHerois.casulo(o, u)
-	Fx.damage_number(o.game, o.global_position + Vector3(0, 0.6, 0), "CASULO", Color(0.92, 0.9, 1.0))
+	Fx.letreiro(o.game, o.global_position + Vector3(0, 0.6, 0), "CASULO", Color(0.92, 0.9, 1.0))
 
 
 ## Golpe ou tiro de um aliado no casulo (Unit._attack_hit, Projectile).

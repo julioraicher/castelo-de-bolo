@@ -26,7 +26,7 @@ static func agarrao(u: Unit, alvo: Unit) -> void:
 	var p := alvo.global_position + Vector3(0, 1.0, 0)
 	Magia.estouro(g, p, "sal", 0.9, 0.25)
 	FxProjetil.faiscas(g, p, SAL, 8, 5.0, Vector3.UP, 120.0, 0.2)
-	Fx.damage_number(g, alvo.global_position + Vector3(0, 0.6, 0), "AGARRADO!", Color(1.0, 0.9, 0.6))
+	Fx.letreiro(g, alvo.global_position + Vector3(0, 0.6, 0), "AGARRADO!", Color(1.0, 0.9, 0.6))
 
 
 static func agarrao_vazio(u: Unit, dir: Vector3) -> void:
@@ -110,7 +110,7 @@ static func casco(u: Unit, dir: Vector3) -> void:
 	Magia.estouro(g, p, "agua", 0.7, 0.2)
 	Sfx.play("block", u.global_position, 0.1, 1.3, -3.0)
 	if u.is_player:
-		Fx.damage_number(g, u.global_position + Vector3(0, 0.4, 0), "CASCO", Color(0.6, 1.0, 0.8), 0.7)
+		Fx.letreiro(g, u.global_position + Vector3(0, 0.4, 0), "CASCO", Color(0.6, 1.0, 0.8), 0.7)
 
 
 # --- Yamabushi -------------------------------------------------------------------
@@ -206,10 +206,9 @@ static func susto(u: Unit, dir: Vector3, r: float) -> void:
 
 static func dobra(u: Unit) -> void:
 	var g := _g(u)
-	FxProjetil.ps(g, u.global_position + Vector3(0, 1.4, 0), FxProjetil._c("quad_papel", func() -> Mesh:
-		var q := QuadMesh.new()
-		q.size = Vector2(0.18, 0.24)
-		return q), PAPEL, FxProjetil._qtd(8), 0.5, {"esfera": 0.4, "v0": 1.0, "v1": 2.5, "ang1": 360.0, "s0": 0.8, "s1": 1.2})
+	# Quad de sprite do kit (caça 2026-11-19, FX-01): o QuadMesh sem material saía
+	# com luz, sem a cor/rampa da partícula, sem encarar a câmera e de uma face só.
+	FxProjetil.ps(g, u.global_position + Vector3(0, 1.4, 0), FxProjetil.quad("papel_dobra", null, false, Vector2(0.18, 0.24)), PAPEL, FxProjetil._qtd(8), 0.5, {"esfera": 0.4, "v0": 1.0, "v1": 2.5, "ang1": 360.0, "s0": 0.8, "s1": 1.2})
 	Magia.estouro(g, u.global_position + Vector3(0, 1.3, 0), "papel", 0.8, 0.25)
 
 
@@ -218,7 +217,7 @@ static func shikigami_rasga(u: Unit) -> void:
 	FxProjetil.ps(g, u.global_position + Vector3(0, 1.3, 0), FxProjetil.lasca(0.2, 0.12), PAPEL, FxProjetil._qtd(12), 0.7,
 			{"esfera": 0.6, "v0": 2.0, "v1": 4.5, "g": Vector3(0, -4, 0), "ang1": 360.0, "s0": 0.8, "s1": 1.3})
 	Magia.estouro(g, u.global_position + Vector3(0, 1.2, 0), "papel", 1.2, 0.25)
-	Fx.damage_number(g, u.global_position + Vector3(0, 0.6, 0), "PAPEL!", PAPEL, 0.7)
+	Fx.letreiro(g, u.global_position + Vector3(0, 0.6, 0), "PAPEL!", PAPEL, 0.7)
 
 
 static var _mat_papel: StandardMaterial3D
@@ -337,7 +336,7 @@ static func requiem(u: Unit, r: float) -> void:
 
 
 static func nota_muda(o: Unit) -> void:
-	Fx.damage_number(_g(o), o.global_position + Vector3(0, 1.4, 0), "MUDO", Color(0.6, 0.95, 0.9), 0.5)
+	Fx.letreiro(_g(o), o.global_position + Vector3(0, 1.4, 0), "MUDO", Color(0.6, 0.95, 0.9), 0.5)
 
 
 static func _notas(g: Node, at: Vector3, dir: Vector3, n: int, spread := 30.0) -> void:
@@ -394,7 +393,7 @@ static func fantasma(u: Unit, t: float) -> void:
 	Magia.onda(g, at, "fantasma", 2.8, 0.5, {"banda": 0.14})
 	Assinatura.pecas(g, at + Vector3(0, 1.2, 0), "cinza", FANTASMA, 14, {"mov": "sobe"})
 	Magia.aura_brasas(u, FANTASMA, t, 10, 0.6)
-	Fx.damage_number(g, at + Vector3(0, 0.8, 0), "NÃO CAIU!", Color(0.72, 0.88, 1.0))
+	Fx.letreiro(g, at + Vector3(0, 0.8, 0), "NÃO CAIU!", Color(0.72, 0.88, 1.0))
 
 
 static func fantasma_volta(u: Unit) -> void:
@@ -403,7 +402,7 @@ static func fantasma_volta(u: Unit) -> void:
 	Magia.estouro(g, at + Vector3(0, 1.1, 0), "fantasma", 1.6, 0.35)
 	Magia.anel_sobe(g, at, "fantasma", 1.2, 2.6, 0.7)
 	Assinatura.pecas(g, at + Vector3(0, 1.0, 0), "cinza", FANTASMA, 10)
-	Fx.damage_number(g, at + Vector3(0, 0.8, 0), "VOLTOU!", Color(0.8, 0.93, 1.0))
+	Fx.letreiro(g, at + Vector3(0, 0.8, 0), "VOLTOU!", Color(0.8, 0.93, 1.0))
 
 
 static func fantasma_cai(u: Unit) -> void:
@@ -516,13 +515,13 @@ static func sorte_em(o: Unit) -> void:
 	var g := _g(o)
 	Magia.estouro(g, o.global_position + Vector3(0, 1.7, 0), "festa", 0.8, 0.25)
 	Assinatura.pecas(g, o.global_position + Vector3(0, 1.8, 0), "confete", FESTA, 6, {"tam": 0.6})
-	Fx.damage_number(g, o.global_position + Vector3(0, 0.9, 0), "SORTE", Color(1.0, 0.85, 0.35), 0.8)
+	Fx.letreiro(g, o.global_position + Vector3(0, 0.9, 0), "SORTE", Color(1.0, 0.85, 0.35), 0.8)
 
 
 static func azar_em(o: Unit) -> void:
 	var g := _g(o)
 	FxProjetil.fumaca(g, o.global_position + Vector3(0, 2.2, 0), Color(0.3, 0.2, 0.42, 0.75), 4, 0.8, 0.7, 0.4)
-	Fx.damage_number(g, o.global_position + Vector3(0, 0.9, 0), "AZAR", Color(0.72, 0.5, 1.0), 0.8)
+	Fx.letreiro(g, o.global_position + Vector3(0, 0.9, 0), "AZAR", Color(0.72, 0.5, 1.0), 0.8)
 
 
 ## Marca sobre a cabeça: estrela dourada (Sorte) ou nuvem roxa (Azar), balançando.
@@ -543,13 +542,13 @@ static func marca_sorte(u: Unit, tipo: String) -> Node3D:
 
 static func errou(quem: Unit, alvo: Unit) -> void:
 	var g := _g(quem)
-	Fx.damage_number(g, alvo.global_position + Vector3(0, 0.7, 0), "ERROU!", Color(0.75, 0.55, 1.0), 0.9)
+	Fx.letreiro(g, alvo.global_position + Vector3(0, 0.7, 0), "ERROU!", Color(0.75, 0.55, 1.0), 0.9)
 	FxProjetil.fumaca(g, quem.global_position + Vector3(0, 2.3, 0), Color(0.3, 0.2, 0.42, 0.8), 4, 0.7, 0.6, 0.3)
 
 
 static func sorte_desvia(u: Unit) -> void:
 	var g := _g(u)
-	Fx.damage_number(g, u.global_position + Vector3(0, 0.7, 0), "SORTE!", Color(1.0, 0.85, 0.35), 0.9)
+	Fx.letreiro(g, u.global_position + Vector3(0, 0.7, 0), "SORTE!", Color(1.0, 0.85, 0.35), 0.9)
 	Assinatura.pecas(g, u.global_position + Vector3(0, 1.3, 0), "confete", FESTA, 8, {"tam": 0.6})
 	Sfx.play("shishimai_sino", u.global_position, 0.1)
 
@@ -557,7 +556,7 @@ static func sorte_desvia(u: Unit) -> void:
 static func sorte_dobra(quem: Unit, alvo: Unit) -> void:
 	var g := _g(quem)
 	Magia.estouro(g, alvo.global_position + Vector3(0, 1.2, 0), "festa", 1.1, 0.25)
-	Fx.damage_number(g, alvo.global_position + Vector3(0, 1.0, 0), "SORTE ×2", Color(1.0, 0.85, 0.35), 1.0)
+	Fx.letreiro(g, alvo.global_position + Vector3(0, 1.0, 0), "SORTE ×2", Color(1.0, 0.85, 0.35), 1.0)
 
 
 static func arrastao(u: Unit, t: float) -> void:
@@ -570,7 +569,7 @@ static func arrastao(u: Unit, t: float) -> void:
 static func arrastao_pega(u: Unit, o: Unit) -> void:
 	var g := _g(u)
 	Magia.estouro(g, o.global_position + Vector3(0, 1.1, 0), "festa", 1.0, 0.25)
-	Fx.damage_number(g, o.global_position + Vector3(0, 0.7, 0), "NA BOCA!", Color(1.0, 0.7, 0.35))
+	Fx.letreiro(g, o.global_position + Vector3(0, 0.7, 0), "NA BOCA!", Color(1.0, 0.7, 0.35))
 	Sfx.play("shishimai_mordida", o.global_position, 0.05, 0.9)
 
 
@@ -598,7 +597,7 @@ static func festa_pulso(u: Unit, r: float) -> void:
 static func festa_levanta(u: Unit, c: Unit) -> void:
 	var g := _g(u)
 	Magia.anel_sobe(g, c.global_position, "festa", 1.0, 2.4, 0.7)
-	Fx.damage_number(g, c.global_position + Vector3(0, 0.8, 0), "LEVANTA!", Color(1.0, 0.85, 0.4))
+	Fx.letreiro(g, c.global_position + Vector3(0, 0.8, 0), "LEVANTA!", Color(1.0, 0.85, 0.4))
 
 
 # --- Jorogumo --------------------------------------------------------------------
@@ -694,7 +693,7 @@ static func teia_prende(o: Unit) -> void:
 ## Rede (3º fio): a teia pequena gruda nos pés.
 static func rede(o: Unit) -> void:
 	_teia_pe(o, Config.cfg.rede_preso)
-	Fx.damage_number(_g(o), o.global_position + Vector3(0, 1.0, 0), "REDE!", Color(0.92, 0.9, 1.0), 0.8)
+	Fx.letreiro(_g(o), o.global_position + Vector3(0, 1.0, 0), "REDE!", Color(0.92, 0.9, 1.0), 0.8)
 
 
 static func _teia_pe(o: Unit, t: float) -> void:
@@ -718,14 +717,14 @@ static func teia_queima(g: Node, at: Vector3, r: float) -> void:
 	Assinatura.pecas(g, at + Vector3(0, 0.5, 0), "cinza", Color(0.35, 0.3, 0.32), 10, {"mov": "sobe"})
 	FxProjetil.marca_chao(g, at, Color(0.08, 0.05, 0.04, 0.5), r * 0.8, 2.5)
 	Sfx.play("brasa", at, 0.1)
-	Fx.damage_number(g, at + Vector3(0, 1.0, 0), "QUEIMOU", Color(1.0, 0.6, 0.25), 0.7)
+	Fx.letreiro(g, at + Vector3(0, 1.0, 0), "QUEIMOU", Color(1.0, 0.6, 0.25), 0.7)
 
 
 static func teia_rasga(g: Node, at: Vector3, r: float) -> void:
 	Magia.onda(g, at, "vento", r * 1.2, 0.35, {"banda": 0.2, "gira": 0.8})
 	Assinatura.pecas(g, at + Vector3(0, 0.5, 0), "fio", SEDA, 14, {"tang": 18.0, "anel": r * 0.5, "v0": 3.0, "v1": 6.0})
 	Sfx.play("magia_vento", at, 0.1)
-	Fx.damage_number(g, at + Vector3(0, 1.0, 0), "RASGOU", Color(1.0, 0.95, 0.8), 0.7)
+	Fx.letreiro(g, at + Vector3(0, 1.0, 0), "RASGOU", Color(1.0, 0.95, 0.8), 0.7)
 
 
 static func puxar(u: Unit, alvos: Array[Unit], r: float) -> void:
