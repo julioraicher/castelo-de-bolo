@@ -4,7 +4,7 @@ extends RefCounted
 ## poça âmbar que brilha (e pega fogo), andaime de madeira com lona do time e a
 ## chuva de garrafas da Saideira. Só visual (randf pode); as regras moram em
 ## HeroisObra, PocaCachaca e Andaime. Malhas de madeira no material pintado do
-## tema (FxNatureza._mat_cena), como a árvore do Kodama.
+## tema (MalhaPintada.material), como a árvore do Kodama.
 
 const VIDRO := Color(0.36, 0.72, 0.42)
 const VIDRO_ESCURO := Color(0.18, 0.42, 0.24)
@@ -14,8 +14,6 @@ const ROLHA := Color(0.62, 0.42, 0.24)
 const MADEIRA := Color(0.66, 0.48, 0.28)
 const MADEIRA_ESCURA := Color(0.44, 0.3, 0.17)
 const FALA := Color(1.0, 0.86, 0.32)
-## s do lançamento do engradado até a 1ª garrafa da Saideira chegar ao chão.
-const SAIDEIRA_VOO := 0.55
 const QUEDA := 0.28  # s de queda de cada garrafa da Saideira
 
 static var _malhas := {}
@@ -23,20 +21,10 @@ static var _mat_vidro: StandardMaterial3D
 static var _mat_poca: StandardMaterial3D
 
 
-static func _g(u: Unit) -> Node:
-	return u.game
-
-
-static func _shake(g: Node, pos: Vector3, forca: float) -> void:
-	var game := g as Game
-	if game and game.camera:
-		game.camera.shake_at(pos, forca)
-
-
 # --- Falas ----------------------------------------------------------------------------
 
 static func fala(u: Unit, txt: String) -> void:
-	Fx.letreiro(_g(u), u.global_position + Vector3(0, 0.6, 0), txt, FALA, 1.3)
+	Fx.letreiro(FxBase.g(u), u.global_position + Vector3(0, 0.6, 0), txt, FALA, 1.3)
 
 
 # --- Garrafa ----------------------------------------------------------------------------
@@ -65,24 +53,24 @@ static func malha_garrafa(cor_time: Color, garrafao := false) -> ArrayMesh:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var r := 0.13 if not garrafao else 0.2
 	# Fundo e corpo (o líquido aparece mais claro embaixo).
-	FxNatureza._tubo(st, [Vector3(0, 0.0, 0), Vector3(0, 0.02, 0)], r * 0.6, r, VIDRO_ESCURO, VIDRO, 10)
-	FxNatureza._tubo(st, [Vector3(0, 0.02, 0), Vector3(0, 0.16, 0)], r, r, CACHACA.lerp(VIDRO, 0.35), CACHACA.lerp(VIDRO, 0.45), 10)
+	MalhaPintada.tubo(st, [Vector3(0, 0.0, 0), Vector3(0, 0.02, 0)], r * 0.6, r, VIDRO_ESCURO, VIDRO, 10)
+	MalhaPintada.tubo(st, [Vector3(0, 0.02, 0), Vector3(0, 0.16, 0)], r, r, CACHACA.lerp(VIDRO, 0.35), CACHACA.lerp(VIDRO, 0.45), 10)
 	if garrafao:
 		# Palha trançada: três anéis grossos de palha na barriga.
 		for y in [0.06, 0.14, 0.22]:
-			FxNatureza._tubo(st, [Vector3(0, y - 0.02, 0), Vector3(0, y + 0.02, 0)], r + 0.025, r + 0.025, Color(0.82, 0.66, 0.36), Color(0.7, 0.54, 0.28), 10)
-		FxNatureza._tubo(st, [Vector3(0, 0.16, 0), Vector3(0, 0.3, 0)], r, r * 0.95, VIDRO, VIDRO, 10)
+			MalhaPintada.tubo(st, [Vector3(0, y - 0.02, 0), Vector3(0, y + 0.02, 0)], r + 0.025, r + 0.025, Color(0.82, 0.66, 0.36), Color(0.7, 0.54, 0.28), 10)
+		MalhaPintada.tubo(st, [Vector3(0, 0.16, 0), Vector3(0, 0.3, 0)], r, r * 0.95, VIDRO, VIDRO, 10)
 	else:
 		# Rótulo na cor do time.
-		FxNatureza._tubo(st, [Vector3(0, 0.16, 0), Vector3(0, 0.27, 0)], r + 0.006, r + 0.006, cor_time.lightened(0.15), cor_time, 10)
-		FxNatureza._tubo(st, [Vector3(0, 0.27, 0), Vector3(0, 0.3, 0)], r, r, VIDRO, VIDRO, 10)
+		MalhaPintada.tubo(st, [Vector3(0, 0.16, 0), Vector3(0, 0.27, 0)], r + 0.006, r + 0.006, cor_time.lightened(0.15), cor_time, 10)
+		MalhaPintada.tubo(st, [Vector3(0, 0.27, 0), Vector3(0, 0.3, 0)], r, r, VIDRO, VIDRO, 10)
 	var topo := 0.3
-	FxNatureza._tubo(st, [Vector3(0, topo, 0), Vector3(0, topo + 0.08, 0), Vector3(0, topo + 0.12, 0)], r * 0.95, r * 0.32, VIDRO, VIDRO_ESCURO, 10)
-	FxNatureza._tubo(st, [Vector3(0, topo + 0.12, 0), Vector3(0, topo + 0.24, 0)], r * 0.3, r * 0.28, VIDRO, VIDRO, 8)
-	FxNatureza._tubo(st, [Vector3(0, topo + 0.24, 0), Vector3(0, topo + 0.3, 0)], r * 0.3, r * 0.26, ROLHA, ROLHA.darkened(0.2), 8)
+	MalhaPintada.tubo(st, [Vector3(0, topo, 0), Vector3(0, topo + 0.08, 0), Vector3(0, topo + 0.12, 0)], r * 0.95, r * 0.32, VIDRO, VIDRO_ESCURO, 10)
+	MalhaPintada.tubo(st, [Vector3(0, topo + 0.12, 0), Vector3(0, topo + 0.24, 0)], r * 0.3, r * 0.28, VIDRO, VIDRO, 8)
+	MalhaPintada.tubo(st, [Vector3(0, topo + 0.24, 0), Vector3(0, topo + 0.3, 0)], r * 0.3, r * 0.26, ROLHA, ROLHA.darkened(0.2), 8)
 	if garrafao:
 		# Alça de palha.
-		FxNatureza._tubo(st, [Vector3(r * 0.4, topo + 0.08, 0), Vector3(r * 1.1, topo + 0.04, 0), Vector3(r * 1.25, topo - 0.08, 0), Vector3(r + 0.02, topo - 0.14, 0)], 0.022, 0.022, Color(0.82, 0.66, 0.36), Color(0.7, 0.54, 0.28), 5)
+		MalhaPintada.tubo(st, [Vector3(r * 0.4, topo + 0.08, 0), Vector3(r * 1.1, topo + 0.04, 0), Vector3(r * 1.25, topo - 0.08, 0), Vector3(r + 0.02, topo - 0.14, 0)], 0.022, 0.022, Color(0.82, 0.66, 0.36), Color(0.7, 0.54, 0.28), 5)
 	st.index()
 	var m := st.commit()
 	m.surface_set_material(0, mat_vidro())
@@ -133,12 +121,12 @@ static func estilhaco(g: Node, at: Vector3, r: float, forte := false, na_poca :=
 		FxProjetil.faiscas(g, chao, Color(0.9, 1.0, 0.92), 10, 7.0, Vector3.UP, 85.0, 0.16)
 		Fx.letreiro(g, at, "ESPALHOU!", FALA, 0.8)
 	Sfx.play("garrafa_quebra", at, 0.12, 0.85 if forte else 1.0, 0.0 if forte else -2.0)
-	_shake(g, at, 0.3 if forte else 0.18)
+	FxBase.tremer(g, at, 0.3 if forte else 0.18)
 
 
 ## Levou garrafada: "HIC!" e a cachaça escorrendo enquanto dura.
 static func encachacado(u: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Fx.letreiro(g, u.global_position + Vector3(0, 0.9, 0), "HIC!", CACHACA, 0.7)
 	if not Magia.enfeite():
 		return
@@ -161,13 +149,13 @@ static func arde(u: Unit) -> void:
 	if Sorte.ms() - int(u.get_meta("ardeu_ms", -5000)) < 900:
 		return
 	u.set_meta("ardeu_ms", Sorte.ms())
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Magia.chama(g, u.global_position + Vector3(0, 0.2, 0), "brasa", 0.7, 1.8, 0.45, {"segura": 0.4})
 	Fx.letreiro(g, u.global_position + Vector3(0, 1.0, 0), "ARDEU!", Color(1.0, 0.55, 0.2), 0.8)
 
 
 static func escorregou(o: Unit, _dono: Unit) -> void:
-	var g := _g(o)
+	var g := FxBase.g(o)
 	Fx.letreiro(g, o.global_position + Vector3(0, 0.6, 0), "ESCORREGOU!", CACHACA, 0.8)
 	FxProjetil.ps(g, o.global_position + Vector3(0, 0.1, 0), FxProjetil._gota(), CACHACA, 6, 0.45, {"dir": Vector3.UP, "spread": 60.0,
 			"v0": 1.5, "v1": 3.0, "g": Vector3(0, -12, 0), "s0": 0.7, "s1": 1.0})
@@ -294,7 +282,7 @@ static func poca_seca(pai: Node3D, raio: float, queimada: bool) -> void:
 
 ## O garrafão do Q voando da mão até onde vira poça (`voo` s, em arco).
 static func garrafao(u: Unit, at: Vector3, voo: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var no := Node3D.new()
 	no.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	g.add_child(no)
@@ -318,34 +306,6 @@ static func garrafao(u: Unit, at: Vector3, voo: float) -> void:
 
 # --- Andaime ---------------------------------------------------------------------------------
 
-## Vértice no formato do pintura.gdshader: COLOR.a = oclusão, UV.x = vento,
-## UV.y = desenho (1 = tábuas).
-static func _v(st: SurfaceTool, p: Vector3, nrm: Vector3, cor: Color, ao: float, vento: float, desenho: float) -> void:
-	st.set_color(Color(cor.r, cor.g, cor.b, ao))
-	st.set_uv(Vector2(vento, desenho))
-	st.set_normal(nrm)
-	st.add_vertex(p)
-
-
-## Caixa orientada (centro, meias-medidas, base) com as seis faces de fora.
-static func _caixa(st: SurfaceTool, c: Vector3, meia: Vector3, b: Basis, cor: Color, desenho := 1.0, ao := Vector2(0.7, 1.0), vento := 0.0) -> void:
-	var eixos := [b.x * meia.x, b.y * meia.y, b.z * meia.z]
-	for f in 3:
-		for s in [-1.0, 1.0]:
-			var nrm: Vector3 = (eixos[f] as Vector3).normalized() * s
-			var u: Vector3 = eixos[(f + 1) % 3]
-			var w: Vector3 = eixos[(f + 2) % 3]
-			var centro: Vector3 = c + eixos[f] * s
-			var q := [centro - u - w, centro + u - w, centro + u + w, centro - u + w]
-			# frente no sentido horário visto de fora (o pintado descarta o verso)
-			if (q[1] - q[0]).cross(q[2] - q[0]).dot(nrm) > 0.0:
-				q = [q[0], q[3], q[2], q[1]]
-			for i in [0, 1, 2, 0, 2, 3]:
-				var p: Vector3 = q[i]
-				var alto := clampf((p.y - c.y + meia.y) / maxf(meia.y * 2.0, 0.01), 0.0, 1.0) if absf(b.y.y) > 0.5 else 0.5
-				_v(st, p, nrm, cor, lerpf(ao.x, ao.y, alto), vento * (1.0 - alto), desenho)
-
-
 ## Andaime de raio: largura `larg`, altura `alt`, frente = +z do nó. Postes,
 ## travessas, cruzes de travamento, a plataforma com balde e garrafa em cima e
 ## a lona na cor do time (a barra de baixo balança no vento).
@@ -362,12 +322,12 @@ static func _malha_andaime(larg: float, alt: float, cor_time: Color) -> ArrayMes
 	for i in 3:
 		var x := lerpf(-m + 0.12, m - 0.12, i / 2.0)
 		var torto := Basis(Vector3.FORWARD, 0.04 if i == 2 else 0.0)
-		_caixa(st, Vector3(x, alt * 0.5, 0.0), Vector3(0.07, alt * 0.5 + 0.1, 0.07), torto, MADEIRA_ESCURA, 1.0, Vector2(0.55, 1.0))
-		_caixa(st, Vector3(x, 0.04, 0.0), Vector3(0.18, 0.04, 0.22), I, MADEIRA_ESCURA.darkened(0.15), 1.0, Vector2(0.5, 0.7))
+		MalhaPintada.caixa(st, Vector3(x, alt * 0.5, 0.0), Vector3(0.07, alt * 0.5 + 0.1, 0.07), torto, MADEIRA_ESCURA, 1.0, Vector2(0.55, 1.0))
+		MalhaPintada.caixa(st, Vector3(x, 0.04, 0.0), Vector3(0.18, 0.04, 0.22), I, MADEIRA_ESCURA.darkened(0.15), 1.0, Vector2(0.5, 0.7))
 	# Travessas na frente e atrás, em dois andares.
 	for y in [alt * 0.45, alt - 0.05]:
 		for z in [-0.12, 0.12]:
-			_caixa(st, Vector3(0, y, z), Vector3(m, 0.05, 0.03), I, MADEIRA, 1.0, Vector2(0.8, 1.0))
+			MalhaPintada.caixa(st, Vector3(0, y, z), Vector3(m, 0.05, 0.03), I, MADEIRA, 1.0, Vector2(0.8, 1.0))
 	# Cruzes de travamento atrás (X em cada vão).
 	for k in 2:
 		var cx := lerpf(-m + 0.12, 0.0, 0.5) if k == 0 else lerpf(0.0, m - 0.12, 0.5)
@@ -375,21 +335,21 @@ static func _malha_andaime(larg: float, alt: float, cor_time: Color) -> ArrayMes
 		var diag := sqrt(vao * vao + alt * 0.45 * alt * 0.45) * 0.5
 		var ang := atan2(alt * 0.45, vao)
 		for s in [-1.0, 1.0]:
-			_caixa(st, Vector3(cx, alt * 0.225, -0.16), Vector3(diag, 0.035, 0.02), Basis(Vector3.BACK, ang * s), MADEIRA.darkened(0.1), 1.0, Vector2(0.6, 0.9))
+			MalhaPintada.caixa(st, Vector3(cx, alt * 0.225, -0.16), Vector3(diag, 0.035, 0.02), Basis(Vector3.BACK, ang * s), MADEIRA.darkened(0.1), 1.0, Vector2(0.6, 0.9))
 	# Plataforma de tábuas no topo, um pouco funda, e o guarda-corpo.
 	for k in 3:
-		_caixa(st, Vector3(0, alt + 0.02, -0.2 + k * 0.2), Vector3(m + 0.15, 0.03, 0.09), Basis(Vector3.RIGHT, 0.02 * (k - 1)), MADEIRA.lightened(0.05 * k), 1.0, Vector2(0.85, 1.0))
+		MalhaPintada.caixa(st, Vector3(0, alt + 0.02, -0.2 + k * 0.2), Vector3(m + 0.15, 0.03, 0.09), Basis(Vector3.RIGHT, 0.02 * (k - 1)), MADEIRA.lightened(0.05 * k), 1.0, Vector2(0.85, 1.0))
 	# Balde de massa e a garrafa (claro) esquecidos lá em cima.
-	FxNatureza._tubo(st, [Vector3(-m * 0.55, alt + 0.05, -0.05), Vector3(-m * 0.55, alt + 0.33, -0.05)], 0.15, 0.19, Color(0.55, 0.57, 0.6), Color(0.68, 0.7, 0.72), 8)
-	FxNatureza._bola(st, Vector3(-m * 0.55, alt + 0.33, -0.05), 0.16, Vector3(1.0, 0.25, 1.0), Color(0.78, 0.76, 0.7))
-	FxNatureza._tubo(st, [Vector3(m * 0.6, alt + 0.05, -0.1), Vector3(m * 0.6, alt + 0.33, -0.1), Vector3(m * 0.6, alt + 0.5, -0.1)], 0.1, 0.03, VIDRO, VIDRO_ESCURO, 7)
+	MalhaPintada.tubo(st, [Vector3(-m * 0.55, alt + 0.05, -0.05), Vector3(-m * 0.55, alt + 0.33, -0.05)], 0.15, 0.19, Color(0.55, 0.57, 0.6), Color(0.68, 0.7, 0.72), 8)
+	MalhaPintada.bola(st, Vector3(-m * 0.55, alt + 0.33, -0.05), 0.16, Vector3(1.0, 0.25, 1.0), Color(0.78, 0.76, 0.7))
+	MalhaPintada.tubo(st, [Vector3(m * 0.6, alt + 0.05, -0.1), Vector3(m * 0.6, alt + 0.33, -0.1), Vector3(m * 0.6, alt + 0.5, -0.1)], 0.1, 0.03, VIDRO, VIDRO_ESCURO, 7)
 	# Lona do time na frente (fina, com volume para ler dos dois lados), com
 	# a barra de baixo solta no vento.
-	_caixa(st, Vector3(0, alt * 0.6, 0.16), Vector3(m - 0.08, alt * 0.33, 0.015), I, lona, 0.0, Vector2(0.75, 1.0), 0.5)
+	MalhaPintada.caixa(st, Vector3(0, alt * 0.6, 0.16), Vector3(m - 0.08, alt * 0.33, 0.015), I, lona, 0.0, Vector2(0.75, 1.0), 0.5)
 	# Faixa listrada (amarela e preta) de obra em cima da lona.
 	for k in 8:
 		var x := lerpf(-m + 0.3, m - 0.3, k / 7.0)
-		_caixa(st, Vector3(x, alt * 0.93, 0.19), Vector3(m / 8.0 - 0.02, 0.06, 0.01), Basis(Vector3.BACK, 0.4), Color(1.0, 0.82, 0.18) if k % 2 == 0 else Color(0.1, 0.09, 0.08), 0.0, Vector2(0.9, 1.0))
+		MalhaPintada.caixa(st, Vector3(x, alt * 0.93, 0.19), Vector3(m / 8.0 - 0.02, 0.06, 0.01), Basis(Vector3.BACK, 0.4), Color(1.0, 0.82, 0.18) if k % 2 == 0 else Color(0.1, 0.09, 0.08), 0.0, Vector2(0.9, 1.0))
 	st.index()
 	var mm := st.commit()
 	_malhas[chave] = mm
@@ -405,17 +365,11 @@ static func andaime(pai: Node3D, larg: float, alt: float, cor_time: Color) -> No
 	pai.add_child(no)
 	var mi := MeshInstance3D.new()
 	mi.mesh = _malha_andaime(larg, alt, cor_time)
-	mi.material_override = FxNatureza._mat_cena(pai.get_parent())
+	mi.material_override = MalhaPintada.material(pai.get_parent())
 	no.add_child(mi)
 	for k in 2:
-		var l := Label3D.new()
-		l.text = "OBRA DO PREDERO" if k == 0 else "CUIDADO: OBRA"
-		l.font = Estilo.LETREIRO
-		l.font_size = 48
-		l.pixel_size = 0.006
-		l.outline_size = 10
-		l.modulate = Color(1.0, 0.95, 0.85)
-		l.outline_modulate = Estilo.TINTA
+		var l := Estilo.letreiro_3d("OBRA DO PREDERO" if k == 0 else "CUIDADO: OBRA", 48, {"pixel": 0.006, "contorno": 10,
+				"cor": Color(1.0, 0.95, 0.85), "billboard": false})
 		l.position = Vector3(0, alt * 0.62, 0.2 if k == 0 else -0.2)
 		l.rotation.y = 0.0 if k == 0 else PI
 		l.rotation.z = 0.05 if k == 0 else -0.04  # placa pintada à mão, torta
@@ -430,7 +384,7 @@ static func andaime_sobe(g: Node, pos: Vector3, larg: float, lado: Vector3) -> v
 		Assinatura.pecas(g, p + Vector3(0, 1.0, 0), "lasca", MADEIRA.lightened(0.2), 3, {"tam": 0.7})
 	Magia.onda(g, pos + Vector3(0, 0.1, 0), "vento", larg * 0.7, 0.35, {"banda": 0.14})
 	Sfx.play("andaime_sobe", pos, 0.05)
-	_shake(g, pos, 0.2)
+	FxBase.tremer(g, pos, 0.2)
 
 
 static func andaime_golpe(a: Node3D, by: Unit) -> void:
@@ -459,9 +413,9 @@ static func andaime_cai(g: Node, pos: Vector3, larg: float, lado: Vector3) -> vo
 # --- Saideira -------------------------------------------------------------------------------
 
 ## O engradado sobe girando até acima do centro, abre e as garrafas caem uma a
-## uma em `pts` (a i-ésima chega em SAIDEIRA_VOO + i·cada s; a última acesa).
+## uma em `pts` (a i-ésima chega em HeroisConfig.saideira_voo + i·cada s; a última acesa).
 static func saideira(u: Unit, centro: Vector3, pts: Array, cada: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var cor := Config.team_color(u.team)
 	fala(u, "SAIDEIRA!")
 	var topo := centro + Vector3(0, 6.5, 0)
@@ -472,9 +426,10 @@ static func saideira(u: Unit, centro: Vector3, pts: Array, cada: float) -> void:
 	caixa.global_position = de
 	var mi := MeshInstance3D.new()
 	mi.mesh = _malha_engradado(cor)
-	mi.material_override = FxNatureza._mat_cena(g)
+	mi.material_override = MalhaPintada.material(g)
 	caixa.add_child(mi)
-	var subida := SAIDEIRA_VOO - QUEDA
+	var voo: float = Config.cfg.herois.saideira_voo
+	var subida := voo - QUEDA
 	var tw := caixa.create_tween()
 	tw.tween_method(func(k: float) -> void:
 		var p := de.lerp(topo, k)
@@ -485,10 +440,10 @@ static func saideira(u: Unit, centro: Vector3, pts: Array, cada: float) -> void:
 		Magia.estouro(g, topo, "cachaca", 1.4, 0.3)
 		Assinatura.pecas(g, topo, "lasca", MADEIRA.lightened(0.15), 8, {"tam": 0.8})
 		caixa.queue_free())
-	Magia.selo(g, centro, "cachaca", Config.cfg.herois.saideira_raio, SAIDEIRA_VOO + cada * pts.size() + 0.3)
+	Magia.selo(g, centro, "cachaca", Config.cfg.herois.saideira_raio, voo + cada * pts.size() + 0.3)
 	Sfx.play("garrafa_lancar", de, 0.05, 0.7)
 	for i in pts.size():
-		var chega := SAIDEIRA_VOO + cada * i
+		var chega := voo + cada * i
 		var at: Vector3 = pts[i]
 		var ultima := i == pts.size() - 1
 		var t0 := g.create_tween()
@@ -527,15 +482,15 @@ static func _malha_engradado(cor_time: Color) -> ArrayMesh:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var I := Basis.IDENTITY
 	for z in [-0.28, 0.28]:
-		_caixa(st, Vector3(0, 0.0, z), Vector3(0.45, 0.2, 0.03), I, MADEIRA, 1.0)
+		MalhaPintada.caixa(st, Vector3(0, 0.0, z), Vector3(0.45, 0.2, 0.03), I, MADEIRA, 1.0)
 	for x in [-0.43, 0.43]:
-		_caixa(st, Vector3(x, 0.0, 0), Vector3(0.03, 0.2, 0.28), I, MADEIRA.darkened(0.1), 1.0)
-	_caixa(st, Vector3(0, -0.18, 0), Vector3(0.45, 0.02, 0.3), I, MADEIRA_ESCURA, 1.0)
-	_caixa(st, Vector3(0, 0.05, 0.315), Vector3(0.2, 0.06, 0.01), I, cor_time, 0.0)
+		MalhaPintada.caixa(st, Vector3(x, 0.0, 0), Vector3(0.03, 0.2, 0.28), I, MADEIRA.darkened(0.1), 1.0)
+	MalhaPintada.caixa(st, Vector3(0, -0.18, 0), Vector3(0.45, 0.02, 0.3), I, MADEIRA_ESCURA, 1.0)
+	MalhaPintada.caixa(st, Vector3(0, 0.05, 0.315), Vector3(0.2, 0.06, 0.01), I, cor_time, 0.0)
 	for i in 3:
 		for j in 2:
 			var p := Vector3(-0.27 + i * 0.27, 0.1, -0.13 + j * 0.26)
-			FxNatureza._tubo(st, [p, p + Vector3(0, 0.25, 0), p + Vector3(0, 0.38, 0)], 0.09, 0.035, VIDRO, VIDRO_ESCURO, 6)
+			MalhaPintada.tubo(st, [p, p + Vector3(0, 0.25, 0), p + Vector3(0, 0.38, 0)], 0.09, 0.035, VIDRO, VIDRO_ESCURO, 6)
 	st.index()
 	var m := st.commit()
 	_malhas[chave] = m

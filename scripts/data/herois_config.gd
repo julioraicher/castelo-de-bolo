@@ -206,5 +206,9 @@ extends Resource
 @export var saideira_dist := 11.0
 @export var saideira_dano := 14.0
 @export var saideira_cada := 0.14
+## s do lançamento do engradado até a 1ª garrafa chegar ao chão (o dano começa
+## aí; o voo da garrafa no FxObra segue este número). Era FxObra.SAIDEIRA_VOO,
+## uma constante "visual" que a regra lia (revisão 3c, FX-10).
+@export var saideira_voo := 0.55
 ## Árvore do Kodama é para-raios: raio que cai a até N m dela cai nela.
 @export var arvore_pararaios := 4.0

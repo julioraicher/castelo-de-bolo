@@ -3209,15 +3209,8 @@ func set_nome_tag(nome: String) -> void:
 			_nome_tag = null
 		return
 	if _nome_tag == null:
-		_nome_tag = Label3D.new()
-		_nome_tag.font = Estilo.LETREIRO
-		_nome_tag.font_size = 40
-		_nome_tag.outline_size = 14
-		_nome_tag.pixel_size = 0.0065
-		_nome_tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		_nome_tag.no_depth_test = true
-		_nome_tag.render_priority = 2
-		_nome_tag.outline_modulate = Color(0.05, 0.04, 0.08, 0.92)
+		_nome_tag = Estilo.letreiro_3d("", 40, {"contorno": 14, "pixel": 0.0065, "frente": true, "prioridade": 2,
+				"cor_contorno": Color(0.05, 0.04, 0.08, 0.92)})
 		_nome_tag.position = Vector3(0, 3.2, 0)
 		add_child(_nome_tag)
 	_nome_tag.text = nome

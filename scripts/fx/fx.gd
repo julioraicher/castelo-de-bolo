@@ -4,16 +4,12 @@ extends RefCounted
 ## faíscas de impacto, anel de cura, rastro de golpe. Funções estáticas: Fx.letreiro(...).
 
 static var _sector_cache := {}  # "raio_arco" -> ArrayMesh do rastro de golpe
-static var _cache := {}  # malhas de partícula já prontas (com material), por tipo + cor
+static var _sem_contorno := {}  # material com contorno -> cópia sem (tirar_contorno)
 
 
-## Recurso reaproveitado: cria uma vez com maker e devolve o mesmo nas próximas.
-## Partículas não animam o material, então todas as do mesmo tipo e cor podem
-## dividir malha e material (menos alocação e nenhum shader novo no meio da luta).
+## Recurso reaproveitado (FxBase.cache, chaves com "fx/").
 static func cached(key: String, maker: Callable) -> Resource:
-	if not _cache.has(key):
-		_cache[key] = maker.call()
-	return _cache[key]
+	return FxBase.cache("fx/" + key, maker)
 
 
 ## Esquenta os shaders dos efeitos: desenha cada tipo uma vez, escondido
@@ -36,6 +32,20 @@ static func prewarm(parent: Node, pos: Vector3) -> void:
 	parent.add_child(bolha)
 	bolha.global_position = p
 	parent.get_tree().create_timer(0.5).timeout.connect(bolha.queue_free)
+	# Revisão 3c (FX-08): o que ficava de fora e compilava no primeiro uso.
+	var no := Node3D.new()
+	parent.add_child(no)
+	no.global_position = p
+	MarcaChao.criar(no, "selo", 1.0, Color.WHITE, Color(0.3, 0.5, 1.0), 0.3)  # todo poder de área
+	for sh: Shader in [Magia.SH_ENERGIA_ATRAS, Assinatura.SH_SELO_FRENTE]:
+		var m := ShaderMaterial.new()
+		m.shader = sh
+		var mi := MeshInstance3D.new()
+		mi.mesh = QuadMesh.new()
+		mi.material_override = m
+		no.add_child(mi)
+	parent.get_tree().create_timer(0.5).timeout.connect(no.queue_free)
+	Respingo.em(parent, p, Vector3.FORWARD, Color(0.3, 0.5, 1.0), 0.5)
 
 
 ## forca: 1 = golpe comum; > 1 = número maior e com mais "pop" (combo final,
@@ -50,18 +60,8 @@ static func damage_number(parent: Node, pos: Vector3, text: String, color: Color
 ## Sempre aparece (caça 2026-11-19, FX-02): antes passava pelo damage_number e
 ## desligar "Números de dano" apagava ~50 avisos de estado, como NINGUÉM PERTO.
 static func letreiro(parent: Node, pos: Vector3, text: String, color: Color, forca := 1.0, dir := Vector3.ZERO) -> void:
-	var label := Label3D.new()
-	label.text = text
-	label.modulate = color
-	label.outline_modulate = Estilo.TINTA
-	label.outline_size = 16
-	label.font = Estilo.NUMERO
-	label.font_size = 64
-	label.pixel_size = 0.0095 * clampf(0.85 + 0.2 * forca, 0.85, 1.35)  # um pouco menores (pedido do Julio)
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.no_depth_test = true
-	label.fixed_size = false
-	label.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
+	var label := Estilo.letreiro_3d(text, 64, {"fonte": Estilo.NUMERO, "contorno": 16, "cor": color, "frente": true, "solto": true,
+			"pixel": 0.0095 * clampf(0.85 + 0.2 * forca, 0.85, 1.35)})  # um pouco menores (pedido do Julio)
 	parent.add_child(label)
 	label.global_position = pos + Vector3(randf_range(-0.4, 0.4), 2.6, 0)
 	# "Pop": nasce grande e volta com sobra (TRANS_BACK), lê como impacto.
@@ -205,12 +205,8 @@ static func montar_pecas(pai: Node3D, pecas: Array, mat: Material) -> void:
 	# material, então o selo/emblema custa 1 chamada de desenho em vez de uma
 	# por peça (medido: 48 só das torretas). O material segue compartilhado:
 	# o dono pode animar a transparência dele que a malha acompanha.
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for p in pecas:
-		st.append_from(p[0], 0, p[1])
 	var mi := MeshInstance3D.new()
-	mi.mesh = st.commit()
+	mi.mesh = MalhaUnica.pecas(pecas)
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	pai.add_child(mi)
@@ -224,9 +220,13 @@ static func tirar_contorno(raiz: Node) -> void:
 		for s in mi.mesh.get_surface_count():
 			var mat := mi.mesh.surface_get_material(s) as ShaderMaterial
 			if mat and mat.next_pass:
-				var m: ShaderMaterial = mat.duplicate()
-				m.next_pass = null
-				mi.set_surface_override_material(s, m)
+				# Uma cópia sem contorno por material original, não uma por peça
+				# (N torretas = N cópias iguais antes; revisão 3c, FX-34).
+				if not _sem_contorno.has(mat):
+					var m: ShaderMaterial = mat.duplicate()
+					m.next_pass = null
+					_sem_contorno[mat] = m
+				mi.set_surface_override_material(s, _sem_contorno[mat])
 
 
 static func lit(color: Color, roughness := 0.6) -> StandardMaterial3D:

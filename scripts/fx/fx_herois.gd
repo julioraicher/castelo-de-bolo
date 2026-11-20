@@ -15,14 +15,10 @@ const SOM := Color(0.55, 0.95, 0.88)
 const ROXO := Color(0.72, 0.45, 0.95)
 
 
-static func _g(u: Unit) -> Node:
-	return u.game
-
-
 # --- Sumotori --------------------------------------------------------------------
 
 static func agarrao(u: Unit, alvo: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var p := alvo.global_position + Vector3(0, 1.0, 0)
 	Magia.estouro(g, p, "sal", 0.9, 0.25)
 	FxProjetil.faiscas(g, p, SAL, 8, 5.0, Vector3.UP, 120.0, 0.2)
@@ -30,7 +26,7 @@ static func agarrao(u: Unit, alvo: Unit) -> void:
 
 
 static func agarrao_vazio(u: Unit, dir: Vector3) -> void:
-	Fx.slash(_g(u), u.global_position + Vector3(0, 1.0, 0), dir, 2.6, 70.0, SAL, 0.0, false)
+	Fx.slash(FxBase.g(u), u.global_position + Vector3(0, 1.0, 0), dir, 2.6, 70.0, SAL, 0.0, false)
 
 
 static func pouso_pesado(g: Node, at: Vector3, r: float) -> void:
@@ -41,7 +37,7 @@ static func pouso_pesado(g: Node, at: Vector3, r: float) -> void:
 
 
 static func pisao_grande(u: Unit, r: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var at := u.global_position
 	Magia.onda(g, at, "sal", r * 1.15, 0.5, {"banda": 0.2, "gira": 0.4})
 	Magia.onda(g, at, "brasa", r * 0.7, 0.35, {"banda": 0.12})
@@ -53,7 +49,7 @@ static func pisao_grande(u: Unit, r: float) -> void:
 
 ## Ringue de sal: círculo de sal no chão, corda shimenawa (anel) e grãos subindo.
 static func dohyo(u: Unit, r: float, dur: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var at := u.global_position
 	Assinatura.selo(g, at, u, r * 1.18, dur, {"escrita": 0.08})  # a corda fica na borda do ringue
 	Magia.onda(g, at, "sal", r, 0.5, {"r0": 0.2, "banda": 0.06})
@@ -93,7 +89,7 @@ static func poca(g: Node, at: Vector3) -> void:
 
 
 static func jato(u: Unit, de: Vector3, ate: Vector3, larg: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var y := Vector3(0, 1.1, 0)
 	Magia.lanca(g, de + y, ate + y, "agua", larg * 1.2, 0.45, {"cresce": 0.12, "corre": 6.0, "forca": 1.1})
 	Magia.lanca(g, de + y, ate + y, [Color(1, 1, 1), AGUA, Color(0.1, 0.4, 0.8)], larg * 0.5, 0.35, {"cresce": 0.1, "corre": 9.0})
@@ -104,7 +100,7 @@ static func jato(u: Unit, de: Vector3, ate: Vector3, larg: float) -> void:
 
 
 static func casco(u: Unit, dir: Vector3) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var p := u.global_position + Vector3(0, 1.1, 0) - dir * 0.5
 	FxProjetil.faiscas(g, p, Color(0.8, 1.0, 0.85), 6, 5.0, -dir + Vector3.UP * 0.5, 60.0, 0.18)
 	Magia.estouro(g, p, "agua", 0.7, 0.2)
@@ -116,7 +112,7 @@ static func casco(u: Unit, dir: Vector3) -> void:
 # --- Yamabushi -------------------------------------------------------------------
 
 static func rajada(u: Unit, dir: Vector3, r: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var de := u.global_position + Vector3(0, 1.1, 0)
 	Fx.slash(g, de, dir, r, Config.cfg.herois.rajada_cone, Color(1.0, 0.9, 0.7), 0.0, true)
 	for k in [-1.0, 0.0, 1.0]:
@@ -149,7 +145,7 @@ static func asas(u: Unit, tempo: float) -> void:
 	var pal := [Color(0.6, 0.5, 0.9), Color(0.28, 0.2, 0.45), PENA]
 	for s in [-1.0, 1.0]:
 		Magia.fita(u, Vector3(0.35 * s, 1.5, -0.1), Vector3(1.6 * s, 1.9, -0.5), pal, tempo, {"pontos": 10, "forca": 0.6})
-	FxProjetil.ps(_g(u), u.global_position + Vector3(0, 1.2, 0), FxProjetil.lasca(0.3, 0.09), PENA, FxProjetil._qtd(10), 0.8,
+	FxProjetil.ps(FxBase.g(u), u.global_position + Vector3(0, 1.2, 0), FxProjetil.lasca(0.3, 0.09), PENA, FxProjetil._qtd(10), 0.8,
 			{"esfera": 0.6, "dir": Vector3.UP, "spread": 80.0, "v0": 1.0, "v1": 3.0, "g": Vector3(0, -2, 0), "s0": 0.8, "s1": 1.3, "ang1": 360.0})
 
 
@@ -181,20 +177,20 @@ static func revoada_area(n: Node3D, r: float, dur: float) -> void:
 # --- Mujina ---------------------------------------------------------------------
 
 static func rosto(u: Unit, alvo: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Magia.bola(g, u.global_position + Vector3(0, 1.2, 0), "sombra", 1.3, 0.45)
 	FxProjetil.fumaca(g, u.global_position + Vector3(0, 1.0, 0), Color(0.35, 0.2, 0.5, 0.85), 10, 1.4, 0.8, 1.0)
 	Magia.lanca(g, alvo.global_position + Vector3(0, 1.5, 0), u.global_position + Vector3(0, 1.5, 0), "sombra", 0.35, 0.3, {"cresce": 0.1})
 
 
 static func rosto_cai(u: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	FxProjetil.fumaca(g, u.global_position + Vector3(0, 1.0, 0), Color(0.35, 0.2, 0.5, 0.85), 8, 1.2, 0.7, 1.0)
 	Magia.estouro(g, u.global_position + Vector3(0, 1.0, 0), "sombra", 1.0, 0.3)
 
 
 static func susto(u: Unit, dir: Vector3, r: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Fx.slash(g, u.global_position + Vector3(0, 1.2, 0), dir, r, 90.0, ROXO, 0.0, true)
 	Magia.onda(g, u.global_position, "sombra", r, 0.35, {"banda": 0.15})
 	FxProjetil.ps(g, u.global_position + Vector3(0, 1.6, 0) + dir * 0.5, FxProjetil.quad("olho", FxProjetil.tex_olho(), false, Vector2(0.5, 0.5)), Color(0.9, 0.75, 1.0), FxProjetil._qtd(6), 0.6,
@@ -205,7 +201,7 @@ static func susto(u: Unit, dir: Vector3, r: float) -> void:
 # --- Onmyoji --------------------------------------------------------------------
 
 static func dobra(u: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	# Quad de sprite do kit (caça 2026-11-19, FX-01): o QuadMesh sem material saía
 	# com luz, sem a cor/rampa da partícula, sem encarar a câmera e de uma face só.
 	FxProjetil.ps(g, u.global_position + Vector3(0, 1.4, 0), FxProjetil.quad("papel_dobra", null, false, Vector2(0.18, 0.24)), PAPEL, FxProjetil._qtd(8), 0.5, {"esfera": 0.4, "v0": 1.0, "v1": 2.5, "ang1": 360.0, "s0": 0.8, "s1": 1.2})
@@ -213,7 +209,7 @@ static func dobra(u: Unit) -> void:
 
 
 static func shikigami_rasga(u: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	FxProjetil.ps(g, u.global_position + Vector3(0, 1.3, 0), FxProjetil.lasca(0.2, 0.12), PAPEL, FxProjetil._qtd(12), 0.7,
 			{"esfera": 0.6, "v0": 2.0, "v1": 4.5, "g": Vector3(0, -4, 0), "ang1": 360.0, "s0": 0.8, "s1": 1.3})
 	Magia.estouro(g, u.global_position + Vector3(0, 1.2, 0), "papel", 1.2, 0.25)
@@ -264,7 +260,7 @@ static func bonecos(u: Unit, n: int) -> Node3D:
 # --- Tennin ---------------------------------------------------------------------
 
 static func laco(u: Unit, alvo: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var de := u.global_position + Vector3(0, 1.4, 0)
 	var ate := alvo.global_position + Vector3(0, 0.6 if not alvo.alive else 1.2, 0)
 	Magia.lanca(g, de, ate, "celeste", 0.45, 0.45, {"cresce": 0.12, "corre": 4.0})
@@ -273,7 +269,7 @@ static func laco(u: Unit, alvo: Unit) -> void:
 
 
 static func danca(u: Unit, r: float, dur: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Assinatura.selo(g, u.global_position, u, r, dur, {"escrita": 0.3, "giro": 0.3})
 	Magia.vortice(u, "celeste", r * 0.35, 2.0, dur, {"r_topo": 2.4, "gira": 1.4, "alfa": 0.7})
 	Magia.aura_brasas(u, CELESTE, dur, 10, 1.2)
@@ -281,7 +277,7 @@ static func danca(u: Unit, r: float, dur: float) -> void:
 
 
 static func veu(u: Unit, r: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Magia.onda(g, u.global_position, "celeste", r, 0.6, {"banda": 0.1, "gira": 0.6})
 	Magia.anel_sobe(g, u.global_position, "celeste", 2.0, 3.0, 0.9)
 
@@ -293,7 +289,7 @@ static func veu_em(o: Unit, t: float) -> void:
 # --- Komusō ---------------------------------------------------------------------
 
 static func canto(u: Unit, dir: Vector3, r: float, dur: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	for k in 3:
 		var tw := u.create_tween()
 		tw.tween_interval(k * dur / 3.0)
@@ -304,17 +300,17 @@ static func canto(u: Unit, dir: Vector3, r: float, dur: float) -> void:
 
 
 static func canto_fim(u: Unit, dir: Vector3, r: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Fx.slash(g, u.global_position + Vector3(0, 1.4, 0), dir, r, 60.0, Color(0.7, 0.85, 1.0), 0.0, true)
 	Magia.onda(g, u.global_position + dir * r * 0.5, [Color(0.95, 1.0, 1.0), Color(0.55, 0.75, 1.0), Color(0.2, 0.3, 0.7)], r * 0.5, 0.5, {"banda": 0.15})
 
 
 static func sono_em(o: Unit) -> void:
-	Magia.estouro(_g(o), o.global_position + Vector3(0, 1.0, 0), [Color(0.95, 1.0, 1.0), Color(0.55, 0.75, 1.0), Color(0.2, 0.3, 0.7)], 1.0, 0.35)
+	Magia.estouro(FxBase.g(o), o.global_position + Vector3(0, 1.0, 0), [Color(0.95, 1.0, 1.0), Color(0.55, 0.75, 1.0), Color(0.2, 0.3, 0.7)], 1.0, 0.35)
 
 
 static func hipnose(u: Unit, r: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Assinatura.selo(g, u.global_position, u, r, 1.2, {"escrita": 0.2})
 	Magia.onda(g, u.global_position, "som", r, 0.6, {"gira": 1.0, "banda": 0.08})
 	Magia.onda(g, u.global_position, "som", r * 0.3, 0.6, {"r0": 3.3, "gira": -1.5, "banda": 0.08})
@@ -327,7 +323,7 @@ static func hipnose_em(o: Unit, t: float) -> void:
 
 
 static func requiem(u: Unit, r: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Magia.onda(g, u.global_position, "som", r, 0.8, {"banda": 0.06, "gira": 0.3})
 	Magia.onda(g, u.global_position, [Color(0.9, 0.95, 1.0), Color(0.45, 0.5, 0.6), Color(0.15, 0.15, 0.22)], r * 0.6, 0.6, {"banda": 0.12})
 	Magia.anel_sobe(g, u.global_position, "som", 1.6, 3.0, 0.9)
@@ -336,7 +332,7 @@ static func requiem(u: Unit, r: float) -> void:
 
 
 static func nota_muda(o: Unit) -> void:
-	Fx.letreiro(_g(o), o.global_position + Vector3(0, 1.4, 0), "MUDO", Color(0.6, 0.95, 0.9), 0.5)
+	Fx.letreiro(FxBase.g(o), o.global_position + Vector3(0, 1.4, 0), "MUDO", Color(0.6, 0.95, 0.9), 0.5)
 
 
 static func _notas(g: Node, at: Vector3, dir: Vector3, n: int, spread := 30.0) -> void:
@@ -350,71 +346,44 @@ static func _notas(g: Node, at: Vector3, dir: Vector3, n: int, spread := 30.0) -
 # Ochimusha fogo-fantasma azul e cinzas; Shishimai festa (dourado, vermelho,
 # confete); Jorogumo seda (branco perolado, lilás) com orvalho na cor do time.
 
-const FANTASMA := Color(0.55, 0.78, 1.0)
+const AZUL_FANTASMA := Color(0.55, 0.78, 1.0)  # o do NinjaVisual; FANTASMA (verde) é o espírito (FX-27)
 const SEDA := Color(0.95, 0.94, 1.0)
 const FESTA := Color(1.0, 0.78, 0.3)
 const AZAR := Color(0.5, 0.32, 0.72)
 
-static var _quads := {}
-
-
-## Peça do atlas parada (não partícula) na cor `cor`: quad com cor de vértice e
-## o material da peça (1 chamada). Para marcas e fogos que seguem o boneco.
-static func peca_fixa(pai: Node3D, pos: Vector3, tipo: String, cor: Color, tam: float) -> MeshInstance3D:
-	var chave := "%s|%s" % [tipo, cor.to_html()]
-	if not _quads.has(chave):
-		var st := SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		var cantos := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.5), Vector2(-0.5, 0.5)]
-		for i in [0, 1, 2, 0, 2, 3]:
-			var c: Vector2 = cantos[i]
-			st.set_color(cor)
-			st.set_uv(Vector2(c.x + 0.5, 0.5 - c.y))
-			st.add_vertex(Vector3(c.x, c.y, 0))
-		var m := st.commit()
-		m.surface_set_material(0, Assinatura._malha_peca(tipo, 0.0).material)
-		_quads[chave] = m
-	var mi := MeshInstance3D.new()
-	mi.mesh = _quads[chave]
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mi.extra_cull_margin = 1.0
-	mi.position = pos
-	mi.scale = Vector3.ONE * tam
-	pai.add_child(mi)
-	return mi
 
 
 # --- Ochimusha -------------------------------------------------------------------
 
 static func fantasma(u: Unit, t: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var at := u.global_position
 	Magia.bola(g, at + Vector3(0, 1.1, 0), "fantasma", 1.4, 0.45)
 	Magia.onda(g, at, "fantasma", 2.8, 0.5, {"banda": 0.14})
-	Assinatura.pecas(g, at + Vector3(0, 1.2, 0), "cinza", FANTASMA, 14, {"mov": "sobe"})
-	Magia.aura_brasas(u, FANTASMA, t, 10, 0.6)
+	Assinatura.pecas(g, at + Vector3(0, 1.2, 0), "cinza", AZUL_FANTASMA, 14, {"mov": "sobe"})
+	Magia.aura_brasas(u, AZUL_FANTASMA, t, 10, 0.6)
 	Fx.letreiro(g, at + Vector3(0, 0.8, 0), "NÃO CAIU!", Color(0.72, 0.88, 1.0))
 
 
 static func fantasma_volta(u: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var at := u.global_position
 	Magia.estouro(g, at + Vector3(0, 1.1, 0), "fantasma", 1.6, 0.35)
 	Magia.anel_sobe(g, at, "fantasma", 1.2, 2.6, 0.7)
-	Assinatura.pecas(g, at + Vector3(0, 1.0, 0), "cinza", FANTASMA, 10)
+	Assinatura.pecas(g, at + Vector3(0, 1.0, 0), "cinza", AZUL_FANTASMA, 10)
 	Fx.letreiro(g, at + Vector3(0, 0.8, 0), "VOLTOU!", Color(0.8, 0.93, 1.0))
 
 
 static func fantasma_cai(u: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var at := u.global_position
-	Assinatura.pecas(g, at + Vector3(0, 1.1, 0), "cinza", FANTASMA, 18, {"mov": "sobe", "esfera": 0.8})
+	Assinatura.pecas(g, at + Vector3(0, 1.1, 0), "cinza", AZUL_FANTASMA, 18, {"mov": "sobe", "esfera": 0.8})
 	FxProjetil.fumaca(g, at + Vector3(0, 1.0, 0), Color(0.5, 0.6, 0.8, 0.7), 8, 1.2, 0.9, 1.4)
 
 
 ## Corte do Eco: o risco fica no chão, azul, até cortar de novo.
 static func eco_marca(u: Unit, at: Vector3, dir: Vector3, alcance: float, atraso: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var lado := dir.cross(Vector3.UP)
 	var y := Vector3(0, 0.1, 0)
 	Magia.lanca(g, at + y + dir * 0.5 - lado * alcance * 0.35, at + y + dir * alcance + lado * alcance * 0.3, "fantasma", 0.28, atraso + 0.15, {"cresce": 0.08, "corre": 2.0})
@@ -422,14 +391,14 @@ static func eco_marca(u: Unit, at: Vector3, dir: Vector3, alcance: float, atraso
 
 
 static func eco_corte(u: Unit, at: Vector3, dir: Vector3, alcance: float, arco: float) -> void:
-	var g := _g(u)
-	Fx.slash(g, at + Vector3(0, 1.0, 0), dir, alcance + 0.4, minf(arco, 160.0), FANTASMA, 88.0, true)
-	Assinatura.pecas(g, at + dir * alcance * 0.6 + Vector3(0, 1.0, 0), "cinza", FANTASMA, 8)
+	var g := FxBase.g(u)
+	Fx.slash(g, at + Vector3(0, 1.0, 0), dir, alcance + 0.4, minf(arco, 160.0), AZUL_FANTASMA, 88.0, true)
+	Assinatura.pecas(g, at + dir * alcance * 0.6 + Vector3(0, 1.0, 0), "cinza", AZUL_FANTASMA, 8)
 	Sfx.play("corte_critico", at, 0.08, 0.75)
 
 
 static func flecha(u: Unit, alvo: Unit, dn: Vector3) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var de := u.global_position + Vector3(0, 1.7, 0) - u._facing() * 0.35
 	var ate := alvo.global_position + Vector3(0, 1.2, 0)
 	Magia.lanca(g, de, ate, "fantasma", 0.22, 0.25, {"cresce": 0.06, "corre": 8.0})
@@ -438,7 +407,7 @@ static func flecha(u: Unit, alvo: Unit, dn: Vector3) -> void:
 
 
 static func onibi_nasce(u: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Magia.estouro(g, u.global_position + Vector3(0, 1.3, 0), "fantasma", 1.4, 0.3)
 	Sfx.play("ochimusha_onibi", u.global_position, 0.05)
 
@@ -454,9 +423,9 @@ static func onibi(u: Unit, n: int, raio: float) -> Node3D:
 		var a := TAU * i / maxf(n, 1)
 		var p := Vector3(cos(a), 0.15 * sin(a * 2.0), sin(a)) * raio
 		FxProjetil.brilho_fixo(no, p, Color(0.35, 0.6, 1.0, 0.85), 0.9, false)
-		peca_fixa(no, p + Vector3(0, 0.05, 0), "chama", Color(0.62, 0.84, 1.0), 0.55)
+		Assinatura.peca_fixa(no, p + Vector3(0, 0.05, 0), "chama", Color(0.62, 0.84, 1.0), 0.55)
 		if Magia.enfeite():
-			FxProjetil.ps(no, p, FxProjetil.quad("brilho", FxProjetil.tex_brilho(), false), FANTASMA, 6, 0.45,
+			FxProjetil.ps(no, p, FxProjetil.quad("brilho", FxProjetil.tex_brilho(), false), AZUL_FANTASMA, 6, 0.45,
 					{"one_shot": false, "local_pos": true, "esfera": 0.12, "dir": Vector3.UP, "spread": 25.0, "v0": 0.6, "v1": 1.4, "s0": 0.1, "s1": 0.2, "rampa": "nasce"})
 	var tw := no.create_tween().set_loops()
 	tw.tween_property(no, "rotation:y", TAU, 1.6).from(0.0)
@@ -465,18 +434,18 @@ static func onibi(u: Unit, n: int, raio: float) -> Node3D:
 
 static func onibi_estoura(g: Node, at: Vector3) -> void:
 	Magia.bola(g, at, "fantasma", 1.1, 0.35)
-	Magia.brasas(g, at, FANTASMA, 10, 0.6, 0.9)
-	Assinatura.pecas(g, at, "cinza", FANTASMA, 6)
+	Magia.brasas(g, at, AZUL_FANTASMA, 10, 0.6, 0.9)
+	Assinatura.pecas(g, at, "cinza", AZUL_FANTASMA, 6)
 	Sfx.play("ochimusha_onibi", at, 0.1, 1.3, -3.0)
 
 
 static func onibi_some(u: Unit) -> void:
-	FxProjetil.fumaca(_g(u), u.global_position + Vector3(0, 1.3, 0), Color(0.5, 0.65, 0.9, 0.6), 5, 0.9, 0.6, 1.2)
+	FxProjetil.fumaca(FxBase.g(u), u.global_position + Vector3(0, 1.3, 0), Color(0.5, 0.65, 0.9, 0.6), 5, 0.9, 0.6, 1.2)
 
 
 ## Carga dos Caídos: n samurais-fantasma em fila avançam pela faixa.
 static func carga_caidos(u: Unit, de: Vector3, dir: Vector3, comp: float, larg: float, tempo: float, n: int) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var lado := dir.cross(Vector3.UP).normalized()
 	var y := Vector3(0, 0.12, 0)
 	Magia.lanca(g, de + y, de + y + dir * comp, "fantasma", larg * 0.9, tempo + 0.25, {"cresce": 0.1, "corre": 3.0, "forca": 0.8})
@@ -489,7 +458,7 @@ static func carga_caidos(u: Unit, de: Vector3, dir: Vector3, comp: float, larg: 
 		tw.tween_interval(atraso)
 		tw.tween_property(f, "global_position", p0 + dir * comp, tempo).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		if Magia.enfeite():
-			var r := FxProjetil.ps(f, Vector3(0, -0.6, 0), Assinatura._malha_peca("cinza", 0.0), FANTASMA, 10, 0.6,
+			var r := FxProjetil.ps(f, Vector3(0, -0.6, 0), Assinatura._malha_peca("cinza", 0.0), AZUL_FANTASMA, 10, 0.6,
 					{"one_shot": false, "local_pos": true, "esfera": 0.4, "dir": Vector3.UP, "spread": 30.0, "v0": 0.5, "v1": 1.5, "s0": 0.6, "s1": 1.0})
 			r.local_coords = false
 	FxProjetil.marca_chao(g, de + dir * comp * 0.5, Color(0.08, 0.1, 0.2, 0.4), larg * 0.5, 2.0)
@@ -499,7 +468,7 @@ static func carga_caidos(u: Unit, de: Vector3, dir: Vector3, comp: float, larg: 
 # --- Shishimai -------------------------------------------------------------------
 
 static func mordida(u: Unit, alvo: Unit, aliado: bool) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var at := alvo.global_position + Vector3(0, 1.1, 0)
 	Magia.estouro(g, at, "cura" if aliado else "festa", 0.9, 0.25)
 	Assinatura.pecas(g, at, "confete", FESTA if aliado else Color(1.0, 0.35, 0.3), 8, {"tam": 0.7})
@@ -507,19 +476,19 @@ static func mordida(u: Unit, alvo: Unit, aliado: bool) -> void:
 
 
 static func mordida_vazia(u: Unit, dir: Vector3) -> void:
-	Fx.slash(_g(u), u.global_position + Vector3(0, 1.1, 0), dir, 2.2, 60.0, Color(1.0, 0.75, 0.35), 0.0, false)
+	Fx.slash(FxBase.g(u), u.global_position + Vector3(0, 1.1, 0), dir, 2.2, 60.0, Color(1.0, 0.75, 0.35), 0.0, false)
 	Sfx.play("shishimai_mordida", u.global_position, 0.08, 1.2, -6.0)
 
 
 static func sorte_em(o: Unit) -> void:
-	var g := _g(o)
+	var g := FxBase.g(o)
 	Magia.estouro(g, o.global_position + Vector3(0, 1.7, 0), "festa", 0.8, 0.25)
 	Assinatura.pecas(g, o.global_position + Vector3(0, 1.8, 0), "confete", FESTA, 6, {"tam": 0.6})
 	Fx.letreiro(g, o.global_position + Vector3(0, 0.9, 0), "SORTE", Color(1.0, 0.85, 0.35), 0.8)
 
 
 static func azar_em(o: Unit) -> void:
-	var g := _g(o)
+	var g := FxBase.g(o)
 	FxProjetil.fumaca(g, o.global_position + Vector3(0, 2.2, 0), Color(0.3, 0.2, 0.42, 0.75), 4, 0.8, 0.7, 0.4)
 	Fx.letreiro(g, o.global_position + Vector3(0, 0.9, 0), "AZAR", Color(0.72, 0.5, 1.0), 0.8)
 
@@ -533,7 +502,7 @@ static func marca_sorte(u: Unit, tipo: String) -> Node3D:
 	no.position = Vector3(0, 2.75, 0)
 	var sorte := tipo == "sorte"
 	FxProjetil.brilho_fixo(no, Vector3.ZERO, Color(1.0, 0.8, 0.3, 0.6) if sorte else Color(0.3, 0.15, 0.45, 0.6), 0.8, false)
-	peca_fixa(no, Vector3.ZERO, "estrela" if sorte else "nuvem", FESTA if sorte else AZAR, 0.42)
+	Assinatura.peca_fixa(no, Vector3.ZERO, "estrela" if sorte else "nuvem", FESTA if sorte else AZAR, 0.42)
 	var tw := no.create_tween().set_loops()
 	tw.tween_property(no, "position:y", 2.9, 0.5).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(no, "position:y", 2.75, 0.5).set_trans(Tween.TRANS_SINE)
@@ -541,46 +510,46 @@ static func marca_sorte(u: Unit, tipo: String) -> Node3D:
 
 
 static func errou(quem: Unit, alvo: Unit) -> void:
-	var g := _g(quem)
+	var g := FxBase.g(quem)
 	Fx.letreiro(g, alvo.global_position + Vector3(0, 0.7, 0), "ERROU!", Color(0.75, 0.55, 1.0), 0.9)
 	FxProjetil.fumaca(g, quem.global_position + Vector3(0, 2.3, 0), Color(0.3, 0.2, 0.42, 0.8), 4, 0.7, 0.6, 0.3)
 
 
 static func sorte_desvia(u: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Fx.letreiro(g, u.global_position + Vector3(0, 0.7, 0), "SORTE!", Color(1.0, 0.85, 0.35), 0.9)
 	Assinatura.pecas(g, u.global_position + Vector3(0, 1.3, 0), "confete", FESTA, 8, {"tam": 0.6})
 	Sfx.play("shishimai_sino", u.global_position, 0.1)
 
 
 static func sorte_dobra(quem: Unit, alvo: Unit) -> void:
-	var g := _g(quem)
+	var g := FxBase.g(quem)
 	Magia.estouro(g, alvo.global_position + Vector3(0, 1.2, 0), "festa", 1.1, 0.25)
 	Fx.letreiro(g, alvo.global_position + Vector3(0, 1.0, 0), "SORTE ×2", Color(1.0, 0.85, 0.35), 1.0)
 
 
 static func arrastao(u: Unit, t: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Magia.fita(u, Vector3(-0.3, 1.6, 0.2), Vector3(0.3, 1.6, 0.2), "festa", t + 0.2, {"pontos": 10})
 	FxProjetil.fumaca(g, u.global_position + Vector3(0, 0.3, 0), Color(0.7, 0.62, 0.5, 0.7), 6, 1.0, 0.6, 0.6)
 	Sfx.play("shishimai_taiko", u.global_position, 0.05)
 
 
 static func arrastao_pega(u: Unit, o: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Magia.estouro(g, o.global_position + Vector3(0, 1.1, 0), "festa", 1.0, 0.25)
 	Fx.letreiro(g, o.global_position + Vector3(0, 0.7, 0), "NA BOCA!", Color(1.0, 0.7, 0.35))
 	Sfx.play("shishimai_mordida", o.global_position, 0.05, 0.9)
 
 
 static func arrastao_fim(u: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Magia.onda(g, u.global_position, "festa", 2.0, 0.35, {"banda": 0.2})
 	FxProjetil.fumaca(g, u.global_position + Vector3(0, 0.3, 0), Color(0.7, 0.62, 0.5, 0.7), 8, 1.2, 0.7, 0.8)
 
 
 static func festa(u: Unit, t: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Magia.onda(g, u.global_position, "festa", 4.0, 0.6, {"banda": 0.1, "gira": 0.5})
 	Assinatura.pecas(g, u.global_position + Vector3(0, 2.4, 0), "confete", FESTA, 30, {"spread": 70.0, "v0": 5.0, "v1": 9.0, "g": Vector3(0, -6, 0), "vida": 1.8})
 	Magia.aura_brasas(u, FESTA, t, 12, 0.9)
@@ -588,14 +557,14 @@ static func festa(u: Unit, t: float) -> void:
 
 
 static func festa_pulso(u: Unit, r: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Magia.onda(g, u.global_position, "festa", r, 0.5, {"banda": 0.06})
 	Assinatura.pecas(g, u.global_position + Vector3(0, 2.6, 0), "confete", FESTA, 10, {"tam": 0.7})
 	Sfx.play("shishimai_sino", u.global_position, 0.1, 1.0, -4.0)
 
 
 static func festa_levanta(u: Unit, c: Unit) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Magia.anel_sobe(g, c.global_position, "festa", 1.0, 2.4, 0.7)
 	Fx.letreiro(g, c.global_position + Vector3(0, 0.8, 0), "LEVANTA!", Color(1.0, 0.85, 0.4))
 
@@ -673,7 +642,7 @@ static func _traco(st: SurfaceTool, a: Vector3, b: Vector3, larg: float, cor: Co
 
 
 static func teia_lanca(u: Unit, at: Vector3) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	Magia.lanca(g, u.global_position + Vector3(0, 1.4, 0), at + Vector3(0, 0.2, 0), "seda", 0.14, 0.25, {"cresce": 0.05})
 	Sfx.play("jorogumo_teia", u.global_position, 0.05)
 
@@ -684,7 +653,7 @@ static func teia_nasce(g: Node, at: Vector3, r: float) -> void:
 
 
 static func teia_prende(o: Unit) -> void:
-	var g := _g(o)
+	var g := FxBase.g(o)
 	_teia_pe(o, Config.cfg.herois.teia_preso)
 	Assinatura.pecas(g, o.global_position + Vector3(0, 0.8, 0), "fio", SEDA, 6, {"tam": 0.7})
 	Sfx.play("seda_gruda", o.global_position, 0.1)
@@ -693,11 +662,11 @@ static func teia_prende(o: Unit) -> void:
 ## Rede (3º fio): a teia pequena gruda nos pés.
 static func rede(o: Unit) -> void:
 	_teia_pe(o, Config.cfg.herois.rede_preso)
-	Fx.letreiro(_g(o), o.global_position + Vector3(0, 1.0, 0), "REDE!", Color(0.92, 0.9, 1.0), 0.8)
+	Fx.letreiro(FxBase.g(o), o.global_position + Vector3(0, 1.0, 0), "REDE!", Color(0.92, 0.9, 1.0), 0.8)
 
 
 static func _teia_pe(o: Unit, t: float) -> void:
-	var g := _g(o)
+	var g := FxBase.g(o)
 	var n := Node3D.new()
 	n.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	g.add_child(n)
@@ -728,7 +697,7 @@ static func teia_rasga(g: Node, at: Vector3, r: float) -> void:
 
 
 static func puxar(u: Unit, alvos: Array[Unit], r: float) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	var mao := u.global_position + Vector3(0, 1.4, 0)
 	Magia.onda(g, u.global_position, "seda", r * 0.45, 0.4, {"banda": 0.1, "gira": -0.6})
 	for o in alvos:
@@ -738,7 +707,7 @@ static func puxar(u: Unit, alvos: Array[Unit], r: float) -> void:
 
 
 static func casulo_lanca(u: Unit, alvos: Array) -> void:
-	var g := _g(u)
+	var g := FxBase.g(u)
 	for o in alvos:
 		Magia.lanca(g, u.global_position + Vector3(0, 1.4, 0), (o as Unit).global_position + Vector3(0, 1.0, 0), "seda", 0.2, 0.35, {"cresce": 0.08})
 	Sfx.play("jorogumo_casulo", u.global_position, 0.03)
@@ -827,14 +796,14 @@ static func _fazer_casulo() -> ArrayMesh:
 
 
 static func casulo_bate(o: Unit) -> void:
-	Assinatura.pecas(_g(o), o.global_position + Vector3(0, 1.1, 0), "fio", SEDA, 5, {"tam": 0.6})
+	Assinatura.pecas(FxBase.g(o), o.global_position + Vector3(0, 1.1, 0), "fio", SEDA, 5, {"tam": 0.6})
 	Sfx.play("seda_gruda", o.global_position, 0.1, 1.3)
 	if o._casulo_vida > 0:
-		Fx.damage_number(_g(o), o.global_position + Vector3(0, 1.0, 0), "%d" % o._casulo_vida, SEDA, 0.6)
+		Fx.damage_number(FxBase.g(o), o.global_position + Vector3(0, 1.0, 0), "%d" % o._casulo_vida, SEDA, 0.6)
 
 
 static func casulo_quebra(o: Unit) -> void:
-	var g := _g(o)
+	var g := FxBase.g(o)
 	Magia.estouro(g, o.global_position + Vector3(0, 1.0, 0), "seda", 1.3, 0.3)
 	Assinatura.pecas(g, o.global_position + Vector3(0, 1.0, 0), "fio", SEDA, 14)
 	Sfx.play("seda", o.global_position, 0.1, 0.8)

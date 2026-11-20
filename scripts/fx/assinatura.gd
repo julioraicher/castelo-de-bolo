@@ -88,7 +88,8 @@ const MOVS := {
 const MOV := {"pena": "cai", "folha": "cai", "papel": "cai", "petala": "cai", "nota": "sobe", "conta": "sobe", "chama": "sobe", "grou": "sobe", "cinza": "sobe", "confete": "cai", "fio": "cai", "nuvem": "sobe", "semente": "cai", "faisca": "espirra"}
 
 static var _cache := {}
-static var _sh_frente: Shader  # mesmo selo, sem teste de profundidade (hanko junto do nome)
+## Mesmo selo, sem teste de profundidade (hanko junto do nome).
+const SH_SELO_FRENTE := preload("res://assets/shaders/assinatura_selo_frente.gdshader")
 
 
 # --- Consulta ---------------------------------------------------------------------
@@ -192,9 +193,9 @@ static func selo(g: Node, pos: Vector3, quem: Variant, raio: float, dur: float, 
 	oo["metros"] = raio
 	oo.merge(o, true)
 	var verbo: String = oo.get("verbo", d["verbo"])
-	var n := Magia._no(g, pos + Vector3(0, 0.09, 0))
+	var n := FxBase.no(g, pos + Vector3(0, 0.09, 0))
 	var m := _mat(SELOS.find(_id(quem)), Magia.paleta(d["pal"]), verbo, oo)
-	Magia._malha(n, Magia._quad_chao(), m)
+	FxBase.malha(n, Magia._quad_chao(), m)
 	var escrita: float = minf(oo.get("escrita", VERBO[verbo][2]), dur * 0.6)
 	n.scale = Vector3(raio, 1, raio)
 	var tw := _vida(n, m, escrita, dur)
@@ -215,13 +216,40 @@ static func figura(g: Node, pos: Vector3, nome: String, pal: Variant, tam: Vecto
 	var oo := o.duplicate()
 	oo["em_pe"] = 0.0 if deitada else 1.0
 	oo["metros"] = maxf(tam.x, tam.y) * 0.5
-	var n := Magia._no(g, pos)
+	var n := FxBase.no(g, pos)
 	var m := _mat(SELOS.size() + FIGURAS.find(nome), Magia.paleta(pal), verbo, oo)
-	var mi := Magia._malha(n, Magia._quad_chao() if deitada else _quad_pe(), m)
+	var mi := FxBase.malha(n, Magia._quad_chao() if deitada else _quad_pe(), m)
 	mi.extra_cull_margin = maxf(tam.x, tam.y)
 	n.scale = Vector3(tam.x * 0.5, 1, tam.y * 0.5) if deitada else Vector3(tam.x * 0.5, tam.y * 0.5, 1)
 	_vida(n, m, minf(o.get("escrita", VERBO[verbo][2]), dur * 0.6), dur)
 	return n
+
+
+## Peça do atlas parada (não partícula) na cor `cor`: quad com cor de vértice e
+## o material da peça (1 chamada). Para marcas e fogos que seguem o boneco.
+## (Morava em FxHerois com cache próprio; revisão 3c, FX-42.)
+static func peca_fixa(pai: Node3D, pos: Vector3, tipo: String, cor: Color, tam: float) -> MeshInstance3D:
+	var chave := "fixa_%s|%s" % [tipo, cor.to_html()]
+	if not _cache.has(chave):
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var cantos := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.5), Vector2(-0.5, 0.5)]
+		for i in [0, 1, 2, 0, 2, 3]:
+			var c: Vector2 = cantos[i]
+			st.set_color(cor)
+			st.set_uv(Vector2(c.x + 0.5, 0.5 - c.y))
+			st.add_vertex(Vector3(c.x, c.y, 0))
+		var m := st.commit()
+		m.surface_set_material(0, _malha_peca(tipo, 0.0).material)
+		_cache[chave] = m
+	var mi := MeshInstance3D.new()
+	mi.mesh = _cache[chave]
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.extra_cull_margin = 1.0
+	mi.position = pos
+	mi.scale = Vector3.ONE * tam
+	pai.add_child(mi)
+	return mi
 
 
 static func _malha_peca(tipo: String, vira: float) -> QuadMesh:
@@ -277,11 +305,8 @@ static func pecas(g: Node, pos: Vector3, tipo: String, cor_p: Color, n: int, o: 
 static func hanko(l: Label3D, u: Unit) -> void:
 	if de(u).is_empty():
 		return
-	if _sh_frente == null:
-		_sh_frente = Shader.new()
-		_sh_frente.code = SH_SELO.code.replace("depth_draw_never,", "depth_draw_never, depth_test_disabled,")
 	var m := _mat(SELOS.find(_id(u)), [PAPEL, HANKO_COR, HANKO_COR], "carimbo", {"em_pe": 1.0})
-	m.shader = _sh_frente
+	m.shader = SH_SELO_FRENTE
 	m.set_shader_parameter("hanko", 1.0)
 	m.render_priority = 4
 	var larg := l.font.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, l.font_size).x * l.pixel_size
@@ -293,7 +318,7 @@ static func hanko(l: Label3D, u: Unit) -> void:
 	n.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	l.add_child(n)
 	n.position = lado * (larg * 0.5 + tam * 0.95) - cima * tam * 0.2
-	var mi := Magia._malha(n, _quad_pe(), m)
+	var mi := FxBase.malha(n, _quad_pe(), m)
 	mi.extra_cull_margin = 4.0
 	m.set_shader_parameter("rot", -0.14)
 	m.set_shader_parameter("escreve", 0.0)
@@ -584,7 +609,7 @@ static func abrir_r(u: Unit) -> void:
 			var leque := figura(g, p + Vector3(0, 3.2, 0) + _fundo(g, 1.0), "leque", pal, Vector2(5.2, 5.2), 0.95, {"verbo": "carimbo", "rot": -0.9})
 			var ml := mat_de(leque)
 			leque.create_tween().tween_method(func(v: float) -> void: ml.set_shader_parameter("rot", v), -0.9, 0.9, 0.34).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN_OUT)
-			var no := Magia._no(g, p)
+			var no := FxBase.no(g, p)
 			Magia.vortice(no, pal, 2.4, 4.6, 1.3, {"r_topo": 1.9, "gira": 2.2, "alfa": 0.8})
 			no.create_tween().tween_callback(no.queue_free).set_delay(2.0)
 			pecas(g, alto, peca, pc, 32, {"anel": 2.4, "tang": 30.0, "g": Vector3(0, 2.2, 0), "vida": 1.6})
@@ -607,7 +632,7 @@ static func abrir_r(u: Unit) -> void:
 				var grou := figura(g, p + Vector3(0, 2.4, 0) + _fundo(g, 1.0), "grou", pal, Vector2(5.0, 5.0), 1.2, {"verbo": "risco", "escrita": 0.16})
 				grou.create_tween().tween_property(grou, "global_position:y", p.y + 5.6, 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT))
 		&"tennin":  # ela gira e as fitas desenham um véu
-			var no := Magia._no(g, p)
+			var no := FxBase.no(g, p)
 			Magia.vortice(no, pal, 4.2, 4.8, 1.5, {"r_topo": 1.0, "gira": 1.2, "alfa": 0.6})
 			no.create_tween().tween_callback(no.queue_free).set_delay(2.1)
 			for k in 3:

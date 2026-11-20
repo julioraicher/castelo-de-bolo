@@ -4,6 +4,51 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até o Ciclo 2.29b (2026-11-14) estão em `docs/changelog-antigo.md`.
 
+## Revisão 3c (2026-11-20), Diretor de Jogabilidade: kit visual arrumado
+Lote 3c do relatório de 2026-11-19 (mexe em arquivos de efeito, papel do Diretor
+Visual: só reorganização, nenhum desenho novo). **Nada muda no jogo; na tela, o
+mesmo desenho com menos chamadas de desenho.** Prova: o resumo da partida (SINC)
+ficou idêntico ao do 3b nas 6 partidas de prova; as 23 malhas pintadas e de
+projétil saem byte a byte iguais; testes 1688/1688; varredura de poderes sem erro;
+os 12 modos de print/filme/vitrine rodam sem erro e com os mesmos arquivos.
+
+**Código**
+- `FxBase` (`scripts/fx/fx_base.gd`): cache de recurso, nó/malha de efeito, onde
+  pendurar o efeito de um boneco, tremor da câmera e o portão da qualidade Mínima,
+  que 7 kits escreviam cada um do seu jeito (FX-12/13/24).
+- `MalhaPintada` (`scripts/fx/malha_pintada.gd`): material pintado do tema e os
+  construtores (tubo, bola, corda, caixa, placa, aro...) que FxNatureza, FxObra e
+  FxItens tinham em 3 cópias e chamavam os `_` privados um do outro (FX-15/16).
+  `MalhaUnica.pecas` junta peças soltas (era escrito 3 vezes) (FX-14).
+- `Estilo.letreiro_3d`: os 15 Label3D (nome do golpe, avisos, placas das casas,
+  torreta, nome do boneco...) nascem numa receita só; cada um mantém os próprios
+  números (FX-19/UI-16).
+- Variantes de shader viraram arquivos (`magia_energia_atras`,
+  `assinatura_selo_frente`, corpo em `.gdshaderinc`): antes eram feitas trocando
+  texto do código em tempo de execução, o que quebrava calado se alguém mexesse
+  no `render_mode` (FX-25).
+- `Fx.prewarm` cobre o que ficava de fora (marca de chão dos poderes, as duas
+  variantes, respingo, os 14 tipos de projétil): no navegador, o 1º poder de
+  área não trava mais compilando shader (FX-08).
+- Menos chamadas de desenho: coluna de fogo 6 → 1, pétalas da bênção 10 → 1
+  (MultiMesh com as mesmas curvas), minas do campo minado com malha e material
+  únicos, contorno tirado com uma cópia por material e não por peça (FX-22/34).
+- Tempo de voo da Saideira é regra e foi para `cfg.herois.saideira_voo` (FX-10);
+  código morto do AreaEffect e números do selo antigo saíram (FX-30/31);
+  `Assinatura.peca_fixa` mora no Assinatura (FX-42); `FxHerois.AZUL_FANTASMA`
+  (o FANTASMA verde do NinjaVisual é outra cor) (FX-27).
+- AutoQuality mede o tempo real durante a câmera lenta (antes a janela de medida
+  esticava no slow-motion) (FX-40).
+
+**Ficou para decidir com prancha (muda a tela):** Decalque (marcas no chão num
+MultiMesh só: muda a ordem de desenho em relação às ondas e ao chão), cores
+repetidas com valores diferentes (PAPEL tem 5, OURO 4, TINTA da magia ≠ da
+interface), anel do chão triplicado, regra de neblina nos efeitos.
+
+**O que testar**
+- Nada novo. Se quiser conferir: Kitsune de Luz (bênção e coluna), Armadilheiro
+  (campo minado) e o Predero (Saideira) no modo teste, iguais a antes.
+
 ## Revisão 3b (2026-11-20), Diretor de Jogabilidade: peças do mundo
 Lote 3b do relatório de 2026-11-19. **Nada muda no jogo nem no modo teste.**
 Prova: o resumo antigo da partida (SINC) ficou idêntico, quadro a quadro, nas

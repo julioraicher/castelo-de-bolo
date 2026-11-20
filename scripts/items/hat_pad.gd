@@ -83,14 +83,7 @@ func setup(p_team: int, p_stats: ClassStats, pos: Vector3, modelo := "") -> void
 		_hat = make_hat(stats.hat_style, stats.hat_color)
 		_hat.position.y = 1.2
 		add_child(_hat)
-	_label = Label3D.new()
-	_label.font = Estilo.LETREIRO
-	_label.font_size = 40
-	_label.pixel_size = 0.011
-	_label.line_spacing = -6
-	_label.outline_size = 10
-	_label.outline_modulate = Estilo.TINTA
-	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_label = Estilo.letreiro_3d("", 40, {"contorno": 10, "linhas": -6})
 	_label.position.y = 3.4 if _maquina else 2.6
 	_label.add_to_group("letreiro_perto")  # some de longe (Game._letreiros_perto)
 	_label.modulate = stats.hat_color.lightened(0.3)

@@ -12,7 +12,8 @@ extends RefCounted
 
 const SH_ENERGIA := preload("res://assets/shaders/magia_energia.gdshader")
 const SH_SELO := preload("res://assets/shaders/magia_selo.gdshader")
-static var _sh_atras: Shader  # mesma energia, só as faces de trás (aura que não tapa o boneco)
+## Mesma energia, só as faces de trás (aura que não tapa o boneco).
+const SH_ENERGIA_ATRAS := preload("res://assets/shaders/magia_energia_atras.gdshader")
 const TINTA := Color(0.09, 0.03, 0.14)
 
 ## Paletas: [núcleo, meio, borda]. O filete de tinta é o mesmo em todas.
@@ -44,17 +45,12 @@ const PALETAS := {
 	"cachaca": [Color(1.0, 0.99, 0.86), Color(1.0, 0.8, 0.32), Color(0.66, 0.38, 0.08)],
 }
 
-static var _cache := {}
-
-
 static func _c(key: String, maker: Callable) -> Variant:
-	if not _cache.has(key):
-		_cache[key] = maker.call()
-	return _cache[key]
+	return FxBase.cache("magia/" + key, maker)
 
 
 static func enfeite() -> bool:
-	return Settings.quality > 0
+	return FxBase.enfeite()
 
 
 static func paleta(nome: Variant) -> Array:
@@ -124,12 +120,7 @@ static func tex_ruido() -> Texture2D:
 static func mat(pal: Variant, o: Dictionary = {}) -> ShaderMaterial:
 	var p := paleta(pal)
 	var m := ShaderMaterial.new()
-	m.shader = SH_ENERGIA
-	if o.get("atras", false):
-		if _sh_atras == null:
-			_sh_atras = Shader.new()
-			_sh_atras.code = SH_ENERGIA.code.replace("cull_disabled", "cull_front")
-		m.shader = _sh_atras
+	m.shader = SH_ENERGIA_ATRAS if o.get("atras", false) else SH_ENERGIA
 	m.set_shader_parameter("ruido", tex_ruido())
 	m.set_shader_parameter("cor_nucleo", p[0])
 	m.set_shader_parameter("cor_meio", p[1])
@@ -202,23 +193,6 @@ static func _quad_chao() -> PlaneMesh:
 		return p)
 
 
-static func _no(parent: Node, pos: Vector3) -> Node3D:
-	var n := Node3D.new()
-	n.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	parent.add_child(n)
-	n.global_position = pos
-	return n
-
-
-static func _malha(parent: Node3D, mesh: Mesh, m: Material) -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	mi.material_override = m
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	parent.add_child(mi)
-	return mi
-
-
 ## Anima um uniforme do material.
 static func _anim(tw: Tween, m: ShaderMaterial, nome: String, de: float, ate: float, dur: float) -> MethodTweener:
 	m.set_shader_parameter(nome, de)
@@ -231,7 +205,7 @@ static func _anim(tw: Tween, m: ShaderMaterial, nome: String, de: float, ate: fl
 ## baixo. o: r_topo, barriga, giro (voltas), rola, escala, forca, segura (fração
 ## da vida inteira antes de corroer).
 static func chama(g: Node, pos: Vector3, pal: Variant, raio: float, altura: float, vida: float, o: Dictionary = {}) -> Node3D:
-	var n := _no(g, pos)
+	var n := FxBase.no(g, pos)
 	var m := mat(pal, {
 		"escala": o.get("escala", Vector2(3.0, 0.5)),
 		"rola": o.get("rola", Vector2(0.12, -1.3)),
@@ -239,7 +213,7 @@ static func chama(g: Node, pos: Vector3, pal: Variant, raio: float, altura: floa
 		"base": o.get("base", 0.8), "topo": o.get("topo", -0.2), "atras": o.get("atras", false),
 		"ondula": o.get("ondula", 0.1), "fresnel": o.get("fresnel", 0.75),
 	})
-	_malha(n, tubo(o.get("r_topo", 0.25), o.get("barriga", 0.12)), m)
+	FxBase.malha(n, tubo(o.get("r_topo", 0.25), o.get("barriga", 0.12)), m)
 	n.scale = Vector3(raio * 0.5, altura * 0.08, raio * 0.5)
 	var tw := n.create_tween().set_parallel()
 	tw.tween_property(n, "scale", Vector3(raio, altura, raio), minf(0.16, vida * 0.3)).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
@@ -252,14 +226,14 @@ static func chama(g: Node, pos: Vector3, pal: Variant, raio: float, altura: floa
 
 ## Onda de choque no chão: faixa de energia que abre até `raio` e se rasga.
 static func onda(g: Node, pos: Vector3, pal: Variant, raio: float, vida := 0.45, o: Dictionary = {}) -> Node3D:
-	var n := _no(g, pos + Vector3(0, o.get("y", 0.12), 0))
+	var n := FxBase.no(g, pos + Vector3(0, o.get("y", 0.12), 0))
 	var m := mat(pal, {
 		"escala": Vector2(o.get("voltas", 4.0), 0.6), "rola": Vector2(o.get("gira", 0.0), -0.9),
 		"forca": o.get("forca", 0.7), "base": 0.85, "topo": 0.85,
 		"banda": o.get("banda", 0.22), "centro": 0.76,
 		"tinta": o.get("tinta", 0.07 * clampf(3.0 / maxf(raio, 0.1), 0.4, 1.0)),
 	})
-	_malha(n, disco(), m)
+	FxBase.malha(n, disco(), m)
 	var r0: float = o.get("r0", 0.15)
 	n.scale = Vector3(raio * r0, 1, raio * r0)
 	var tw := n.create_tween().set_parallel()
@@ -276,12 +250,12 @@ static func onda(g: Node, pos: Vector3, pal: Variant, raio: float, vida := 0.45,
 
 ## Cúpula de energia que incha e se rasga (estouro, grito, escudo quebrando).
 static func estouro(g: Node, pos: Vector3, pal: Variant, raio: float, vida := 0.4, o: Dictionary = {}) -> Node3D:
-	var n := _no(g, pos)
+	var n := FxBase.no(g, pos)
 	var m := mat(pal, {
 		"escala": Vector2(3.0, 1.0), "rola": Vector2(0.0, -1.2 if o.get("sobe", true) else 0.6),
 		"forca": o.get("forca", 1.0), "base": o.get("base", 0.75), "topo": o.get("topo", 0.6), "fresnel": 0.7,
 	})
-	_malha(n, cupula(), m)
+	FxBase.malha(n, cupula(), m)
 	n.scale = Vector3.ONE * raio * 0.25
 	var tw := n.create_tween().set_parallel()
 	tw.tween_property(n, "scale", Vector3.ONE * raio, vida).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUART)
@@ -294,7 +268,7 @@ static func estouro(g: Node, pos: Vector3, pal: Variant, raio: float, vida := 0.
 ## (s depois de escrito, acende o miolo). Devolve o nó; o selo fica `dur` s.
 static func selo(g: Node, pos: Vector3, pal: Variant, raio: float, dur: float, o: Dictionary = {}) -> Node3D:
 	var p := paleta(pal)
-	var n := _no(g, pos + Vector3(0, 0.09, 0))
+	var n := FxBase.no(g, pos + Vector3(0, 0.09, 0))
 	var m := ShaderMaterial.new()
 	m.shader = SH_SELO
 	m.set_shader_parameter("ruido", tex_ruido())
@@ -306,7 +280,7 @@ static func selo(g: Node, pos: Vector3, pal: Variant, raio: float, dur: float, o
 	m.set_shader_parameter("giro", o.get("giro", 0.06))
 	m.set_shader_parameter("semente", randf())
 	m.set_shader_parameter("fino", clampf(3.2 / maxf(raio, 0.1), 0.3, 1.0))
-	_malha(n, _quad_chao(), m)
+	FxBase.malha(n, _quad_chao(), m)
 	n.scale = Vector3(raio, 1, raio)
 	var escrita: float = minf(o.get("escrita", 0.45), dur * 0.6)
 	var tw := n.create_tween().set_parallel()
@@ -329,7 +303,7 @@ static func vortice(pai: Node3D, pal: Variant, raio: float, altura: float, dur: 
 		"forca": o.get("forca", 1.5), "base": o.get("base", 0.2), "topo": o.get("topo", 0.08), "tinta": o.get("tinta", 0.04),
 		"teto": 4.0, "ondula": 0.05, "alfa": o.get("alfa", 1.0),
 	})
-	_malha(n, tubo(o.get("r_topo", 1.9), 0.0, 16, 4), m)
+	FxBase.malha(n, tubo(o.get("r_topo", 1.9), 0.0, 16, 4), m)
 	n.scale = Vector3(raio * 0.4, altura * 0.3, raio * 0.4)
 	var tw := n.create_tween().set_parallel()
 	tw.tween_property(n, "scale", Vector3(raio, altura, raio), 0.22).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
@@ -340,9 +314,9 @@ static func vortice(pai: Node3D, pal: Variant, raio: float, altura: float, dur: 
 
 ## Anel de energia que sobe (subir de nível, captura, bênção): faixa num tubo.
 static func anel_sobe(g: Node, pos: Vector3, pal: Variant, raio: float, sobe: float, vida := 1.0, atraso := 0.0) -> void:
-	var n := _no(g, pos)
+	var n := FxBase.no(g, pos)
 	var m := mat(pal, {"escala": Vector2(3.0, 0.5), "rola": Vector2(0.4, 0.0), "forca": 0.6, "base": 0.85, "topo": 0.85, "banda": 0.5, "centro": 0.5, "corroi": 1.0})
-	_malha(n, tubo(1.0, 0.0, 20, 1), m)
+	FxBase.malha(n, tubo(1.0, 0.0, 20, 1), m)
 	n.scale = Vector3(raio, raio * 0.22, raio)
 	var tw := n.create_tween()
 	tw.tween_interval(atraso)
@@ -366,7 +340,7 @@ static func raio(g: Node, de: Vector3, ate: Vector3, pal: Variant, larg := 0.22,
 	var comp := d.length()
 	if comp < 0.1:
 		return null
-	var n := _no(g, de)
+	var n := FxBase.no(g, de)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var pts := zigue(Vector3.ZERO, d, int(o.get("n", clampi(int(comp / 1.1), 3, 9))), float(o.get("amp", minf(comp * 0.1, 0.9))))
@@ -377,7 +351,7 @@ static func raio(g: Node, de: Vector3, ate: Vector3, pal: Variant, larg := 0.22,
 		fita_raio(st, zigue(p, p + (d.normalized() * 0.6 + desvio).normalized() * comp * 0.25, 3, comp * 0.04), larg * 0.55)
 	var m := mat(pal, {"escala": Vector2(1.0, maxf(comp * 0.3, 1.0)), "rola": Vector2(0.0, -7.0), "forca": 0.5,
 			"base": 1.0, "topo": 1.0, "lados": 1.0, "tinta": 0.1})
-	var mi := _malha(n, st.commit(), m)
+	var mi := FxBase.malha(n, st.commit(), m)
 	var tw := n.create_tween()
 	tw.tween_interval(vida * 0.22)
 	tw.tween_callback(func() -> void: mi.visible = false)
@@ -433,13 +407,13 @@ static func lanca(g: Node, de: Vector3, ate: Vector3, pal: Variant, larg := 0.3,
 	var comp := d.length()
 	if comp < 0.05:
 		return
-	var n := _no(g, de)
+	var n := FxBase.no(g, de)
 	n.look_at(ate, Vector3.UP if absf(d.normalized().y) < 0.99 else Vector3.RIGHT)
 	var m := mat(pal, {
 		"escala": Vector2(1.0, maxf(comp * 0.25, 1.0)), "rola": Vector2(0.0, -o.get("corre", 3.0)),
 		"forca": o.get("forca", 0.8), "base": 0.95, "topo": 0.95, "lados": 1.0, "tinta": o.get("tinta", 0.06),
 	})
-	_malha(n, _cruz(), m)
+	FxBase.malha(n, _cruz(), m)
 	n.scale = Vector3(larg, larg, comp)
 	var tw := n.create_tween().set_parallel()
 	var cresce: float = o.get("cresce", 0.0)
@@ -491,9 +465,9 @@ static func rachaduras(g: Node, pos: Vector3, pal: Variant, raio: float, qtd := 
 			for q: Array in [[a0, 0.0, v0], [b0, 1.0, v0], [b1, 1.0, v1], [a0, 0.0, v0], [b1, 1.0, v1], [a1, 0.0, v1]]:
 				st.set_uv(Vector2(q[1], q[2]))
 				st.add_vertex(q[0])
-	var n := _no(g, pos + Vector3(0, 0.07, 0))
+	var n := FxBase.no(g, pos + Vector3(0, 0.07, 0))
 	var m := mat(pal, {"escala": Vector2(1.0, 2.0), "rola": Vector2(0.0, -0.5), "forca": 0.45, "base": 0.95, "topo": 0.6, "lados": 0.9, "tinta": 0.1})
-	_malha(n, st.commit(), m)
+	FxBase.malha(n, st.commit(), m)
 	n.scale = Vector3(0.2, 1, 0.2)
 	var tw := n.create_tween().set_parallel()
 	tw.tween_property(n, "scale", Vector3.ONE, 0.12).set_ease(Tween.EASE_OUT)
@@ -503,9 +477,9 @@ static func rachaduras(g: Node, pos: Vector3, pal: Variant, raio: float, qtd := 
 
 ## Bola de energia (bola de fogo, nuvem estilizada) que incha e se corrói.
 static func bola(g: Node, pos: Vector3, pal: Variant, raio: float, vida := 0.5, o: Dictionary = {}) -> Node3D:
-	var n := _no(g, pos)
+	var n := FxBase.no(g, pos)
 	var m := mat(pal, {"escala": Vector2(2.0, 1.2), "rola": Vector2(0.1, o.get("sobe", 0.9)), "forca": o.get("forca", 1.0), "base": o.get("base", 0.55), "topo": o.get("topo", 0.7), "corroi": 0.15, "fresnel": 0.95})
-	_malha(n, _esfera(), m)
+	FxBase.malha(n, _esfera(), m)
 	n.scale = Vector3.ONE * raio * 0.3
 	var achata: float = o.get("achata", 0.75)
 	var tw := n.create_tween().set_parallel()

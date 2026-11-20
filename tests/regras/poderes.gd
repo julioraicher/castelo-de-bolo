@@ -379,7 +379,7 @@ func _magia() -> void:
 	_check(sobras.is_empty(), "magia: peças que não se liberaram: %s" % ", ".join(sobras))
 	_check(FxPoder.ELEMENTO.has("redemoinho") and Magia.PALETAS.has("brasa"), "magia: tabela de elementos e paletas")
 	for poder: String in FxPoder.ELEMENTO:
-		var pal: String = FxPoder.ELEMENTO[poder][0]
+		var pal: String = FxPoder.ELEMENTO[poder]
 		_check(pal == "" or Magia.PALETAS.has(pal), "magia: paleta '%s' do poder %s existe" % [pal, poder])
 	caixa.queue_free()
 

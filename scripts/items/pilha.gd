@@ -40,14 +40,7 @@ func setup(game: Game, p_team: int, pos: Vector3) -> void:
 			_alt_label = c.position.y
 	else:
 		_provisoria()
-	_label = Label3D.new()
-	_label.font = Estilo.LETREIRO
-	_label.font_size = 56
-	_label.pixel_size = 0.012
-	_label.outline_size = 12
-	_label.outline_modulate = Estilo.TINTA
-	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.no_depth_test = true
+	_label = Estilo.letreiro_3d("", 56, {"pixel": 0.012, "contorno": 12, "frente": true})
 	_label.position.y = _alt_label
 	_label.add_to_group("letreiro_perto")  # some de longe (Game._letreiros_perto)
 	add_child(_label)

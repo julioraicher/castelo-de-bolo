@@ -9,23 +9,23 @@ extends RefCounted
 
 # --- Comum a todos ---------------------------------------------------------------
 
-## Elemento de cada poder: a paleta do kit decide o som (`som_elemento`). Os
-## dois números eram o desenho do selo genérico (pontas, pétalas); desde o Ciclo
-## 2.24 o selo é o do personagem (`Assinatura`) e eles não são mais lidos.
+## Elemento de cada poder: a paleta do kit decide o som (`som_elemento`).
+## (Os números do selo genérico saíram: desde o Ciclo 2.24 o selo é o do
+## personagem, `Assinatura`; revisão 3c, FX-31.)
 const ELEMENTO := {
-	"redemoinho": ["vento", 4, 0],
-	"furia": ["brasa", 3, 0],
-	"leque": ["aco", 6, 0],
-	"corte_relampago": ["aco", 6, 0],
-	"chuva_de_flechas": ["", 4, 0],
-	"bencao": ["luz", 0, 8],
-	"selo": ["sombra", 5, 0],
-	"coluna_fogo": ["", 5, 0],
-	"campo_minado": ["veneno", 6, 0],
-	"mutirao": ["luz", 8, 0],
-	"bombardeio": ["brasa", 3, 0],
-	"muralha": ["", 8, 0],
-	"ciranda": ["aco", 6, 0],
+	"redemoinho": "vento",
+	"furia": "brasa",
+	"leque": "aco",
+	"corte_relampago": "aco",
+	"chuva_de_flechas": "",
+	"bencao": "luz",
+	"selo": "sombra",
+	"coluna_fogo": "",
+	"campo_minado": "veneno",
+	"mutirao": "luz",
+	"bombardeio": "brasa",
+	"muralha": "",
+	"ciranda": "aco",
 }
 
 
@@ -43,18 +43,9 @@ static func lancar(u: Unit) -> void:
 
 ## Nome do golpe na fonte de pincel, sobe e some (estilo anime).
 static func _nome(u: Unit, cor: Color) -> void:
-	var l := Label3D.new()
-	l.text = u.stats.power_name.to_upper() + "!"
-	l.font = Estilo.TITULO
-	l.font_size = 96 if u.is_player else 46  # bots: menor e mais curto, para não poluir a briga
-	l.pixel_size = 0.011
-	l.outline_size = 22 if u.is_player else 14
-	l.outline_modulate = Estilo.TINTA
-	l.modulate = cor
-	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	l.no_depth_test = true
-	l.render_priority = 3
-	l.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
+	# Bots: menor e mais curto, para não poluir a briga.
+	var l := Estilo.letreiro_3d(u.stats.power_name.to_upper() + "!", 96 if u.is_player else 46, {"fonte": Estilo.TITULO,
+			"contorno": 22 if u.is_player else 14, "cor": cor, "frente": true, "prioridade": 3, "solto": true})
 	u.game.add_child(l)
 	l.global_position = u.global_position + Vector3(0, 3.3, 0)
 	l.scale = Vector3.ONE * 0.4
@@ -110,13 +101,17 @@ static func campo_minado(u: Unit, pontos: Array) -> void:
 	var origem := u.global_position + Vector3(0, 1.3, 0)
 	for k in pontos.size():
 		var alvo: Vector3 = pontos[k]
-		var n := _no(g, origem)
-		var s := SphereMesh.new()
-		s.radius = 0.16
-		s.height = 0.32
-		s.radial_segments = 6
-		s.rings = 3
-		_malha(n, s, Fx.unshaded(Color(0.12, 0.14, 0.1)))
+		var n := FxBase.no(g, origem)
+		# Malha e material da panela divididos por todas as minas (antes um de
+		# cada por mina; revisão 3c, FX-22).
+		FxBase.malha(n, FxBase.cache("poder/mina_malha", func() -> SphereMesh:
+				var s := SphereMesh.new()
+				s.radius = 0.16
+				s.height = 0.32
+				s.radial_segments = 6
+				s.rings = 3
+				return s),
+				FxBase.cache("poder/mina_mat", func() -> Material: return Fx.unshaded(Color(0.12, 0.14, 0.1))))
 		Magia.fita(n, Vector3(0, -0.14, 0), Vector3(0, 0.14, 0), pal, 0.0, {"pontos": 8})
 		var atraso := 0.04 * k
 		var tw := n.create_tween()
@@ -166,9 +161,9 @@ static func corte_relampago(u: Unit, de: Vector3, ate: Vector3, atingidos: Array
 	cap.rings = 2
 	for k in 5:
 		var t := (k + 0.5) / 5.0
-		var n := _no(g, de.lerp(ate, t) + Vector3(0, 0.9, 0))
+		var n := FxBase.no(g, de.lerp(ate, t) + Vector3(0, 0.9, 0))
 		var mat := Magia.mat("aco", {"base": 0.5, "topo": 0.5, "forca": 0.9, "rola": Vector2(0.0, 1.5)})
-		_malha(n, cap, mat)
+		FxBase.malha(n, cap, mat)
 		var tw := n.create_tween()
 		tw.tween_interval(0.05 * k)
 		Magia._anim(tw, mat, "corroi", 0.0, 1.0, 0.35)
@@ -176,7 +171,7 @@ static func corte_relampago(u: Unit, de: Vector3, ate: Vector3, atingidos: Array
 	var dir := (ate - de).normalized()
 	Fx.slash(g, ate + Vector3(0, 1.0, 0), dir, 2.6, 160.0, Color(0.5, 1.0, 1.0), 55.0, true)
 	Fx.slash(g, ate + Vector3(0, 1.0, 0), dir, 2.6, 160.0, Color(0.5, 1.0, 1.0), -55.0, true)
-	var n2 := _no(g, ate)
+	var n2 := FxBase.no(g, ate)
 	var t2 := n2.create_tween()
 	t2.tween_interval(0.28)
 	t2.tween_callback(func() -> void:
@@ -197,13 +192,13 @@ static func leque(u: Unit, dir: Vector3) -> void:
 	var arco := maxf(u.stats.power_radius, 40.0)
 	Fx.slash(g, p + Vector3(0, 1.1, 0), dir, 7.0, arco, Color(0.4, 1.0, 1.0), 0.0, true)
 	Fx.slash(g, p + Vector3(0, 0.7, 0), dir, 4.5, arco * 0.8, Color(0.8, 1.0, 1.0), 12.0, false)
-	var n := _no(g, p + Vector3(0, 2.6, 0) + dir * 0.6)
+	var n := FxBase.no(g, p + Vector3(0, 2.6, 0) + dir * 0.6)
 	var giro := Node3D.new()
 	n.add_child(giro)
-	var estrela := _malha(giro, FxProjetil.malha_shuriken(), FxProjetil.mat_solido())
+	var estrela := FxBase.malha(giro, FxProjetil.malha_shuriken(), FxProjetil.mat_solido())
 	estrela.scale = Vector3.ONE * 5.0
 	var mat := Magia.mat("aco", {"escala": Vector2(3.0, 0.8), "rola": Vector2(2.5, 0.0), "forca": 0.9, "base": 0.4, "topo": 0.8, "banda": 0.45, "centro": 0.62})
-	_malha(giro, Magia.disco(), mat).scale = Vector3(1.5, 1, 1.5)
+	FxBase.malha(giro, Magia.disco(), mat).scale = Vector3(1.5, 1, 1.5)
 	n.rotation = Vector3(deg_to_rad(-60), atan2(dir.x, dir.z), 0)
 	n.scale = Vector3.ONE * 0.4
 	var tw := n.create_tween().set_parallel()
@@ -218,9 +213,9 @@ static func leque(u: Unit, dir: Vector3) -> void:
 	cap.height = 1.7
 	cap.radial_segments = 8
 	cap.rings = 2
-	var sombra := _no(g, p + Vector3(0, 0.9, 0) - dir * 0.5)
+	var sombra := FxBase.no(g, p + Vector3(0, 0.9, 0) - dir * 0.5)
 	var smat := Magia.mat("fumaca", {"base": 0.5, "topo": 0.5, "forca": 1.0, "rola": Vector2(0.0, 1.2)})
-	_malha(sombra, cap, smat)
+	FxBase.malha(sombra, cap, smat)
 	var ts := sombra.create_tween()
 	Magia._anim(ts, smat, "corroi", 0.1, 1.0, 0.5)
 	ts.tween_callback(sombra.queue_free)
@@ -246,24 +241,39 @@ static func bencao(u: Unit) -> void:
 	var g := u.game
 	var p := u.global_position
 	var r := u.stats.power_radius
-	var n := _no(g, p + Vector3(0, 0.12, 0))
+	var n := FxBase.no(g, p + Vector3(0, 0.12, 0))
 	var mat := Magia.mat("luz", {"escala": Vector2(1.0, 1.0), "rola": Vector2(0.0, 0.35), "forca": 0.5, "base": 0.62, "topo": 0.62, "tinta": 0.05})
 	var s := SphereMesh.new()
 	s.radius = 0.5
 	s.height = 0.25
 	s.radial_segments = 8
 	s.rings = 3
+	# As 10 pétalas num MultiMesh (1 chamada de desenho em vez de 10; revisão 3c,
+	# FX-22). Pétala por pétala: cada uma abre 0,03 s depois da vizinha, com as
+	# mesmas curvas dos tweens de antes (escala TRANS_BACK, inclinação linear).
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = s
+	mm.instance_count = 10
+	var mmi := MultiMeshInstance3D.new()
+	mmi.multimesh = mm
+	mmi.material_override = mat
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	n.add_child(mmi)
+	var esc0 := Vector3(0.05, 0.05, 0.05)
+	var abre := func(t: float) -> void:
+		for k in 10:
+			var dt := t - 0.03 * k
+			var esc := esc0
+			var incl := 0.0
+			if dt > 0.0:
+				esc = Tween.interpolate_value(esc0, Vector3(0.8, 1, 2.2) - esc0, minf(dt, 0.3), 0.3, Tween.TRANS_BACK, Tween.EASE_OUT)
+				incl = Tween.interpolate_value(0.0, deg_to_rad(-45), minf(dt, 0.45), 0.45, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+			var petala := Transform3D(Basis.from_euler(Vector3(incl, 0, 0)) * Basis.from_scale(esc), Vector3(0, 0, 0.9))
+			mm.set_instance_transform(k, Transform3D(Basis(Vector3.UP, TAU * k / 10.0), Vector3.ZERO) * petala)
+	abre.call(0.0)
 	var tw := n.create_tween().set_parallel()
-	for k in 10:
-		var pivo := Node3D.new()
-		pivo.rotation.y = TAU * k / 10.0
-		n.add_child(pivo)
-		var mi := _malha(pivo, s, mat)
-		mi.scale = Vector3(0.05, 0.05, 0.05)
-		mi.position = Vector3(0, 0, 0.9)
-		# Pétala por pétala: cada uma abre 0,03 s depois da vizinha.
-		tw.tween_property(mi, "scale", Vector3(0.8, 1, 2.2), 0.3).set_delay(0.03 * k).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw.tween_property(mi, "rotation:x", deg_to_rad(-45), 0.45).set_delay(0.03 * k)
+	tw.tween_method(abre, 0.0, 0.72, 0.72)
 	n.scale = Vector3.ONE * 1.6
 	tw.tween_property(n, "rotation:y", PI / 3, 1.3)
 	Magia._anim(tw, mat, "corroi", 0.0, 1.0, 0.5).set_delay(0.8)
@@ -319,7 +329,7 @@ static func selo(g: Node, centro: Vector3, r: float) -> void:
 	var pal: Array = Magia.paleta("sombra")
 	Assinatura.selo(g, centro, &"kitsune_sombria", r * 1.25, 1.9, {"escrita": 0.2})
 	Magia.carga(g, centro + Vector3(0, 1.0, 0), pal[1], r * 0.9, 0.2, 12)
-	var n := _no(g, centro)
+	var n := FxBase.no(g, centro)
 	var tw := n.create_tween()
 	tw.tween_interval(0.18)
 	tw.tween_callback(func() -> void:
@@ -345,17 +355,20 @@ static func coluna_fogo(g: Node, centro: Vector3, r: float, dur: float, cor := C
 	Magia.onda(g, centro, pal, r * 1.1, 0.45)
 	Magia.clarao(g, centro, pal[1], r * 2.2)
 	Magia.brasas(g, centro, pal[1], 12, r * 0.6, 1.4)
-	var n := _no(g, centro + Vector3(0, 1.4, 0))
+	var n := FxBase.no(g, centro + Vector3(0, 1.4, 0))
 	var s := SphereMesh.new()
 	s.radius = 0.34
 	s.height = 0.8
 	s.radial_segments = 8
 	s.rings = 4
 	var mat := Magia.mat(pal, {"base": 0.45, "topo": 0.75, "forca": 0.8, "escala": Vector2(2.0, 1.0), "rola": Vector2(0.0, 1.6)})
+	# As 6 bolas giram juntas (só o pai gira): uma malha só, 1 chamada de
+	# desenho em vez de 6 (revisão 3c, FX-22).
+	var pecas: Array = []
 	for k in 6:
 		var a := TAU * k / 6.0
-		var mi := _malha(n, s, mat)
-		mi.position = Vector3(cos(a), sin(a * 2.0) * 0.4, sin(a)) * r * 0.75
+		pecas.append([s, Transform3D(Basis(), Vector3(cos(a), sin(a * 2.0) * 0.4, sin(a)) * r * 0.75)])
+	Fx.montar_pecas(n, pecas, mat)
 	var tw := n.create_tween().set_parallel()
 	tw.tween_property(n, "rotation:y", TAU * dur * 0.8, dur)
 	Magia._anim(tw, mat, "corroi", 0.0, 1.0, 0.35).set_delay(maxf(dur - 0.35, 0.0))
@@ -369,7 +382,7 @@ static func mutirao(u: Unit, oficina: Node3D) -> void:
 	var alvo := oficina.global_position
 	Magia.lanca(g, u.global_position + Vector3(0, 1.2, 0), alvo + Vector3(0, 1.5, 0), "luz", 0.5, 0.7, {"cresce": 0.15})
 	Magia.anel_sobe(g, alvo + Vector3(0, 0.3, 0), "luz", 2.2, 3.5, 1.0, 0.15)
-	var n := _no(g, alvo)
+	var n := FxBase.no(g, alvo)
 	var tw := n.create_tween()
 	for k in 3:
 		tw.tween_interval(0.14 if k == 0 else 0.22)
@@ -391,7 +404,7 @@ static func aviso_bombardeio(g: Node, pontos: Array, r: float, intervalo: float)
 		var atraso: float = intervalo * (i + 1)
 		var centro: Vector3 = pontos[i]
 		Magia.onda(g, centro, "brasa", r * 0.12, atraso, {"r0": 1.0 / 0.12, "banda": 0.14, "tinta": 0.02, "forca": 0.4, "voltas": 6.0, "gira": 0.6, "y": 0.1, "linear": true, "segura": 0.92})
-		var n := _no(g, centro + Vector3(0, 0.1, 0))
+		var n := FxBase.no(g, centro + Vector3(0, 0.1, 0))
 		var pavio := FxProjetil.brilho_fixo(n, Vector3(0, 0.15, r), Color(1.0, 0.75, 0.3), 0.5, false)
 		pavio.name = "Pavio"
 		var tw := n.create_tween().set_parallel()
@@ -432,7 +445,7 @@ static func arremate_chuva(g: Node, centro: Vector3, r: float, cor: Color) -> vo
 
 ## Som de camada do elemento do poder (gerado por tools/gerar_sons.py magia).
 static func som_elemento(u: Unit) -> String:
-	match ELEMENTO.get(u.stats.power, [""])[0]:
+	match ELEMENTO.get(u.stats.power, ""):
 		"brasa": return "magia_fogo"
 		"vento", "aco": return "magia_vento"
 		"sombra": return "magia_selo"
@@ -481,7 +494,7 @@ static func muralha(u: Unit, r: float, dur: float) -> void:
 	var g := u.game
 	var p := u.global_position
 	var pal := Magia.paleta_de(u.stats.hat_color)
-	var no := _no(g, p)
+	var no := FxBase.no(g, p)
 	Magia.vortice(no, pal, r, 2.6, dur, {"r_topo": 1.0, "gira": 0.5, "sobe": -0.6, "forca": 1.2, "base": 0.35, "topo": 0.0, "alfa": 0.85})
 	Magia.vortice(no, "luz", r * 0.98, 1.2, dur, {"r_topo": 1.0, "gira": -0.8, "forca": 0.8, "base": 0.6, "topo": 0.0, "alfa": 0.6})
 	Assinatura.selo(g, p, u, r, dur, {"escrita": 0.3})
@@ -587,18 +600,8 @@ static func subir_nivel(g: Node, pos: Vector3, cor: Color, nivel: int) -> void:
 	Magia.onda(g, pos, pal, 3.2, 0.5)
 	Magia.clarao(g, pos, ouro, 9.0)
 	_motas(g, pos + Vector3(0, 1.0, 0), ouro, 16)
-	var l := Label3D.new()
-	l.text = "NÍVEL %d!" % nivel
-	l.font = Estilo.TITULO
-	l.font_size = 80
-	l.pixel_size = 0.011
-	l.outline_size = 20
-	l.outline_modulate = Color(0.25, 0.12, 0.0, 0.95)
-	l.modulate = ouro.lightened(0.2)
-	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	l.no_depth_test = true
-	l.render_priority = 3
-	l.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	var l := Estilo.letreiro_3d("NÍVEL %d!" % nivel, 80, {"fonte": Estilo.TITULO, "contorno": 20,
+			"cor_contorno": Color(0.25, 0.12, 0.0, 0.95), "cor": ouro.lightened(0.2), "frente": true, "prioridade": 3, "solto": true})
 	g.add_child(l)
 	l.global_position = pos + Vector3(0, 5.2, 0)
 	l.scale = Vector3.ONE * 0.3
@@ -629,23 +632,6 @@ static func coluna_captura(g: Node, pos: Vector3, cor_time: Color) -> void:
 
 
 # --- Peças --------------------------------------------------------------------------
-
-static func _no(parent: Node, pos: Vector3) -> Node3D:
-	var n := Node3D.new()
-	n.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
-	parent.add_child(n)
-	n.global_position = pos
-	return n
-
-
-static func _malha(parent: Node3D, mesh: Mesh, mat: Material) -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	parent.add_child(mi)
-	return mi
-
 
 ## Pedaços (pedra/madeira) voando e caindo.
 static func _detritos(g: Node, pos: Vector3, cor: Color, qtd: int) -> void:

@@ -49,17 +49,9 @@ func _ready() -> void:
 	_botao.position = Vector3(0, 1.04, 0)
 	add_child(_botao)
 	# Letreiro no estilo das maquininhas.
-	var l := Label3D.new()
-	l.font = Estilo.LETREIRO
-	l.font_size = 40
-	l.pixel_size = 0.011
-	l.line_spacing = -6
-	l.outline_size = 10
-	l.outline_modulate = Estilo.TINTA
-	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	l.modulate = Color(1.0, 0.82, 0.4) if heroi else Color(1.0, 0.55, 0.5)
+	var l := Estilo.letreiro_3d("%s\n[F] %s" % [nome().to_upper(), "caminho ou herói" if heroi else "classe base"], 40,
+			{"contorno": 10, "linhas": -6, "cor": Color(1.0, 0.82, 0.4) if heroi else Color(1.0, 0.55, 0.5)})
 	l.position.y = 2.6
-	l.text = "%s\n[F] %s" % [nome().to_upper(), "caminho ou herói" if heroi else "classe base"]
 	l.add_to_group("letreiro_perto")
 	add_child(l)
 	# Tudo que é parado vira uma malha só; o botão fica de fora (anima).

@@ -305,12 +305,35 @@ static func cor_time(team: int) -> Color:
 	return AZUL if team == 0 else VERMELHO
 
 
-## Letreiro 3D (Label3D): Lilita com contorno de tinta grosso, igual ao HUD.
-static func letreiro(l: Label3D, size: int) -> void:
-	l.font = LETREIRO
-	l.font_size = size
-	l.outline_size = maxi(10, size / 4)
-	l.outline_modulate = TINTA
+## Letreiro 3D (Label3D) da casa: fonte, tamanho, contorno de tinta e billboard
+## num lugar só (revisão 3c, FX-19/UI-16: eram 15 receitas copiadas). Cada
+## chamador ainda passa os próprios números (igualar os tamanhos é visual:
+## prancha antes). `o` (tudo opcional):
+##   fonte (LETREIRO), pixel (0,011), contorno (tam / 4, no mínimo 10),
+##   cor (modulate), cor_contorno (TINTA), frente (no_depth_test),
+##   prioridade (render_priority), linhas (line_spacing), billboard (true),
+##   solto (sem interpolação de física: animado por tween).
+static func letreiro_3d(texto: String, tam: int, o := {}) -> Label3D:
+	var l := Label3D.new()
+	l.text = texto
+	l.font = o.get("fonte", LETREIRO)
+	l.font_size = tam
+	l.pixel_size = o.get("pixel", 0.011)
+	l.outline_size = o.get("contorno", maxi(10, tam / 4))
+	l.outline_modulate = o.get("cor_contorno", TINTA)
+	if o.has("cor"):
+		l.modulate = o.cor
+	if o.has("linhas"):
+		l.line_spacing = o.linhas
+	if o.get("billboard", true):
+		l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	if o.get("frente", false):
+		l.no_depth_test = true
+	if o.has("prioridade"):
+		l.render_priority = o.prioridade
+	if o.get("solto", false):
+		l.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	return l
 
 
 ## Tema dos menus: botões de ouro, abas, listas, controles deslizantes.

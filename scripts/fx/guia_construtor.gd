@@ -64,15 +64,7 @@ func setup(p_game: Game) -> void:
 	_cone.material_override = mc
 	_cone.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_marca.add_child(_cone)
-	_texto = Label3D.new()
-	_texto.font = Estilo.LETREIRO
-	_texto.font_size = 60
-	_texto.pixel_size = 0.011
-	_texto.outline_size = 14
-	_texto.outline_modulate = Estilo.TINTA
-	_texto.modulate = COR
-	_texto.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_texto.no_depth_test = true
+	_texto = Estilo.letreiro_3d("", 60, {"contorno": 14, "cor": COR, "frente": true})
 	_texto.position.y = 0.95
 	_marca.add_child(_texto)
 	visible = false

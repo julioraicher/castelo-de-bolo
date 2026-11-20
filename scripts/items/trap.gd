@@ -35,7 +35,7 @@ func setup(game: Game, p_owner: Unit, pos: Vector3) -> void:
 	add_child(_vis)
 	var mi := MeshInstance3D.new()
 	mi.mesh = FxItens.malha_mina(cor) if _mina else FxItens.malha_estrepes(cor, randi() % 3)
-	mi.material_override = FxItens.mat_objeto(game)
+	mi.material_override = MalhaPintada.material(game)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_vis.add_child(mi)
 	if _mina:

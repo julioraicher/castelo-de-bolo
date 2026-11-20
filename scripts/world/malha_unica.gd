@@ -86,6 +86,30 @@ static func juntar(raiz: Node3D, manter: Array = []) -> MeshInstance3D:
 	return mi
 
 
+## Junta peças soltas numa ArrayMesh (revisão 3c, FX-14: era escrito 3 vezes).
+##   [Mesh, Transform3D]         canais copiados como estão (selo, emblema, malha pintada)
+##   [Mesh, Transform3D, Color]  cor da peça gravada no vértice, sem normal (projéteis unshaded)
+## Não misturar os dois jeitos na mesma lista.
+static func pecas(lista: Array) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for p: Array in lista:
+		if p.size() < 3:
+			st.append_from(p[0], 0, p[1])
+			continue
+		var arr: Array = (p[0] as Mesh).surface_get_arrays(0)
+		var xf: Transform3D = p[1]
+		var cor: Color = p[2]
+		var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+		var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+		if idx.is_empty():
+			idx = PackedInt32Array(range(verts.size()))
+		for i in idx:
+			st.set_color(cor)
+			st.add_vertex(xf * verts[i])
+	return st.commit()
+
+
 ## Nós que algum AnimationPlayer debaixo de `raiz` move: não podem ser juntados.
 static func animados(raiz: Node) -> Array:
 	var out := []
