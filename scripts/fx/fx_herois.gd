@@ -118,9 +118,9 @@ static func casco(u: Unit, dir: Vector3) -> void:
 static func rajada(u: Unit, dir: Vector3, r: float) -> void:
 	var g := _g(u)
 	var de := u.global_position + Vector3(0, 1.1, 0)
-	Fx.slash(g, de, dir, r, Config.cfg.rajada_cone, Color(1.0, 0.9, 0.7), 0.0, true)
+	Fx.slash(g, de, dir, r, Config.cfg.herois.rajada_cone, Color(1.0, 0.9, 0.7), 0.0, true)
 	for k in [-1.0, 0.0, 1.0]:
-		var d := dir.rotated(Vector3.UP, deg_to_rad(k * Config.cfg.rajada_cone * 0.33))
+		var d := dir.rotated(Vector3.UP, deg_to_rad(k * Config.cfg.herois.rajada_cone * 0.33))
 		Magia.lanca(g, de + d * 0.6, de + d * r, "vento", 0.7, 0.3, {"cresce": 0.1, "corre": 7.0})
 	Magia.orbita(u, Color(1.0, 0.75, 0.45), 1.2, 0.3, 8)
 
@@ -685,14 +685,14 @@ static func teia_nasce(g: Node, at: Vector3, r: float) -> void:
 
 static func teia_prende(o: Unit) -> void:
 	var g := _g(o)
-	_teia_pe(o, Config.cfg.teia_preso)
+	_teia_pe(o, Config.cfg.herois.teia_preso)
 	Assinatura.pecas(g, o.global_position + Vector3(0, 0.8, 0), "fio", SEDA, 6, {"tam": 0.7})
 	Sfx.play("seda_gruda", o.global_position, 0.1)
 
 
 ## Rede (3º fio): a teia pequena gruda nos pés.
 static func rede(o: Unit) -> void:
-	_teia_pe(o, Config.cfg.rede_preso)
+	_teia_pe(o, Config.cfg.herois.rede_preso)
 	Fx.letreiro(_g(o), o.global_position + Vector3(0, 1.0, 0), "REDE!", Color(0.92, 0.9, 1.0), 0.8)
 
 

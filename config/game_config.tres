@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="GameConfig" format=3]
 
 [ext_resource type="Script" path="res://scripts/data/game_config.gd" id="1"]
+[ext_resource type="Resource" path="res://config/herois_regras.tres" id="herois_regras"]
 [ext_resource type="Script" path="res://scripts/data/class_stats.gd" id="1_3yous"]
 [ext_resource type="Resource" path="res://config/classes/recruta.tres" id="2"]
 [ext_resource type="Resource" path="res://config/classes/guerreiro.tres" id="3"]
@@ -17,6 +18,7 @@
 
 [resource]
 script = ExtResource("1")
+herois = ExtResource("herois_regras")
 villager = ExtResource("2")
 hat_class_list = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource("4"), ExtResource("of_kitsune"), ExtResource("11")])
 bot_start_classes = Array[ExtResource("1_3yous")]([ExtResource("3"), ExtResource("4"), ExtResource("of_kitsune"), ExtResource("11"), ExtResource("2")])

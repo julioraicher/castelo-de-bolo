@@ -292,7 +292,7 @@ func _estilhaco(at: Vector3) -> void:
 	var poca := HeroisObra.poca_em(owner_unit, at)
 	if poca and poca.raio > r:
 		r = poca.raio
-		dano *= Config.cfg.garrafa_poca_mult
+		dano *= Config.cfg.herois.garrafa_poca_mult
 		at = Vector3(poca.global_position.x, at.y, poca.global_position.z)
 	FxObra.estilhaco(_game, at, r, nivel >= 2, poca != null)
 	for u in _game.units:

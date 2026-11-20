@@ -1,5 +1,5 @@
 class_name Finalizar
-extends RefCounted
+extends CanalNoCorpo
 ## Finalização de herói (Ciclo 2.34).
 ##
 ## Herói raro (Nv6) que cai fica CAÍDO como todo mundo (Reanimar, Ciclo 2.18) e
@@ -24,51 +24,37 @@ extends RefCounted
 ## Reanimar (wants_reanimar = [F] segurado): perto de herói inimigo caído o [F]
 ## finaliza; perto de aliado caído, reanima.
 
-const ANEL := preload("res://assets/shaders/anel_reanimar.gdshader")
 const COR := Color(1.0, 0.28, 0.18)
-
-var game: Game
-var cfg: GameConfig
-## Corpo -> {raiz, anel, placa} (só para o time que pode finalizar).
-var _visuais := {}
-## Corpo -> bot que está indo finalizar (um por corpo).
-var _reservas := {}
-var _efeito_t := 0.0
-static var _mat_anel: ShaderMaterial
-
-
-func _init(g: Game) -> void:
-	game = g
-	cfg = Config.cfg
+# _visuais (CanalNoCorpo): corpo -> {raiz, anel, placa}, só para o time que pode finalizar.
 
 
 # --- Regra ----------------------------------------------------------------------
+
+func _ligado() -> bool:
+	return cfg.finalizar_ligado
+
+
+## Herói inimigo de `u` caído que ainda dá para finalizar.
+func _vale(c: Unit, u: Unit) -> bool:
+	return c.team != u.team and pode_finalizar(c)
+
+
+func _dono(c: Unit) -> Unit:
+	return c.finalizador
+
+
+func _no_outro_canal(u: Unit) -> bool:
+	return u.reanimando != null
+
+
+func _raio_bot(_u: Unit) -> float:
+	return cfg.finalizar_bot_raio
+
 
 ## Herói caído que ainda dá para finalizar.
 func pode_finalizar(corpo: Unit) -> bool:
 	return cfg.finalizar_ligado and corpo != null and is_instance_valid(corpo) and not corpo.alive \
 			and corpo.stats.heroi and not corpo.finalizado and not corpo.em_voo and corpo._respawn_t > 0.0
-
-
-## Corpo de herói inimigo finalizável mais perto de `u`, dentro de `raio`.
-func corpo_perto(u: Unit, raio: float) -> Unit:
-	var melhor: Unit = null
-	var dmin := raio
-	for c in game.units:
-		if c.team == u.team or not pode_finalizar(c):
-			continue
-		if c.finalizador != null and c.finalizador != u:
-			continue
-		var d := u.global_position.distance_to(c.global_position)
-		if d < dmin:
-			dmin = d
-			melhor = c
-	return melhor
-
-
-func _pode_canalizar(u: Unit) -> bool:
-	return u.alive and not u.em_voo and u._dodge_t <= 0.0 and u.carried_princess == null \
-			and u.carried_tora == null and not u.is_equipping() and u.reanimando == null
 
 
 ## Roda antes do Reanimar.tick (Game._physics_process): quem está finalizando
@@ -205,11 +191,6 @@ func heroi_caiu(c: Unit, killer: Unit) -> void:
 	Sfx.play("corte_critico", c.global_position, 0.05, 0.7)
 
 
-func _nome(u: Unit) -> String:
-	var l := game.placar.linha(u)
-	return String(l.get("nome", u.stats.display_name))
-
-
 ## HUD do jogador: barra enquanto finaliza; dica é em Game (_dica do [F]).
 func _tick_hud() -> void:
 	var p := game.player
@@ -218,73 +199,16 @@ func _tick_hud() -> void:
 	game.hud.reanimar_barra(p.finalizar_prog, "FINALIZANDO %s  ·  solte [F] para parar" % p.finalizando.stats.display_name.to_upper(), COR.lightened(0.15))
 
 
-# --- Bots -----------------------------------------------------------------------
-
-## Herói inimigo caído que o bot `u` deve ir finalizar (ou null). Um bot por corpo.
-func corpo_para_bot(u: Unit) -> Unit:
-	if not cfg.finalizar_ligado or u.carried_princess or u.carried_tora:
-		return null
-	var melhor: Unit = null
-	var dmin := cfg.finalizar_bot_raio
-	for c in game.units:
-		if c.team == u.team or not pode_finalizar(c):
-			continue
-		var r: Unit = _reservas.get(c)
-		if r and r != u and is_instance_valid(r) and r.alive:
-			continue
-		var d := u.global_position.distance_to(c.global_position)
-		if d < dmin:
-			dmin = d
-			melhor = c
-	if melhor:
-		_reservas[melhor] = u
-	return melhor
-
-
 # --- Marca no corpo (só para quem pode finalizar) ---------------------------------
 
 func _criar_visual(u: Unit) -> void:
 	if _visuais.has(u):
 		return
-	if _mat_anel == null:
-		_mat_anel = ShaderMaterial.new()
-		_mat_anel.shader = ANEL
-	var raiz := Node3D.new()
-	raiz.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	game.add_child(raiz)
-	raiz.global_position = u.global_position
-	var anel := MeshInstance3D.new()
-	var pl := PlaneMesh.new()
-	var lado := cfg.finalizar_raio * 2.0
-	pl.size = Vector2(lado, lado)
-	anel.mesh = pl
-	anel.material_override = _mat_anel
-	anel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	anel.position = Vector3(0, 0.08, 0)
-	anel.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	var raiz := _raiz_marca(u)
+	var anel := _anel(raiz, cfg.finalizar_raio, 0.08)
 	anel.set_instance_shader_parameter("cor", COR)
-	raiz.add_child(anel)
-	var placa := Label3D.new()
-	placa.text = "FINALIZE  [F]"
-	placa.font = Estilo.LETREIRO
-	placa.font_size = 44
-	placa.outline_size = 14
-	placa.pixel_size = 0.006
-	placa.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	placa.no_depth_test = true
-	placa.modulate = COR.lightened(0.35)
-	placa.outline_modulate = Color(0.05, 0.04, 0.08, 0.9)
-	placa.position = Vector3(0, 2.05, 0)
-	placa.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	raiz.add_child(placa)
+	var placa := _placa(raiz, "FINALIZE  [F]", COR.lightened(0.35))
 	_visuais[u] = {"raiz": raiz, "anel": anel, "placa": placa}
-
-
-func _remover_visual(u: Unit) -> void:
-	if not _visuais.has(u):
-		return
-	(_visuais[u].raiz as Node3D).queue_free()
-	_visuais.erase(u)
 
 
 func _tick_visuais() -> void:

@@ -131,7 +131,7 @@ func _herois_regras() -> void:
 	a._quick_cd = 0.0
 	_check(a._usar_rapida() and b.em_voo, "Sumotori: Agarrão deveria levantar o alvo")
 	var hp0: float = b.hp
-	await get_tree().create_timer(cfg.agarrao_segura + 0.75).timeout
+	await get_tree().create_timer(cfg.herois.agarrao_segura + 0.75).timeout
 	_check(not b.em_voo and b.hp < hp0 and b.global_position.distance_to(centro) > 4.0,
 		"Sumotori: alvo deveria pousar longe ferido (dist %.1f, dano %.1f)" % [b.global_position.distance_to(centro), hp0 - b.hp])
 	# Dohyō: quem estava dentro não sai; de fora não entra.
@@ -139,13 +139,13 @@ func _herois_regras() -> void:
 	_por(b, centro + dx * 2.0, -dx)
 	a.super_carga = a.POWER_MAX
 	_check(Herois.super_proprio(a) and a._dohyo_t > 0.0, "Sumotori: Dohyō deveria abrir o ringue")
-	b.global_position = centro + dx * (cfg.dohyo_raio + 3.0)
+	b.global_position = centro + dx * (cfg.herois.dohyo_raio + 3.0)
 	Herois._tick_dohyo(a)
-	_check(b.global_position.distance_to(centro) <= cfg.dohyo_raio, "Sumotori: quem estava no ringue não sai (%.1f m)" % b.global_position.distance_to(centro))
+	_check(b.global_position.distance_to(centro) <= cfg.herois.dohyo_raio, "Sumotori: quem estava no ringue não sai (%.1f m)" % b.global_position.distance_to(centro))
 	a.set_meta("dohyo_dentro", [])
 	b.global_position = centro + dx * 1.0
 	Herois._tick_dohyo(a)
-	_check(b.global_position.distance_to(centro) >= cfg.dohyo_raio, "Sumotori: quem estava fora não entra no ringue")
+	_check(b.global_position.distance_to(centro) >= cfg.herois.dohyo_raio, "Sumotori: quem estava fora não entra no ringue")
 	a._dohyo_t = 0.0
 
 	# Kappa: casco reduz só por trás.
@@ -240,11 +240,11 @@ func _herois_regras() -> void:
 		aliado._die(null)
 		_check(Herois._laco(a), "Tennin: Laço acha o aliado caído")
 		await get_tree().create_timer(0.45).timeout
-		_check(aliado.alive and aliado.hp >= aliado.max_hp() * cfg.laco_vida - 0.5, "Tennin: Laço levanta o caído com %.0f%%" % (cfg.laco_vida * 100))
+		_check(aliado.alive and aliado.hp >= aliado.max_hp() * cfg.herois.laco_vida - 0.5, "Tennin: Laço levanta o caído com %.0f%%" % (cfg.herois.laco_vida * 100))
 		aliado.set_class(ac)
 		aliado.global_position = guardados.get(aliado, game.arena.spawn_center[aliado.team])
 	# Véu: intocável por veu_tempo.
-	_check(Herois.super_proprio(a) and a._intocavel_t >= cfg.veu_tempo - 0.01, "Tennin: Véu deixa intocável por %.0f s" % cfg.veu_tempo)
+	_check(Herois.super_proprio(a) and a._intocavel_t >= cfg.herois.veu_tempo - 0.01, "Tennin: Véu deixa intocável por %.0f s" % cfg.herois.veu_tempo)
 	a._intocavel_t = 0.0
 
 	# Komusō: Sono dorme quem fica no cone; dano acorda; interrompe com dano; Réquiem cala.
@@ -259,7 +259,7 @@ func _herois_regras() -> void:
 	Herois._sono(a)
 	a.take_damage(1.0, b, -dx)
 	_check(a._canto_t <= 0.0, "Komusō: dano interrompe a Canção")
-	_check(Herois.super_proprio(a) and b._mudo_t >= cfg.requiem_tempo - 0.01, "Komusō: Réquiem cala por %.0f s" % cfg.requiem_tempo)
+	_check(Herois.super_proprio(a) and b._mudo_t >= cfg.herois.requiem_tempo - 0.01, "Komusō: Réquiem cala por %.0f s" % cfg.herois.requiem_tempo)
 	b.power = b.POWER_MAX
 	b.wants_power = true
 	var pw: float = b.power
@@ -345,14 +345,14 @@ func _herois_elementos() -> void:
 	a.take_damage(50.0, b, dx)
 	_check(a.alive and _perto(a.hp, 1.0, 0.01), "Ochimusha: fantasma não apanha")
 	Herois.abateu(a, b)
-	_check(a._fantasma_t <= 0.0 and a.hp >= a.max_hp() * cfg.fantasma_volta - 0.5, "Ochimusha: abate no fantasma volta com %.0f%%" % (cfg.fantasma_volta * 100))
+	_check(a._fantasma_t <= 0.0 and a.hp >= a.max_hp() * cfg.herois.fantasma_volta - 0.5, "Ochimusha: abate no fantasma volta com %.0f%%" % (cfg.herois.fantasma_volta * 100))
 	a.take_damage(9999.0, b, dx)
 	_check(not a.alive, "Ochimusha: só não cai uma vez por vida")
 	a._voltar_a_vida()
 	a.set_class(load("res://config/classes/ochimusha.tres"))
 	_por(a, centro, dx)
 	a.take_damage(9999.0, b, dx)
-	Herois._tick_2_27(a, cfg.fantasma_tempo + 0.1)
+	Herois._tick_2_27(a, cfg.herois.fantasma_tempo + 0.1)
 	_check(not a.alive, "Ochimusha: sem abate, cai no fim do fantasma")
 	a._voltar_a_vida()
 	a.set_class(load("res://config/classes/ochimusha.tres"))
@@ -372,11 +372,11 @@ func _herois_elementos() -> void:
 	# Onibi: três fogos; cada um estoura no primeiro que encosta.
 	_por(b, centro + dx * 1.2, -dx)
 	Herois._onibi(a)
-	_check(a._onibi_n == cfg.onibi_n, "Ochimusha: Onibi acende %d fogos" % cfg.onibi_n)
+	_check(a._onibi_n == cfg.herois.onibi_n, "Ochimusha: Onibi acende %d fogos" % cfg.herois.onibi_n)
 	hp0 = b.hp
 	a.set_meta("onibi_cd", 0.0)
 	Herois._tick_onibi(a, 0.016)
-	_check(a._onibi_n == cfg.onibi_n - 1 and b.hp < hp0 and b._forcado_t > 0.0, "Ochimusha: fogo estoura em quem encosta e assusta")
+	_check(a._onibi_n == cfg.herois.onibi_n - 1 and b.hp < hp0 and b._forcado_t > 0.0, "Ochimusha: fogo estoura em quem encosta e assusta")
 	Herois._fim_onibi(a)
 	b._forcado_t = 0.0
 
@@ -403,7 +403,7 @@ func _herois_elementos() -> void:
 	b.take_damage(10.0, c, dx)
 	var normal: float = hb - b.hp
 	b.hp = b.max_hp()
-	Herois.dar_sorte(c, cfg.sorte_tempo)
+	Herois.dar_sorte(c, cfg.herois.sorte_tempo)
 	b.take_damage(10.0, c, dx)
 	var dobro: float = b.max_hp() - b.hp
 	_check(normal > 0.0 and _perto(dobro, normal * 2.0, 0.05), "Shishimai: Sorte dobra o próximo golpe dado (%.1f → %.1f)" % [normal, dobro])
@@ -466,14 +466,14 @@ func _herois_elementos() -> void:
 			_check(not t2.indo, "reação: o próprio time não rasga a teia")
 			Reacoes.em(game, t2.global_position, 1.0, "vento", b.team)
 			_check(t2.indo, "reação: vento rasga a teia")
-	for i in cfg.teia_max + 1:
+	for i in cfg.herois.teia_max + 1:
 		a.aim_point = centro + dz * (3.0 + i)
 		Herois._teia(a)
 	var vivas := 0
 	for n in get_tree().get_nodes_in_group("teias"):
 		if n.dona == a and not n.indo:
 			vivas += 1
-	_check(vivas == cfg.teia_max, "Jorogumo: no máximo %d teias (tem %d)" % [cfg.teia_max, vivas])
+	_check(vivas == cfg.herois.teia_max, "Jorogumo: no máximo %d teias (tem %d)" % [cfg.herois.teia_max, vivas])
 	for n in get_tree().get_nodes_in_group("teias"):
 		if n.dona == a:
 			n.sumir()
@@ -490,7 +490,7 @@ func _herois_elementos() -> void:
 	_check(b._casulo_t <= 0.0, "Jorogumo: %d golpes de aliado soltam o casulo" % vida)
 	b.take_damage(20.0, a, dx)
 	var sem: float = b.max_hp() - b.hp
-	_check(seda > 0.0 and _perto(seda, sem * cfg.casulo_dano, 0.05), "Jorogumo: o casulo segura parte do dano (%.1f de %.1f)" % [seda, sem])
+	_check(seda > 0.0 and _perto(seda, sem * cfg.herois.casulo_dano, 0.05), "Jorogumo: o casulo segura parte do dano (%.1f de %.1f)" % [seda, sem])
 
 	a.brain = cerebros[0]
 	b.brain = cerebros[1]
@@ -573,7 +573,7 @@ func _herois_natureza() -> void:
 	for n in get_tree().get_nodes_in_group("arvores_kodama"):
 		if n.dono == a:
 			arvores.append(n)
-	_check(arvores.size() == cfg.bosque_n, "Kodama: Bosque faz %d árvores (fez %d)" % [cfg.bosque_n, arvores.size()])
+	_check(arvores.size() == cfg.herois.bosque_n, "Kodama: Bosque faz %d árvores (fez %d)" % [cfg.herois.bosque_n, arvores.size()])
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	if arvores.size() > 0:
@@ -594,20 +594,20 @@ func _herois_natureza() -> void:
 		_check(arv._tocha_t <= 0.0, "reação: fogo do próprio time não queima a árvore")
 		Reacoes.em(game, arv.global_position, 1.0, "fogo", b.team)
 		_check(arv._tocha_t > 0.0, "reação: fogo do inimigo vira tocha")
-		arv._tick_tocha(cfg.tocha_tempo + 0.1)
+		arv._tick_tocha(cfg.herois.tocha_tempo + 0.1)
 		_check(arv.indo, "Kodama: a tocha cai no fim")
 		_por(c, centro - dz * 14.0, dx)
 	if arvores.size() > 1:
 		var arv2 = arvores[1]
 		var toras0: int = game.toras.size()
 		var cortes := 0
-		for i in cfg.arvore_golpes:
+		for i in cfg.herois.arvore_golpes:
 			var dir: Vector3 = (arv2.global_position - b.global_position)
 			dir.y = 0
 			_por(b, arv2.global_position - dx * 1.2, dx)
 			if HeroisNatureza.cortar_arvore(b, dx, 2.0, 120.0):
 				cortes += 1
-		_check(cortes == cfg.arvore_golpes and arv2.indo and game.toras.size() == toras0 + 1, "Kodama: o lenhador derruba em %d golpes e ganha 1 tora" % cfg.arvore_golpes)
+		_check(cortes == cfg.herois.arvore_golpes and arv2.indo and game.toras.size() == toras0 + 1, "Kodama: o lenhador derruba em %d golpes e ganha 1 tora" % cfg.herois.arvore_golpes)
 	limpar.call()
 	await get_tree().process_frame
 	# Floresta Antiga: anel de gigantes; dentro, inimigo preso e aliado curado.
@@ -622,7 +622,7 @@ func _herois_natureza() -> void:
 	for n in get_tree().get_nodes_in_group("arvores_kodama"):
 		if n.dono == a and n.grande:
 			gigantes += 1
-	_check(gigantes >= cfg.floresta_n - 3, "Kodama: o anel tem %d gigantes" % gigantes)
+	_check(gigantes >= cfg.herois.floresta_n - 3, "Kodama: o anel tem %d gigantes" % gigantes)
 	HeroisNatureza._tick_floresta(a, 0.7)
 	_check(b.hp < hp0 and b._preso_t > 0.0 and c.hp > hc2, "Kodama: a floresta prende e fere o inimigo e cura o aliado de dentro")
 	a._floresta_t = 0.0
@@ -640,7 +640,7 @@ func _herois_natureza() -> void:
 	hp0 = b.hp
 	var he: float = e.hp
 	b.take_damage(10.0, a, dx)
-	_check(hp0 - b.hp >= 10.0 + cfg.descarga_dano * 0.9 and a.carga <= 0.0 and not a.has_meta("carga_no"), "Kaminari-kozō: o golpe com carga cheia descarrega (%.0f de dano)" % (hp0 - b.hp))
+	_check(hp0 - b.hp >= 10.0 + cfg.herois.descarga_dano * 0.9 and a.carga <= 0.0 and not a.has_meta("carga_no"), "Kaminari-kozō: o golpe com carga cheia descarrega (%.0f de dano)" % (hp0 - b.hp))
 	_check(e.hp < he, "Kaminari-kozō: a descarga pula para o inimigo perto")
 	# Molhado conduz: mais dano de raio e a descarga pula mais longe.
 	_por(b, centro + dx * 2.0, -dx)
@@ -653,14 +653,14 @@ func _herois_natureza() -> void:
 	hp0 = b.hp
 	b.take_damage(10.0, a, dx, 0.0, false, "trovao", 1)
 	var molhado: float = hp0 - b.hp
-	_check(_perto(molhado, seco * cfg.molhado_dano, 0.05), "reação: molhado leva %.0f%% do raio (%.1f → %.1f)" % [cfg.molhado_dano * 100, seco, molhado])
-	_por(e, centro + dx * 2.0 + dz * (cfg.descarga_raio + 2.0), -dx)
+	_check(_perto(molhado, seco * cfg.herois.molhado_dano, 0.05), "reação: molhado leva %.0f%% do raio (%.1f → %.1f)" % [cfg.herois.molhado_dano * 100, seco, molhado])
+	_por(e, centro + dx * 2.0 + dz * (cfg.herois.descarga_raio + 2.0), -dx)
 	b.hp = b.max_hp()
-	b._molhado_t = cfg.molhado_tempo
+	b._molhado_t = cfg.herois.molhado_tempo
 	he = e.hp
 	HeroisNatureza.somar_carga(a, 1.0)
 	b.take_damage(5.0, a, dx)
-	_check(e.hp < he, "reação: molhado, a descarga pula %.0f m" % (cfg.descarga_raio + 2.0))
+	_check(e.hp < he, "reação: molhado, a descarga pula %.0f m" % (cfg.herois.descarga_raio + 2.0))
 	b._molhado_t = 0.0
 	# Correr carrega.
 	a.carga = 0.0
@@ -683,14 +683,14 @@ func _herois_natureza() -> void:
 		hp0 = b.hp
 		pr._physics_process(0.6)
 		_check(b.hp < hp0, "Kaminari-kozō: o para-raios dá choque em quem está perto")
-	for i in cfg.pararaios_max + 1:
+	for i in cfg.herois.pararaios_max + 1:
 		a.aim_point = centro + dz * (3.0 + i)
 		HeroisNatureza.para_raios(a)
 	var vivos := 0
 	for n in get_tree().get_nodes_in_group("para_raios"):
 		if n.dono == a and not n.indo:
 			vivos += 1
-	_check(vivos == cfg.pararaios_max, "Kaminari-kozō: no máximo %d para-raios (tem %d)" % [cfg.pararaios_max, vivos])
+	_check(vivos == cfg.herois.pararaios_max, "Kaminari-kozō: no máximo %d para-raios (tem %d)" % [cfg.herois.pararaios_max, vivos])
 	limpar.call()
 	await get_tree().process_frame
 	# Relâmpago: salta em linha e fere quem está no caminho.
@@ -699,7 +699,7 @@ func _herois_natureza() -> void:
 	hp0 = b.hp
 	HeroisNatureza.relampago(a)
 	var salto: float = (a.global_position - centro).dot(dx)
-	_check(salto > cfg.relampago_dist * 0.8 and b.hp < hp0 and a.carga >= cfg.carga_relampago - 0.01, "Kaminari-kozō: Relâmpago salta %.1f m, fere no caminho e carrega" % salto)
+	_check(salto > cfg.herois.relampago_dist * 0.8 and b.hp < hp0 and a.carga >= cfg.herois.carga_relampago - 0.01, "Kaminari-kozō: Relâmpago salta %.1f m, fere no caminho e carrega" % salto)
 	a.carga = 0.0
 	HeroisNatureza.zerar(a)
 	# Tambores: raio do céu no inimigo mais perto.
@@ -787,11 +787,11 @@ func _predero() -> void:
 	b.take_damage(10.0, c, dx, 0.0, false, "brasa", 1)
 	var seco: float = hp0 - b.hp
 	b.hp = b.max_hp()
-	b._encachacado_t = cfg.encachacado_tempo
+	b._encachacado_t = cfg.herois.encachacado_tempo
 	hp0 = b.hp
 	b.take_damage(10.0, c, dx, 0.0, false, "brasa", 1)
 	var bebado: float = hp0 - b.hp
-	_check(_perto(bebado, seco * cfg.encachacado_fogo, 0.05), "Predero: encachaçado leva %.0f%% do fogo (%.1f → %.1f)" % [cfg.encachacado_fogo * 100, seco, bebado])
+	_check(_perto(bebado, seco * cfg.herois.encachacado_fogo, 0.05), "Predero: encachaçado leva %.0f%% do fogo (%.1f → %.1f)" % [cfg.herois.encachacado_fogo * 100, seco, bebado])
 	b._encachacado_t = 0.0
 	# Projétil de verdade: a garrafa estoura no chão e fere em volta.
 	_por(b, centro + dx * 6.0, -dx)
@@ -841,16 +841,16 @@ func _predero() -> void:
 		hp0 = b.hp
 		poca._physics_process(0.1)
 		_check(b.hp < hp0, "Predero: a poça acesa queima o inimigo em cima")
-		poca._physics_process(cfg.poca_fogo_tempo + 0.1)
+		poca._physics_process(cfg.herois.poca_fogo_tempo + 0.1)
 		_check(poca.indo, "Predero: a poça acesa evapora no fim")
-	for i in cfg.poca_max + 1:
+	for i in cfg.herois.poca_max + 1:
 		a.aim_point = centro + dz * (4.0 + i * 1.5)
 		HeroisObra.poca(a)
 	var vivas := 0
 	for n in get_tree().get_nodes_in_group("pocas_cachaca"):
 		if n.dono == a and not n.indo:
 			vivas += 1
-	_check(vivas == cfg.poca_max, "Predero: no máximo %d poças (tem %d)" % [cfg.poca_max, vivas])
+	_check(vivas == cfg.herois.poca_max, "Predero: no máximo %d poças (tem %d)" % [cfg.herois.poca_max, vivas])
 	limpar.call()
 	await get_tree().process_frame
 
@@ -871,19 +871,19 @@ func _predero() -> void:
 		var hit: Dictionary = game.get_world_3d().direct_space_state.intersect_ray(q)
 		_check(not hit.is_empty(), "Predero: o andaime bloqueia tiro (raio no mundo bate)")
 		var cortes := 0
-		for i in cfg.andaime_golpes:
+		for i in cfg.herois.andaime_golpes:
 			_por(b, andaime.global_position + dx * 1.2, -dx)
 			if HeroisObra.cortar_andaime(b, -dx, 2.0, 120.0):
 				cortes += 1
-		_check(cortes == cfg.andaime_golpes and andaime.indo, "Predero: o lenhador desmonta o andaime em %d golpes" % cfg.andaime_golpes)
+		_check(cortes == cfg.herois.andaime_golpes and andaime.indo, "Predero: o lenhador desmonta o andaime em %d golpes" % cfg.herois.andaime_golpes)
 	# Quem estava no lugar é empurrado para fora.
 	limpar.call()
 	await get_tree().process_frame
 	_por(a, centro, dx)
-	_por(b, centro + dx * cfg.andaime_dist, -dx)
+	_por(b, centro + dx * cfg.herois.andaime_dist, -dx)
 	HeroisObra.andaime(a)
 	var frente: float = (b.global_position - centro).dot(dx)
-	_check(absf(frente - cfg.andaime_dist) > 0.3, "Predero: o andaime empurra quem estava no lugar")
+	_check(absf(frente - cfg.herois.andaime_dist) > 0.3, "Predero: o andaime empurra quem estava no lugar")
 	limpar.call()
 	await get_tree().process_frame
 
@@ -896,8 +896,8 @@ func _predero() -> void:
 		n._physics_process(0.6)
 	hp0 = b.hp
 	_check(HeroisObra.saideira(a), "Predero: Saideira sai")
-	HeroisObra.tick(a, FxObra.SAIDEIRA_VOO + cfg.saideira_cada * cfg.saideira_n + 0.1)
-	_check(a._saideira_n == cfg.saideira_n and b.hp < hp0, "Predero: Saideira derruba %d garrafas e fere (caíram %d)" % [cfg.saideira_n, a._saideira_n])
+	HeroisObra.tick(a, FxObra.SAIDEIRA_VOO + cfg.herois.saideira_cada * cfg.herois.saideira_n + 0.1)
+	_check(a._saideira_n == cfg.herois.saideira_n and b.hp < hp0, "Predero: Saideira derruba %d garrafas e fere (caíram %d)" % [cfg.herois.saideira_n, a._saideira_n])
 	var acesas := 0
 	var pequenas := 0
 	for n in get_tree().get_nodes_in_group("pocas_cachaca"):

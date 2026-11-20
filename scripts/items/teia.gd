@@ -1,6 +1,6 @@
 class_name Teia
 extends Node3D
-## Teia da Jorogumo (Q, Heróis 2.27): fica no chão GameConfig.teia_tempo s.
+## Teia da Jorogumo (Q, Heróis 2.27): fica no chão HeroisConfig.teia_tempo s.
 ## Inimigo que pisa fica preso teia_preso s (a mesma teia espera teia_espera s
 ## para prender a mesma pessoa de novo; quem está no dash passa). A dona em
 ## cima corre teia_vel ×. Fogo queima e vento rasga (Reacoes).
@@ -21,8 +21,8 @@ func setup(game: Game, p_dona: Unit, pos: Vector3) -> void:
 	_game = game
 	dona = p_dona
 	time = p_dona.team
-	raio = Config.cfg.teia_raio
-	_vida = Config.cfg.teia_tempo
+	raio = Config.cfg.herois.teia_raio
+	_vida = Config.cfg.herois.teia_tempo
 	nasceu = Sorte.ms()
 	add_to_group("teias")
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
@@ -61,10 +61,10 @@ func _physics_process(delta: float) -> void:
 			continue
 		if u.team == time or u._dodge_t > 0.0 or _espera.has(u):
 			continue
-		_espera[u] = cfg.teia_espera
-		u.prender(cfg.teia_preso)
+		_espera[u] = cfg.herois.teia_espera
+		u.prender(cfg.herois.teia_preso)
 		u._fio_dono = dona
-		u._fio_t = maxf(u._fio_t, cfg.teia_preso + 0.6)
+		u._fio_t = maxf(u._fio_t, cfg.herois.teia_preso + 0.6)
 		FxHerois.teia_prende(u)
 
 

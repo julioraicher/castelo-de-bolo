@@ -89,7 +89,7 @@ func _contra_golpe() -> void:
 		return
 	d.set_class(load("res://config/classes/guerreiro.tres"))
 	var dir := Vector3(1, 0, 0)  # golpe de a para d
-	d._visual.rotation.y = atan2(-dir.x, -dir.z)  # d de frente para a
+	d.yaw = atan2(-dir.x, -dir.z)  # d de frente para a
 	for x in [d, a]:
 		x._dodge_t = 0.0
 		x._shield = 0.0
@@ -127,7 +127,7 @@ func _guarda_quebra() -> void:
 		return
 	d.set_class(load("res://config/classes/guerreiro.tres"))
 	var dir := Vector3(1, 0, 0)
-	d._visual.rotation.y = atan2(-dir.x, -dir.z)
+	d.yaw = atan2(-dir.x, -dir.z)
 	d._dodge_t = 0.0
 	d._shield = 0.0
 	d.carried_princess = null
@@ -249,7 +249,7 @@ func _controles() -> void:
 	u.carried_princess = null
 	u.hp = u.max_hp()
 	var dir := Vector3(1, 0, 0)
-	u._visual.rotation.y = atan2(-dir.x, -dir.z)
+	u.yaw = atan2(-dir.x, -dir.z)
 	u._blocking = true
 	u._block_t = cfg.parry_janela + 0.5
 	u.take_damage(20.0, a, dir, 1.0, true)
@@ -370,3 +370,25 @@ func _mira() -> void:
 func _dash_estilos() -> void:
 	for c in cfg.todas_classes():
 		_check(c.dash_estilo in ["", "rolar", "rolamento", "ninja", "chama", "polvora", "tropeco"], "dash: estilo desconhecido em %s: '%s'" % [c.id, c.dash_estilo])
+
+
+## Revisão 3a (NU-06): TRAVAS diz o que cada estado trava. Nome errado na tabela
+## viraria "nunca trava" sem erro (get() de campo que não existe dá null).
+func _travas() -> void:
+	var u = _alvo()
+	if u == null:
+		_check(false, "travas: faltou boneco")
+		return
+	_por(u, u.global_position, Vector3(1, 0, 0))
+	for campo in Unit.TRAVAS:
+		_check(typeof(u.get(campo)) == TYPE_FLOAT, "TRAVAS: %s não é um timer da Unit" % campo)
+	_check(not u.travado(Unit.Trava.MAOS | Unit.Trava.Q | Unit.Trava.ER | Unit.Trava.DASH), "travas: boneco zerado já travado")
+	for campo in Unit.TRAVAS:
+		var f: int = Unit.TRAVAS[campo]
+		u.set(campo, 1.0)
+		for acao in [Unit.Trava.MAOS, Unit.Trava.Q, Unit.Trava.ER, Unit.Trava.DASH]:
+			_check(u.travado(acao) == bool(f & acao), "travas: %s trava a ação %d errado" % [campo, acao])
+		_check(u.maos_livres() == not bool(f & Unit.Trava.MAOS), "travas: maos_livres com %s" % campo)
+		u.set(campo, 0.0)
+	_por(u, u.global_position, Vector3(1, 0, 0))
+

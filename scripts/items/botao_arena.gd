@@ -2,7 +2,7 @@ class_name BotaoArena
 extends Node3D
 ## Tambor da Arena de chapéus (Ciclo 2.29): um taiko baixo de laca escura com
 ## o botão no topo. [F] perto dele gera um inimigo aleatório na frente do
-## jogador (Game._gerar_inimigo_arena). Dois tambores (2.29b): o de Desafio
+## jogador (ModoTeste.gerar_inimigo_arena). Dois tambores (2.29b): o de Desafio
 ## (botão vermelho) chama classe base; o dos Heróis (botão dourado, faixa
 ## roxa) chama caminho Nv2-5 ou herói raro.
 ## Silhueta própria (princípio 13): tambor com tachas douradas e duas

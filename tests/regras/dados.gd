@@ -20,6 +20,7 @@ func _dados() -> void:
 	for t in cfg.themes:
 		_check(t != null, "tema nulo em game_config.themes")
 	_check(not cfg.maps.is_empty(), "nenhum mapa em game_config.maps")
+	_check(cfg.herois != null and cfg.herois.resource_path.ends_with("herois_regras.tres"), "game_config sem herois = config/herois_regras.tres (números dos heróis)")
 	_check(cfg.carrier_damage_mult > 0.0 and cfg.carrier_damage_mult <= 1.0,
 		"carrier_damage_mult fora de (0, 1]")
 	# Caça 2026-11-19 (TL-01): o gerador do cenário recriava os temas e apagava

@@ -102,7 +102,7 @@ func _sohei_kusarigama() -> void:
 	u._ciranda_t = 0.0
 	u.carried_princess = null
 	u.aim_dir = dir
-	u._visual.rotation.y = atan2(-dir.x, -dir.z)
+	u.yaw = atan2(-dir.x, -dir.z)
 	# Sohei: colado leva o cabo (empurra, sem dano); na ponta, a lâmina.
 	u.set_class(load("res://config/classes/sohei.tres"))
 	u.aim_dir = dir
@@ -420,12 +420,91 @@ func _poderes_revisados() -> void:
 	var q0: Vector3 = inim.global_position
 	var dir := Vector3.RIGHT
 	u.aim_dir = dir
-	inim.global_position = p0 + dir * (cfg.flecha_alcance + 0.5)
-	_check(Herois.alvo_toque(u, cfg.flecha_alcance, cfg.flecha_cone) == inim, "2.29b: Flecha Arrancada acha o inimigo alinhado na borda do alcance")
-	inim.global_position = p0 + dir.rotated(Vector3.UP, deg_to_rad(cfg.flecha_cone * 0.5 - 5.0)) * cfg.flecha_alcance
-	_check(Herois.alvo_toque(u, cfg.flecha_alcance, cfg.flecha_cone) == inim, "2.29b: Flecha Arrancada acha o inimigo meio de lado")
+	inim.global_position = p0 + dir * (cfg.herois.flecha_alcance + 0.5)
+	_check(Herois.alvo_toque(u, cfg.herois.flecha_alcance, cfg.herois.flecha_cone) == inim, "2.29b: Flecha Arrancada acha o inimigo alinhado na borda do alcance")
+	inim.global_position = p0 + dir.rotated(Vector3.UP, deg_to_rad(cfg.herois.flecha_cone * 0.5 - 5.0)) * cfg.herois.flecha_alcance
+	_check(Herois.alvo_toque(u, cfg.herois.flecha_alcance, cfg.herois.flecha_cone) == inim, "2.29b: Flecha Arrancada acha o inimigo meio de lado")
 	inim.global_position = p0 - dir * 2.0
-	_check(Herois.alvo_toque(u, cfg.flecha_alcance, cfg.flecha_cone) == null, "2.29b: Flecha Arrancada não acerta quem está atrás")
+	_check(Herois.alvo_toque(u, cfg.herois.flecha_alcance, cfg.herois.flecha_cone) == null, "2.29b: Flecha Arrancada não acerta quem está atrás")
 	inim.global_position = q0
 	u.global_position = p0
 	u.set_class(cfg.villager)
+
+
+## NU-14 (revisão 2026-11-19): o poder sai por texto em 4 lugares (enum do
+## ClassStats, Unit._usar_rapida/_use_power, Herois.rapida/poder/super_proprio e
+## a IA em BotHerois). Valor do enum sem ramo = poder que não sai; ramo fora do
+## enum = código morto ou .tres que o Inspector estraga; herói sem ramo na IA =
+## bot que nunca usa aquele poder.
+func _registro_poderes() -> void:
+	var enum_q := _enum_de("skill")
+	var enum_e := _enum_de("power")
+	var q_unit := _ramos("res://scripts/actors/unit.gd", "func _usar_rapida(")
+	var q_her := _ramos("res://scripts/actors/herois.gd", "static func rapida(")
+	var e_unit := _ramos("res://scripts/actors/unit.gd", "func _use_power(")
+	var e_her := _ramos("res://scripts/actors/herois.gd", "static func poder(")
+	var r_her := _ramos("res://scripts/actors/herois.gd", "static func super_proprio(")
+	var q_bot := _ramos("res://scripts/ai/bot_herois.gd", "static func rapida(")
+	var e_bot := _ramos("res://scripts/ai/bot_herois.gd", "static func poder(")
+	var r_bot := _ramos("res://scripts/ai/bot_herois.gd", "static func super_r(")
+	_check(enum_q.size() > 10 and enum_e.size() > 10 and q_unit.size() >= 6 and q_her.size() >= 10 and e_unit.size() >= 10 \
+			and e_her.size() >= 10 and r_her.size() >= 8 and r_bot.size() >= 8,
+			"registro dos poderes: não achou os ramos (função renomeada? atualize _registro_poderes)")
+	for v in enum_q:
+		if v != "nenhum" and v != "bloqueio":
+			_check(q_unit.has(v) or q_her.has(v), "Q %s está no enum do ClassStats mas nenhum ramo o solta" % v)
+	for v in q_unit + q_her:
+		_check(enum_q.has(v), "Q %s tem ramo mas não está no @export_enum de skill" % v)
+	_check(_mesmos(Unit.RAPIDAS_BASE, q_unit), "Unit.RAPIDAS_BASE diferente dos ramos de _usar_rapida")
+	_check(_mesmos(Herois.RAPIDAS, q_her), "Herois.RAPIDAS diferente dos ramos de Herois.rapida")
+	for v in enum_e:
+		if v != "nenhum":
+			_check(e_unit.has(v) or e_her.has(v), "E %s está no enum do ClassStats mas nenhum ramo o solta" % v)
+	for v in e_unit + e_her:
+		_check(enum_e.has(v), "E %s tem ramo mas não está no @export_enum de power" % v)
+	for base in cfg.hat_class_list:
+		for h in base.herois:
+			_check(q_her.has(h.skill) and q_bot.has(h.skill), "herói %s: Q %s sem ramo em Herois.rapida ou na IA" % [h.id, h.skill])
+			_check(e_her.has(h.power) and e_bot.has(h.power), "herói %s: E %s sem ramo em Herois.poder ou na IA" % [h.id, h.power])
+			if h.super_tipo == "proprio":
+				_check(r_her.has(h.super_poder) and r_bot.has(h.super_poder), "herói %s: R %s sem ramo em Herois.super_proprio ou na IA" % [h.id, h.super_poder])
+
+
+## Valores do @export_enum de um campo do ClassStats.
+func _enum_de(campo: String) -> Array[String]:
+	var out: Array[String] = []
+	for p in ClassStats.new().get_property_list():
+		if p.name == campo:
+			for v in String(p.hint_string).split(","):
+				out.append(v.get_slice(":", 0))
+	return out
+
+
+## Valores dos ramos do primeiro nível do `match` da função (linhas `\t\t"a", "b":`).
+func _ramos(arquivo: String, cabeca: String) -> Array[String]:
+	var txt := FileAccess.get_file_as_string(arquivo)
+	var i := txt.find("\n" + cabeca)
+	if i < 0:
+		return []
+	var fim := txt.length()
+	for marca in ["\nfunc ", "\nstatic func "]:
+		var j := txt.find(marca, i + 2)
+		if j >= 0:
+			fim = mini(fim, j)
+	var out: Array[String] = []
+	var re := RegEx.create_from_string('(?m)^\\t\\t((?:"[a-z_0-9]+"(?:, )?)+):')
+	var aspas := RegEx.create_from_string('"([a-z_0-9]+)"')
+	for m in re.search_all(txt.substr(i, fim - i)):
+		for a in aspas.search_all(m.get_string(1)):
+			out.append(a.get_string(1))
+	return out
+
+
+func _mesmos(a: Array, b: Array) -> bool:
+	for x in a:
+		if not b.has(x):
+			return false
+	for x in b:
+		if not a.has(x):
+			return false
+	return true

@@ -378,7 +378,7 @@ static func raizes(u: Unit, de: Vector3, dir: Vector3, comp: float) -> void:
 		tw.tween_interval(atraso)
 		tw.tween_callback(func() -> void:
 			if is_instance_valid(g):
-				_tufo(g, p, 1.25, Config.cfg.raizes_preso)
+				_tufo(g, p, 1.25, Config.cfg.herois.raizes_preso)
 				FxProjetil.fumaca(g, p + Vector3(0, 0.2, 0), TERRA, 2, 0.8, 0.5, 0.8))
 	Assinatura.pecas(g, de + dir * comp * 0.5 + Vector3(0, 0.6, 0), "semente", FOLHA, 8, {"esfera": comp * 0.3})
 	FxProjetil.marca_chao(g, de + dir * comp * 0.5, Color(0.18, 0.12, 0.06, 0.45), comp * 0.35, 1.8)
@@ -394,7 +394,7 @@ static func raiz_prende(o: Unit) -> void:
 ## 3º tiro do Kodama: a semente brota nos pés de quem acertou.
 static func broto(u: Unit) -> void:
 	var g := _g(u)
-	_tufo(g, u.global_position, 0.7, Config.cfg.broto_preso + 0.1)
+	_tufo(g, u.global_position, 0.7, Config.cfg.herois.broto_preso + 0.1)
 	Assinatura.pecas(g, u.global_position + Vector3(0, 0.5, 0), "semente", FOLHA, 6, {"tam": 0.7})
 	Fx.letreiro(g, u.global_position + Vector3(0, 0.9, 0), "BROTOU!", FOLHA, 0.8)
 	Sfx.play("kodama_brota", u.global_position, 0.1)
@@ -413,7 +413,7 @@ static func bosque(u: Unit, centro: Vector3) -> void:
 ## R Floresta Antiga: selo enorme e a terra rachando em verde.
 static func floresta(u: Unit, c: Vector3, r: float) -> void:
 	var g := _g(u)
-	Magia.selo(g, c, "bosque", r, Config.cfg.floresta_tempo, {"pontas": 10, "petalas": 5, "escrita": 0.6, "giro": 0.03})
+	Magia.selo(g, c, "bosque", r, Config.cfg.herois.floresta_tempo, {"pontas": 10, "petalas": 5, "escrita": 0.6, "giro": 0.03})
 	Magia.rachaduras(g, c, "bosque", r * 0.9, 12, 1.4)
 	Magia.onda(g, c, "bosque", r * 1.1, 0.7, {"banda": 0.08})
 	Magia.chama(g, c, "bosque", 1.2, 4.0, 0.8, {"giro": 0.8, "segura": 0.3})
@@ -602,7 +602,7 @@ static func para_raios_lanca(u: Unit, at: Vector3) -> void:
 		if is_instance_valid(g):
 			FxProjetil.fumaca(g, at + Vector3(0, 0.15, 0), TERRA, 4, 0.7, 0.5, 0.6)
 			FxProjetil.faiscas(g, at + Vector3(0, 0.3, 0), Color(1.0, 0.75, 0.45), 8, 6.0, Vector3.UP, 70.0, 0.2)
-			FxProjetil.marca_chao(g, at, Color(0.12, 0.09, 0.07, 0.5), 0.6, Config.cfg.pararaios_tempo)
+			FxProjetil.marca_chao(g, at, Color(0.12, 0.09, 0.07, 0.5), 0.6, Config.cfg.herois.pararaios_tempo)
 			Sfx.play("kaminari_choque", at, 0.1, 0.8, -4.0))
 	Sfx.play("lancar_metal", u.global_position, 0.1)
 
@@ -634,7 +634,7 @@ static func relampago(u: Unit, de: Vector3, ate: Vector3) -> void:
 ## R Tambores do Trovão: a nuvem de tempestade em cima dele por `t` s.
 static func tambores(u: Unit, t: float) -> void:
 	var g := _g(u)
-	Magia.onda(g, u.global_position, "raio", Config.cfg.tambores_raio, 0.6, {"banda": 0.05, "gira": 0.6})
+	Magia.onda(g, u.global_position, "raio", Config.cfg.herois.tambores_raio, 0.6, {"banda": 0.05, "gira": 0.6})
 	Magia.estouro(g, u.global_position + Vector3(0, 1.2, 0), "raio", 2.0, 0.35)
 	var no := Node3D.new()
 	no.name = "NuvemTrovao"

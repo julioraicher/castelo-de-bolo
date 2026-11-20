@@ -32,7 +32,7 @@ func setup(game: Game, p_dono: Unit, pos: Vector3, tempo: float, p_grande: bool)
 	time = p_dono.team
 	grande = p_grande
 	_vida = tempo
-	_golpes = Config.cfg.arvore_golpes * (2 if grande else 1)
+	_golpes = Config.cfg.herois.arvore_golpes * (2 if grande else 1)
 	_escala = 1.7 if grande else 1.0
 	add_to_group("arvores_kodama")
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
@@ -101,12 +101,12 @@ func _curar_sombra() -> void:
 		if absf(d.y) > 2.0:
 			continue
 		d.y = 0
-		if d.length() > cfg.bosque_sombra:
+		if d.length() > cfg.herois.bosque_sombra:
 			continue
 		if int(u.get_meta("sombra_ms", 0)) > agora:
 			continue  # já curou nesta volta por outra árvore
 		u.set_meta("sombra_ms", agora + 900)
-		if u.heal(cfg.bosque_cura, dono if is_instance_valid(dono) else null) > 0.0:
+		if u.heal(cfg.herois.bosque_cura, dono if is_instance_valid(dono) else null) > 0.0:
 			FxNatureza.sombra_cura(u)
 
 
@@ -129,7 +129,7 @@ func golpe(by: Unit) -> bool:
 func queimar(time_fogo: int) -> void:
 	if indo or _tocha_t > 0.0 or time_fogo == time:
 		return
-	_tocha_t = Config.cfg.tocha_tempo
+	_tocha_t = Config.cfg.herois.tocha_tempo
 	_tocha_tick = 0.0
 	_tocha_no = FxNatureza.tocha(self, _escala, _tocha_t)
 
@@ -145,8 +145,8 @@ func _tick_tocha(delta: float) -> void:
 				continue
 			var d := u.global_position - global_position
 			d.y = 0
-			if d.length() <= cfg.tocha_raio * _escala:
-				u.take_damage(cfg.tocha_dano * 0.5, null, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.2, false, "brasa", 1)
+			if d.length() <= cfg.herois.tocha_raio * _escala:
+				u.take_damage(cfg.herois.tocha_dano * 0.5, null, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.2, false, "brasa", 1)
 	if _tocha_t <= 0.0:
 		cair(true)
 

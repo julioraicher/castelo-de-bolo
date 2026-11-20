@@ -118,7 +118,7 @@ func _equilibrio_classes() -> void:
 	var sam = load("res://config/classes/guerreiro.tres")
 	_check(sam.dano_costas > 0.0, "Samurai deveria ter bônus pelas costas")
 	a.set_class(sam)
-	b._visual.rotation.y = atan2(1.0, 0.0)  # b olha para +x
+	b.yaw = atan2(1.0, 0.0)  # b olha para +x
 	_check(_perto(a.mult_costas(b, Vector3(-1, 0, 0)), 1.0, 1e-4), "Samurai de frente: sem bônus")
 	_check(_perto(a.mult_costas(b, Vector3(1, 0, 0)), 1.0 + sam.dano_costas, 1e-4), "Samurai pelas costas: com bônus")
 	_check(_perto(a.mult_costas(b, Vector3(0, 0, 1)), 1.0 + sam.dano_costas, 1e-4), "Samurai pelo lado: com bônus")

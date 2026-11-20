@@ -372,7 +372,7 @@ func _torretas() -> void:
 		u.hp = u.max_hp()
 		u._blocking = c[1]
 		u._block_t = 5.0
-		u._visual.rotation.y = atan2(c[2], 0.0)  # -1 = virado para a torreta (-x)
+		u.yaw = atan2(c[2], 0.0)  # -1 = virado para a torreta (-x)
 		var v = V.new()
 		game.add_child(v)
 		v.setup(game, t, t.global_position + Vector3(0, 2.6, 0), u)

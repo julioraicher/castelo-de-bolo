@@ -22,6 +22,7 @@ const DODGE_SPEED := 17.0
 const DODGE_TIME := 0.24
 const DODGE_COOLDOWN := 0.9
 const KNOCK_DECAY := 40.0  # m/s² de "freada" do empurrão: distância = v²/(2·KNOCK_DECAY)
+const GRAVIDADE := 30.0  # m/s² do corpo no ar (pulo, empurrão para cima, queda)
 const EQUIP_TIME := 0.75  # s para pegar o chapéu e pôr na cabeça (andando)
 const COMBO_WINDOW := 0.5  # s depois do fim da recarga para o próximo golpe contar no combo
 const POWER_MAX := 100.0
@@ -82,7 +83,7 @@ var finalizando: Unit = null  # vivo: o corpo de herói que estou finalizando
 var finalizar_prog := 0.0     # vivo: 0..1 do [F] segurado no corpo
 var _intocavel_t := 0.0      # acabou de ser reanimado: não leva dano
 
-## Medidor de Glacê (0 a POWER_MAX). Cheio = poder do Q liberado.
+## Medidor de Chi (0 a POWER_MAX). Cheio = poder do E liberado.
 var power := 0.0
 ## Barra do super (0 a POWER_MAX): só enche jogando (dano, abates, itens,
 ## espíritos, captura), nunca com o tempo, e não cai ao morrer.
@@ -95,6 +96,17 @@ static var _fantasma_cache := {}  # material opaco -> versão translúcida (Pass
 var nav_agent: NavigationAgent3D
 
 var _visual: Node3D
+## Para onde o boneco olha NA REGRA (bloqueio, golpe pelas costas, direção padrão
+## dos poderes). Revisão 3a (NU-08): a regra lia _visual.rotation.y; um enfeite
+## que girasse o _visual só no PC de quem vê separaria a partida online. Agora o
+## _visual só copia o yaw; enfeite pode girar o _visual à vontade. Guardado com
+## a precisão do Node3D (32 bits, via Vector3): é a mesma conta de antes, bit a
+## bit (com 64 bits a partida igual dava outro SINC aos 38 s, na revisão).
+var yaw := 0.0:
+	set(v):
+		yaw = Vector3(0.0, v, 0.0).y
+		if _visual:
+			_visual.rotation.y = yaw
 var _model: Node3D
 var _anim: AnimationPlayer
 var _meshes: Array[MeshInstance3D] = []
@@ -602,12 +614,39 @@ func parar_reanimar() -> void:
 	_current_anim = ""
 
 
-## Pode atacar/usar habilidade agora (sem máscara nem tora nos braços, fora
-## do dash, do chapéu, do Redemoinho e do Selo).
+## O que cada estado trava (revisão 3a, NU-06/NU-12). Antes cada ação tinha a
+## sua lista de timers à mão (golpe, Q, E/R, dash) e estado novo precisava
+## lembrar de 4 lugares. Estado novo = uma linha em TRAVAS.
+##   MAOS: golpe, Q e defesa (maos_livres)   Q: só o Q   ER: E e R   DASH: o dash
+## Preso solta E e R de propósito (decisão pendente do Julio, NU-06).
+enum Trava { MAOS = 1, Q = 2, ER = 4, DASH = 8 }
+const TRAVAS := {
+	&"_dodge_t": Trava.MAOS,  # no meio do dash
+	&"_equip_t": Trava.MAOS,  # pondo o chapéu
+	&"_spin_t": Trava.MAOS | Trava.DASH,  # Redemoinho girando
+	&"_silence_t": Trava.MAOS | Trava.ER,  # Selo
+	&"_preso_t": Trava.MAOS | Trava.DASH,  # gancho, teia, raízes, guarda quebrada
+	&"_ciranda_t": Trava.MAOS | Trava.DASH,  # Ciranda de Aço girando
+	&"_sono_t": Trava.MAOS | Trava.ER | Trava.DASH,  # Canção de Ninar (dormindo)
+	&"_forcado_t": Trava.MAOS | Trava.ER,  # andar forçado (Susto, Hipnose)
+	&"_canto_t": Trava.MAOS | Trava.DASH,  # Komusō tocando a flauta
+	&"_casulo_t": Trava.MAOS | Trava.DASH,  # enrolado no casulo da Jorogumo
+	&"_mudo_t": Trava.Q | Trava.ER,  # Réquiem
+}
+
+
+## Algum estado ativo trava esta ação (Trava.*)?
+func travado(acao: int) -> bool:
+	for campo in TRAVAS:
+		if TRAVAS[campo] & acao and float(get(campo)) > 0.0:
+			return true
+	return false
+
+
+## Pode atacar/usar habilidade agora (sem máscara nem tora nos braços e sem
+## estado que trave as mãos: dash, chapéu, Redemoinho, Selo, preso...).
 func maos_livres() -> bool:
-	return not carried_princess and not carried_tora and _dodge_t <= 0.0 and _equip_t <= 0.0 \
-			and _spin_t <= 0.0 and _silence_t <= 0.0 and _preso_t <= 0.0 and _ciranda_t <= 0.0 \
-			and _sono_t <= 0.0 and _forcado_t <= 0.0 and _canto_t <= 0.0 and _casulo_t <= 0.0
+	return not carried_princess and not carried_tora and not travado(Trava.MAOS)
 
 
 ## Corta madeira (Construtor e variações: quem tem velocidade_obra).
@@ -695,11 +734,11 @@ func current_speed() -> float:
 	if _sombra_t > 0.0:
 		s *= Config.cfg.sombra_vel
 	if _preso_t > 0.0:
-		s *= 0.1
+		s *= Config.cfg.preso_vel_mult
 	if _sono_t > 0.0 or _canto_t > 0.0 or _casulo_t > 0.0:
 		s = 0.0
 	if _teia_t > 0.0:
-		s *= Config.cfg.teia_vel
+		s *= Config.cfg.herois.teia_vel
 	if _ciranda_t > 0.0:
 		s *= Config.cfg.ciranda_vel_mult
 	if _tiro_lento_t > 0.0:
@@ -741,7 +780,7 @@ func charge_ratio() -> float:
 	return clampf(_charge_t / maxf(stats.charge_time, 0.01), 0.0, 1.0)
 
 
-## Soma ao medidor de Glacê. Enquanto o próprio poder age, nada entra
+## Soma ao medidor de Chi. Enquanto o próprio poder age, nada entra
 ## (senão o Redemoinho se recarregaria sozinho).
 func add_power(amount: float) -> void:
 	if amount <= 0.0 or _power_active_t > 0.0 or not alive:
@@ -762,7 +801,7 @@ func _physics_process(delta: float) -> void:
 	if not alive:
 		# Quem morre no ar cai (sem isso o corpo ficava parado no ar).
 		if not is_on_floor():
-			velocity = Vector3(0, velocity.y - 30.0 * delta, 0)
+			velocity = Vector3(0, velocity.y - GRAVIDADE * delta, 0)
 			move_and_slide()
 		_tick_corpo(delta, Vector3.ZERO)
 		_tick_aura()
@@ -815,7 +854,7 @@ func _physics_process(delta: float) -> void:
 	_tick_power(delta)
 	_tick_buffs(delta)
 
-	if wants_dodge and _dodge_cd <= 0.0 and not carried_princess and _spin_t <= 0.0 and _ciranda_t <= 0.0 and _preso_t <= 0.0 and _sono_t <= 0.0 and _canto_t <= 0.0 and _casulo_t <= 0.0:
+	if wants_dodge and _dodge_cd <= 0.0 and not carried_princess and not travado(Trava.DASH):
 		_start_dodge()
 	wants_dodge = false
 
@@ -859,7 +898,7 @@ func _physics_process(delta: float) -> void:
 		var target := move_intent.limit_length(1.0) * speed + _separation() * 3.0
 		# Na poça de cachaça o atrito some: a = μ·g cai junto com μ e o boneco
 		# leva ~1/poca_atrito × mais tempo para virar ou frear (derrapa).
-		var atrito := Config.cfg.poca_atrito if _derrapa_t > 0.0 else 1.0
+		var atrito := Config.cfg.herois.poca_atrito if _derrapa_t > 0.0 else 1.0
 		_move_vel = _move_vel.move_toward(target, ACCEL * atrito * delta)
 	# O empurrão entra só na velocidade final. Antes ele era somado à própria
 	# velocidade do quadro anterior, ou seja, integrado de novo a cada quadro:
@@ -874,7 +913,7 @@ func _physics_process(delta: float) -> void:
 		_mola(minf(_launch_vy, 8.0), 0.0)  # sai do chão esticado
 		_launch_vy = 0.0
 	else:
-		velocity.y = 0.0 if is_on_floor() else velocity.y - 30.0 * delta
+		velocity.y = 0.0 if is_on_floor() else velocity.y - GRAVIDADE * delta
 	_vy_antes = velocity.y
 	var t1 := Time.get_ticks_usec() if game._perf else 0
 	move_and_slide()
@@ -896,11 +935,11 @@ func _physics_process(delta: float) -> void:
 	_update_skill(delta, free_hands)
 	if wants_power:
 		wants_power = false
-		if _silence_t <= 0.0 and _mudo_t <= 0.0 and _sono_t <= 0.0 and _forcado_t <= 0.0:
+		if not travado(Trava.ER):
 			_use_power()
 	if wants_super:
 		wants_super = false
-		if _silence_t <= 0.0 and _mudo_t <= 0.0 and _sono_t <= 0.0 and _forcado_t <= 0.0:
+		if not travado(Trava.ER):
 			_use_super()
 	_tick_super(delta)
 	if _windup_t > 0.0:
@@ -936,7 +975,7 @@ func _face(delta: float) -> void:
 		look = move_intent
 	if look.length() > 0.01:
 		var target_yaw := atan2(look.x, look.z)
-		_visual.rotation.y = lerp_angle(_visual.rotation.y, target_yaw, 1.0 - exp(-18.0 * delta))
+		yaw = lerp_angle(yaw, target_yaw, 1.0 - exp(-18.0 * delta))
 
 
 func _separation() -> Vector3:
@@ -996,7 +1035,7 @@ func _start_dodge() -> void:
 	if stats.dash_peca:
 		Herois.dash_peca(self, true)
 	if stats.carga_estatica:
-		HeroisNatureza.somar_carga(self, Config.cfg.carga_dash)
+		HeroisNatureza.somar_carga(self, Config.cfg.herois.carga_dash)
 
 
 ## Pouso do dash por personalidade.
@@ -1084,7 +1123,7 @@ func _attack() -> void:
 	if _cego_t > 0.0 and not humano:
 		aim_dir = aim_dir.rotated(Vector3.UP, deg_to_rad(Sorte.r(-35.0, 35.0)))
 	if _disfarce_t > 0.0:
-		mult *= Config.cfg.mujina_golpe_mult  # golpe saindo do rosto roubado
+		mult *= Config.cfg.herois.mujina_golpe_mult  # golpe saindo do rosto roubado
 		finisher = true
 		Herois.tirar_rosto(self)
 	if _sombra_t > 0.0:
@@ -1292,10 +1331,10 @@ func _assisted_dir(dir: Vector3, alvo: Unit) -> Vector3:
 ## do Komusō é lenta e fácil de desviar; agora curva devagar atrás do alvo,
 ## balançando de lado, e some no fim do alcance. Dano por nota não muda.
 func _nota_teleguiada(p: Projectile, alvo: Unit) -> void:
-	p.torto = Config.cfg.nota_balanco
+	p.torto = Config.cfg.herois.nota_balanco
 	if alvo:
 		p.segue = alvo
-		p.vira = Config.cfg.nota_vira
+		p.vira = Config.cfg.herois.nota_vira
 
 
 ## Inimigo vivo mais alinhado com `dir`, dentro de `graus` e do alcance.
@@ -1334,7 +1373,7 @@ func _shoot_arrow(dmg_mult: float, speed_mult: float, dir_override := Vector3.ZE
 	var p := game.spawn_projectile(self, global_position + Vector3(0, 1.4, 0) + dir * 0.9, dir, stats.projetil)
 	p.damage *= dmg_mult
 	if stats.projetil == "nota":
-		_nota_teleguiada(p, mirado if mirado else _alvo_no_cone(dir, Config.cfg.nota_cone))
+		_nota_teleguiada(p, mirado if mirado else _alvo_no_cone(dir, Config.cfg.herois.nota_cone))
 	_tiro_lento_t = Config.cfg.atirador_lento_t
 	p.velocity *= speed_mult
 	var dist := clampf(to.length(), 6.0 if not stats.projetil in ["bomba", "garrafa"] else 3.0, stats.attack_range * 1.4 * speed_mult)
@@ -1373,11 +1412,11 @@ func _poder_visual(p: Projectile) -> void:
 func damage_mult() -> float:
 	var m := 1.0
 	if _fury_t > 0.0:
-		m *= 1.8
+		m *= Config.cfg.furia_dano_mult
 	if _dmg_boost_t > 0.0:
 		m *= Config.cfg.pickup_damage_mult
-	if _dohyo_t > 0.0 and global_position.distance_to(_dohyo_pos) <= Config.cfg.dohyo_raio:
-		m *= 1.0 + Config.cfg.dohyo_dano
+	if _dohyo_t > 0.0 and global_position.distance_to(_dohyo_pos) <= Config.cfg.herois.dohyo_raio:
+		m *= 1.0 + Config.cfg.herois.dohyo_dano
 	if stats.heroi:
 		m *= Config.cfg.heroi_dano_mult
 	return m * (1.0 + Config.cfg.mago_bonus_dano * _nivel_mago())
@@ -1437,7 +1476,7 @@ func _update_skill(delta: float, free_hands: bool) -> void:
 	_tick_escudo_def(delta)
 	if wants_quick:
 		wants_quick = false
-		if quick_ready() and free_hands and not _blocking and _mudo_t <= 0.0:
+		if quick_ready() and free_hands and not _blocking and not travado(Trava.Q):
 			if _usar_rapida():
 				Assinatura.toque_q(self)
 				_quick_cd = quick_cooldown()
@@ -1446,9 +1485,13 @@ func _update_skill(delta: float, free_hands: bool) -> void:
 					_quick_cd = 0.35
 
 
+## Q das classes comuns (ramos de _usar_rapida); os dos heróis estão em
+## Herois.RAPIDAS. O teste _registro_poderes confere enum x ramos x IA.
+const RAPIDAS_BASE := ["cura", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho"]
+
+
 func tem_rapida() -> bool:
-	return stats.skill in ["cura", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho"] \
-			or Herois.RAPIDAS.has(stats.skill)
+	return stats.skill in RAPIDAS_BASE or Herois.RAPIDAS.has(stats.skill)
 
 
 func quick_cooldown() -> float:
@@ -2117,7 +2160,7 @@ func _contra_golpe(attacker: Unit, dir: Vector3) -> void:
 
 
 func _facing() -> Vector3:
-	return Vector3(sin(_visual.rotation.y), 0, cos(_visual.rotation.y))
+	return Vector3(sin(yaw), 0, cos(yaw))
 
 
 func _die(killer: Unit) -> void:
@@ -2166,7 +2209,7 @@ func _respawn() -> void:
 	if descartavel:
 		# Arena de chapéus: inimigo do tambor some em vez de renascer.
 		game.units.erase(self)
-		game.inimigos_arena.erase(self)
+		game.modo_teste.inimigos_arena.erase(self)
 		if game.reanimar:
 			game.reanimar.esquecer(self)
 		Fx.burst(game, global_position + Vector3(0, 0.8, 0), Color(0.6, 0.6, 0.65), 8, 3.0)
@@ -2216,7 +2259,7 @@ func _voltar_a_vida() -> void:
 	_gigante = 1.0
 
 
-# --- Poder do Q (medidor de Glacê) --------------------------------------------
+# --- Poder do E (medidor de Chi) ----------------------------------------------
 
 ## Vazamento do medidor depois de um tempo sem lutar: dG/dt = −G/τ.
 func _tick_power(delta: float) -> void:
@@ -2474,7 +2517,7 @@ func _use_power() -> bool:
 					other.heal(other.max_hp() * stats.power_value, self)
 					other.give_shield(stats.power_shield, stats.power_duration)
 		"furia":
-			# Ronin Oni: pancada no chão (onda de choque) e dano x1,8 por um tempo.
+			# Ronin Oni: pancada no chão (onda de choque) e dano x furia_dano_mult por um tempo.
 			_fury_t = stats.power_duration
 			_play_once("2H_Melee_Attack_Chop", 0.45)
 			Fx.cracks(game, global_position, Color(1.0, 0.12, 0.08), stats.power_radius)
@@ -2987,7 +3030,7 @@ func _tick_corpo(delta: float, horizontal: Vector3, congelado := false) -> void:
 		var voo := 2.0 * MORTE_VY / MORTE_G
 		if _morte_t < voo:
 			off.y += MORTE_VY * _morte_t - 0.5 * MORTE_G * _morte_t * _morte_t
-			_visual.rotation.y += TAU / voo * delta  # uma volta inteira no ar
+			yaw += TAU / voo * delta  # uma volta inteira no ar
 		elif t0 < voo:
 			_mola(-10.0, 0.0)
 			Fx.burst(game, global_position + Vector3(0, 0.3, 0), Color(0.75, 0.72, 0.7), 10, 3.0)
@@ -2996,7 +3039,7 @@ func _tick_corpo(delta: float, horizontal: Vector3, congelado := false) -> void:
 	# (sx·sy·sz = 1), como massa de modelar.
 	var v := 1.0 + clampf(_sq, -0.45, 0.6)
 	var f := 1.0 + clampf(_st, -0.35, 0.55)
-	var alvo_g: float = Config.cfg.furia_escala if _fury_t > 0.0 else (Config.cfg.festa_escala if _festa_t > 0.0 else 1.0)
+	var alvo_g: float = Config.cfg.furia_escala if _fury_t > 0.0 else (Config.cfg.herois.festa_escala if _festa_t > 0.0 else 1.0)
 	_gigante = move_toward(_gigante, alvo_g, delta * 2.5)
 	_visual.scale = Vector3(1.0 / sqrt(v * f), v / sqrt(f), f / sqrt(v)) * _gigante
 	# Tremor de quem apanha: chacoalho aleatório que some em ~0,2 s.
