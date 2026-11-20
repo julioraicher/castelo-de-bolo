@@ -11,6 +11,7 @@ extends Node
 ## Poder novo de apoio = linha em ESPERADO.
 
 var game  # Game (sem tipo: script carregado em tempo de execução)
+const Bonecos = preload("res://tests/lib/bonecos.gd")
 const ESPERA := 3.0
 ## "classe poder": o que tem de acontecer com os aliados.
 ##   cura   = um aliado ganha vida     escudo = o ferido ganha escudo
@@ -163,21 +164,8 @@ func _testar(p, cls, poder: String, espera: Array, com_caido: bool) -> void:
 
 
 func _boneco(team: int, pos: Vector3):
-	var u = load("res://scripts/actors/unit.gd").new()
-	u.name = "Aliados_%d" % randi()
-	u.descartavel = true
-	game.add_child(u)
-	u.setup(game, team, false, load("res://config/classes/guerreiro.tres"))
-	u.global_position = pos
-	u.reset_physics_interpolation()
-	u.died.connect(game._on_unit_died)
-	game.units.append(u)
-	return u
+	return Bonecos.criar(game, team, pos, "Aliados", true)
 
 
 func _limpar(lista: Array) -> void:
-	for u in lista:
-		if is_instance_valid(u):
-			game.units.erase(u)
-			game.reanimar.esquecer(u)
-			u.queue_free()
+	Bonecos.limpar(game, lista)

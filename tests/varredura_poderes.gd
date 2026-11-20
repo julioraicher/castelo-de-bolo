@@ -8,6 +8,7 @@ extends Node
 ## escudo nem efeito no inimigo). Sai 0 sem suspeito; 1 com.
 
 var game  # Game (sem tipo: script carregado em tempo de execução)
+const Bonecos = preload("res://tests/lib/bonecos.gd")
 const ESPERA := 3.0
 ## Poderes que, com só um inimigo parado na frente e sem aliado, não mostram
 ## nada no alvo DE PROPÓSITO (conferidos no código na 2.29b). Poder novo que
@@ -161,20 +162,8 @@ func _nome_poder(cls, poder: String) -> String:
 
 
 func _boneco(team: int, pos: Vector3):
-	var u = load("res://scripts/actors/unit.gd").new()
-	u.name = "Varredura_%d" % randi()
-	u.descartavel = true
-	game.add_child(u)
-	u.setup(game, team, false, load("res://config/classes/guerreiro.tres"))
-	u.global_position = pos
-	u.reset_physics_interpolation()
-	game.units.append(u)
-	return u
+	return Bonecos.criar(game, team, pos, "Varredura", false)
 
 
 func _limpar(lista: Array) -> void:
-	for u in lista:
-		if is_instance_valid(u):
-			game.units.erase(u)
-			game.reanimar.esquecer(u)
-			u.queue_free()
+	Bonecos.limpar(game, lista)

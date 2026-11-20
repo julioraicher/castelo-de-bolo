@@ -58,7 +58,7 @@ xvfb-run -a -s "-screen 0 1280x720x24" godot --path . $GL -- --autoplay --sandbo
 # Prancha das finalizações (2.34):
 xvfb-run -a -s "-screen 0 1280x720x24" godot --path . $GL -- --prancha-finalizar=DIR
 # Regravar os clipes dos menus: tools/clipes_tutorial.sh [cena|classe:id ...]
-#   (classe nova = id em CLASSES do script; quadros importam com perda, ~12 KB cada)
+#   (classe nova = id em tools/lib/classes.sh; quadros importam com perda, ~12 KB cada)
 ```
 
 ## Geradores de modelos e dados

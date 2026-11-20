@@ -8,7 +8,9 @@
 # Sai 1 se algo não acontecer. Uso: tools/teste_queda.sh [queda|dessinc] [quadros=9000] [godot=godot]
 MODO=${1:-queda}; Q=${2:-9000}; GODOT=${3:-godot}
 cd "$(dirname "$0")/.."
-SD=$(mktemp -d); H=/tmp/queda_${MODO}_h.txt; C=/tmp/queda_${MODO}_c.txt
+. tools/lib/sinc.sh
+pasta_temporaria
+SD=$(mktemp -d); H="$T/h.txt"; C="$T/c.txt"
 [ "$MODO" = "dessinc" ] && GATILHO="--dessinc-teste=900" || GATILHO="--cair-teste=900"
 timeout 900 "$GODOT" --headless --path . --fixed-fps 60 --quit-after "$Q" -- --autoplay --sinc --criar-sala-teste=2 --recomecar-teste --codigo=18A1-WA26 --sinal-dir="$SD" --nome=Anfitriao > "$H" 2>&1 &
 P=$!
@@ -28,10 +30,9 @@ else
   grep -q "^REDE voltou" "$C" || falha "o amigo não voltou sozinho para a sala"
 fi
 # Segunda partida: o resumo tem de bater.
-seg() { awk '/^REDE partida/{n++} n>=2' "$1" | grep "^SINC " | awk '{ if ($2 + 0 <= ult) exit; ult = $2 + 0; print }' ult=-1; }
-seg "$H" > /tmp/queda_h_sinc.txt; seg "$C" > /tmp/queda_c_sinc.txt
-nh=$(wc -l < /tmp/queda_h_sinc.txt); nc=$(wc -l < /tmp/queda_c_sinc.txt); n=$(( nh < nc ? nh : nc ))
+pega_sinc "$H" 2 > "$T/h_sinc.txt"; pega_sinc "$C" 2 > "$T/c_sinc.txt"
+compara_sinc "$T/h_sinc.txt" "$T/c_sinc.txt"; n=$SINC_N
 [ "$n" -ge 5 ] || falha "a segunda partida quase não rodou ($n resumos)"
-dif=$(diff <(head -n "$n" /tmp/queda_h_sinc.txt) <(head -n "$n" /tmp/queda_c_sinc.txt) | head -2)
-[ -z "$dif" ] || falha "a segunda partida não bate: $dif"
+[ -z "$SINC_DIF" ] || falha "a segunda partida não bate: $SINC_DIF"
+rm -rf "$T"
 echo "QUEDA OK ($MODO): voltaram para a sala e a partida nova bate ($n resumos)"

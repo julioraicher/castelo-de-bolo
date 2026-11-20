@@ -57,9 +57,13 @@ var _reanimar_alvo: Unit = null  # aliado caído que este bot foi reanimar
 var _finalizar_alvo: Unit = null  # herói inimigo caído que este bot foi finalizar (Ciclo 2.34)
 
 const TATICA_INTERVALO := 0.2
+## Só os testes de regra ligam (tests/regras.gd): a IA fica parada e o mundo, quieto.
+var parado := false
 
 
 func tick(delta: float) -> void:
+	if parado:
+		return
 	_think_t -= delta
 	if _think_t <= 0.0:
 		_think_t = Config.cfg.bot_think_interval

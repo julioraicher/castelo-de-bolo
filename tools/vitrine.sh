@@ -5,7 +5,8 @@
 #   tools/vitrine.sh --gif ANTES DEPOIS SAIDA     -> SAIDA/<classe>.gif (lado a lado)
 # Para o "antes": git worktree add /tmp/antes <commit>, rode lá e compare.
 set -e
-CLASSES_PADRAO="guerreiro ronin_oni arqueiro arqueiro_yumi bombardeiro armadilheiro construtor kitsune kitsune_luz kitsune_sombria"
+. "$(dirname "$0")/lib/classes.sh"
+CLASSES_PADRAO="$CLASSES_TODAS"  # todas (TL-19: a lista daqui parou nas 10 da 2.4)
 if [ "$1" = "--gif" ]; then
   A="$2"; D="$3"; OUT="$4"; mkdir -p "$OUT"
   for dir in "$D"/*/; do

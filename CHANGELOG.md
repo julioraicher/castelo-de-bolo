@@ -4,6 +4,38 @@ Uma entrada por rodada de testes (mais nova em cima). Serve para a próxima
 conversa saber o que mudou sem reler o histórico.
 Entradas até o Ciclo 2.29b (2026-11-14) estão em `docs/changelog-antigo.md`.
 
+## Revisão 3e (2026-11-20), Diretor de Jogabilidade: testes e ferramentas
+Lote 3e do relatório de 2026-11-19 (pedido do Julio: gastar o limite em lotes
+grandes que não mudam o jogo). **Nada muda no jogo** nem no modo teste; muda como
+o jogo é testado.
+
+**Testes**
+- `tests/regras.gd` (3.300 linhas) virou um runner de 130: os testes moram em
+  `tests/regras/<sistema>.gd` (dados, combate, poderes, economia, partida,
+  reanimar, itens, herois, sistema), com base comum `tests/lib/caso.gd` (um
+  `_por` só no lugar de 4 cópias divergentes) e o tempo de cada arquivo no fim.
+- **Bots parados durante os testes** (`BotBrain.parado`): o resultado não depende
+  mais da semente nem de onde os bots andaram (antes havia teste que falhava
+  "1 em 5"). Conferido com 4 sementes: mesmas checagens, todas ok.
+- Testes novos: os 5 itens do chão (poção, escudo, velocidade, dano, medidor),
+  configurações salvas ao fechar a janela, IA dos 14 heróis (todo herói usa Q, E
+  ou R com 3 inimigos na frente e mira no grupo), lista de classes igual em todo
+  lugar (selos, clipes, geradores de casa/herói/pavilhão, `tools/lib/classes.sh`),
+  e todo `.scn` comprimido. 1.113 → 1.471 checagens; piso subiu para 1.400.
+- Boneco de teste único (`tests/lib/bonecos.gd`) nas regras e nas duas varreduras.
+
+**Ferramentas e CI**
+- QA do mapa só avisa o que piorou em relação a `tests/qa_mapa_base.txt` (antes
+  repetia os mesmos 477 avisos em todo push).
+- Testes de rede com pasta própria (`tools/lib/sinc.sh`, `mktemp -d`): queda e
+  dessincronia rodam juntas no CI (grupo rede ~1,5 min mais curto).
+- `tools/lib/classes.sh`: lista única das classes para `clipes_tutorial.sh` e
+  `vitrine.sh` (a da vitrine tinha parado nas 10 da 2.4).
+- Saiu `tools/comprimir_cenas.gd` (migração de uma vez só; o teste novo garante).
+
+**O que testar**
+- Nada no jogo. Se o CI ficar verde, está certo.
+
 ## Caça 2.35 (2026-11-20), Diretor de Jogabilidade: revisão completa, lote de consertos + CI + docs
 Pedido do Julio: revisão do jogo inteiro e, da fase 2, o pacote "Consertos + CI +
 docs" (lotes 0, 1 e 3h do relatório de 2026-11-19, pasta do projeto

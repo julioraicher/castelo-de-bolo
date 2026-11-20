@@ -63,7 +63,7 @@ scripts/
   autoload/sfx.gd         toca sons
   rede/                   multiplayer: sala, conexão, quadros (autoload Rede), RedeBrain
   data/*.gd               definem os campos dos arquivos .tres
-tests/regras.gd           testes de regra; varredura_*.gd = Q/E/R de todas as classes; qa_mapa.gd = QA do mapa
+tests/regras/<sistema>.gd testes de regra (regras.gd chama na ordem); varredura_*.gd = Q/E/R de todas as classes; qa_mapa.gd = QA do mapa
 tools/checar.sh           todas as checagens em grupos (o CI roda este script)
 tools/gerar_*.gd          geram cenário, mapa e peças por código (tools/gerar_tudo.sh roda todos na ordem); prancha_*.gd = imagens de pitaco
 tools/gerar_sons.py       sintetiza a música e os sons originais (Python puro)
