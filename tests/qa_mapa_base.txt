@@ -1,0 +1,8 @@
+# Linha de base do QA do mapa (revisão 2026-11-19, TS-07): problemas já conhecidos.
+# tools/checar.sh só avisa quando um tipo passa daqui (folga de 2 para as faces,
+# que variam 1 entre rodadas). Consertou algo? Baixe o número. Aceitou um novo? Suba.
+inalcançável 2
+desvio 0
+bot preso 0
+escondido 2
+faces sobrepostas 474

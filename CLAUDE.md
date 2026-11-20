@@ -28,7 +28,7 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para
 `tools/checar.sh` em 3 grupos paralelos (regras, partida, rede); qualquer
 `SCRIPT ERROR` reprova. Na `main`, se passarem, exporta Web (GitHub Pages),
 Windows/Linux (release `ultima-versao`) e itch.io (se configurado). Regra nova
-que importa = um `_check` em `tests/regras.gd`.
+que importa = um `_check` em `tests/regras/<sistema>.gd`.
 
 ## Arquitetura
 
@@ -71,7 +71,7 @@ que importa = um `_check` em `tests/regras.gd`.
 - Empurrão: velocidade de andar (`_move_vel`) e de empurrão (`_knock`) são
   separadas. Somar o empurrão à velocidade anterior o integra de novo a cada quadro.
 - Modelo `.scn` gerado: salvar com `ResourceSaver.FLAG_COMPRESS` (7x menor, mesmo
-  conteúdo; download web 104 → 43 MB). `tools/comprimir_cenas.gd` converte os antigos.
+  conteúdo; download web 104 → 43 MB).
 - Material billboard ignora escala: use `billboard_keep_scale = true`.
 - `Label` com quebra de linha dentro de `GridContainer` vira uma letra por linha.
 - Texto dentro de `Button` não faz o botão crescer: cartão com texto = `PanelContainer`

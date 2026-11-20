@@ -21,10 +21,12 @@ arquitetura geral; leia daqui a seção do sistema em que vai mexer.
 5. Sons: nomes novos em `SOUNDS` de `scripts/autoload/sfx.gd`.
 6. Casa/pavilhão: `BASES` de `tools/gerar_casas.gd` (classe base) ou
    `tools/gerar_pavilhao.gd` (herói); depois `tools/gerar_tudo.sh`.
-7. Menus: clipe em `CLASSES` de `tools/clipes_tutorial.sh` e regravar.
+7. Menus: id em `tools/lib/classes.sh` (lista única dos scripts de vídeo) e
+   `tools/clipes_tutorial.sh classe:<id>`. O teste `_listas_de_classes` reprova se
+   faltar o selo, o clipe ou a linha nos geradores (casas, heróis, pavilhão).
 8. Testes: `POR_DESENHO` (`tests/varredura_poderes.gd`) se o poder não fere de
    propósito; `ESPERADO` (`tests/varredura_aliados.gd`) se cura/protege; `_check`
-   em `tests/regras.gd` para a regra que importa. Rodar `tools/checar.sh tudo`.
+   em `tests/regras/<sistema>.gd` para a regra que importa. Rodar `tools/checar.sh tudo`.
 9. Sandbox: o personagem precisa aparecer no modo teste na mesma entrega.
 
 ## Cenário
@@ -113,3 +115,19 @@ prancha (`tools/prancha_personagens.gd`). Ver docs/arte-personagens.md.
 `tests/contador_erros.gd` (Logger) conta erros de script durante os testes e
 reprova; `tests/regras.gd` exige um mínimo de checagens (`MIN_CHECAGENS`) para
 um teste pulado não passar despercebido. Regra nova que importa = um `_check`.
+
+- Testes de regra (revisão 3e): um arquivo por sistema em `tests/regras/`
+  (dados, combate, poderes, economia, partida, reanimar, itens, herois, sistema),
+  todos `extends "res://tests/lib/caso.gd"` (`_check`, `_por`, `_perto`, `cfg`,
+  `game`). `tests/regras.gd` só chama na `ORDEM` (importa: o estado da partida é
+  um só; o relógio vai por último) e imprime o tempo de cada arquivo. Teste novo
+  = função no arquivo do sistema + uma linha na `ORDEM`.
+- Bots parados durante os testes (`BotBrain.parado`): o resultado não depende de
+  onde eles andaram nem da semente. Teste que precisa da IA chama o cérebro
+  direto (ex.: `_bots_herois` chama `BotHerois.rapida/poder/super_r`).
+- Boneco descartável: `tests/lib/bonecos.gd` (`criar`, `limpar`), o mesmo nas
+  regras e nas duas varreduras.
+- QA do mapa: `tests/qa_mapa_base.txt` guarda os números de hoje; o
+  `checar.sh` avisa só quando algum tipo piora. Problema consertado = baixar a base.
+- Rede: `tools/lib/sinc.sh` (`pega_sinc`, `compara_sinc`, `pasta_temporaria`);
+  cada teste usa a sua pasta (`mktemp -d`), então podem rodar juntos.

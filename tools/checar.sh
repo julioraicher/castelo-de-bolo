@@ -18,28 +18,40 @@ mkdir -p "$LOGS"
 FALHAS=()
 AVISOS=()
 
-# passo NOME TEMPO comando...: roda, guarda o log e reprova com exit != 0 ou erro de script.
-passo() {
+# rodar NOME TEMPO comando...: roda e guarda o log (e o código/tempo em LOG.rc).
+# avaliar NOME: mostra o resumo e reprova com exit != 0 ou erro de script.
+# passo = rodar + avaliar. Dois "rodar" em segundo plano + wait = passos em paralelo.
+_log() { echo "$LOGS/$(echo "$1" | tr ' /' '__').log"; }
+rodar() {
   local nome="$1" tempo="$2"; shift 2
-  local log="$LOGS/$(echo "$nome" | tr ' /' '__').log"
-  local ini=$SECONDS
-  echo "::group::$nome"
+  local log ini=$SECONDS
+  log=$(_log "$nome")
   timeout "$tempo" "$@" > "$log" 2>&1
-  local rc=$?
+  echo "$? $((SECONDS - ini))" > "$log.rc"
+}
+avaliar() {
+  local nome="$1" log rc dur
+  log=$(_log "$nome")
+  read -r rc dur < "$log.rc"
+  echo "::group::$nome"
   grep -E "^(TESTES|VARREDURA FIM|ALIADOS FIM|SINCRONIA|REDE|RTC|QUEDA|DESSINC|SEMENTE|AUDITORIA|UI)" "$log" | tail -8
   if grep -qE "SCRIPT ERROR|Parse Error" "$log"; then
     grep -E -A3 "SCRIPT ERROR|Parse Error" "$log" | head -30
     rc=99
   fi
-  if [ $rc -ne 0 ]; then
+  if [ "$rc" -ne 0 ]; then
     tail -25 "$log"
     echo "::endgroup::"
-    echo "::error::$nome falhou (código $rc, $((SECONDS - ini)) s)"
+    echo "::error::$nome falhou (código $rc, $dur s)"
     FALHAS+=("$nome")
   else
     echo "::endgroup::"
-    echo "ok  $nome ($((SECONDS - ini)) s)"
+    echo "ok  $nome ($dur s)"
   fi
+}
+passo() {
+  rodar "$@"
+  avaliar "$1"
 }
 
 # aviso NOME TEMPO comando...: como passo, mas só avisa (depende de serviço de fora ou tem linha de base).
@@ -82,17 +94,42 @@ qa_mapa() {
     if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
       { echo '### QA do mapa'; echo '```'; cat "$qa/qa_mapa.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
     fi
-    if [ "$(wc -l < "$qa/qa_mapa.txt")" -gt 1 ]; then echo "::warning::QA do mapa: $(sed -n 2p "$qa/qa_mapa.txt")"; fi
+    qa_novos "$qa/qa_mapa.txt"
   else
     echo "::warning::QA do mapa não gerou o relatório."
+  fi
+}
+
+# Compara a linha "Por tipo: a N, b N, ..." com tests/qa_mapa_base.txt e avisa só do
+# que piorou (TS-07: os mesmos ~477 de sempre viravam ruído em todo push).
+qa_novos() {
+  local tipos piorou=""
+  tipos=$(sed -n 's/^Por tipo: //p' "$1" | tr ',' '\n' | sed 's/^ *//')
+  while IFS= read -r par; do
+    [ -z "$par" ] && continue
+    local n="${par##* }" nome="${par% *}" base
+    base=$(grep -v '^#' tests/qa_mapa_base.txt | grep "^$nome " | sed 's/.* //')
+    base="${base:-0}"
+    local folga=0
+    [ "$nome" = "faces sobrepostas" ] && folga=2
+    if [ "$n" -gt $((base + folga)) ]; then piorou="$piorou $nome $base -> $n;"; fi
+  done <<< "$tipos"
+  if [ -n "$piorou" ]; then
+    echo "::warning::QA do mapa piorou:$piorou (base em tests/qa_mapa_base.txt)"
+  else
+    echo "QA do mapa: nada novo em relação à base (tests/qa_mapa_base.txt)"
   fi
 }
 
 rede() {
   passo "Rede local (anfitrião + amigo, humanos de Yumi)" 15m bash tools/teste_rede.sh 5000 "$GODOT" --classe=arqueiro_yumi
   passo "Conexão por código (WebRTC, recados por pasta)" 15m bash tools/teste_rtc.sh 5000 "$GODOT"
-  passo "Queda (o amigo cai e volta)" 15m bash tools/teste_queda.sh queda 9000 "$GODOT"
-  passo "Dessincronia (todos voltam para a sala)" 15m bash tools/teste_queda.sh dessinc 9000 "$GODOT"
+  # Queda e dessincronia ao mesmo tempo: cada um tem a sua pasta (TL-14), ~1 min a menos.
+  rodar "Queda (o amigo cai e volta)" 15m bash tools/teste_queda.sh queda 9000 "$GODOT" &
+  rodar "Dessincronia (todos voltam para a sala)" 15m bash tools/teste_queda.sh dessinc 9000 "$GODOT" &
+  wait
+  avaliar "Queda (o amigo cai e volta)"
+  avaliar "Dessincronia (todos voltam para a sala)"
   if [ "${CHECAR_INTERNET:-0}" = "1" ]; then
     aviso "Conexão pela internet (ntfy.sh + STUN)" 15m bash tools/teste_rtc.sh 5000 "$GODOT" internet
   fi
