@@ -163,3 +163,8 @@ func _provisoria() -> Node3D:
 			vara.rotation.z = (i - 1) * 0.08
 			root.add_child(vara)
 	return root
+
+
+## Resumo para o SINC (Game.hash_partes, revisão 3b, IT-08): só estado de regra.
+func hash_estado() -> int:
+	return hash([global_position, estagio, restantes, _t, _game.idx_unit(cortador)])

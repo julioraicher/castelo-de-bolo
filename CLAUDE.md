@@ -97,7 +97,8 @@ que importa = um `_check` em `tests/regras/<sistema>.gd`.
   `create_timer(t, false, true)`); regra não lê transform de nó visual; nada de
   regra em `_process`. `is_player` só para câmera/HUD/som: regra que depende de
   "quem bateu é humano" usa `humano` (2.28d: hitstop só no PC de quem atirou
-  separava a partida).
+  separava a partida). Estrutura nova com estado de regra entra no SINC
+  (`hash_estado()`; ver docs/mapa-do-codigo.md, "Peças do mundo").
 - Inferência `:=` falha com valores sem tipo (ex.: `surface_get_format`): tipar.
 - Script de diagnóstico `-s`: não citar `Unit`/classes do jogo nem autoloads
   (`Config`) por nome: compila antes dos autoloads e quebra o `Unit`. Use

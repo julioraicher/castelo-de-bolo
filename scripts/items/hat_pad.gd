@@ -13,7 +13,7 @@ extends Node3D
 ## `classe_base` é esta classe, a máquina sobe de nível: fabrica a cada
 ## `maquina_n2_intervalo` s até `maquina_n2_estoque`. Modelo: os nós "N2_*"
 ## ficam escondidos no nível 1 e aparecem no 2; toca "subir_nivel" se existir.
-## Também sobe com madeira: Construtores do time parados a OBRA_RAIO m puxam 1
+## Também sobe com madeira: Construtores do time a raio_obra_maquina m puxam 1
 ## madeira do estoque a cada oficina_puxar_intervalo / Σv s até maquina_n2_custo.
 
 var team := 0
@@ -26,7 +26,6 @@ var nivel := 1
 ## Madeira já posta no nível 2 (fica guardada, como a obra das oficinas).
 var madeira_n2 := 0
 
-const OBRA_RAIO := 2.8
 ## Distância para pegar o chapéu (a casa evoluída é maior que a barraquinha).
 var raio_pegar := 2.0
 ## false = a casa da classe (Oficina) cuida da madeira: a maquininha não puxa
@@ -206,18 +205,13 @@ func _obra_n2(delta: float) -> void:
 	var game := get_parent() as Game
 	if game == null or game.game_over:
 		return
-	var rate := 0.0
-	for u in game.units:
-		if u.alive and u.team == team and u.stats.velocidade_obra > 0.0 and not u.carried_princess \
-				and not u.carried_tora and u.global_position.distance_to(global_position) < OBRA_RAIO:
-			rate += u.stats.velocidade_obra
-			u.building_t = 0.25
+	var rate := game.ritmo_obra(team, global_position, Config.cfg.raio_obra_maquina)
 	if rate > 0.0:
 		_puxar_t -= delta * rate
 		if _puxar_t <= 0.0 and puxar_madeira_n2(game):
 			_puxar_t = Config.cfg.oficina_puxar_intervalo
 	var p := game.player
-	var perto := p != null and p.team == team and p.lenhador() and p.global_position.distance_to(global_position) < OBRA_RAIO + 1.2
+	var perto := p != null and p.team == team and p.lenhador() and p.global_position.distance_to(global_position) < Config.cfg.raio_obra_maquina + 1.2
 	_contador.visible = nivel == 1 and (madeira_n2 > 0 or perto)
 	if _contador.visible:
 		_contador.mostrar(faltam_n2(), Config.cfg.maquina_n2_custo, perto, faltam_n2() > 0 and game.madeira[team] <= 0)
@@ -241,6 +235,18 @@ func avancar(delta: float) -> void:
 
 
 ## Prensa desce, o chapéu salta do molde (0,8 a 1,2 s) e vai para a prateleira.
+## Um degrau acima do 2 do bairro (Oficina, revisão 3b: mexia nos campos daqui):
+## +1 de estoque (ganha o chapéu na hora), fabrica mais rápido e mostra a peça
+## do nível n.
+func subir_degrau(n: int) -> void:
+	estoque_max += 1
+	intervalo *= Config.cfg.mago_pad_intervalo_mult
+	if estoque < estoque_max:
+		estoque += 1
+		_fabricou()
+	mostrar_nivel(n)
+
+
 func _fabricou() -> void:
 	if _maquina:
 		if _anim and _anim.has_animation("fabricar"):
@@ -696,3 +702,8 @@ static func _box(t: Vector3) -> BoxMesh:
 	var m := BoxMesh.new()
 	m.size = t
 	return m
+
+
+## Resumo para o SINC (Game.hash_partes, revisão 3b, IT-08): só estado de regra.
+func hash_estado() -> int:
+	return hash([available, estoque, nivel, madeira_n2, intervalo, retorno, _fab_t, _livre_t, _puxar_t])

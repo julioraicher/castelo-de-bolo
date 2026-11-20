@@ -1,5 +1,5 @@
 class_name ArvoreKodama
-extends Node3D
+extends PecaDoMundo
 ## Árvore do Kodama (Heróis 2.27b): nasce do Bosque (E, três juntas) ou da
 ## Floresta Antiga (R, anel de gigantes). Tronco sólido no LAYER_WORLD: bloqueia
 ## passagem e tiros. A sombra cura os aliados do dono (bosque_cura/s, uma vez
@@ -10,12 +10,7 @@ extends Node3D
 ## Visual (FxNatureza.arvore): a árvore adulta do tema com a corda shimenawa,
 ## os papéis shide e o musgo na cor do time.
 
-var dono: Unit
-var time := 0
 var grande := false
-var indo := false
-var _game: Game
-var _vida := 12.0
 var _golpes := 2
 var _tocha_t := 0.0
 var _tocha_tick := 0.0
@@ -27,16 +22,10 @@ var _escala := 1.0
 
 
 func setup(game: Game, p_dono: Unit, pos: Vector3, tempo: float, p_grande: bool) -> void:
-	_game = game
-	dono = p_dono
-	time = p_dono.team
 	grande = p_grande
-	_vida = tempo
 	_golpes = Config.cfg.herois.arvore_golpes * (2 if grande else 1)
 	_escala = 1.7 if grande else 1.0
-	add_to_group("arvores_kodama")
-	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	global_position = pos
+	_iniciar(game, p_dono, &"arvores_kodama", tempo, pos)
 	rotation.y = Sorte.f() * TAU
 	_corpo = StaticBody3D.new()
 	_corpo.collision_layer = Config.LAYER_WORLD
@@ -61,7 +50,7 @@ func atraso_nascer(t: float) -> void:
 	if t <= 0.0 or _visual == null:
 		return
 	_visual.visible = false
-	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	var tw := _tween_fisica()
 	tw.tween_interval(t)
 	tw.tween_callback(func() -> void: _visual.visible = true)
 
@@ -83,7 +72,7 @@ func _physics_process(delta: float) -> void:
 		_tick_tocha(delta)
 		return
 	if _vida <= 0.0:
-		cair()
+		sair()
 		return
 	_cura_t -= delta
 	if _cura_t <= 0.0 and not grande:  # a Floresta cura pelo anel inteiro (HeroisNatureza)
@@ -106,7 +95,7 @@ func _curar_sombra() -> void:
 		if int(u.get_meta("sombra_ms", 0)) > agora:
 			continue  # já curou nesta volta por outra árvore
 		u.set_meta("sombra_ms", agora + 900)
-		if u.heal(cfg.herois.bosque_cura, dono if is_instance_valid(dono) else null) > 0.0:
+		if u.heal(cfg.herois.bosque_cura, dono_valido()) > 0.0:
 			FxNatureza.sombra_cura(u)
 
 
@@ -121,7 +110,7 @@ func golpe(by: Unit) -> bool:
 	var dir := global_position - by.global_position
 	dir.y = 0
 	_game.soltar_tora(global_position + Vector3(0, 0.4, 0), -dir.normalized() if dir.length() > 0.01 else Vector3.RIGHT)
-	cair()
+	sair()
 	return true
 
 
@@ -148,21 +137,19 @@ func _tick_tocha(delta: float) -> void:
 			if d.length() <= cfg.herois.tocha_raio * _escala:
 				u.take_damage(cfg.herois.tocha_dano * 0.5, null, d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 0.2, false, "brasa", 1)
 	if _tocha_t <= 0.0:
-		cair(true)
+		sair(true)
 
 
 ## Some: tomba para um lado (queimada: vira cinza) e libera a passagem na hora.
-func cair(queimada := false) -> void:
-	if indo:
+func sair(queimada := false) -> void:
+	if not _saindo():
 		return
-	indo = true
-	remove_from_group("arvores_kodama")
 	if _corpo:
 		_corpo.queue_free()
 		_corpo = null
 	FxNatureza.arvore_cai(self, queimada, _escala)
 	var lado := randf() * TAU
-	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).set_parallel(true)
+	var tw := _tween_fisica().set_parallel(true)
 	if _visual:
 		tw.tween_property(_visual, "rotation", Vector3(cos(lado) * 1.3, 0, sin(lado) * 1.3), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		tw.tween_property(_visual, "scale", Vector3.ONE * _escala * 0.2, 0.55).set_delay(0.25)

@@ -154,14 +154,7 @@ static func para_raios(u: Unit) -> bool:
 	if to.length() < 1.0:
 		to = Herois._dir_mira(u) * 2.0
 	var at := Herois.chao_valido(u, Herois.sem_parede(u, u.global_position, u.global_position + to.limit_length(u.stats.skill_radius)))
-	var meus: Array = []
-	for n in u.get_tree().get_nodes_in_group("para_raios"):
-		var pr := n as ParaRaios
-		if pr and pr.dono == u and not pr.indo:
-			meus.append(pr)
-	meus.sort_custom(func(a: ParaRaios, b: ParaRaios) -> bool: return a.nasceu < b.nasceu)
-	while meus.size() >= cfg.herois.pararaios_max:
-		(meus.pop_front() as ParaRaios).sumir()
+	PecaDoMundo.limitar(u.get_tree(), u, &"para_raios", cfg.herois.pararaios_max)
 	var pr := ParaRaios.new()
 	u.game.add_child(pr)
 	pr.setup(u.game, u, at)
@@ -388,21 +381,8 @@ static func _tick_floresta(u: Unit, delta: float) -> void:
 ## Construtor (qualquer lenhador) cortando: a árvore do Kodama mais perto no
 ## arco leva o golpe (arvore_golpes golpes = 1 tora e ela cai).
 static func cortar_arvore(by: Unit, dir: Vector3, alcance: float, arco: float) -> bool:
-	var melhor: ArvoreKodama = null
-	var dist := alcance + 0.5
-	for n in by.get_tree().get_nodes_in_group("arvores_kodama"):
-		var a := n as ArvoreKodama
-		if a == null or a.indo:
-			continue
-		var to := a.global_position - by.global_position
-		to.y = 0
-		var d := to.length() - a.raio_tronco()
-		if d > dist:
-			continue
-		if d > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > arco * 0.5:
-			continue
-		dist = d
-		melhor = a
+	var melhor := Game.mais_perto_no_arco(by.get_tree().get_nodes_in_group("arvores_kodama"), by, dir, alcance + 0.5, arco,
+			func(a: ArvoreKodama, d: float) -> float: return INF if a.indo else d - a.raio_tronco()) as ArvoreKodama
 	if melhor == null:
 		return false
 	melhor.golpe(by)

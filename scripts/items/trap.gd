@@ -1,5 +1,5 @@
 class_name Trap
-extends Node3D
+extends PecaDoMundo
 ## Armadilhas do Construtor:
 ##   estrepes (Construtor, botão direito): o primeiro inimigo que pisa leva dano
 ##     e fica lento.
@@ -10,18 +10,12 @@ extends Node3D
 ## corda do time e a brasa do estopim pulsando. Cai quicando quando é posta,
 ## dispara com peças próprias e, se vencer, afunda no chão (sumir).
 
-const RADIUS := 1.4
-const LIFETIME := 40.0
-
-var owner_unit: Unit
-## Time e números guardados na hora de pôr (caça 2026-11-19, IT-01): na Arena de
-## chapéus o dono pode ser liberado (queue_free) com estrepes ainda no chão.
-var _time := 0
+## Números guardados na hora de pôr (caça 2026-11-19, IT-01): na Arena de
+## chapéus o dono pode ser liberado (queue_free) com estrepes ainda no chão
+## (o time fica em PecaDoMundo.time; o autor do dano, em dono_valido()).
 var _dano := 0.0
 var _lento := 1.0
 var _lento_t := 0.0
-var _game: Game
-var _life := LIFETIME
 var _mina := false
 var _vis: Node3D
 var _brasa: MeshInstance3D
@@ -29,15 +23,10 @@ var _blink_t := 0.0
 
 
 func setup(game: Game, p_owner: Unit, pos: Vector3) -> void:
-	_game = game
-	owner_unit = p_owner
-	_time = p_owner.team
 	_dano = p_owner.stats.trap_damage
 	_lento = p_owner.stats.trap_slow
 	_lento_t = p_owner.stats.trap_slow_time
-	add_to_group("traps")
-	global_position = pos
-	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # parada; só aparece com tween
+	_iniciar(game, p_owner, &"traps", Config.cfg.armadilha_vida, pos)  # parada; só aparece com tween
 	_mina = p_owner.stats.trap_kind == "mina"
 	var cor := Config.team_color(p_owner.team)
 	_vis = Node3D.new()
@@ -53,7 +42,7 @@ func setup(game: Game, p_owner: Unit, pos: Vector3) -> void:
 		_brasa = FxItens.brasa(_vis)
 	_vis.rotation.y = randf() * TAU
 	# Anel tracejado na cor do time: aliados enxergam onde está.
-	FxItens.anel_chao(_vis, Magia.paleta_de(cor), RADIUS, {"voltas": 10.0, "forca": 1.0, "banda": 0.06, "alfa": 0.5, "gira": 0.02, "y": 0.04})
+	FxItens.anel_chao(_vis, Magia.paleta_de(cor), Config.cfg.armadilha_raio, {"voltas": 10.0, "forca": 1.0, "banda": 0.06, "alfa": 0.5, "gira": 0.02, "y": 0.04})
 	# Jogada no chão: cai quicando (a mina balança antes de assentar).
 	_vis.position.y = 0.7
 	var tw := _vis.create_tween()
@@ -74,41 +63,35 @@ func _process(delta: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	_life -= delta
-	if _life <= 0.0:
-		sumir()
+	_vida -= delta
+	if _vida <= 0.0:
+		sair()
 		return
 	for u in _game.units:
-		if not u.alive or u.team == _time:
+		if not u.alive or u.team == time:
 			continue
 		var d := u.global_position - global_position
 		if absf(d.y) > 1.5:
 			continue
 		d.y = 0
-		if d.length() <= RADIUS:
+		if d.length() <= Config.cfg.armadilha_raio:
 			if _mina:
 				_explode()
 				queue_free()
 				return
 			var dir := d.normalized() if d.length() > 0.1 else Vector3.FORWARD
-			u.take_damage(_dano, dono(), dir, 0.3)
+			u.take_damage(_dano, dono_valido(), dir, 0.3)
 			u.apply_slow(_lento, _lento_t)
 			FxItens.estrepes_fisga(_game, global_position, dir)
 			queue_free()
 			return
 
 
-## Dono vivo no jogo, ou null se ele já foi liberado (o dano segue sem autor).
-func dono() -> Unit:
-	return owner_unit if is_instance_valid(owner_unit) else null
-
-
 ## Some sem disparar (venceu o tempo ou foi trocada pela nova): a regra tira
 ## na hora; o visual se solta e afunda no chão.
-func sumir() -> void:
-	if is_queued_for_deletion():
+func sair() -> void:
+	if is_queued_for_deletion() or not _saindo():
 		return
-	remove_from_group("traps")
 	if _vis and is_instance_valid(_game):
 		var t := _vis.global_transform
 		remove_child(_vis)
@@ -119,20 +102,20 @@ func sumir() -> void:
 
 
 func _explode() -> void:
-	var r := RADIUS * 1.6
+	var r := Config.cfg.armadilha_raio * 1.6
 	FxProjetil.explosao(_game, global_position, r)
 	FxProjetil.anel_chao(_game, global_position, Color(1.0, 0.55, 0.15, 0.8), r)
 	FxItens.mina_estoura(_game, global_position)
-	Reacoes.em(_game, global_position, r, "bomba", _time)
+	Reacoes.em(_game, global_position, r, "bomba", time)
 	Sfx.play("explosao", global_position, 0.1, 1.1)
 	_game.camera.shake_at(global_position, 0.5)
 	for u in _game.units:
-		if not u.alive or u.team == _time:
+		if not u.alive or u.team == time:
 			continue
 		var d := u.global_position - global_position
 		if absf(d.y) > 1.5:
 			continue
 		d.y = 0
 		if d.length() <= r:
-			u.take_damage(_dano, dono(), d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 1.5)
+			u.take_damage(_dano, dono_valido(), d.normalized() if d.length() > 0.1 else Vector3.FORWARD, 1.5)
 			u.launch(6.0)

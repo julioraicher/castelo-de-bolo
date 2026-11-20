@@ -191,7 +191,7 @@ func _physics_process(delta: float) -> void:
 				u.heal(cura, owner_unit)
 				FxProjetil.brilho(_game, u.global_position + Vector3(0, 1.2, 0), Color(0.6, 1.0, 0.7), 1.0, 0.25)
 	for u in _game.units:
-		if u._casulo_t > 0.0 and u.alive and u.team == owner_unit.team and u != owner_unit:
+		if u.em_casulo() and u.alive and u.team == owner_unit.team and u != owner_unit:
 			# Casulo da Jorogumo: tiro de aliado bate no casulo e ajuda a soltar.
 			var dc := u.global_position - global_position
 			var dyc := -dc.y
@@ -319,3 +319,8 @@ func _bateu(at: Vector3) -> void:
 func _fim() -> void:
 	FxProjetil.soltar_rastro(self, _game)
 	queue_free()
+
+
+## Resumo para o SINC (Game.hash_partes, revisão 3b, IT-08): só estado de regra.
+func hash_estado() -> int:
+	return hash([global_position, velocity, kind, damage, _life, _game.idx_unit(owner_unit)])

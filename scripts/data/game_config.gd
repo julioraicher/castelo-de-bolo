@@ -185,6 +185,17 @@ extends Resource
 @export var raio_alimentar := 4.0
 @export var raio_pegar_espirito := 1.8
 @export var raio_pegar_item := 1.6
+## Obra (revisão 3b, IT-12: eram constantes de cada peça): Construtores do time a
+## esta distância puxam madeira e erguem a peça. No bairro da classe só vale
+## quem está quase parado (< obra_parado_vel m/s; quem passa indo ao depósito
+## não puxa). Torreta e maquininha não pedem parado (igualar = decisão do Julio).
+@export var raio_obra_bairro := 4.8
+@export var obra_parado_vel := 1.5
+@export var raio_obra_torreta := 3.0
+@export var raio_obra_maquina := 2.8
+## Estrepes e mina: raio de quem pisa (a mina estoura em 1,6 × isso) e segundos no chão.
+@export var armadilha_raio := 1.4
+@export var armadilha_vida := 40.0
 
 @export_group("Itens no chão")
 ## Um item novo a cada tantos segundos, até o máximo, na área do meio.

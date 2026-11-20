@@ -1,5 +1,5 @@
 class_name ParaRaios
-extends Node3D
+extends PecaDoMundo
 ## Para-raios do Kaminari-kozō (Q, Heróis 2.27b): baqueta de cobre cravada no
 ## chão por pararaios_tempo s (até pararaios_max por dono). A cada
 ## pararaios_cada s dá choque em quem é do outro time a até pararaios_raio m.
@@ -7,24 +7,11 @@ extends Node3D
 ## Tambores do Trovão. Visual: FxNatureza.para_raios (cobre, ponta na cor do
 ## time, faíscas em volta).
 
-var dono: Unit
-var time := 0
-var nasceu := 0
-var indo := false
-var _game: Game
-var _vida := 6.0
 var _tick := 0.5
 
 
 func setup(game: Game, p_dono: Unit, pos: Vector3) -> void:
-	_game = game
-	dono = p_dono
-	time = p_dono.team
-	nasceu = Sorte.ms()
-	_vida = Config.cfg.herois.pararaios_tempo
-	add_to_group("para_raios")
-	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	global_position = pos
+	_iniciar(game, p_dono, &"para_raios", Config.cfg.herois.pararaios_tempo, pos)
 	FxNatureza.para_raios(self, Config.team_color(time))
 
 
@@ -37,7 +24,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_vida -= delta
 	if _vida <= 0.0 or not is_instance_valid(dono):
-		sumir()
+		sair()
 		return
 	_tick -= delta
 	if _tick > 0.0:
@@ -76,11 +63,9 @@ func descarregar(dano: float) -> void:
 	_choque(dano, "descarga")
 
 
-func sumir() -> void:
-	if indo:
+func sair() -> void:
+	if not _saindo():
 		return
-	indo = true
-	remove_from_group("para_raios")
-	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	var tw := _tween_fisica()
 	tw.tween_property(self, "scale", Vector3(0.2, 0.05, 0.2), 0.25)
 	tw.tween_callback(queue_free)

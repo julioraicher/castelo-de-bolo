@@ -93,3 +93,8 @@ func _physics_process(delta: float) -> void:
 	if _chao_t >= Config.cfg.tora_tempo_chao:
 		_game.toras.erase(self)
 		queue_free()
+
+
+## Resumo para o SINC (Game.hash_partes, revisão 3b, IT-08): só estado de regra.
+func hash_estado() -> int:
+	return hash([_game.idx_unit(carrier) if carrier else global_position, _chao_t])

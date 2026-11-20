@@ -1746,12 +1746,8 @@ func _tick_escudo_def(delta: float) -> void:
 
 ## Estrepes nos pés; passou do limite, a mais antiga do mesmo dono some.
 func _place_trap() -> void:
-	var mine: Array[Node] = []
-	for t in get_tree().get_nodes_in_group("traps"):
-		if t.owner_unit == self and not t.is_queued_for_deletion() and not t.has_meta("do_poder"):
-			mine.append(t)
-	while mine.size() >= stats.trap_max:
-		mine.pop_front().sumir()
+	PecaDoMundo.limitar(get_tree(), self, &"traps", stats.trap_max,
+			func(t: PecaDoMundo) -> bool: return not t.has_meta("do_poder"))
 	var trap := Trap.new()
 	game.add_child(trap)
 	trap.setup(game, self, global_position - _facing() * 0.8)
@@ -1859,7 +1855,7 @@ func take_damage(amount: float, attacker: Unit, dir: Vector3, knock_mult := 1.0,
 	if carried_princess:
 		amount *= Config.cfg.carrier_damage_mult
 	# Bloqueio: vale para golpes que chegam pela frente (até 60° do rosto).
-	var blocked := _blocking and _guarda_trava_t <= 0.0 and _facing().dot(-dir) > BLOCK_COS
+	var blocked := _guarda_trava_t <= 0.0 and defende_de(dir)
 	if blocked and melee and attacker and attacker.alive and _block_t <= Config.cfg.parry_janela:
 		_contra_golpe(attacker, dir)
 		return
@@ -2161,6 +2157,27 @@ func _contra_golpe(attacker: Unit, dir: Vector3) -> void:
 
 func _facing() -> Vector3:
 	return Vector3(sin(yaw), 0, cos(yaw))
+
+
+## Leitura pública para as peças do mundo (revisão 3b, IT-11): torreta, virote e
+## projétil liam os campos "_" direto, e uma renomeação quebrava em silêncio.
+## Escudo erguido de frente para o que vem no sentido `dir` (sem olhar a guarda quebrada).
+func defende_de(dir: Vector3) -> bool:
+	return _blocking and _facing().dot(-dir) > BLOCK_COS
+
+
+## Escondido de quem mira de longe (Passo da Sombra ou disfarce).
+func escondido() -> bool:
+	return _sombra_t > 0.0 or _disfarce_t > 0.0
+
+
+func em_casulo() -> bool:
+	return _casulo_t > 0.0
+
+
+## Vestido com `cls`: agora, trocando para ela ou por baixo do super "maior".
+func veste(cls: ClassStats) -> bool:
+	return stats == cls or _equip_stats == cls or _stats_normal == cls
 
 
 func _die(killer: Unit) -> void:

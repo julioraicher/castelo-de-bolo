@@ -21,15 +21,15 @@ func _poderes_q() -> void:
 	# visual fica afundando no chão, fora dela.
 	var uma = null
 	for t in get_tree().get_nodes_in_group("traps"):
-		if t.owner_unit == u:
+		if t.dono == u:
 			uma = t
 	if uma:
 		var vis: Node = uma._vis
-		uma.sumir()
-		_check(not uma.is_in_group("traps") and uma.is_queued_for_deletion(), "Trap.sumir: deveria sair do grupo traps e ser apagada")
-		_check(is_instance_valid(vis) and vis.get_parent() != uma, "Trap.sumir: o visual deveria se soltar para afundar")
+		uma.sair()
+		_check(not uma.is_in_group("traps") and uma.is_queued_for_deletion(), "Trap.sair: deveria sair do grupo traps e ser apagada")
+		_check(is_instance_valid(vis) and vis.get_parent() != uma, "Trap.sair: o visual deveria se soltar para afundar")
 	for t in get_tree().get_nodes_in_group("traps"):
-		if t.owner_unit == u:
+		if t.dono == u:
 			t.queue_free()
 	u.set_class(load("res://config/classes/ronin_oni.tres"))
 	u._fury_t = 1.0

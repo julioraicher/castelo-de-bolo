@@ -55,6 +55,26 @@ arquitetura geral; leia daqui a seção do sistema em que vai mexer.
   (`CanalNoCorpo`) é a base de `Reanimar` e `Finalizar` (busca, reserva de bot,
   anel e letreiro); a filha responde só o que muda.
 
+## Peças do mundo (revisão 3b)
+
+- Peça que um boneco põe no chão e some sozinha (teia, para-raios, poça, andaime,
+  árvore do Kodama, estrepes e mina) = `extends PecaDoMundo`
+  (`scripts/items/peca_do_mundo.gd`): `_iniciar(game, dono, grupo, vida, pos)` no
+  setup, `sair()` para acabar (uma vez só; `_saindo()` + visual de saída),
+  `dono_valido()`, `PecaDoMundo.limitar(arvore, dono, grupo, max)` (a mais antiga
+  sai). Peça nova = filha + o grupo em `PecaDoMundo.GRUPOS`.
+- Resumo da partida (SINC, `Game.hash_partes`): placar, um pedaço por boneco e um
+  por tipo de estrutura (`Game.PARTES_MUNDO`: máscaras, torretas/catapultas,
+  casas/maquininhas, chão, peças, tiros). Cada peça tem `hash_estado()` só com
+  estado de regra. Estrutura nova com estado de regra = `hash_estado()` + entrar
+  num desses pedaços.
+- Golpe no arco: `Game.no_arco` e `Game.mais_perto_no_arco` (plantas, árvore,
+  andaime; a torreta usa `no_arco`). Obra: `Game.ritmo_obra(time, pos, raio,
+  parado_vel)` (bairro, torreta, maquininha); raios em `cfg.raio_obra_*`.
+- Leituras públicas da Unit para as peças: `defende_de(dir)`, `escondido()`,
+  `em_casulo()`, `veste(cls)`. Mira da torreta = `Torreta.mira_y` (regra; o nó
+  da besta só copia).
+
 ## Cenário
 
 `tools/gerar_cenario_ninja.gd` (+ `gerar_mapa_rio.gd`) gera temas e peças com o

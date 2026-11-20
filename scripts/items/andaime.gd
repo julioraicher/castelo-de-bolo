@@ -1,16 +1,11 @@
 class_name Andaime
-extends Node3D
+extends PecaDoMundo
 ## Andaime Expresso do Predero (Herói 2.30, E): uma parede de andaime de madeira
 ## com lona na cor do time, de pé na frente dele por andaime_tempo s. Corpo
 ## sólido no LAYER_WORLD: bloqueia passagem e tiros (como a árvore do Kodama).
 ## Lenhador de outro time desmonta em andaime_golpes machadadas (e não ganha
 ## tora: é madeira de obra, já tem dono). Visual em FxObra.andaime.
 
-var dono: Unit
-var time := 0
-var indo := false
-var _game: Game
-var _vida := 7.0
 var _golpes := 3
 var _corpo: StaticBody3D
 var _visual: Node3D
@@ -19,14 +14,8 @@ const PROF := 0.7  # espessura do corpo sólido (m)
 
 func setup(game: Game, p_dono: Unit, pos: Vector3, frente: Vector3) -> void:
 	var cfg := Config.cfg
-	_game = game
-	dono = p_dono
-	time = p_dono.team
-	_vida = cfg.herois.andaime_tempo
 	_golpes = cfg.herois.andaime_golpes
-	add_to_group("andaimes")
-	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	global_position = pos
+	_iniciar(game, p_dono, &"andaimes", cfg.herois.andaime_tempo, pos)
 	# A lona fica virada para quem atira: frente do nó = sentido da mira.
 	look_at(pos + frente, Vector3.UP)
 	rotate_object_local(Vector3.UP, PI)
@@ -56,7 +45,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_vida -= delta
 	if _vida <= 0.0:
-		cair()
+		sair()
 
 
 ## Machadada de lenhador (HeroisObra.cortar_andaime). true = desmontou.
@@ -67,20 +56,18 @@ func golpe(by: Unit) -> bool:
 	FxObra.andaime_golpe(self, by)
 	if _golpes > 0:
 		return false
-	cair()
+	sair()
 	return true
 
 
-func cair() -> void:
-	if indo:
+func sair() -> void:
+	if not _saindo():
 		return
-	indo = true
-	remove_from_group("andaimes")
 	if _corpo:
 		_corpo.queue_free()
 		_corpo = null
 	FxObra.andaime_cai(_game, global_position, Config.cfg.herois.andaime_larg, global_basis.x)
-	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).set_parallel(true)
+	var tw := _tween_fisica().set_parallel(true)
 	if _visual:
 		tw.tween_property(_visual, "rotation:x", -1.35, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		tw.tween_property(_visual, "scale", Vector3(1.0, 0.3, 1.0), 0.45).set_delay(0.3)

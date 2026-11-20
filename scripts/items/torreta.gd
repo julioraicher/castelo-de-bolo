@@ -20,7 +20,6 @@ extends Node3D
 
 enum Estado { VAZIO, OBRA, PRONTA }
 
-const RAIO_OBRA := 3.0
 const RAIO_CORPO := 1.0  # para golpes e tiros acertarem a torreta
 const ALTURA_ARMA := 2.6
 const ALT_LABEL := 4.5    # estado (madeira, %, vida)
@@ -36,6 +35,14 @@ var hp := 0.0
 var _game: Game
 var _casa: Node3D
 var _arma: Node3D
+## Giro da besta (regra: o virote sai daqui). Antes morava só no rotation.y do
+## nó do modelo (IT-04). Guardado em float32, como o nó guardava, para o tiro
+## sair igual; o nó só copia.
+var mira_y := 0.0:
+	set(v):
+		mira_y = Vector3(0.0, v, 0.0).y
+		if _arma:
+			_arma.rotation.y = mira_y
 var _selo: Node3D
 var _selo_mat: StandardMaterial3D
 var _label: Label3D
@@ -140,12 +147,7 @@ func _process(delta: float) -> void:
 # --- Obra -----------------------------------------------------------------------
 
 func _obra(delta: float) -> void:
-	var rate := 0.0
-	for u in _game.units:
-		if u.alive and u.team == team and u.lenhador() and not u.carried_princess and not u.carried_tora \
-				and u.global_position.distance_to(global_position) < RAIO_OBRA:
-			rate += u.stats.velocidade_obra
-			u.building_t = 0.25
+	var rate := _game.ritmo_obra(team, global_position, Config.cfg.raio_obra_torreta)
 	if rate <= 0.0:
 		return
 	_puxar_t -= delta * rate
@@ -228,7 +230,7 @@ func _alvo() -> Unit:
 	var best: Unit = null
 	var best_d := Config.cfg.torreta_alcance
 	for u in _game.units:
-		if not u.alive or u.team == team or u.em_voo or u._sombra_t > 0.0 or u._disfarce_t > 0.0:
+		if not u.alive or u.team == team or u.em_voo or u.escondido():
 			continue
 		var d := u.global_position - global_position
 		if absf(d.y) > 4.0:
@@ -244,7 +246,7 @@ func _atirar(delta: float) -> void:
 	var alvo := _alvo()
 	if alvo and _arma:
 		var to := alvo.global_position - global_position
-		_arma.rotation.y = lerp_angle(_arma.rotation.y, atan2(to.x, to.z), minf(delta * 10.0, 1.0))
+		mira_y = lerp_angle(mira_y, atan2(to.x, to.z), minf(delta * 10.0, 1.0))
 	_tiro_t -= delta
 	if alvo == null or _tiro_t > 0.0:
 		return
@@ -252,11 +254,10 @@ func _atirar(delta: float) -> void:
 	var boca := global_position + Vector3(0, ALTURA_ARMA + 0.1, 0)
 	if _arma:
 		_arma.position.z = -0.22  # coice (volta em _process)
-		# Direção da besta só pelo giro dela (rotation.y), sem o balanço visual
+		# Direção da besta só pelo giro dela (mira_y), sem o balanço visual
 		# da casa (_casa.rotation.z sorteado ao apanhar): o tiro é regra e
 		# precisa sair igual em todos os PCs da partida online.
-		var ry := _arma.rotation.y
-		boca += (global_transform.basis * Vector3(sin(ry), 0.0, cos(ry))).normalized() * 0.7
+		boca += (global_transform.basis * Vector3(sin(mira_y), 0.0, cos(mira_y))).normalized() * 0.7
 	var v := Virote.new()
 	_game.add_child(v)
 	v.setup(_game, self, boca, alvo)
@@ -419,10 +420,17 @@ func _montar_torre() -> Node3D:
 	var casa: Node3D = (load(path) as PackedScene).instantiate()
 	raiz.add_child(casa)
 	_arma = casa.get_node_or_null("Arma")
+	if _arma:
+		mira_y = _arma.rotation.y  # o giro com que o modelo nasce
 	if Settings.quality < 3:
 		Fx.tirar_contorno(casa)
 	MalhaUnica.juntar(casa, [_arma] if _arma else [])
 	return raiz
+
+
+## Resumo para o SINC (Game.hash_partes, revisão 3b, IT-08): só estado de regra.
+func hash_estado() -> int:
+	return hash([estado, progresso, madeira_entregue, hp, mira_y, _tiro_t, _puxar_t, _caindo])
 
 
 ## Virote da torreta: voa reto (corrigindo a mira um pouco) até o alvo.
@@ -491,7 +499,7 @@ class Virote extends Node3D:
 		dir.y = 0
 		dir = dir.normalized() if dir.length() > 0.01 else Vector3.FORWARD
 		# Escudo virado para o virote: ele volta (sem janela de tempo; quiz 2026-11-06).
-		if _alvo._blocking and _alvo._facing().dot(-dir) > Unit.BLOCK_COS:
+		if _alvo.defende_de(dir):
 			_volta = true
 			_vida = 1.6
 			Fx.burst(_game, global_position, Color(1, 0.9, 0.5), 10, 6.0)
