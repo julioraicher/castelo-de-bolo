@@ -337,7 +337,7 @@ static func requiem(u: Unit, r: float) -> void:
 
 
 static func nota_muda(o: Unit) -> void:
-	Fx.damage_number(_g(o), o.global_position + Vector3(0, 1.4, 0), "♪̸", Color(0.6, 0.95, 0.9), 0.5)
+	Fx.damage_number(_g(o), o.global_position + Vector3(0, 1.4, 0), "MUDO", Color(0.6, 0.95, 0.9), 0.5)
 
 
 static func _notas(g: Node, at: Vector3, dir: Vector3, n: int, spread := 30.0) -> void:

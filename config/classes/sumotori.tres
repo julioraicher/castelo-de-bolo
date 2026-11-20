@@ -51,3 +51,6 @@ super_nome = "Dohyō"
 heroi = true
 anim_idle = "Unarmed_Idle"
 anim_attack = "Unarmed_Melee_Attack_Punch_A"
+skill_desc = "Agarra quem está na frente e arremessa longe; quem cai em cima também apanha."
+power_desc = "Pisão do santuário: dano e arremesso em volta."
+super_desc = "Ringue de sal: ninguém entra nem sai, e quem está dentro do seu time bate mais forte."

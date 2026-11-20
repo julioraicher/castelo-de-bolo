@@ -15,59 +15,6 @@ const CLIPE_FPS := 7.5
 const CLIPE_TAM := Vector2(320, 180)
 const LISTA_LARG := 216.0
 
-## O que cada habilidade (enum `skill` do ClassStats) faz, em uma linha.
-const RAPIDA := {
-	"investida": "Corte em avanço: atravessa quem estiver na frente.",
-	"pisao": "Onda curta que arremessa quem está perto.",
-	"tiro_carregado": "Tiro cheio que atravessa os inimigos em linha.",
-	"cura": "Cura quem estiver em volta.",
-	"armadilha": "Estrepes no chão: dano e lentidão em quem pisa.",
-	"bloqueio": "Bloqueio reforçado por alguns segundos.",
-	"corrida": "Arrancada curta.",
-	"varrida": "Giro largo da naginata: fere e empurra quem está na frente e dos lados, e dá escudo aos aliados perto.",
-	"gancho": "Lança o peso na mira: o primeiro inimigo na linha apanha, fica preso e é puxado para perto.",
-	# Heróis raros (Ciclo 2.23)
-	"agarrao": "Agarra quem está na frente e arremessa longe; quem cai em cima também apanha.",
-	"rasteira": "Some numa poça e reaparece no pé do inimigo, derrubando.",
-	"rajada": "Abano do leque: devolve flechas e empurra quem está na frente.",
-	"mergulho": "Sobe ao céu e cai em cima do atirador mais isolado.",
-	"roubar_rosto": "Toca num inimigo e vira ele: os outros não te veem como inimigo até o 1º golpe.",
-	"dobrar": "Dobra um shikigami (até 3) que engole golpes; cheio, solta talismãs que caçam o alvo.",
-	"laco": "Puxa de volta o aliado caído (levanta na hora) ou o ferido longe, curando.",
-	"sono": "Canção: quem estiver na frente dorme até levar um golpe.",
-}
-## O que cada poder de Chi (enum `power`) faz.
-const PODER := {
-	"redemoinho": "Gira com a lâmina: dano e empurrão em volta.",
-	"furia": "Mais força e vida por alguns segundos.",
-	"leque": "Leque de shurikens à frente.",
-	"chuva_de_flechas": "Flechas caem numa área à frente.",
-	"bencao": "Cura e escudo nos aliados perto.",
-	"selo": "Inimigos em volta ficam sem atacar.",
-	"coluna_fogo": "Colunas de fogo-raposa onde você mira.",
-	"mutirao": "Adianta a obra perto de você.",
-	"campo_minado": "Minas em volta.",
-	"bombardeio": "Bombas caem numa área.",
-	"muralha": "Anel de fé no chão: aliados dentro ganham escudo e pressa; inimigos são empurrados para fora.",
-	"ciranda": "Gira a corrente em volta: o peso fere quem está na borda do anel (colado no corpo não corta).",
-	"pisao_grande": "Pisão do santuário: dano e arremesso em volta.",
-	"jato": "Jato d'água em linha: empurra todos de uma vez.",
-	"redemoinho_longe": "Redemoinho onde você mira: puxa para o meio e arremessa no fim.",
-	"revoada": "Corvos numa área: quem está dentro fica cego e erra.",
-	"susto": "Mostra o rosto vazio: quem está perto foge correndo.",
-	"grou": "Grou de papel que atravessa: fere inimigos e cura aliados no caminho.",
-	"danca": "Dança: cura os aliados em volta enquanto dura.",
-	"hipnose": "Puxa os inimigos em volta para perto de você.",
-}
-## Super próprio dos heróis raros (super_tipo "proprio": ClassStats.super_poder).
-const SUPER_PROPRIO := {
-	"dohyo": "Ringue de sal: ninguém entra nem sai, e quem está dentro do seu time bate mais forte.",
-	"mergulho3": "Três mergulhos seguidos, cada um no inimigo mais perto.",
-	"mil_grous": "Revoada de grous em leque: atravessa tudo, fere e cura.",
-	"veu": "Véu do céu: aliados em volta não morrem por alguns segundos.",
-	"requiem": "Réquiem: inimigos em volta ficam sem Q, E e R por alguns segundos.",
-}
-
 var _ficha: VBoxContainer
 var _clipe: TutorialClipe
 var _clipe_moldura: PanelContainer
@@ -116,7 +63,7 @@ static func nome_super(s: ClassStats) -> String:
 
 static func origem(s: ClassStats) -> String:
 	if base_do_heroi(s):
-		return "★ herói raro (nível 6, %d madeiras)" % Config.cfg.heroi_custo
+		return "herói raro (nível 6, %d madeiras)" % Config.cfg.heroi_custo
 	if s.classe_base != &"":
 		return "caminho %s (nível 3 da casa, %d madeiras)" % [s.caminho_nome if s.caminho_nome != "" else s.display_name, Config.cfg.oficina_custo_madeira]
 	return "pátio (barraquinha)"
@@ -293,17 +240,15 @@ func _mostrar(s: ClassStats) -> void:
 		ch.queue_free()
 	var linhas := []
 	if s.skill != "nenhum":
-		linhas.append(["Q", s.skill_name, RAPIDA.get(s.skill, ""), "recarga %.0f s" % (s.skill_cooldown * cfg.rapida_cooldown_mult * (cfg.heroi_recarga_mult if s.heroi else 1.0)) if s.skill != "armadilha" else "recarga %.0f s" % s.trap_cooldown])
+		linhas.append(["Q", s.skill_name, s.skill_desc, "recarga %.0f s" % (s.skill_cooldown * cfg.rapida_cooldown_mult * (cfg.heroi_recarga_mult if s.heroi else 1.0)) if s.skill != "armadilha" else "recarga %.0f s" % s.trap_cooldown])
 	if s.power != "nenhum":
-		linhas.append(["E", s.power_name, PODER.get(s.power, ""), "quando o Chi enche"])
-		var super_txt := ""
-		if s.super_tipo == "proprio":
-			super_txt = SUPER_PROPRIO.get(s.super_poder, "")
-		elif s.super_tipo == "sombra":
+		linhas.append(["E", s.power_name, s.power_desc, "quando o Chi enche"])
+		var super_txt: String = s.super_desc  # vazio: monta pelo tipo
+		if super_txt == "" and s.super_tipo == "sombra":
 			var tempo := ("%.1f" % cfg.sombra_tempo).replace(".", ",")
 			var mult := ("%.1f" % cfg.sombra_golpe_mult).replace(".", ",")
 			super_txt = "Some por %s s, anda mais rápido e o primeiro golpe dá ×%s." % [tempo, mult]
-		else:
+		elif super_txt == "" and s.super_tipo == "maior":
 			super_txt = "%s em versão gigante: mais área, mais força e mais tempo." % s.power_name
 		linhas.append(["R", nome_super(s), super_txt, "barra dourada cheia"])
 	if s.attack_kind == "ranged":

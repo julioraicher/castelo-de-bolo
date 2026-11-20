@@ -674,7 +674,7 @@ func _gerar_inimigo_arena(heroi := false) -> void:
 	Fx.burst(self, pos + Vector3(0, 1.2, 0), Config.team_color(inimigo).lightened(0.3), 18, 6.0)
 	Sfx.play("renascer", pos, 0.04)
 	if hud:
-		hud.show_big("⚔ %s!" % cls.display_name, Config.team_color(inimigo).lightened(0.35), 1.4)
+		hud.show_big("DUELO: %s!" % cls.display_name, Config.team_color(inimigo).lightened(0.35), 1.4)
 
 
 ## Arena de chapéus: nível que cada classe veste na arena (base = 1,
@@ -1745,7 +1745,7 @@ func _dica_casa() -> String:
 				if of.pede_heroi():
 					var hs := " ou ".join(of.herois().map(func(c): return c.display_name))
 					if not construtor:
-						return "★ Nível 6: um Construtor escolhe o herói raro (%s)" % hs
+						return "Nível 6: um Construtor escolhe o herói raro (%s)" % hs
 					if aberta == of:
 						if aperta:
 							hud.fechar_escolha()
@@ -1758,7 +1758,7 @@ func _dica_casa() -> String:
 						else:
 							hud.abrir_escolha(of, _confirmar_heroi.bind(of), true)
 							return ""
-					return "[F] ★ escolher o herói raro do nível 6: %s  ·  %d madeiras" % [hs, Config.cfg.heroi_custo]
+					return "[F] escolher o herói raro do nível 6: %s  ·  %d madeiras" % [hs, Config.cfg.heroi_custo]
 				if not construtor:
 					return ""
 				if of.heroi >= 0 and not of.heroi_pronto:
@@ -1766,7 +1766,7 @@ func _dica_casa() -> String:
 				if of.pode_subir():
 					return "Nível %d de %s e %s: faltam %d madeiras  ·  fique no bairro" % [of.nivel + 1, of.base.display_name, of.opcao().display_name, of.faltam_nivel()]
 				if of.heroi_pronto:
-					return "%s, %s e ★ %s: bairro completo (Nv6)" % [of.base.display_name, of.opcao().display_name, of.heroi_cls().display_name]
+					return "%s, %s e o herói %s: bairro completo (Nv6)" % [of.base.display_name, of.opcao().display_name, of.heroi_cls().display_name]
 				return "%s e %s no nível máximo (%d)" % [of.base.display_name, of.opcao().display_name, of.nivel]
 	return ""
 
@@ -1870,13 +1870,13 @@ func dica_fim() -> String:
 		return ""
 	if game_over:
 		if Rede.anfitriao:
-			return "Revanche: Esc → Voltar à sala (todos)"
-		return "Esperando o anfitrião voltar para a sala (Esc → Sair da partida)"
+			return "Revanche: Esc > Voltar à sala (todos)"
+		return "Esperando o anfitrião voltar para a sala (Esc > Sair da partida)"
 	if caidos.is_empty():
 		return ""
 	var quem := ", ".join(caidos)
 	if Rede.anfitriao:
-		return "%s caiu: um bot joga no lugar  ·  para voltar a jogar junto: Esc → Voltar à sala (todos)" % quem
+		return "%s caiu: um bot joga no lugar  ·  para voltar a jogar junto: Esc > Voltar à sala (todos)" % quem
 	return "%s caiu: um bot joga no lugar" % quem
 
 
@@ -2489,7 +2489,7 @@ func on_heroi_escolhido(of: Oficina) -> void:
 	if hud == null or player == null or _montando_sandbox:
 		return
 	if of.team == player.team:
-		hud.show_big("★ Herói escolhido: %s!\nO pavilhão sobe com %d madeiras" % [h.display_name, Config.cfg.heroi_custo], Estilo.OURO_CLARO, 2.6)
+		hud.show_big("Herói escolhido: %s!\nO pavilhão sobe com %d madeiras" % [h.display_name, Config.cfg.heroi_custo], Estilo.OURO_CLARO, 2.6)
 	else:
 		hud.show_big("O inimigo chamou o herói %s" % h.display_name, Color(1, 0.6, 0.55), 1.8)
 
@@ -2500,7 +2500,7 @@ func on_heroi_pronto(of: Oficina) -> void:
 	if hud == null or player == null or _montando_sandbox:
 		return
 	if of.team == player.team:
-		hud.show_big("★ %s chegou ao pavilhão!\nUm chapéu só: quem pegar vira o herói" % h.display_name, Estilo.OURO_CLARO, 2.8)
+		hud.show_big("%s chegou ao pavilhão!\nUm chapéu só: quem pegar vira o herói" % h.display_name, Estilo.OURO_CLARO, 2.8)
 	else:
 		hud.show_big("O inimigo tem um herói: %s" % h.display_name, Color(1, 0.6, 0.55), 1.8)
 
@@ -2508,7 +2508,7 @@ func on_heroi_pronto(of: Oficina) -> void:
 ## Nv5 com madeira para o herói: o quintal acende (aviso uma vez por bairro).
 func on_heroi_disponivel(of: Oficina) -> void:
 	if hud and player and of.team == player.team and not _montando_sandbox:
-		hud.show_big("★ Herói raro disponível no bairro de %s\nUm Construtor sobe o nível 6" % of.base.display_name, Estilo.OURO_CLARO, 2.4)
+		hud.show_big("Herói raro disponível no bairro de %s\nUm Construtor sobe o nível 6" % of.base.display_name, Estilo.OURO_CLARO, 2.4)
 
 
 ## Alguém do time vestiu o herói (Game._rules, ao pegar o chapéu).
@@ -2516,7 +2516,7 @@ func on_heroi_vestido(u: Unit, cls: ClassStats) -> void:
 	_log("heroi vestido %s: %s (t=%.0fs)" % [Config.TEAM_NAMES[u.team], cls.display_name, _time])
 	if hud and player and u.team == player.team and not _montando_sandbox:
 		var quem := "Você é" if u == player else "%s entrou na briga:" % ("Um aliado")
-		hud.show_big("★ %s %s!" % [quem, cls.display_name], Estilo.OURO_CLARO, 2.0)
+		hud.show_big("%s %s!" % [quem, cls.display_name], Estilo.OURO_CLARO, 2.0)
 
 
 ## Bots esperam o jogador pegar o chapéu do herói nos primeiros s no altar.
@@ -2549,7 +2549,7 @@ func on_mago_nivel(of: Oficina) -> void:
 		if of.team == player.team:
 			var extra := "\nSuper (R) liberado  ·  próximo: escolher o caminho" if of.nivel == 2 else ""
 			if of.nivel == Config.cfg.mago_nivel_max and not of.herois().is_empty():
-				extra = "\n★ Próximo: o herói raro do nível 6"
+				extra = "\nPróximo: o herói raro do nível 6"
 			hud.show_big("%s: nível %d/%d!%s" % [nome, of.nivel, Config.cfg.mago_nivel_max + (1 if not of.herois().is_empty() else 0), extra], of.cor_nivel(), 2.2)
 		else:
 			hud.show_big("O inimigo subiu %s para o nível %d" % [nome, of.nivel], Color(1, 0.6, 0.55), 1.6)

@@ -48,3 +48,5 @@ power_duration = 14.0
 super_nome = "Enchente"
 heroi = true
 anim_attack = "1H_Melee_Attack_Slice_Diagonal"
+skill_desc = "Some numa poça e reaparece no pé do inimigo, derrubando."
+power_desc = "Jato d'água em linha: empurra todos de uma vez."

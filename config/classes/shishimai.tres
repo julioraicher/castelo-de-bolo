@@ -48,3 +48,6 @@ som_super = "shishimai_super"
 som_golpe_final = "shishimai_final"
 heroi = true
 anim_attack = "Unarmed_Melee_Attack_Punch_A"
+skill_desc = "Morde quem está na frente: aliado cura e ganha Sorte (próximo golpe dobrado); inimigo apanha e ganha Azar (o próximo golpe dele erra)."
+power_desc = "Avança levando o primeiro inimigo na boca (ele larga a máscara) e o prende no fim."
+super_desc = "Vira o leão gigante: dá Sorte aos aliados perto e levanta o aliado caído que alcançar."

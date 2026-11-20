@@ -50,3 +50,6 @@ som_super = "jorogumo_super"
 som_golpe_final = "jorogumo_final"
 heroi = true
 anim_attack = "Spellcast_Shoot"
+skill_desc = "Teia no chão: inimigo que pisa fica preso, e ela corre mais rápido em cima."
+power_desc = "Quem ela marcou com fio, teia ou rede vem para perto e fica preso."
+super_desc = "Os inimigos perto viram casulo: não andam nem atacam até um aliado deles quebrar a seda."

@@ -50,3 +50,6 @@ super_poder = "mergulho3"
 super_nome = "Noite de Corvos"
 heroi = true
 anim_attack = "Dualwield_Melee_Attack_Slice"
+skill_desc = "Sobe ao céu e cai em cima do atirador mais isolado."
+power_desc = "Corvos numa área: quem está dentro fica cego e erra."
+super_desc = "Três mergulhos seguidos, cada um no inimigo mais perto."

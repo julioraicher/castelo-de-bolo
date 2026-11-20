@@ -50,3 +50,6 @@ som_super = "ochimusha_super"
 som_golpe_final = "ochimusha_final"
 heroi = true
 anim_attack = "1H_Melee_Attack_Slice_Diagonal"
+skill_desc = "Arranca uma das flechas das costas e crava em quem está na frente: dano e lentidão. As flechas são as cargas do Q."
+power_desc = "Três fogos-fantasma giram em volta e estouram em quem encosta: dano e susto."
+super_desc = "Quatro samurais-fantasma avançam em linha e ferem quem estiver na faixa."

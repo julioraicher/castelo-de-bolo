@@ -870,7 +870,7 @@ func _on_recado(d: Dictionary) -> void:
 					_ice_chegou[de].append(cc)
 		"nao":
 			if _reconectando and str(d.get("k", "")) == "partida":
-				aviso.emit("O anfitrião ainda está na partida. Quando ele for em Esc → Voltar à sala (todos), você entra sozinho.", Color(1, 0.8, 0.45))
+				aviso.emit("O anfitrião ainda está na partida. Quando ele for em Esc > Voltar à sala (todos), você entra sozinho.", Color(1, 0.8, 0.45))
 				return  # continua mandando "oi" a cada 3 s
 			var m := str(d.get("m", "O anfitrião recusou.")).left(160)
 			sair()
@@ -1106,6 +1106,11 @@ func _toques() -> int:
 		b |= Comando.ESQUIVA
 	if Input.is_action_just_pressed("interact"):
 		b |= Comando.INTERAGE
+	# Clique curto (FPS baixo: entra e sai no mesmo quadro) também ataca (NU-02),
+	# menos quando o clique é da interface (painel da escolha, menu por cima).
+	if Input.is_action_just_pressed("attack") and not game.hud_bloqueia_mouse() \
+			and not (game.hud and game.hud.escolha_aberta()):
+		b |= Comando.ATAQUE
 	return b
 
 

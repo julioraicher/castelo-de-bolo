@@ -598,7 +598,7 @@ func abrir_escolha(of: Oficina, cb: Callable, heroi := false) -> void:
 				"E: %s" % cls.power_name if cls.power_name != "" else ""]
 		if heroi:
 			# Q, E e R em linhas separadas: "Q · E" numa linha só quebrava no meio do nome.
-			linhas = ["★ HERÓI RARO", cls.epiteto, cls.estilo_linha,
+			linhas = ["HERÓI RARO", cls.epiteto, cls.estilo_linha,
 					"Q: %s" % cls.skill_name, "E: %s" % cls.power_name,
 					"R: %s" % (cls.super_nome if cls.super_nome != "" else "Super " + cls.power_name)]
 		for j in linhas.size():

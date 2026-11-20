@@ -46,3 +46,5 @@ power_value = 22.0
 power_duration = 5.0
 carry_speed_mult = 0.8
 anim_attack = "Throw"
+skill_desc = "Tiro cheio que atravessa os inimigos em linha."
+power_desc = "Bombas caem numa área."

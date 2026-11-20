@@ -343,7 +343,7 @@ func _atualizar() -> void:
 	# o letreiro numa linha só invadia o da lado.
 	var txt := "%s%s\n%d/%d" % [stats.display_name, " Nv%d" % nivel if nivel >= 2 else "", estoque, estoque_max]
 	if raro:
-		txt = "★ %s  Nv%d\n%s" % [stats.display_name, nivel, "Herói raro" if available else ("volta em %ds" % ceili(retorno) if retorno >= 0.0 else "em campo")]
+		txt = "%s  Nv%d\n%s" % [stats.display_name, nivel, "Herói raro" if available else ("volta em %ds" % ceili(retorno) if retorno >= 0.0 else "em campo")]
 	elif estoque < estoque_max:
 		txt += "  · %ds" % ceili(intervalo - _fab_t)
 	if _label.text != txt:

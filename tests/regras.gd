@@ -20,6 +20,7 @@ func _ready() -> void:
 	# Espera a partida montar e os bonecos nascerem.
 	await get_tree().create_timer(0.5).timeout
 	_dados()
+	_glifos()
 	_mascara_pesada()  # antes de qualquer teste mexer no peso
 	_dano()
 	_contra_golpe()
@@ -965,6 +966,39 @@ func _dados() -> void:
 	_esquema_classes()
 
 
+## UI-04 (caça 2026-11-19): ★ ✔ ● → ⚔ não existem na Nunito nem na Lilita. No
+## .exe o Windows empresta outra fonte; no navegador viram um quadrado. Varre os
+## textos entre aspas de scripts/ (comentários não contam). A Lilita cai na Nunito
+## para o que não tem, então a Nunito precisa ter tudo.
+func _glifos() -> void:
+	var nunito: FontFile = load("res://assets/fonts/Nunito-Black.ttf")
+	var aspas := RegEx.new()
+	aspas.compile("\"((?:[^\"\\\\]|\\\\.)*)\"")
+	var faltam := {}
+	var pastas := ["res://scripts"]
+	while not pastas.is_empty():
+		var d: String = pastas.pop_back()
+		for sub in DirAccess.get_directories_at(d):
+			pastas.append(d.path_join(sub))
+		for arq in DirAccess.get_files_at(d):
+			if not arq.ends_with(".gd"):
+				continue
+			var n := 0
+			for linha in FileAccess.get_file_as_string(d.path_join(arq)).split("\n"):
+				n += 1
+				if linha.strip_edges().begins_with("#"):
+					continue
+				for m in aspas.search_all(linha):
+					var txt := m.get_string(1)
+					for i in txt.length():
+						var c := txt.unicode_at(i)
+						if c > 127 and not nunito.has_char(c) and not faltam.has(c):
+							faltam[c] = "%s:%d" % [arq, n]
+	for c in faltam:
+		_check(false, "glifo %s (U+%04X) não existe na fonte do jogo (%s): vira quadrado na Web" % [char(c), c, faltam[c]])
+	_check(true, "glifos dos textos")
+
+
 ## NU-03 (caça 2026-11-19): valor de texto fora da lista do @export_enum some no
 ## Inspector e um "salvar" pelo editor troca pelo 1º item (o Predero perdia a poça).
 ## Varre TODOS os .tres de classes (pátio, caminhos e heróis).
@@ -987,6 +1021,13 @@ func _esquema_classes() -> void:
 		for campo in listas:
 			var v := String(c.get(campo))
 			_check((listas[campo] as PackedStringArray).has(v), "classe %s: %s = \"%s\" fora da lista do esquema" % [arq, campo, v])
+		# UI-03: a ficha do menu Classes lê o texto do .tres (seis heróis saíam em branco).
+		if c.skill != "nenhum":
+			_check(c.skill_desc != "", "classe %s: Q sem skill_desc (ficha em branco)" % arq)
+		if c.power != "nenhum":
+			_check(c.power_desc != "", "classe %s: E sem power_desc (ficha em branco)" % arq)
+		if c.super_tipo == "proprio":
+			_check(c.super_desc != "", "classe %s: R próprio sem super_desc (ficha em branco)" % arq)
 	_check(n >= 27, "esquema: só %d classes lidas em config/classes" % n)
 
 

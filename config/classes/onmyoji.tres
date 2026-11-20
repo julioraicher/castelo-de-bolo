@@ -50,3 +50,6 @@ super_nome = "Mil Grous"
 heal_amount = 22.0
 heroi = true
 anim_attack = "Spellcast_Shoot"
+skill_desc = "Dobra um shikigami (até 3) que engole golpes; cheio, solta talismãs que caçam o alvo."
+power_desc = "Grou de papel que atravessa: fere inimigos e cura aliados no caminho."
+super_desc = "Revoada de grous em leque: atravessa tudo, fere e cura."

@@ -52,7 +52,7 @@ func _ready() -> void:
 	])
 	_aba("Herói raro", "heroi", [
 		["losango", Estilo.OURO_CLARO, "Nível 6: o herói do bairro",
-			"Com o bairro no nível 5, o Construtor aperta F e escolhe um herói raro da classe (Samurai: Sumotori, Kappa, Ochimusha ou Shishimai; Shuriken: Yamabushi, Karasu Tengu, Mujina, Jorogumo ou Kaminari-kozō; Kitsune: Onmyoji, Tennin, Komusō ou Kodama do Shinboku). O Construtor não tem herói."],
+			"Com o bairro no nível 5, o Construtor aperta F e escolhe um herói raro da classe (%s)." % lista_herois(cfg)],
 		["martelo", Estilo.OURO, "Pavilhão dourado (%d madeiras)" % cfg.heroi_custo,
 			"Sobe no tapete do caminho, ao lado da casa. Com madeira no depósito, o tapete brilha e a estrela pisca no minimapa. Pronto, dá +1 nível de bônus para o bairro."],
 		["katana", Estilo.OURO_CLARO, "Um chapéu só",
@@ -90,6 +90,22 @@ func _ready() -> void:
 
 
 ## Abre numa aba pelo nome (ex.: "Madeira").
+## "Samurai: Sumotori, Kappa ou ...; Ninja de Shuriken: ..." lido dos .tres
+## (caça 2026-11-19, UI-02: a frase fixa esqueceu o Predero do Construtor).
+## Nome do herói sem o complemento ("Kappa do Rio" vira "Kappa") para caber.
+static func lista_herois(cfg) -> String:
+	var partes: PackedStringArray = []
+	for base in cfg.hat_class_list:
+		if base == null or base.herois.is_empty():
+			continue
+		var nomes: PackedStringArray = []
+		for h in base.herois:
+			nomes.append(String(h.display_name).split(" do ")[0].split(" de ")[0])
+		var txt := ", ".join(nomes.slice(0, -1)) + " ou " + nomes[-1] if nomes.size() > 1 else nomes[0]
+		partes.append("%s: %s" % [base.display_name, txt])
+	return "; ".join(partes)
+
+
 func abrir(aba: String) -> void:
 	for i in _tabs.get_tab_count():
 		if _tabs.get_tab_title(i) == aba:

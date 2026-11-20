@@ -42,3 +42,5 @@ power_duration = 4.0
 som_poder = "mutirao"
 som_super = "super_maior"
 carry_speed_mult = 0.85
+skill_desc = "Estrepes no chão: dano e lentidão em quem pisa."
+power_desc = "Adianta a obra perto de você."

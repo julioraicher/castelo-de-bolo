@@ -15,8 +15,8 @@ extends Node3D
 ##              nasce no Nv3 e a barraquinha vai junto.
 ##   Nv3 → Nv5: uma subida (mago_nivel_custo) leva barraquinha e casa juntas.
 ##   Nv5 → Nv6 (Ciclo 2.23): segunda escolha, um HERÓI RARO entre os
-##              ClassStats.herois da classe base (2 ou mais; o Construtor não
-##              tem). O Pavilhão do Herói sobe no tapete do caminho escolhido
+##              ClassStats.herois da classe base (o Construtor tem só o Predero,
+##              2.30). O Pavilhão do Herói sobe no tapete do caminho escolhido
 ##              (heroi_custo madeiras) e é a terceira casinha de chapéu: 1
 ##              chapéu só, sem fabricar; volta heroi_retorno s depois que o
 ##              herói sai de campo (renasce como aldeão ou troca de chapéu).
@@ -969,7 +969,7 @@ func _update_label() -> void:
 			txt = "Obra: %s  %d%%" % [opcao().display_name, int(progresso * 100.0)]
 		Estado.PRONTA:
 			if pede_heroi():
-				txt = "★ Herói raro  Nv6\n%s" % "  ou  ".join(herois().map(func(c): return c.display_name))
+				txt = "Herói raro  Nv6\n%s" % "  ou  ".join(herois().map(func(c): return c.display_name))
 			elif heroi >= 0 and not heroi_pronto:
 				txt = "Pavilhão: %s  %d%%" % [heroi_cls().display_name, int(100.0 * madeira_nivel / maxf(custo_nivel(), 1.0))]
 	if txt != _texto:

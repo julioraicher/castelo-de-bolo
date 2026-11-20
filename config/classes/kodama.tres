@@ -52,3 +52,6 @@ som_super = "kodama_super"
 som_golpe_final = "kodama_final"
 heroi = true
 anim_attack = "Spellcast_Shoot"
+skill_desc = "Raízes rompem o chão em linha: ferem e prendem quem está no caminho."
+power_desc = "Três árvores nascem onde você mira: o tronco bloqueia passagem e tiro, e a sombra cura os aliados."
+super_desc = "Anel de árvores gigantes em volta: as raízes prendem e ferem os inimigos dentro, e os aliados se curam."

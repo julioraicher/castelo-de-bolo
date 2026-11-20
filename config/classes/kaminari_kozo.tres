@@ -53,3 +53,6 @@ som_super = "kaminari_kozo_super"
 som_golpe_final = "kaminari_kozo_final"
 heroi = true
 anim_attack = "Throw"
+skill_desc = "Crava uma baqueta de cobre que dá choque em volta e chama a descarga e os raios para ela."
+power_desc = "Vira raio e salta em linha até antes da parede, ferindo quem estiver no caminho."
+super_desc = "Tempestade: raios caem do céu no inimigo mais perto de você ou de um para-raios seu."

@@ -44,3 +44,5 @@ power_radius = 4.0
 power_value = 14.0
 power_duration = 3.0
 anim_attack = "2H_Ranged_Shoot"
+skill_desc = "Tiro cheio que atravessa os inimigos em linha."
+power_desc = "Flechas caem numa área à frente."

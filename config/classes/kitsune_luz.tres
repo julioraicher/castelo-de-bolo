@@ -47,3 +47,5 @@ heal_amount = 19.5
 heal_radius = 7.0
 heal_cooldown = 3.0
 anim_attack = "Spellcast_Shoot"
+skill_desc = "Cura quem estiver em volta."
+power_desc = "Cura e escudo nos aliados perto."

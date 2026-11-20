@@ -47,3 +47,5 @@ super_tipo = "sombra"
 super_nome = "Passo sem Rosto"
 heroi = true
 anim_attack = "1H_Melee_Attack_Stab"
+skill_desc = "Toca num inimigo e vira ele: os outros não te veem como inimigo até o 1º golpe."
+power_desc = "Mostra o rosto vazio: quem está perto foge correndo."
