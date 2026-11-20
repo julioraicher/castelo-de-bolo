@@ -1,12 +1,15 @@
-# Todo push (qualquer branch) roda os testes de regra (tests/regras.gd: dano,
-# carregador, esquiva, escudo, cura, empurrão, conteúdo do game_config) e o
-# teste de fumaça (5 min de partida simulada sem janela); qualquer falha reprova.
-# Na main, só depois dele passar, exporta o jogo:
+# Todo push (qualquer branch) roda as checagens em 3 grupos paralelos
+# (tools/checar.sh: o mesmo script do agente testador; qualquer SCRIPT ERROR
+# reprova, mesmo com código de saída 0). Na main, só depois de passarem, exporta:
 #  - versão Web publicada no GitHub Pages (link para jogar no navegador)
 #  - .exe (Windows) e Linux anexados à release "ultima-versao"
 #  - itch.io (página oculta de teste): web, Windows e Linux via butler.
 #    Só roda se existir o segredo BUTLER_API_KEY e a variável ITCH_ALVO
 #    (ex.: "julioraicher/castelo-de-bolo"). Pages só roda com repo público.
+#
+# Segurança (caça 2026-11-19, CI-01/02/03/08): permissão mínima por job, Godot e
+# templates conferidos pelo SHA-512 oficial, Actions fixadas por SHA (o comentário
+# diz a versão), checkout sem guardar o token, release atualizada sem apagar.
 name: Build e publicação
 
 on:
@@ -14,135 +17,67 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
 
 concurrency:
   group: build-${{ github.ref }}
-  cancel-in-progress: true
+  # Na main não corta: um push logo depois cancelava entre apagar e recriar a release.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   GODOT_VERSION: "4.7.2"
+  # SHA512-SUMS.txt oficial da 4.7.2-stable (conferido em 2026-11-19).
+  GODOT_SHA512: 9aa00f7a605200940bce3027a567b782f49bd8e940dd06ae9e987bd65aee1b1467edd56ed84fcdcbdd44354bf613bdbb4e5d2913e925850368e150c59ed54c65
+  TEMPLATES_SHA512: ca4d71c4d7b81dfc15d1a98baa07534aa95b03fdda78a0075b06672e1648d2e5f40980c9adc28d23e1b92e732ee7bf3461997aa804af74ec2fcd7a93ccb84079
 
 jobs:
-  fumaca:
+  testes:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        # regras: testes de regra (semente fixa), auditoria da interface, varreduras de Q/E/R.
+        # partida: 5 min simulados, sincronia 60 x 23 FPS, QA do mapa (só avisa).
+        # rede: rede local, conexão por código, queda e dessincronia (+ internet na main, só avisa).
+        grupo: [regras, partida, rede]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
 
-      - name: Baixar Godot
-        run: |
-          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
-          unzip -q "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
-          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
+      - name: Godot (conferido) e import
+        run: bash tools/ci_preparar_godot.sh
 
-      - name: Baixar extensão WebRTC (oficial do Godot, versão e SHA-256 fixos)
-        run: bash tools/baixar_webrtc.sh
-
-      - name: Importar assets
-        run: ./godot --headless --import --path . || true
-
-      - name: Testes de regra
-        run: timeout 5m ./godot --headless --path . --fixed-fps 60 -- --autoplay --testes
-
-      # Interface (Ciclo 2.33): texto que vaza da moldura, sai da tela ou
-      # painel do HUD por cima do minimapa, em 7 resoluções.
-      - name: Auditoria da interface
-        run: timeout 15m ./godot --headless --path . -s tools/auditoria_ui.gd -- --sandbox --sem-prints
-
-      # Q, E e R das 26 classes (caça aos bugs 2026-11-15): com inimigo
-      # alinhado e com aliado ferido, caído e distante (cura, escudo,
-      # reanimar, puxão, fogo amigo, dono preso).
-      - name: Varredura de poderes (inimigo)
-        run: timeout 15m ./godot --headless --path . --fixed-fps 60 -- --autoplay --varredura-poderes
-
-      - name: Varredura de poderes (aliados)
-        run: timeout 15m ./godot --headless --path . --fixed-fps 60 -- --autoplay --varredura-aliados
-
-      - name: Partida simulada de 5 min (bots jogam por todos)
-        run: |
-          set -o pipefail
-          timeout 20m ./godot --headless --path . --fixed-fps 60 --quit-after 18000 -- --autoplay --poderes 2>&1 | tee fumaca.log
-          # Vazamento ao fechar ("still in use at exit") é do motor, não do jogo.
-          if grep -E "SCRIPT ERROR|ERROR:" fumaca.log | grep -v "at exit"; then
-            echo "::error::A partida simulada teve erro (veja acima)."
-            exit 1
-          fi
-
-      # Multiplayer (Ciclo 2.28): as regras precisam dar o mesmo resultado em
-      # qualquer FPS (lockstep), e dois processos ligados pela rede também.
-      - name: Sincronia (mesma semente, 60 x 23 quadros/s)
-        run: timeout 15m bash tools/teste_sincronia.sh 90 7 ./godot
-
-      # Humanos de Yumi: tiro de humano acertando gente (Ciclo 2.28d: o tiro
-      # separava a partida em duas e o teste só com recruta não via).
-      - name: Rede de verdade (anfitrião + amigo em 127.0.0.1, humanos de Yumi)
-        run: timeout 15m bash tools/teste_rede.sh 5000 ./godot --classe=arqueiro_yumi
-
-      - name: Conexão automática por código (WebRTC, recados por pasta)
-        run: timeout 15m bash tools/teste_rtc.sh 5000 ./godot
-
-      # Ciclo 2.28d: o amigo cai e volta sozinho; a partida se separa e todos
-      # voltam para a sala com aviso. A partida seguinte tem de bater.
-      - name: Queda e dessincronia (voltar para a sala)
-        run: |
-          timeout 15m bash tools/teste_queda.sh queda 9000 ./godot
-          timeout 15m bash tools/teste_queda.sh dessinc 9000 ./godot
-
-      # Pela internet de verdade (ntfy.sh + STUN): só avisa, porque depende de
-      # serviço de fora; se falhar, a conexão automática pode estar quebrada.
-      - name: Conexão automática pela internet (aviso)
-        continue-on-error: true
-        run: timeout 15m bash tools/teste_rtc.sh 5000 ./godot internet
-
-      # QA do mapa (tests/qa_mapa.gd): passagem, objetos escondidos atrás de
-      # estrutura e bots presos. Por enquanto só avisa, não reprova o build.
-      - name: QA automático do mapa (aviso)
-        continue-on-error: true
-        run: |
-          timeout 10m ./godot --headless --path . --fixed-fps 60 -- --qa-mapa=qa > /dev/null 2>&1 || true
-          if [ -f qa/qa_mapa.txt ]; then
-            cat qa/qa_mapa.txt
-            { echo '### QA do mapa'; echo '```'; cat qa/qa_mapa.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-            if [ "$(wc -l < qa/qa_mapa.txt)" -gt 1 ]; then
-              echo "::warning::QA do mapa achou problemas: $(sed -n 2p qa/qa_mapa.txt)"
-            fi
-          else
-            echo "::warning::QA do mapa não gerou o relatório."
-          fi
+      - name: Checagens (${{ matrix.grupo }})
+        env:
+          GODOT: ./godot
+          CHECAR_LOGS: logs
+          CHECAR_INTERNET: ${{ github.ref == 'refs/heads/main' && '1' || '0' }}
+        run: bash tools/checar.sh ${{ matrix.grupo }}
 
   export:
-    needs: fumaca
+    needs: testes
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write  # release "ultima-versao"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
 
-      - name: Baixar Godot e templates de exportação
-        run: |
-          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
-          wget -q "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
-          wget -q "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
-          unzip -q "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
-          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
-          tdir="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
-          mkdir -p "$tdir"
-          unzip -q "Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
-          mv templates/* "$tdir/"
-
-      - name: Baixar extensão WebRTC (oficial do Godot, versão e SHA-256 fixos)
-        run: bash tools/baixar_webrtc.sh
-
-      - name: Importar assets
-        run: ./godot --headless --import --path . || true
+      - name: Godot e templates (conferidos) e import
+        run: bash tools/ci_preparar_godot.sh templates
 
       - name: Exportar Web, Windows e Linux
         run: |
           # Versão do multiplayer = commit: só entra na sala quem tem o mesmo jogo.
-          sed -i "s/const VERSAO := \"dev\"/const VERSAO := \"${GITHUB_SHA::7}\"/" scripts/rede/rede.gd
-          grep -n "const VERSAO" scripts/rede/rede.gd
+          # Confere a troca (CI-04): se a linha mudar de forma, todo build sairia "dev".
+          v="${GITHUB_SHA::7}"
+          sed -i "s/^const VERSAO := \"dev\"/const VERSAO := \"$v\"/" scripts/rede/rede.gd
+          grep -q "^const VERSAO := \"$v\"" scripts/rede/rede.gd || { echo "::error::VERSAO não foi trocada em rede.gd"; exit 1; }
           mkdir -p build/web build/windows build/linux
           ./godot --headless --path . --export-release "Web" build/web/index.html
           ./godot --headless --path . --export-release "Windows" build/windows/CasteloDeBolo.exe
@@ -152,31 +87,45 @@ jobs:
           (cd build/windows && zip -q -r ../CasteloDeBolo-windows.zip .)
           (cd build/linux && zip -q -r ../CasteloDeBolo-linux.zip .)
 
+      # Sem apagar a release (CI-03): antes era "delete + create", e um cancelamento
+      # no meio deixava o link do README sem arquivo. Agora sobe por cima e move a tag.
       - name: Publicar downloads na release "ultima-versao"
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete ultima-versao --yes --cleanup-tag || true
-          gh release create ultima-versao build/CasteloDeBolo-windows.zip build/CasteloDeBolo-linux.zip \
-            --title "Última versão" --notes "Gerada automaticamente a partir de ${GITHUB_SHA::7}." --prerelease
+          gh release view ultima-versao > /dev/null 2>&1 || \
+            gh release create ultima-versao --title "Última versão" --prerelease --notes "-" --target "$GITHUB_SHA"
+          gh release upload ultima-versao build/CasteloDeBolo-windows.zip build/CasteloDeBolo-linux.zip --clobber
+          gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/ultima-versao" -f sha="$GITHUB_SHA" -F force=true > /dev/null
+          gh release edit ultima-versao --prerelease --notes "Gerada automaticamente a partir de ${GITHUB_SHA::7}."
 
+      # Butler: versão por variável BUTLER_VERSAO (padrão LATEST) e, se existir,
+      # BUTLER_SHA256 confere o arquivo. Ao ligar o itch.io, fixe os dois.
       - name: Publicar no itch.io (butler)
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
           ITCH_ALVO: ${{ vars.ITCH_ALVO }}
+          BUTLER_VERSAO: ${{ vars.BUTLER_VERSAO }}
+          BUTLER_SHA256: ${{ vars.BUTLER_SHA256 }}
         run: |
           if [ -z "$BUTLER_API_KEY" ] || [ -z "$ITCH_ALVO" ]; then
             echo "::notice::itch.io ainda não configurado (falta BUTLER_API_KEY ou ITCH_ALVO)."
             exit 0
           fi
-          curl -sSL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          curl -sSfL -o butler.zip "https://broth.itch.zone/butler/linux-amd64/${BUTLER_VERSAO:-LATEST}/archive/default"
+          echo "butler.zip sha256: $(sha256sum butler.zip | cut -d' ' -f1)"
+          if [ -n "$BUTLER_SHA256" ]; then
+            echo "$BUTLER_SHA256  butler.zip" | sha256sum -c -
+          else
+            echo "::warning::BUTLER_SHA256 vazio: butler sem conferência (fixe BUTLER_VERSAO e BUTLER_SHA256 nas variáveis do repo)."
+          fi
           unzip -q butler.zip -d butler && chmod +x butler/butler
           v="${GITHUB_SHA::7}"
           ./butler/butler push build/web "$ITCH_ALVO:web" --userversion "$v"
           ./butler/butler push build/windows "$ITCH_ALVO:windows" --userversion "$v"
           ./butler/butler push build/linux "$ITCH_ALVO:linux" --userversion "$v"
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa  # v3
         if: ${{ !github.event.repository.private }}
         with:
           path: build/web
@@ -185,9 +134,13 @@ jobs:
     needs: export
     if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e  # v4

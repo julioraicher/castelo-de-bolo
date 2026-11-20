@@ -1193,9 +1193,13 @@ func _gerar_temas() -> void:
 		},
 	}
 	for nome in temas:
-		var t: Resource = TC.new()
+		# Caça 2026-11-19 (TL-01): carrega o tema que já existe e só troca as chaves
+		# daqui. Com TC.new() os campos que OUTROS geradores ligam (economia:
+		# arvore_estagios, bambu_estagios, maquina/pilha/tora_model) sumiam.
+		var caminho := "res://config/temas/%s.tres" % nome
+		var t: Resource = load(caminho) if ResourceLoader.exists(caminho) else TC.new()
 		for k in base:
 			t.set(k, base[k])
 		for k in temas[nome]:
 			t.set(k, temas[nome][k])
-		ResourceSaver.save(t, "res://config/temas/%s.tres" % nome)
+		ResourceSaver.save(t, caminho)

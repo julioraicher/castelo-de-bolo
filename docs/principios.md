@@ -5,8 +5,8 @@ O que **não muda** sem o Julio dizer. Qualquer agente lê isto antes de mexer
 aqui e anote no CHANGELOG.
 
 1. **A `main` é a versão de teste e está sempre jogável.** Coisa nova vai num
-   branch; entra na main com o "aprovado" do Julio ou estável (testes de regra
-   + 5 min simulados sem erro, os dois no CI).
+   branch; entra na main com o "aprovado" do Julio ou estável (`tools/checar.sh`
+   verde: regras, partida de 5 min, sincronia e rede; é o mesmo script do CI).
 2. **Toda entrega na main tem "O que testar"** na entrada do CHANGELOG.
 3. **Conteúdo é dado.** Classes, temas e mapas são `.tres`; código só monta o
    que os dados descrevem. Campo novo = campo no esquema com padrão que não

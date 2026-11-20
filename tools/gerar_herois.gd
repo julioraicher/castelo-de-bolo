@@ -242,7 +242,11 @@ func _init() -> void:
 	var feitos := {}
 	for id in HEROIS:
 		var d: Dictionary = HEROIS[id]
-		var c: Resource = esquema.new()
+		var caminho := "res://config/classes/%s.tres" % id
+		# Caça 2026-11-19 (TL-03): carrega o herói que já existe e só troca o que
+		# está aqui. Com esquema.new() sumiam os campos postos depois por outras
+		# rodadas (personalidade no 2.34, textos da ficha skill/power/super_desc).
+		var c: Resource = load(caminho) if ResourceLoader.exists(caminho) else esquema.new()
 		c.id = StringName(id)
 		c.model = load("res://assets/characters/%s.glb" % d.modelo)
 		c.visible_meshes = PackedStringArray(MALHAS[d.modelo])
@@ -263,7 +267,6 @@ func _init() -> void:
 		for base in BAIRROS:
 			if id in BAIRROS[base]:
 				c.classe_base = StringName(base)
-		var caminho := "res://config/classes/%s.tres" % id
 		c.resource_path = caminho
 		var err := ResourceSaver.save(c, caminho)
 		print("%s -> %s" % [caminho, "ok" if err == OK else str(err)])

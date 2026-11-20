@@ -49,8 +49,8 @@ horizontal = horizontal.move_toward(target, ACCEL * delta)
 
 `move_toward` limita a variação do vetor velocidade a `ACCEL·Δt` por passo:
 é aceleração de módulo constante `a = 70 m/s²` até atingir o alvo. Para um
-guerreiro (`move_speed = 6.2`), o tempo para sair do repouso até a
-velocidade máxima é `t = v/a ≈ 0,089 s`, ou seja, ~5 quadros. Por isso o
+Samurai (`move_speed = 6.8`), o tempo para sair do repouso até a
+velocidade máxima é `t = v/a ≈ 0,097 s`, ou seja, ~6 quadros. Por isso o
 controle parece "liso" mas responsivo.
 
 **Experimento 1.1** [ ]: troque `ACCEL` para `8.0`. Previsão antes de rodar:
@@ -71,24 +71,26 @@ dois lugares. O que acontece com grupos de bots? Por que formam "cristais"?
 A velocidade de quem carrega (`Unit.current_speed`):
 
 ```
-v = v₀ · m_carry · (1 − f · k)
+v = v₀ · min(m_carry + b, 1) · (1 − f · k)
 ```
 
 `v₀` = `move_speed` da classe, `m_carry` = `carry_speed_mult`,
-`f ∈ [0, 1]` = gordura (cada bolo soma `fat_per_cake = 0,1`),
-`k` = `fat_slowdown = 0,45` (em `config/game_config.tres`).
+`b` = `carregar_bonus = 0,10`, `f ∈ [0, 1]` = peso da máscara (cada espírito
+soma `fat_per_cake = 0,1`), `k` = `fat_slowdown = 0,38` (padrões em
+`scripts/data/game_config.gd`; o `config/game_config.tres` pode sobrescrever).
+Números de 2026-11-20: confira nos arquivos antes de fazer as contas.
 
-Os pedestais ficam em `x = ±49` (`Arena.to_world(team, -1, 0)` com
-`CASTLE_DISTANCE = 48`), então a distância em linha reta é `L ≈ 98 m`.
-Tempo de carregar, guerreiro (`v₀ = 6,2`, `m = 0,7`):
+Os castelos ficam a `castle_distance = 60 m` do centro
+(`config/mapas/rio_lanternas.tres`), então de pedestal a pedestal são
+`L ≈ 120 m` em linha reta. Tempo de carregar, Samurai (`v₀ = 6,8`, `m = 0,7`):
 
 | f | v (m/s) | t = L/v |
 |---|---|---|
-| 0 | 4,34 | 22,6 s |
-| 0,5 | 3,36 | 29,2 s |
-| 1 | 2,39 | 41,0 s |
+| 0 | 5,44 | 22,1 s |
+| 0,5 | 4,41 | 27,2 s |
+| 1 | 3,37 | 35,6 s |
 
-**Exercício 2.1** [ ]: o aldeão tem `carry_speed_mult = 0,95` e `v₀ = 7`.
+**Exercício 2.1** [ ]: o Recruta tem `carry_speed_mult = 0,95` e `v₀ = 7`.
 Quem é o melhor carregador? Isso é bug ou design? (No jogo original, a
 classe "trabalhadora" é justamente a que carrega bem.)
 

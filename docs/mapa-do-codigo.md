@@ -1,0 +1,115 @@
+# Mapa do código por sistema
+
+Onde mora cada sistema que entrou ciclo a ciclo. O CLAUDE.md tem só a
+arquitetura geral; leia daqui a seção do sistema em que vai mexer.
+
+## Personagem novo (classe ou herói): checklist
+
+"Copiar um .tres" é só o começo. Uma classe ou herói novo também passa por:
+
+1. `config/classes/<id>.tres` (copiar um parecido): números, `skill`/`power`/`super_tipo`
+   e os textos `skill_desc`, `power_desc`, `super_desc` (o teste de esquema reprova
+   descrição vazia ou valor fora da lista), `personalidade` (um dos 8 jeitos).
+   Classe do pátio: id em `hat_class_list` (`config/game_config.tres`). Herói: em
+   `HEROIS` de `tools/gerar_herois.gd` e em `herois` no .tres da base.
+2. Corpo: função `_<id>(time)` em `scripts/actors/ninja_visual.gd` (`_montar` chama
+   pelo nome) e prancha `tools/prancha_personagens.gd` (princípio 13: pitaco antes).
+3. Poder novo (valor novo de `skill`/`power`): enum em `scripts/data/class_stats.gd`,
+   regra em `unit.gd`/`herois*.gd`, efeito pelo kit `Magia`, bot em `scripts/ai/`.
+4. Assinatura: desenho em `tools/assinaturas/desenhos.js` + linha em `DADOS` de
+   `scripts/fx/assinatura.gd` (nunca reutilizar o selo de outro).
+5. Sons: nomes novos em `SOUNDS` de `scripts/autoload/sfx.gd`.
+6. Casa/pavilhão: `BASES` de `tools/gerar_casas.gd` (classe base) ou
+   `tools/gerar_pavilhao.gd` (herói); depois `tools/gerar_tudo.sh`.
+7. Menus: clipe em `CLASSES` de `tools/clipes_tutorial.sh` e regravar.
+8. Testes: `POR_DESENHO` (`tests/varredura_poderes.gd`) se o poder não fere de
+   propósito; `ESPERADO` (`tests/varredura_aliados.gd`) se cura/protege; `_check`
+   em `tests/regras.gd` para a regra que importa. Rodar `tools/checar.sh tudo`.
+9. Sandbox: o personagem precisa aparecer no modo teste na mesma entrega.
+
+## Cenário
+
+`tools/gerar_cenario_ninja.gd` (+ `gerar_mapa_rio.gd`) gera temas e peças com o
+material `pintura.gdshader`: COLOR.a = oclusão, UV.x = vento, UV.y = desenho
+(0 liso, 1 tábuas, 2 telhas, 3 pedras, 4 reboco). Depois de mudar, rode
+`tools/gerar_tudo.sh` (a ordem dos geradores importa; ver docs/comandos.md).
+
+## Casas de chapéu (Ciclo 2.21, escada 2.22)
+
+`Oficina` = bairro da classe base (barraquinha + 2 tapetes com fantasma + casa do
+caminho). Nv1→2 só a barraquinha; Nv2→3 escolha (jogador: painel
+`Hud.abrir_escolha` com [F]; bots: tapete), a casa nasce no Nv3; Nv3→5 as duas
+sobem juntas. Super da classe travado no Nv1. Modelos em `tools/gerar_casas.gd`
+(estende `gerar_economia.gd`; peças N3_/N4_/N5_ por nível, dona de
+`maquina_<classe>`), prancha em `tools/prancha_casas.gd`. Caminhos = `caminhos`
+no .tres da base.
+
+## Heróis raros (Ciclo 2.23 em diante)
+
+Nv5→6 = segunda escolha, um herói de `herois` no .tres da base. Pavilhão dourado
+no tapete do caminho, 1 chapéu só, volta `heroi_retorno` s depois que o herói sai
+de campo. Regras em `scripts/actors/herois.gd` (ganchos de Unit; lista dos
+supers próprios em `Herois.super_proprio`), voo em `voo_heroi.gd`, bots em
+`scripts/ai/bot_herois.gd`, efeitos em `fx_herois.gd`. Gerar: `tools/gerar_herois.gd`
+(.tres), `tools/gerar_pavilhao.gd` (pavilhão, adornos, emblemas); prancha
+`tools/prancha_herois.gd`; sonda `HEROIS=1 tools/sonda_equilibrio.sh`.
+
+- Relógio de 20 min (2.31): último minuto com máscaras leves, prorrogação
+  enquanto a máscara fora ainda empata ou vira (`tempo_limite`, `ultimo_minuto_leve`).
+- Ochimusha, Shishimai, Jorogumo (2.27): estados em `Herois._tick_2_27`/`_apanhar_2_27`;
+  reações entre elementos em `scripts/actors/reacoes.gd` (quem solta fogo/vento
+  chama `Reacoes.em` no impacto); teia no chão = `scripts/items/teia.gd`. Painel do
+  pavilhão aceita até 5 heróis.
+- Kodama, Kaminari-kozō (2.27b): regras em `scripts/actors/herois_natureza.gd`
+  (carga, descarga em cadeia, molhado conduz), árvore = `scripts/items/arvore_kodama.gd`
+  (StaticBody no LAYER_WORLD: bloqueia passagem e tiro), baqueta = `para_raios.gd`,
+  efeitos em `scripts/fx/fx_natureza.gd` (malhas no material pintado do tema).
+- Predero (2.30, único herói do Construtor): regras em `scripts/actors/herois_obra.gd`
+  (encachaçado, derrapa = ACCEL × poca_atrito), poça = `items/poca_cachaca.gd`
+  (fogo de qualquer time acende via `Reacoes`), andaime = `items/andaime.gd`
+  (LAYER_WORLD), projétil "garrafa" em `projectile.gd`, efeitos em `fx/fx_obra.gd`.
+
+## Efeitos
+
+- Poderes: kit `Magia` (`scripts/fx/magia.gd`, shader `magia_energia`): energia com
+  ruído que se rasga (`corroi`) + filete de tinta; nunca primitiva de cor chapada.
+  Raio/faísca = `Magia.raio` (uma malha só; `Fx.zap` e `FxNatureza.raio` usam).
+  Rastro = `Fita` (comprimento em tempo, não em quadros). Receita e orçamento em
+  docs/direcao-efeitos.md §8; conferir com `tools/bancada_magia.gd` e
+  `tools/vitrine.sh SAIDA [classes]`.
+- Texto flutuante: `Fx.damage_number` só para números de dano/cura (respeita a
+  opção "números de dano"); aviso de regra ("CONTRA!", "ESQUIVA!") = `Fx.letreiro`,
+  sempre visível.
+- Peças pequenas do chão (Ciclo 2.32): espírito (`Cake`), itens (`Pickup`) e
+  armadilhas (`Trap`) desenham pelo kit `FxItens` (`scripts/fx/fx_itens.gd`):
+  objeto = ArrayMesh com cor por vértice no material pintado, energia = shader
+  Magia, anel do chão = `FxItens.anel_chao`. Prancha `tools/prancha_itens.gd`;
+  no modo teste há um mostruário com os 5 itens e um espírito.
+- Assinatura por personagem (Ciclo 2.24): kit `Assinatura` (`scripts/fx/assinatura.gd`).
+  Selo com silhueta e verbo próprios, figura em pé no R, partícula com forma, hanko.
+  Desenhos em `tools/assinaturas/desenhos.js` (gerar: `node tools/assinaturas/gerar.js`
+  + `cinza.py`). Tabela em docs/direcao-efeitos.md §9 (atlas 7x7 desde o 2.27).
+- Texto na tela: só caracteres que a fonte Nunito tem (o teste de glifos reprova
+  ★, ⚔, ⚑, →, ✓ e afins nas strings de `scripts/`).
+
+## Personalidade e finalização (Ciclo 2.34)
+
+`ClassStats.personalidade` (8 jeitos: pesado, samurai, ninja, atirador, trapalhao,
+curioso, sereno, predador; dados em `scripts/actors/personalidade.gd`) muda
+parado, corrida, pouso do dash (pose ~0,4 s sem travar controle; o dash em si não
+muda) e o golpe de finalização. Pose de peito/cabeça/braços = `PoseDash`
+(SkeletonModifier3D). Finalizar herói caído ([F] 0,8 s, nega o Reanimar) =
+`scripts/finalizar.gd` (roda antes do Reanimar.tick). Prancha:
+`--prancha-finalizar=DIR` (xvfb).
+
+## Visual dos personagens
+
+Peças por código no esqueleto KayKit (`NinjaVisual`) + shader toon; pitaco por
+prancha (`tools/prancha_personagens.gd`). Ver docs/arte-personagens.md.
+
+## Testes
+
+`tools/checar.sh` agrupa tudo (é o que o CI e o agente `testador` rodam).
+`tests/contador_erros.gd` (Logger) conta erros de script durante os testes e
+reprova; `tests/regras.gd` exige um mínimo de checagens (`MIN_CHECAGENS`) para
+um teste pulado não passar despercebido. Regra nova que importa = um `_check`.

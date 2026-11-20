@@ -140,7 +140,7 @@ func _esquiva_projetil(me: Vector3) -> Vector3:
 		return Vector3.ZERO
 	for n in unit.get_tree().get_nodes_in_group("projeteis"):
 		var p := n as Projectile
-		if p == null or p.owner_unit == null or p.owner_unit.team == unit.team:
+		if p == null or not is_instance_valid(p.owner_unit) or p.owner_unit.team == unit.team:
 			continue
 		var rel := me - p.global_position
 		rel.y = 0

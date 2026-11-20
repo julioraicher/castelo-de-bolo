@@ -17,7 +17,7 @@ Trocar som = trocar arquivo. Nenhum código de jogo muda, então o gasto é só 
 ## Fontes (já no repo / já liberadas na rede)
 - `assets/audio/biblioteca/kenney/{impacto,interface,rpg}/`: 280 sons CC0 (Kenney Impact
   Sounds, Interface Sounds, RPG Audio). Tem `.gdignore`: não entra no jogo exportado.
-- IA: `tools/sons/gerar_ia.py` salva em `assets/audio/biblioteca/ia/`.
+- IA: `tools/sons/gerar_ia.py` salva em `assets/audio/biblioteca/ia/` (a pasta nasce na primeira geração).
   `--motor=stable` (Stable Audio Open, grátis, precisa `HF_TOKEN` nos segredos do ambiente)
   ou `--motor=eleven` (ElevenLabs, pago, precisa `ELEVENLABS_API_KEY`).
 - Rede do ambiente já libera: kenney.nl (o site recusa downloads automáticos: use os

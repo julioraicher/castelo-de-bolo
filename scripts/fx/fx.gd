@@ -1,7 +1,7 @@
 class_name Fx
 extends RefCounted
 ## Efeitos visuais pequenos e reutilizáveis ("game feel"): números de dano,
-## faíscas de impacto, anel de cura, rastro de golpe. Funções estáticas: Fx.damage_number(...).
+## faíscas de impacto, anel de cura, rastro de golpe. Funções estáticas: Fx.letreiro(...).
 
 static var _sector_cache := {}  # "raio_arco" -> ArrayMesh do rastro de golpe
 static var _cache := {}  # malhas de partícula já prontas (com material), por tipo + cor
@@ -40,9 +40,16 @@ static func prewarm(parent: Node, pos: Vector3) -> void:
 
 ## forca: 1 = golpe comum; > 1 = número maior e com mais "pop" (combo final,
 ## contra-golpe). dir: o número escorrega um pouco para onde o golpe empurrou.
+## Só para NÚMERO de dano/cura: obedece a opção "Números de dano".
 static func damage_number(parent: Node, pos: Vector3, text: String, color: Color, forca := 1.0, dir := Vector3.ZERO) -> void:
-	if not Settings.damage_numbers:
-		return
+	if Settings.damage_numbers:
+		letreiro(parent, pos, text, color, forca, dir)
+
+
+## Letreiro que sobe da cabeça (SELADO, PRESO, CONTRA!, falas do Predero...).
+## Sempre aparece (caça 2026-11-19, FX-02): antes passava pelo damage_number e
+## desligar "Números de dano" apagava ~50 avisos de estado, como NINGUÉM PERTO.
+static func letreiro(parent: Node, pos: Vector3, text: String, color: Color, forca := 1.0, dir := Vector3.ZERO) -> void:
 	var label := Label3D.new()
 	label.text = text
 	label.modulate = color
@@ -234,15 +241,10 @@ static func beam(parent: Node, from: Vector3, to: Vector3, color: Color, width :
 	Magia.lanca(parent, from, to, Magia.paleta_de(color), width * 2.2, life)
 
 
-## Choque elétrico: zigue-zague de raios curtos entre dois pontos.
+## Choque elétrico: zigue-zague entre dois pontos, numa malha só (Magia.raio;
+## antes era uma lança por segmento).
 static func zap(parent: Node, from: Vector3, to: Vector3, color: Color, segments := 5) -> void:
-	var prev := from
-	for i in range(1, segments + 1):
-		var p := from.lerp(to, float(i) / segments)
-		if i < segments:
-			p += Vector3(randf_range(-0.5, 0.5), randf_range(-0.3, 0.3), randf_range(-0.5, 0.5))
-		beam(parent, prev, p, color, 0.09, 0.22)
-		prev = p
+	Magia.raio(parent, from, to, Magia.paleta_de(color), 0.2, 0.22, {"n": segments, "amp": 0.45})
 
 
 ## Rachaduras brilhando no chão, saindo do centro (Fúria do Ronin).

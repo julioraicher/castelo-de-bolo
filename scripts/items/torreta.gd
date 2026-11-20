@@ -497,7 +497,7 @@ class Virote extends Node3D:
 			Fx.burst(_game, global_position, Color(1, 0.9, 0.5), 10, 6.0)
 			Sfx.play("besta_devolve", global_position, 0.1)
 			if _alvo.is_player:
-				Fx.damage_number(_game, _alvo.global_position + Vector3(0, 0.5, 0), "DEVOLVEU!", Color(1, 0.9, 0.5))
+				Fx.letreiro(_game, _alvo.global_position + Vector3(0, 0.5, 0), "DEVOLVEU!", Color(1, 0.9, 0.5))
 			_alvo.add_power(cfg.chi_esquiva)
 			return
 		_alvo.take_damage(cfg.torreta_dano, null, dir, 0.4, false, "torreta", 1)

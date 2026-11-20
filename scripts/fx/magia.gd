@@ -354,6 +354,78 @@ static func anel_sobe(g: Node, pos: Vector3, pal: Variant, raio: float, sobe: fl
 	tw.chain().tween_callback(n.queue_free)
 
 
+## Raio em zigue-zague numa malha só, de `de` até `ate` (caça 2026-11-19, FX-04:
+## o Fx.zap montava uma lança por segmento e o R da Kitsune Sombria chegava a 55
+## malhas de raio). Pisca uma vez e se rasga (corroi). o: n (segmentos; padrão
+## pelo comprimento), amp (desvio lateral), galho (ramo no meio se > 2,5 m).
+## Devolve a malha (null se de ≈ ate).
+static func raio(g: Node, de: Vector3, ate: Vector3, pal: Variant, larg := 0.22, vida := 0.3, o: Dictionary = {}) -> MeshInstance3D:
+	if g == null or not is_instance_valid(g):
+		return null
+	var d := ate - de
+	var comp := d.length()
+	if comp < 0.1:
+		return null
+	var n := _no(g, de)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var pts := zigue(Vector3.ZERO, d, int(o.get("n", clampi(int(comp / 1.1), 3, 9))), float(o.get("amp", minf(comp * 0.1, 0.9))))
+	fita_raio(st, pts, larg)
+	if o.get("galho", false) and comp > 2.5:
+		var p: Vector3 = pts[pts.size() / 2]
+		var desvio := d.normalized().cross(Vector3.UP).normalized() * (1.0 if randf() < 0.5 else -1.0)
+		fita_raio(st, zigue(p, p + (d.normalized() * 0.6 + desvio).normalized() * comp * 0.25, 3, comp * 0.04), larg * 0.55)
+	var m := mat(pal, {"escala": Vector2(1.0, maxf(comp * 0.3, 1.0)), "rola": Vector2(0.0, -7.0), "forca": 0.5,
+			"base": 1.0, "topo": 1.0, "lados": 1.0, "tinta": 0.1})
+	var mi := _malha(n, st.commit(), m)
+	var tw := n.create_tween()
+	tw.tween_interval(vida * 0.22)
+	tw.tween_callback(func() -> void: mi.visible = false)
+	tw.tween_interval(0.035)
+	tw.tween_callback(func() -> void: mi.visible = true)
+	tw.tween_method(func(v: float) -> void: m.set_shader_parameter("corroi", v), 0.0, 1.0, vida * 0.7)
+	tw.tween_callback(n.queue_free)
+	return mi
+
+
+## Pontos de um zigue-zague de a até b (pontas fixas).
+static func zigue(a: Vector3, b: Vector3, n: int, amp: float) -> Array:
+	var d := b - a
+	var e1 := d.cross(Vector3.UP if absf(d.normalized().y) < 0.95 else Vector3.RIGHT).normalized()
+	var e2 := d.cross(e1).normalized()
+	var pts := [a]
+	for i in range(1, n):
+		var t := float(i) / n
+		pts.append(a + d * t + e1 * randf_range(-amp, amp) + e2 * randf_range(-amp, amp) * 0.6)
+	pts.append(b)
+	return pts
+
+
+## Fita em cruz ao longo dos pontos (U atravessa, V corre de 0 a 1).
+static func fita_raio(st: SurfaceTool, pts: Array, larg: float) -> void:
+	var total := 0.0
+	for i in pts.size() - 1:
+		total += (pts[i + 1] - pts[i]).length()
+	var corrido := 0.0
+	for i in pts.size() - 1:
+		var a: Vector3 = pts[i]
+		var b: Vector3 = pts[i + 1]
+		var d := (b - a).normalized()
+		var v0 := corrido / total
+		corrido += (b - a).length()
+		var v1 := corrido / total
+		var w0 := larg * (0.55 + 0.45 * sin(v0 * PI))
+		var w1 := larg * (0.55 + 0.45 * sin(v1 * PI))
+		var e1 := d.cross(Vector3.UP if absf(d.y) < 0.95 else Vector3.RIGHT).normalized()
+		var e2 := d.cross(e1).normalized()
+		for e: Vector3 in [e1, e2]:
+			var q := [[a - e * w0 * 0.5, Vector2(0, v0)], [a + e * w0 * 0.5, Vector2(1, v0)], [b + e * w1 * 0.5, Vector2(1, v1)], [b - e * w1 * 0.5, Vector2(0, v1)]]
+			for k in [0, 1, 2, 0, 2, 3]:
+				st.set_uv(q[k][1])
+				st.add_vertex(q[k][0])
+
+
+
 ## Lança/feixe de energia entre dois pontos: dois quads em cruz, o ruído corre
 ## ao longo do feixe. `cresce` > 0: o feixe nasce de `de` e chega em `ate`.
 static func lanca(g: Node, de: Vector3, ate: Vector3, pal: Variant, larg := 0.3, vida := 0.35, o: Dictionary = {}) -> void:

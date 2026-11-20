@@ -51,3 +51,6 @@ super_poder = "veu"
 super_nome = "Véu Celeste"
 heroi = true
 anim_attack = "2H_Melee_Attack_Spin"
+skill_desc = "Puxa de volta o aliado caído (levanta na hora) ou o ferido longe, curando."
+power_desc = "Dança: cura os aliados em volta enquanto dura."
+super_desc = "Véu do céu: aliados em volta não morrem por alguns segundos."

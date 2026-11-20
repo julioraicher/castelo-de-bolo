@@ -246,7 +246,7 @@ func _montar_sala() -> void:
 		base.add_child(b)
 	else:
 		var pronto := bool(Rede.eu().get("pronto", false))
-		var b := _botao("Pronto ✔" if pronto else "Pronto", func(): Rede.pedir_pronto(not pronto))
+		var b := _botao("Pronto!" if pronto else "Pronto", func(): Rede.pedir_pronto(not pronto))
 		b.custom_minimum_size = Vector2(170, 46)
 		base.add_child(b)
 
@@ -269,11 +269,11 @@ func _coluna(t: int) -> PanelContainer:
 		b.add_theme_font_size_override("font_size", 16)
 		if peer >= 0:
 			var j: Dictionary = Rede.jogadores()[peer]
-			var txt := "● %s%s" % [j.nome, " ★" if peer == 1 else ""]
+			var txt := "%s%s" % [j.nome, "  (anfitrião)" if peer == 1 else ""]
 			if peer == Rede.id():
 				txt += "  (você)"
 			if j.get("pronto", false) or peer == 1:
-				txt += "   ✔"
+				txt += "   pronto"
 			if peer != 1 and int(j.get("ping", 0)) > 0:
 				txt += "   %d ms" % int(j.ping)
 			b.text = txt

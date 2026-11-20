@@ -97,9 +97,12 @@ extends Resource
 ## varrida = giro da naginata que acerta só a faixa entre alcance_min e skill_radius
 ## e dá escudo aos aliados perto (Sohei); gancho = corrente que PUXA o primeiro
 ## inimigo na linha até skill_radius m (Kusarigama).
-@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho", "agarrao", "rasteira", "rajada", "mergulho", "roubar_rosto", "dobrar", "laco", "sono", "flecha_arrancada", "mordida", "teia", "raizes", "para_raios") var skill := "nenhum"
+@export_enum("nenhum", "cura", "bloqueio", "tiro_carregado", "armadilha", "investida", "pisao", "corrida", "varrida", "gancho", "agarrao", "rasteira", "rajada", "mergulho", "roubar_rosto", "dobrar", "laco", "sono", "flecha_arrancada", "mordida", "teia", "raizes", "para_raios", "poca") var skill := "nenhum"
 ## Nome mostrado no HUD ao lado da tecla Q.
 @export var skill_name := ""
+## Uma linha do que o Q faz, na ficha do menu Classes (caça 2026-11-19: antes era
+## um dicionário no código e herói novo ficava em branco). Teste exige.
+@export var skill_desc := ""
 ## Recarga do Q em s (cura usa heal_cooldown e armadilha usa trap_cooldown).
 @export var skill_cooldown := 5.0
 ## Investida/pisão: dano. Corrida: multiplicador de velocidade.
@@ -177,8 +180,10 @@ extends Resource
 ## muralha = Muralha de Fé do Sohei (aliados em volta ganham escudo e pressa,
 ## inimigos na borda são empurrados para fora); ciranda = a Kusarigama gira a
 ## corrente em volta (pulsos que acertam só a ponta e arremessam).
-@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "furia", "leque", "selo", "coluna_fogo", "mutirao", "campo_minado", "bombardeio", "muralha", "ciranda", "pisao_grande", "jato", "redemoinho_longe", "revoada", "susto", "grou", "danca", "hipnose", "onibi", "arrastao", "puxar_fios", "bosque", "relampago") var power := "nenhum"
+@export_enum("nenhum", "redemoinho", "chuva_de_flechas", "bencao", "furia", "leque", "selo", "coluna_fogo", "mutirao", "campo_minado", "bombardeio", "muralha", "ciranda", "pisao_grande", "jato", "redemoinho_longe", "revoada", "susto", "grou", "danca", "hipnose", "onibi", "arrastao", "puxar_fios", "bosque", "relampago", "andaime") var power := "nenhum"
 @export var power_name := ""
+## Uma linha do que o E faz, na ficha do menu Classes. Teste exige.
+@export var power_desc := ""
 ## Raio de efeito (m).
 @export var power_radius := 3.0
 ## redemoinho/chuva_de_flechas: dano por pulso; bencao: fração da vida curada;
@@ -192,10 +197,13 @@ extends Resource
 ## maior = o poder E em versão gigante (raio, dano e duração maiores);
 ## sombra = invisível por pouco tempo, mais rápido, golpe de surpresa.
 @export_enum("maior", "sombra", "proprio") var super_tipo := "maior"
-## super_tipo "proprio" (heróis raros): qual R sai (dohyo, mergulho3, mil_grous, veu, requiem).
+## super_tipo "proprio" (heróis raros): qual R sai (lista em Herois.super_proprio).
 @export var super_poder := ""
 ## Nome no HUD. Vazio = "Super " + power_name.
 @export var super_nome := ""
+## Uma linha do que o R faz, na ficha. Obrigatória no "proprio"; vazia nos outros
+## = texto montado ("versão gigante" do E, ou a sombra com os números do cfg).
+@export var super_desc := ""
 
 @export_group("Sons (assinatura da classe)")
 ## Nomes em Sfx.SOUNDS. Vazio = som genérico antigo. O som segue o elemento
@@ -221,3 +229,19 @@ extends Resource
 @export var anim_idle := "Idle"
 @export var anim_run := "Running_A"
 @export var anim_attack := "1H_Melee_Attack_Chop"
+
+
+## Recarga do Q em segundos, com os multiplicadores da regra (sem o do modo teste).
+## Fonte única: Unit.quick_cooldown e a ficha do menu Classes leem daqui
+## (revisão 2026-11-19: a ficha mostrava a da cura e a da armadilha erradas).
+func recarga_q(cfg: Resource) -> float:
+	var base := skill_cooldown
+	match skill:
+		"cura":
+			base = heal_cooldown
+		"armadilha":
+			base = trap_cooldown
+	var m: float = cfg.rapida_cooldown_mult
+	if heroi:
+		m *= cfg.heroi_recarga_mult
+	return base * m

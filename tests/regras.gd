@@ -9,12 +9,18 @@ extends Node
 var game  # Game (sem tipo: o script é carregado em tempo de execução)
 var _falhas: Array[String] = []
 var _total := 0
+var _erros  # contador_erros.gd: erro de script no meio de um teste também reprova
+## Piso de checagens: se uma função de teste abortar no meio, o total cai.
+## Baixe só quando tirar testes de propósito.
+const MIN_CHECAGENS := 1100
 
 
 func _ready() -> void:
+	_erros = load("res://tests/contador_erros.gd").instalar()
 	# Espera a partida montar e os bonecos nascerem.
 	await get_tree().create_timer(0.5).timeout
 	_dados()
+	_glifos()
 	_mascara_pesada()  # antes de qualquer teste mexer no peso
 	_dano()
 	_contra_golpe()
@@ -61,6 +67,10 @@ func _ready() -> void:
 	_rio_sem_ilha()
 	_sons_proprios()
 	_relogio()  # por último: encerra a partida
+	if _erros.relatar("TESTES") > 0:
+		_falhas.append("erro de script/motor durante os testes (veja ERRO DURANTE O TESTE acima)")
+	if _total < MIN_CHECAGENS:
+		_falhas.append("só %d checagens rodaram (piso %d): algum teste parou no meio" % [_total, MIN_CHECAGENS])
 	print("TESTES: %d/%d ok" % [_total - _falhas.size(), _total])
 	if _falhas.is_empty():
 		print("TESTES OK")
@@ -943,6 +953,82 @@ func _dados() -> void:
 	_check(not cfg.maps.is_empty(), "nenhum mapa em game_config.maps")
 	_check(cfg.carrier_damage_mult > 0.0 and cfg.carrier_damage_mult <= 1.0,
 		"carrier_damage_mult fora de (0, 1]")
+	# Caça 2026-11-19 (TL-01): o gerador do cenário recriava os temas e apagava
+	# as peças da economia que o gerar_economia liga (árvore, bambu, tora, pilha).
+	for t in cfg.themes:
+		if t == null:
+			continue
+		var nome_t := String(t.resource_path).get_file()
+		_check(t.arvore_estagios.size() >= 3 and not t.arvore_estagios.has(null), "tema %s sem os 3 estágios da árvore" % nome_t)
+		_check(not t.bambu_estagios.is_empty() and not t.bambu_estagios.has(null), "tema %s sem estágios do bambu" % nome_t)
+		_check(t.maquina_model != null and t.pilha_model != null and t.tora_model != null,
+			"tema %s sem máquina, depósito ou tora" % nome_t)
+	_esquema_classes()
+
+
+## UI-04 (caça 2026-11-19): ★ ✔ ● → ⚔ não existem na Nunito nem na Lilita. No
+## .exe o Windows empresta outra fonte; no navegador viram um quadrado. Varre os
+## textos entre aspas de scripts/ (comentários não contam). A Lilita cai na Nunito
+## para o que não tem, então a Nunito precisa ter tudo.
+func _glifos() -> void:
+	var nunito: FontFile = load("res://assets/fonts/Nunito-Black.ttf")
+	var aspas := RegEx.new()
+	aspas.compile("\"((?:[^\"\\\\]|\\\\.)*)\"")
+	var faltam := {}
+	var pastas := ["res://scripts"]
+	while not pastas.is_empty():
+		var d: String = pastas.pop_back()
+		for sub in DirAccess.get_directories_at(d):
+			pastas.append(d.path_join(sub))
+		for arq in DirAccess.get_files_at(d):
+			if not arq.ends_with(".gd"):
+				continue
+			var n := 0
+			for linha in FileAccess.get_file_as_string(d.path_join(arq)).split("\n"):
+				n += 1
+				if linha.strip_edges().begins_with("#"):
+					continue
+				for m in aspas.search_all(linha):
+					var txt := m.get_string(1)
+					for i in txt.length():
+						var c := txt.unicode_at(i)
+						if c > 127 and not nunito.has_char(c) and not faltam.has(c):
+							faltam[c] = "%s:%d" % [arq, n]
+	for c in faltam:
+		_check(false, "glifo %s (U+%04X) não existe na fonte do jogo (%s): vira quadrado na Web" % [char(c), c, faltam[c]])
+	_check(true, "glifos dos textos")
+
+
+## NU-03 (caça 2026-11-19): valor de texto fora da lista do @export_enum some no
+## Inspector e um "salvar" pelo editor troca pelo 1º item (o Predero perdia a poça).
+## Varre TODOS os .tres de classes (pátio, caminhos e heróis).
+func _esquema_classes() -> void:
+	var dir := "res://config/classes/"
+	var listas := {}
+	var amostra = load(dir + "guerreiro.tres")
+	for prop in amostra.get_property_list():
+		if prop.type == TYPE_STRING and prop.hint == PROPERTY_HINT_ENUM:
+			listas[prop.name] = String(prop.hint_string).split(",")
+	_check(listas.has("skill") and listas.has("power"), "esquema: skill/power deixaram de ser listas fechadas")
+	var n := 0
+	for arq in DirAccess.get_files_at(dir):
+		if not arq.ends_with(".tres"):
+			continue
+		var c = load(dir + arq)
+		if not (c is ClassStats):
+			continue
+		n += 1
+		for campo in listas:
+			var v := String(c.get(campo))
+			_check((listas[campo] as PackedStringArray).has(v), "classe %s: %s = \"%s\" fora da lista do esquema" % [arq, campo, v])
+		# UI-03: a ficha do menu Classes lê o texto do .tres (seis heróis saíam em branco).
+		if c.skill != "nenhum":
+			_check(c.skill_desc != "", "classe %s: Q sem skill_desc (ficha em branco)" % arq)
+		if c.power != "nenhum":
+			_check(c.power_desc != "", "classe %s: E sem power_desc (ficha em branco)" % arq)
+		if c.super_tipo == "proprio":
+			_check(c.super_desc != "", "classe %s: R próprio sem super_desc (ficha em branco)" % arq)
+	_check(n >= 27, "esquema: só %d classes lidas em config/classes" % n)
 
 
 func _alvo():

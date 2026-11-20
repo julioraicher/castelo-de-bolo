@@ -54,3 +54,6 @@ som_golpe_final = "predero_final"
 carry_speed_mult = 0.85
 heroi = true
 anim_attack = "Throw"
+skill_desc = "Garrafão vira poça na mira: inimigo que pisa derrapa, e qualquer fogo acende a poça."
+power_desc = "Levanta uma parede de andaime: bloqueia passagem e tiro e empurra quem estava no lugar."
+super_desc = "Garrafas chovem em espiral na mira, cada uma deixa poça, e a última vem acesa e põe fogo nelas."

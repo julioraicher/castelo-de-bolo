@@ -43,3 +43,5 @@ som_golpe_final = "armadilheiro_final"
 power_value = 0.0
 power_duration = 6.0
 carry_speed_mult = 0.85
+skill_desc = "Mina no chão: explode quando um inimigo pisa."
+power_desc = "Minas em volta."

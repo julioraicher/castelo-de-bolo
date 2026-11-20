@@ -26,34 +26,44 @@ e Configurações.
 | **F11** | tela cheia (liga/desliga) |
 | **Enter** | começar (na tela inicial) |
 
-## Q e E por classe (Ciclo 2.5)
+## Q, E e R por classe
 
-| Classe | Q (rápido) | E (Chi) |
-|---|---|---|
-| Samurai | Investida: corte em avanço de 5,5 m (6 s) | Redemoinho |
-| Ronin Oni | Pisão: onda curta que arremessa (7 s) | Fúria |
-| Ninja de Shuriken | Shuriken Perfurante: tiro cheio que atravessa (4 s) | Leque de Shuriken |
-| Arqueiro Yumi | Flecha Perfurante (5 s) | Chuva de Flechas |
-| Kitsune | Cura em volta (3,5 s) | Coluna de Fogo-Raposa |
-| Kitsune da Luz | Cura da Luz (3 s) | Bênção da Raposa |
-| Kitsune Sombria | Orbe Perfurante (4 s) | Selo Sombrio |
-| Construtor | Estrepes no chão (até 3; 4 s) | Mutirão: adianta a obra perto |
-| Recruta | (nada) | (nada) |
+Gerada dos `config/classes/*.tres` por `python3 tools/tabela_classes.py` (rode
+depois de mudar uma classe; o menu **Classes** do jogo lê os mesmos arquivos).
+Recarga do Q já com o desconto da regra. Heróis raros: um chapéu só por time,
+no pavilhão dourado do bairro (nível 6).
 
-### Heróis raros do nível 6 (Ciclo 2.23)
-
-Um chapéu só por time, no pavilhão dourado do bairro. R próprio de cada um.
-
-| Herói (bairro) | Q (rápido) | E (Chi) | R (Super) |
+<!-- tabela-classes:inicio -->
+| Classe | Q: rápido (recarga) | E: Chi (barra cheia) | R: Super (barra dourada) |
 |---|---|---|---|
-| Sumotori (Samurai) | Agarrão: agarra e arremessa (7 s) | Pisão do Santuário | Dohyō: ringue de sal, ninguém entra nem sai |
-| Kappa do Rio (Samurai) | Rasteira do Rio: some na poça e derruba (6 s) | Jato d'Água em linha | Enchente (jato gigante) |
-| Yamabushi do Leque (Shuriken) | Rajada: devolve flechas e empurra (6 s) | Redemoinho onde mira | Tufão (redemoinho gigante) |
-| Karasu Tengu (Shuriken) | Mergulho no atirador isolado (7 s) | Revoada: cega na área | Noite de Corvos: 3 mergulhos |
-| Mujina (Shuriken) | Roubar Rosto: vira o inimigo até o 1º golpe (12 s) | Susto: quem está perto foge | Passo sem Rosto (some) |
-| Onmyoji de Papel (Kitsune) | Dobrar Shikigami: até 3 escudos, depois talismãs que caçam (3,5 s) | Grou de Papel: fere e cura em linha | Mil Grous em leque |
-| Tennin do Manto (Kitsune) | Laço do Manto: puxa o aliado caído e levanta (10 s) | Dança Celeste: cura em volta | Véu Celeste: aliados não morrem por 3 s |
-| Komusō (Kitsune) | Canção de Ninar: dormem até levar golpe (8 s) | Hipnose: puxa para perto | Réquiem: inimigos sem Q, E e R por 4 s |
+| Samurai | **Investida** (3,1 s): Corte em avanço: atravessa quem estiver na frente. | **Redemoinho**: Gira com a lâmina: dano e empurrão em volta. | **Passo da Sombra**: some por uns segundos, mais rápido, e o golpe de surpresa dói mais |
+| Ronin Oni (caminho, Samurai) | **Pisão** (4,9 s): Onda curta que arremessa quem está perto. | **Fúria**: Mais força e vida por alguns segundos. | o E em versão gigante |
+| Sohei (caminho, Samurai) | **Varrida** (4,2 s): Giro largo da naginata: fere e empurra quem está na frente e dos lados, e dá escudo aos aliados perto. | **Muralha de Fé**: Anel de fé no chão: aliados dentro ganham escudo e pressa; inimigos são empurrados para fora. | o E em versão gigante |
+| Sumotori (herói, Samurai) | **Agarrão** (4,2 s): Agarra quem está na frente e arremessa longe; quem cai em cima também apanha. | **Pisão do Santuário**: Pisão do santuário: dano e arremesso em volta. | **Dohyō**: Ringue de sal: ninguém entra nem sai, e quem está dentro do seu time bate mais forte. |
+| Kappa do Rio (herói, Samurai) | **Rasteira do Rio** (3,6 s): Some numa poça e reaparece no pé do inimigo, derrubando. | **Jato d'Água**: Jato d'água em linha: empurra todos de uma vez. | o E em versão gigante |
+| Ochimusha (herói, Samurai) | **Flecha Arrancada** (4,8 s): Arranca uma das flechas das costas e crava em quem está na frente: dano e lentidão. As flechas são as cargas do Q. | **Onibi**: Três fogos-fantasma giram em volta e estouram em quem encosta: dano e susto. | **Carga dos Caídos**: Quatro samurais-fantasma avançam em linha e ferem quem estiver na faixa. |
+| Shishimai (herói, Samurai) | **Mordida da Sorte** (4,2 s): Morde quem está na frente: aliado cura e ganha Sorte (próximo golpe dobrado); inimigo apanha e ganha Azar (o próximo golpe dele erra). | **Arrastão**: Avança levando o primeiro inimigo na boca (ele larga a máscara) e o prende no fim. | **Festa da Vila**: Vira o leão gigante: dá Sorte aos aliados perto e levanta o aliado caído que alcançar. |
+| Ninja de Shuriken | **Shuriken Perfurante** (2,8 s): Tiro cheio que atravessa os inimigos em linha. | **Leque de Shuriken**: Leque de shurikens à frente. | o E em versão gigante |
+| Arqueiro Yumi (caminho, Ninja de Shuriken) | **Flecha Perfurante** (3,5 s): Tiro cheio que atravessa os inimigos em linha. | **Chuva de Flechas**: Flechas caem numa área à frente. | o E em versão gigante |
+| Kusarigama (caminho, Ninja de Shuriken) | **Gancho** (4,5 s): Lança o peso na mira: o primeiro inimigo na linha apanha, fica preso e é puxado para perto. | **Ciranda de Aço**: Gira a corrente em volta: o peso fere quem está na borda do anel (colado no corpo não corta). | o E em versão gigante |
+| Yamabushi do Leque (herói, Ninja de Shuriken) | **Rajada do Leque** (3,6 s): Abano do leque: devolve flechas e empurra quem está na frente. | **Redemoinho**: Redemoinho onde você mira: puxa para o meio e arremessa no fim. | o E em versão gigante |
+| Karasu Tengu (herói, Ninja de Shuriken) | **Mergulho** (4,2 s): Sobe ao céu e cai em cima do atirador mais isolado. | **Revoada**: Corvos numa área: quem está dentro fica cego e erra. | **Noite de Corvos**: Três mergulhos seguidos, cada um no inimigo mais perto. |
+| Mujina (herói, Ninja de Shuriken) | **Roubar Rosto** (7,1 s): Toca num inimigo e vira ele: os outros não te veem como inimigo até o 1º golpe. | **Susto**: Mostra o rosto vazio: quem está perto foge correndo. | **Passo sem Rosto**: some por uns segundos, mais rápido, e o golpe de surpresa dói mais |
+| Jorogumo (herói, Ninja de Shuriken) | **Teia** (3,6 s): Teia no chão: inimigo que pisa fica preso, e ela corre mais rápido em cima. | **Puxar os Fios**: Quem ela marcou com fio, teia ou rede vem para perto e fica preso. | **Casulo**: Os inimigos perto viram casulo: não andam nem atacam até um aliado deles quebrar a seda. |
+| Kaminari-kozō (herói, Ninja de Shuriken) | **Para-raios** (4,2 s): Crava uma baqueta de cobre que dá choque em volta e chama a descarga e os raios para ela. | **Relâmpago**: Vira raio e salta em linha até antes da parede, ferindo quem estiver no caminho. | **Tambores do Trovão**: Tempestade: raios caem do céu no inimigo mais perto de você ou de um para-raios seu. |
+| Kitsune | **Cura** (2,4 s): Cura quem estiver em volta. | **Coluna de Fogo-Raposa**: Colunas de fogo-raposa onde você mira. | o E em versão gigante |
+| Kitsune da Luz (caminho, Kitsune) | **Cura da Luz** (2,1 s): Cura quem estiver em volta. | **Bênção da Raposa**: Cura e escudo nos aliados perto. | o E em versão gigante |
+| Kitsune Sombria (caminho, Kitsune) | **Orbe Perfurante** (2,8 s): Tiro cheio que atravessa os inimigos em linha. | **Selo Sombrio**: Inimigos em volta ficam sem atacar. | o E em versão gigante |
+| Onmyoji de Papel (herói, Kitsune) | **Dobrar Shikigami** (2,1 s): Dobra um shikigami (até 3) que engole golpes; cheio, solta talismãs que caçam o alvo. | **Grou de Papel**: Grou de papel que atravessa: fere inimigos e cura aliados no caminho. | **Mil Grous**: Revoada de grous em leque: atravessa tudo, fere e cura. |
+| Tennin do Manto (herói, Kitsune) | **Laço do Manto** (6 s): Puxa de volta o aliado caído (levanta na hora) ou o ferido longe, curando. | **Dança Celeste**: Dança: cura os aliados em volta enquanto dura. | **Véu Celeste**: Véu do céu: aliados em volta não morrem por alguns segundos. |
+| Komusō (herói, Kitsune) | **Canção de Ninar** (4,8 s): Canção: quem estiver na frente dorme até levar um golpe. | **Hipnose**: Puxa os inimigos em volta para perto de você. | **Réquiem**: Réquiem: inimigos em volta ficam sem Q, E e R por alguns segundos. |
+| Kodama do Shinboku (herói, Kitsune) | **Raízes** (4,8 s): Raízes rompem o chão em linha: ferem e prendem quem está no caminho. | **Bosque Sagrado**: Três árvores nascem onde você mira: o tronco bloqueia passagem e tiro, e a sombra cura os aliados. | **Floresta Antiga**: Anel de árvores gigantes em volta: as raízes prendem e ferem os inimigos dentro, e os aliados se curam. |
+| Construtor | **Estrepes** (2,8 s): Estrepes no chão: dano e lentidão em quem pisa. | **Mutirão**: Adianta a obra perto de você. | o E em versão gigante |
+| Armadilheiro (caminho, Construtor) | **Mina** (2,4 s): Mina no chão: explode quando um inimigo pisa. | **Campo Minado**: Minas em volta. | o E em versão gigante |
+| Bombardeiro (caminho, Construtor) | **Bomba Grande** (3,5 s): Bomba carregada que explode onde cai: dano em área. | **Bombardeio**: Bombas caem numa área. | o E em versão gigante |
+| Predero (herói, Construtor) | **Poça de Cachaça** (4,2 s): Garrafão vira poça na mira: inimigo que pisa derrapa, e qualquer fogo acende a poça. | **Andaime Expresso**: Levanta uma parede de andaime: bloqueia passagem e tiro e empurra quem estava no lugar. | **Saideira**: Garrafas chovem em espiral na mira, cada uma deixa poça, e a última vem acesa e põe fogo nelas. |
+| Recruta | (nada) | (nada) | (nada) |
+<!-- tabela-classes:fim -->
 
 ## Configurações (Esc > Configurações)
 
@@ -89,14 +99,15 @@ As escolhas ficam salvas (no navegador, no próprio navegador).
 4. **Chapéus** saem das maquininhas do pátio: chegue perto e aperte **F**.
    - No começo: Samurai (Redemoinho), Ninja de Shuriken (Leque), Kitsune
      (Colunas de fogo-raposa; cura) e Construtor (corta madeira e constrói; Mutirão).
-   - Oficinas comuns liberam: Ronin Oni (Fúria) e Arqueiro Yumi (Chuva de flechas).
-     O Construtor não muda de classe: ele corta madeira, arma estrepes e constrói.
-   - Caminho dos magos: Kitsune da Luz (Bênção: cura + escudo) **ou** Kitsune
-     Sombria (Selo: inimigos sem atacar). Construir um sela o outro; o escolhido
-     sobe até o nível 5 com mais madeira.
+   - Cada classe tem um **bairro** no pátio. A barraquinha sobe ao nível 2; no 3
+     o Construtor escolhe um de dois **caminhos**, que ganha casa própria e sobe
+     até o nível 5: Samurai → Ronin Oni (Fúria) ou Sohei (Muralha); Ninja de
+     Shuriken → Arqueiro Yumi (Chuva de flechas) ou Kusarigama (Ciranda);
+     Kitsune → Kitsune da Luz (Bênção: cura + escudo) ou Kitsune Sombria (Selo:
+     inimigos sem atacar); Construtor → Armadilheiro (minas) ou Bombardeiro (bombas).
    - **Nível 6** (bairro no 5): o Construtor escolhe um **herói raro** da classe
-     (8 madeiras), que sobe num pavilhão dourado com um chapéu só. Ele volta 20 s
-     depois que o herói sai de campo. O Construtor não tem herói.
+     (6 madeiras), que sobe num pavilhão dourado com um chapéu só. Ele volta 20 s
+     depois que o herói sai de campo. O Construtor tem um herói só: o Predero.
    - Recruta (sem chapéu): rápido, socos em combo, sem poder.
    - O medidor de **Chi** enche batendo, apanhando, abatendo, entregando
      espírito e capturando a máscara. Cheio, aperte E.

@@ -1,9 +1,10 @@
 # CLAUDE.md
 
 Contexto enxuto para o Claude trabalhar neste repo sem reler conversas antigas.
-**Leia primeiro `docs/principios.md`** (o que não muda sem o Julio).
-Detalhes para humanos: GUIA.md. Plano: ROADMAP.md. O que mudou em cada rodada:
-CHANGELOG.md (leia a entrada mais nova). Regras do jogo: CONTROLES.md.
+**Leia primeiro `docs/principios.md`** (o que não muda sem o Julio; este arquivo
+não repete os princípios). Onde mora cada sistema: `docs/mapa-do-codigo.md`.
+Todos os comandos: `docs/comandos.md`. Para humanos: GUIA.md. Plano: ROADMAP.md.
+O que mudou: CHANGELOG.md (leia a entrada mais nova). Regras do jogo: CONTROLES.md.
 
 ## O que é
 
@@ -11,75 +12,43 @@ Jogo 3D de ação 8v8 com bots no estilo de *Fat Princess* (nome, arte e código
 originais). Godot 4.7.2 + GDScript. Alvo: PC, navegador (Web) e .exe.
 Dono: Julio (estudante de Engenharia Física). Respostas em português, diretas.
 
-## Comandos
+## Comandos do dia a dia
 
 ```bash
-# Depois de criar um script com class_name novo (senão "Identifier not declared"):
-godot --headless --import --path .
-# Testes de regra (dano, carregador, esquiva, escudo, cura, empurrão, dados); sai 0/1:
-godot --headless --path . --fixed-fps 60 -- --autoplay --testes
-# Partida simulada sem janela (bots jogam pelo jogador; eventos no stdout):
-godot --headless --path . --fixed-fps 60 --quit-after 18000 -- --autoplay
-# Arena de chapéus (Ciclo 2.29, 3º modo do menu; --arena / ?arena): QA sem teclado,
-# o Tambor de Desafio toca sozinho a cada N s e gera inimigos:
-godot --headless --path . --fixed-fps 60 --quit-after 7200 -- --autoplay --arena-prova=8
-# Varredura de poderes (2.29b): Q, E e R das 26 classes com inimigo alinhado; sai 0/1.
-#   VARREDURA_SO=id1,id2 filtra; --varredura-perto=N muda a distância. Poder novo
-#   que não fere de propósito = entrada em POR_DESENHO (tests/varredura_poderes.gd).
-godot --headless --path . --fixed-fps 60 -- --autoplay --varredura-poderes
-# Desempenho (xvfb): PERF (fps, chamadas, tris, CPU por seção) + CENSO (passes por dono).
-#   CENSO_DETALHE=Arena lista cada instância; MU_DEBUG=1 mostra os grupos da malha única.
-xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
-  --rendering-method gl_compatibility --audio-driver Dummy --quit-after 600 -- --autoplay --perf=3
-# Prints (precisa de xvfb; renderizador do navegador):
-xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
-  --rendering-method gl_compatibility --audio-driver Dummy -- --autoplay --shots=DIR
-# Prints de cada seção do menu e aba do Como jogar: --tutorial=DIR (com xvfb, como acima)
-# Interface (2.33, no CI): texto vazando/fora da tela/HUD sobreposto em 7 resoluções; sai 0/1.
-#   Com DIR e xvfb também tira prints; --res=1280x720,1024x768 filtra; UI_DEBUG=1 lista blocos.
-godot --headless --path . -s tools/auditoria_ui.gd -- --sandbox --sem-prints
-# Regravar os clipes dos menus (xvfb): tools/clipes_tutorial.sh [cena|classe:id ...]
-#   (classe nova = id em CLASSES do script; quadros importam com perda, ~12 KB cada)
-# QA do mapa (passagem, escondidos da câmera, bots presos): qa_mapa.txt (+ .jpg com tela)
-godot --headless --path . --fixed-fps 60 -- --qa-mapa=DIR
-# Chão/objeto piscando ao andar (z-fighting, desenho fino): pisca.jpg com o que muda em vermelho
-xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
-  --rendering-method gl_compatibility --audio-driver Dummy -- --autoplay --sandbox --pisca=DIR
-# Sons: trocar/ouvir/gerar efeitos = skill .claude/skills/efeitos-sonoros (tools/sons/)
-# Equilíbrio por classe (8 partidas, mortes/abates por classe): tools/sonda_equilibrio.sh
-# Multiplayer: mesma semente em 60 x 23 FPS tem de dar o mesmo SINC; e rede real local
-tools/teste_sincronia.sh 90 7      # [segundos] [semente] [godot] [--variacoes ...]
-tools/teste_rede.sh 5000 godot --classe=arqueiro_yumi  # anfitrião + amigo (127.0.0.1), compara SINC
-tools/teste_queda.sh queda|dessinc # amigo cai/separa: voltam para a sala e a partida nova bate
-tools/baixar_webrtc.sh             # extensão WebRTC oficial (SHA-256 fixo); antes do import
-tools/teste_rtc.sh 5000            # sala por código (WebRTC, recados por pasta); "internet" = ntfy real
-# Exportar só os dados, sem templates, e inspecionar como no jogo publicado:
-godot --headless --path . --export-pack "Linux" x.pck
-godot --headless --main-pack x.pck -s diag.gd
+godot --headless --import --path .   # depois de criar class_name novo
+tools/checar.sh regras|partida|rede|tudo   # as MESMAS checagens do CI (~1,5 min por grupo)
+godot --headless --path . --fixed-fps 60 -- --autoplay --testes --semente=1234   # só regras
+godot --headless --path . --fixed-fps 60 --quit-after 18000 -- --autoplay        # partida 5 min
+tools/teste_sincronia.sh 90 7        # multiplayer: mesma semente em 60 x 23 FPS = mesmo SINC
+tools/gerar_tudo.sh                  # todos os geradores de modelos/dados, na ordem certa
 ```
 
-CI (`.github/workflows/build.yml`): todo push roda os testes de regra e 5 min
-simulados; na `main`, se passarem, exporta Web (GitHub Pages) e Windows/Linux
-(release `ultima-versao`). Regra nova que importa = um `_check` em `tests/regras.gd`.
-Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/local/bin/godot.
+Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para
+/usr/local/bin/godot. CI (`.github/workflows/build.yml`): todo push roda
+`tools/checar.sh` em 3 grupos paralelos (regras, partida, rede); qualquer
+`SCRIPT ERROR` reprova. Na `main`, se passarem, exporta Web (GitHub Pages),
+Windows/Linux (release `ultima-versao`) e itch.io (se configurado). Regra nova
+que importa = um `_check` em `tests/regras.gd`.
 
 ## Arquitetura
 
 - `scripts/game.gd`: monta tudo e aplica as regras por distância em `_rules()`.
-- `scripts/actors/unit.gd`: corpo do soldado. **Cérebro decide, corpo executa**:
-  `PlayerBrain`/`BotBrain` só preenchem `move_intent`, `aim_dir`, `wants_*`.
-- **Tudo que é conteúdo é dado** (`config/*.tres`, esquema em `scripts/data/*.gd`):
+- `scripts/actors/unit.gd`: corpo do soldado. `PlayerBrain`/`BotBrain` só
+  preenchem `move_intent`, `aim_dir`, `wants_*` (princípio 4).
+- Conteúdo é dado (`config/*.tres`, esquema em `scripts/data/*.gd`):
   - `game_config.tres`: regras, lista de classes do pátio, temas, mapa.
-  - `classes/*.tres` (`ClassStats`): modelo, partes visíveis, chapéu, números.
-    Classe nova = copiar um .tres e pôr em `hat_class_list`. Sem código.
+  - `classes/*.tres` (`ClassStats`): modelo, partes, chapéu, números, textos dos
+    poderes. Personagem novo: checklist em `docs/mapa-do-codigo.md` (não é só o .tres).
   - `temas/*.tres` (`ThemeConfig`): luz, céu, neblina, chão, modelos (`{cor}`
     vira blue/red), `model_swaps`. Tema novo = copiar e pôr em `themes`.
   - `mapas/*.tres` (`MapLayout` + `MapProp`): arena, castelo, objetos.
   - `scripts/world/arena.gd` só monta o que esses arquivos descrevem.
   - Para gerar/alterar .tres com sub-recursos, prefira um script `-s` com
-    `ResourceSaver.save()` a editar o texto à mão.
+    `ResourceSaver.save()` a editar o texto à mão; gerador de .tres carrega o
+    arquivo existente e só troca o que gera.
 - Autoloads: `Config` (teclas, constantes, `CONTROLS`), `Settings` (preferências
-  em `user://configuracoes.cfg`), `Sfx`.
+  em `user://configuracoes.cfg`, gravadas 0,4 s depois da última mudança e ao
+  fechar), `Sfx`, `Rede`.
 - UI feita por código: `scripts/ui/hud.gd`, `scripts/ui/menus.gd` (navegação lateral:
   Começo, Como jogar = `tutorial.gd`, Classes = `pagina_classes.gd`, Controles,
   Configurações). Clipes dos menus: `tools/clipes_tutorial.sh` (cenas em `clipe_cenas.gd`).
@@ -96,8 +65,7 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
 ## Armadilhas já pagas (não repetir)
 
 - Torreta 2.9 (2026-11-06): entrou como "lógica" e ganhou visual de primitivas
-  sem pitaco. Toda peça visível segue o princípio 13 (quiz, piloto com detalhe,
-  animações), mesmo quando a thread é de jogabilidade.
+  sem pitaco. Peça visível segue o princípio 13 mesmo em thread de jogabilidade.
 - `editor/export/convert_text_resources_to_binary` deve ficar **false**: a
   conversão perdia `visible_meshes` e os personagens ficavam invisíveis no export.
 - Empurrão: velocidade de andar (`_move_vel`) e de empurrão (`_knock`) são
@@ -109,8 +77,14 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
 - Texto dentro de `Button` não faz o botão crescer: cartão com texto = `PanelContainer`
   (+ `gui_input`). Painel ancorado não encolhe sozinho: `reset_size()` ao trocar o
   conteúdo. Peça nova de interface: rode `tools/auditoria_ui.gd` (2.33).
+- Texto na tela só com caracteres da fonte Nunito (★, ⚔, → viram quadrado; o
+  teste de glifos reprova). Número de dano/cura = `Fx.damage_number` (respeita a
+  opção); aviso de regra = `Fx.letreiro` (sempre aparece).
 - Interpolação de física está ligada: teleporte chama `reset_physics_interpolation()`;
-  nós animados em `_process`/tween usam `PHYSICS_INTERPOLATION_MODE_OFF`.
+  nós animados em `_process`/tween usam `PHYSICS_INTERPOLATION_MODE_OFF`; o visual
+  que segue um nó da física lê `get_global_transform_interpolated()`.
+- Clique: `Input.is_action_just_pressed` também (clique curto cai entre dois
+  quadros de física e `is_action_pressed` sozinho perde o golpe).
 - Música: loop vem do `.import` (`loop_mode=2`); canais em `default_bus_layout.tres`.
 - **Determinismo (multiplayer)**: toda regra roda igual em qualquer PC/FPS.
   Sorteio de regra = `Sorte.f()/r()/i()` (nunca `randf`/`pick_random`/`shuffle`
@@ -118,17 +92,20 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
   (nunca `Time.get_ticks_*`); tween/timer que muda regra roda na física
   (`create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)`,
   `create_timer(t, false, true)`); regra não lê transform de nó visual; nada de
-  regra em `_process`. Conferir com `tools/teste_sincronia.sh` (está no CI).
-  `is_player` só para câmera/HUD/som: regra que depende de "quem bateu é humano"
-  usa `humano` (2.28d: hitstop do tiro só no PC de quem atirou separava a partida).
+  regra em `_process`. `is_player` só para câmera/HUD/som: regra que depende de
+  "quem bateu é humano" usa `humano` (2.28d: hitstop só no PC de quem atirou
+  separava a partida).
 - Inferência `:=` falha com valores sem tipo (ex.: `surface_get_format`): tipar.
 - Script de diagnóstico `-s`: não citar `Unit`/classes do jogo nem autoloads
   (`Config`) por nome: compila antes dos autoloads e quebra o `Unit`. Use
   variáveis sem tipo e `root.get_node("/root/Config")`.
+- Na 4.7 um `SCRIPT ERROR` aborta só a função e o processo sai 0: por isso o
+  `checar.sh` procura o texto e os testes contam erros (`tests/contador_erros.gd`).
+- Referência a nó que pode sumir (dono de armadilha, alvo de fita): guardar o
+  que a regra precisa no `setup` e checar `is_instance_valid` antes de usar.
 - Animação só do tronco: `Unit._play_upper(anim)` (cópia filtrada, criada sob demanda).
 - Desempenho: o PC/navegador do Julio rendeu 9-12 FPS (provável WebGL sem GPU).
-  Existe `AutoQuality` (baixa qualidade sozinho). xvfb aqui também é software:
-  bom para comparar, não para medir FPS real. O gargalo é chamada de desenho
+  Existe `AutoQuality` (baixa qualidade sozinho). O gargalo é chamada de desenho
   (1 MeshInstance3D = 1 chamada por passe: cor, cada divisão de sombra, contorno),
   não script (~1,5 ms/quadro). Peça parada composta de várias malhas: terminar com
   `MalhaUnica.juntar(raiz, [o que se mexe])` (Ciclo 2.17); peças que dividem UM
@@ -140,8 +117,9 @@ Godot não vem no container: baixe o zip 4.7.2 do GitHub releases para /usr/loca
 
 ## Economia de tokens (detalhes: docs/economia-de-tokens.md)
 
-- Arquivo grande (`unit.gd`, `tools/gerar_*.gd`): subagente `explorador` ou Grep
-  + leitura por trecho. Testes/partida: subagente `testador` ou saída filtrada.
+- Arquivo grande (`unit.gd`, `game.gd`, `tools/gerar_*.gd`): subagente `explorador`
+  ou Grep + leitura por trecho. Checagens: subagente `testador` (roda `checar.sh`)
+  ou saída filtrada.
 - CHANGELOG: só a entrada mais nova. Uma imagem por rodada (JPG, ≤1280 px).
 - Avisar outra thread só quando ela depende disso, numa mensagem só.
 - Thread por tarefa (não por papel); quiz ≤5 perguntas com a recomendada
@@ -156,12 +134,23 @@ testes, pendências e o que espera aprovação. Descarte logs e saídas de coman
 ## Fluxo de trabalho
 
 Rodadas: Julio joga e manda feedback (áudio transcrito). Responder com lista
-curta do que entendeu, fazer tudo, publicar, adicionar entrada no CHANGELOG.md.
-Conversas curtas: a cada poucas rodadas, nova conversa a partir deste arquivo.
+curta do que entendeu, fazer tudo, publicar, adicionar entrada no CHANGELOG.md
+(com "O que testar", princípio 2). Conversas curtas: a cada poucas rodadas, nova
+conversa a partir deste arquivo.
+
+- **Modo teste (sandbox) espelha a `main`** (Julio, 2026-11-06): botão "Modo
+  teste" na tela inicial, `?sandbox` na web, `--sandbox`. Lá tudo fica disponível
+  o tempo inteiro: oficinas prontas, maquininhas no nível 2, torretas de pé,
+  catapultas, chapéu em 1 s, Q/E/R/catapulta recarregando rápido (grupo "Modo
+  teste" do `game_config.gd`; `Game._montar_sandbox`, `_regras_sandbox`). Feature
+  nova na `main` = na mesma entrega, pronta no sandbox, e o CHANGELOG diz isso.
+- Fase 1 = polimento (bugs, sensação, equilíbrio, desempenho). Features novas
+  (recursos, oficinas, catapulta) são Fase 2, uma conversa por feature.
+- Julio quer prints a cada marco.
 
 ## Organização (threads do projeto no Claude)
 
-O Julio fala no chat principal (coordenador), que abre threads por ciclo. Cada
+O Julio fala no chat principal (coordenador), que abre threads por tarefa. Cada
 thread é uma sessão separada: o que ela não escrever no repo/memória se perde.
 
 | Papel | Mexe em |
@@ -176,93 +165,7 @@ Skills do Julio úteis aqui (carregam sozinhas): `estagiario-de-ideias`,
 repo: `.claude/skills/`.
 
 - Precisa mudar código ou pasta de outro papel? Faça a menor mudança possível
-  e avise no CHANGELOG. Campo novo num `.tres` = campo novo no esquema em
-  `scripts/data/`, com valor padrão que não quebre os arquivos existentes.
-- Sempre `git pull --rebase origin main` antes de `git push`; nunca force push.
-- Cada papel registra suas mudanças no CHANGELOG.md, com o papel no título
-  (entradas antigas em `docs/changelog-antigo.md`).
-- Cenário: `tools/gerar_cenario_ninja.gd` (+ `gerar_mapa_rio.gd`) gera tudo com o
-  material `pintura.gdshader`: COLOR.a = oclusão, UV.x = vento, UV.y = desenho
-  (0 liso, 1 tábuas, 2 telhas, 3 pedras, 4 reboco). Rode os dois depois de mudar.
-- Casas de chapéu (Ciclo 2.21, escada 2.22): `Oficina` = bairro da classe base
-  (barraquinha + 2 tapetes com fantasma + casa do caminho). Nv1→2 só a barraquinha;
-  Nv2→3 escolha (jogador: painel `Hud.abrir_escolha` com [F]; bots: tapete), a casa
-  nasce no Nv3; Nv3→5 as duas sobem juntas. Super da classe travado no Nv1.
-  Modelos em `tools/gerar_casas.gd` (estende `gerar_economia.gd`; rode depois de
-  mudar; peças N3_/N4_/N5_ por nível), prancha em `tools/prancha_casas.gd`.
-  Caminhos = `caminhos` no .tres da base.
-- Heróis raros (Ciclo 2.23): Nv5→6 = segunda escolha, um herói de `herois` no .tres
-  da base (Construtor não tem). Pavilhão dourado no tapete do caminho, 1 chapéu só,
-  volta `heroi_retorno` s depois que o herói sai de campo. Regras em
-  `scripts/actors/herois.gd` (ganchos de Unit), voo em `voo_heroi.gd`, bots em
-  `scripts/ai/bot_herois.gd`, efeitos em `fx_herois.gd`. Gerar: `tools/gerar_herois.gd`
-  (.tres), `tools/gerar_pavilhao.gd` (pavilhão, adornos, emblemas); prancha
-  `tools/prancha_herois.gd`; sonda `HEROIS=1 tools/sonda_equilibrio.sh`. Relógio de
-  20 min (2.31), último minuto com máscaras leves, prorrogação enquanto a máscara
-  fora ainda empata ou vira (`tempo_limite`, `ultimo_minuto_leve`).
-  Heróis 2.27 (Ochimusha, Shishimai, Jorogumo; parte 2: Kodama, Kaminari-kozō):
-  estados em `Herois._tick_2_27`/`_apanhar_2_27`; reações entre elementos em
-  `scripts/actors/reacoes.gd` (quem solta fogo/vento chama `Reacoes.em` no impacto);
-  teia no chão = `scripts/items/teia.gd`. Painel do pavilhão aceita até 5 heróis.
-  Kodama/Kaminari-kozō (2.27b): regras em `scripts/actors/herois_natureza.gd`
-  (carga, descarga em cadeia, molhado conduz), árvore = `scripts/items/arvore_kodama.gd`
-  (StaticBody no LAYER_WORLD: bloqueia passagem e tiro), baqueta = `para_raios.gd`,
-  efeitos em `scripts/fx/fx_natureza.gd` (malhas no material pintado do tema).
-  Predero (2.30, único herói do Construtor): regras em `scripts/actors/herois_obra.gd`
-  (encachaçado, derrapa = ACCEL × poca_atrito), poça = `items/poca_cachaca.gd`
-  (fogo de qualquer time acende via `Reacoes`), andaime = `items/andaime.gd`
-  (LAYER_WORLD), projétil "garrafa" em `projectile.gd`, efeitos em `fx/fx_obra.gd`.
-- Efeitos de poder: kit `Magia` (`scripts/fx/magia.gd`, shader `magia_energia`):
-  energia com ruído que se rasga (`corroi`) + filete de tinta; nunca primitiva de
-  cor chapada. Receita e orçamento em docs/direcao-efeitos.md §8; conferir com
-  `tools/bancada_magia.gd` e `tools/vitrine.sh SAIDA [classes]`.
-- Peças pequenas do chão (Ciclo 2.32): espírito (`Cake`), itens (`Pickup`) e
-  armadilhas (`Trap`) desenham pelo kit `FxItens` (`scripts/fx/fx_itens.gd`):
-  objeto = ArrayMesh com cor por vértice no material pintado, energia = shader
-  Magia, anel do chão = `FxItens.anel_chao`. Prancha `tools/prancha_itens.gd`;
-  no modo teste há um mostruário com os 5 itens e um espírito.
-- Assinatura por personagem (Ciclo 2.24): kit `Assinatura` (`scripts/fx/assinatura.gd`).
-  Selo com silhueta e verbo próprios, figura em pé no R, partícula com forma, hanko.
-  Desenhos em `tools/assinaturas/desenhos.js` (gerar: `node tools/assinaturas/gerar.js`
-  + `cinza.py`). Personagem novo ganha desenho + linha em `DADOS`; nunca reutilizar
-  o selo de outro. Tabela em docs/direcao-efeitos.md §9 (atlas 7x7 desde o 2.27).
-- Personalidade e finalização (Ciclo 2.34): `ClassStats.personalidade` (8 jeitos:
-  pesado, samurai, ninja, atirador, trapalhao, curioso, sereno, predador; dados em
-  `scripts/actors/personalidade.gd`) muda parado, corrida, pouso do dash (pose
-  ~0,4 s sem travar controle; o dash em si não muda) e o golpe de finalização.
-  Pose de peito/cabeça/braços = `PoseDash` (SkeletonModifier3D). Finalizar herói
-  caído ([F] 0,8 s, nega o Reanimar) = `scripts/finalizar.gd` (roda antes do
-  Reanimar.tick). Personagem novo = escolher a personalidade no .tres.
-  Prancha: `--prancha-finalizar=DIR` (xvfb).
-- Visual: peças por código no esqueleto KayKit (`NinjaVisual`) + shader toon;
-  pitaco por prancha (`tools/prancha_personagens.gd`). Ver docs/arte-personagens.md.
-
-## Fluxo de testes e ideias (permanente)
-
-- A `main` é o que o Julio testa: precisa estar **sempre jogável**.
-- Coisa nova (cenário, poder, feature) vai num branch e só entra na `main`
-  com aprovação do Julio ou quando estável (testes de regra + 5 min simulados).
-- Toda entrega na `main` ganha um bloco **"O que testar"** na entrada do CHANGELOG.
-- **Modo teste (sandbox) espelha a `main`** (Julio, 2026-11-06): é a versão em que ele
-  testa cada peça sozinho (botão "Modo teste" na tela inicial, `?sandbox` na web,
-  `--sandbox`). Lá tudo fica disponível o tempo inteiro: oficinas prontas, maquininhas
-  no nível 2, torretas de pé, catapultas, chapéu em 1 s, Q/E/R/catapulta recarregando
-  rápido (grupo "Modo teste" do `game_config.gd`; `Game._montar_sandbox`,
-  `_regras_sandbox`). Feature nova na `main` = na mesma entrega, deixá-la pronta e
-  disponível no sandbox e dizer isso no CHANGELOG.
-- Ideias para futuras atualizações vão em `docs/ideias.md` (A = próxima, B = depois,
-  C = talvez). Qualquer frente pode anotar; o Julio escolhe o que sobe.
-
-## Preferências do Julio
-
-- **Direção atual (Ciclo 2.2)**: `docs/direcao-ciclo-2.2.md` manda no visual
-  (pintado estilo Fat Princess PS3, tom sombrio, poder no corpo, ~3,5 cabeças).
-
-- Manter o dash/esquiva como está.
-- Quer prints a cada marco e explicações com a física por trás.
-- **Peça nova na tela** (torreta, catapulta, casinha, personagem, item, efeito):
-  princípio 13 de `docs/principios.md`. Quiz/prancha antes, piloto com silhueta
-  própria + cor do time + animações parada/ação/fim, nunca primitivas como
-  entrega. Vale também para threads de jogabilidade.
-- Fase 1 = polimento (bugs, sensação, equilíbrio, desempenho). Features novas
-  (recursos, oficinas, catapulta) são Fase 2, uma conversa por feature.
+  e avise no CHANGELOG.
+- Cada papel registra suas mudanças no CHANGELOG.md, com o papel no título.
+  Entradas de ciclos antigos vão para `docs/changelog-antigo.md` (arquivar quando
+  o CHANGELOG passar de ~1.000 linhas).

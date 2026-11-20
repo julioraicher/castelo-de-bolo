@@ -241,7 +241,7 @@ func levantar(c: Unit, quem: Unit) -> void:
 	Sfx.play("reanimado", c.global_position)
 	Sfx.play("renascer", c.global_position, 0.04)
 	if quem == game.player:
-		Fx.damage_number(game, c.global_position + Vector3(0, 1.0, 0), "REANIMOU +%d" % int(cfg.pts_reanimar), Color(1.0, 0.85, 0.45))
+		Fx.letreiro(game, c.global_position + Vector3(0, 1.0, 0), "REANIMOU +%d" % int(cfg.pts_reanimar), Color(1.0, 0.85, 0.45))
 	if c == game.player:
 		game.hud.show_big("De pé de novo! (%s)" % c.stats.display_name, Color(1.0, 0.85, 0.45), 1.4)
 		game.camera.add_trauma(0.15)

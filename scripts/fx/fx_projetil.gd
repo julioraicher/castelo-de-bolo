@@ -648,6 +648,7 @@ static func _mat_olho() -> StandardMaterial3D:
 		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		m.albedo_texture = tex_olho()
 		m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		m.billboard_keep_scale = true  # tiro carregado (escala 1,7): o olho cresce junto (FX-05)
 		m.no_depth_test = true
 		m.render_priority = 1
 		return m)

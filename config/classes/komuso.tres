@@ -49,3 +49,6 @@ super_poder = "requiem"
 super_nome = "Réquiem"
 heroi = true
 anim_attack = "1H_Ranged_Shoot"
+skill_desc = "Canção: quem estiver na frente dorme até levar um golpe."
+power_desc = "Puxa os inimigos em volta para perto de você."
+super_desc = "Réquiem: inimigos em volta ficam sem Q, E e R por alguns segundos."

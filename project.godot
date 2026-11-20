@@ -8,7 +8,7 @@ config_version=5
 config/name="Castelo de Bolo"
 config/description="Resgate a princesa do castelo inimigo. Alimente a sua com bolo para que fique pesada demais para ser roubada."
 run/main_scene="res://scenes/main.tscn"
-config/features=PackedStringArray("4.7", "Forward Plus")
+config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [autoload]
@@ -57,7 +57,6 @@ common/physics_interpolation=true
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 renderer/rendering_method.web="gl_compatibility"
-anti_aliasing/quality/msaa_3d=2
 ; Mapa de sombra 2048 (era 4096 no PC): a 25 m de câmera 2048 já dá ~2 px de
 ; sombra por pixel de tela; 4096 quadruplicava a memória escrita por quadro.
 lights_and_shadows/directional_shadow/size=2048

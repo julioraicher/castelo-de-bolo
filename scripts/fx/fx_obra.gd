@@ -36,7 +36,7 @@ static func _shake(g: Node, pos: Vector3, forca: float) -> void:
 # --- Falas ----------------------------------------------------------------------------
 
 static func fala(u: Unit, txt: String) -> void:
-	Fx.damage_number(_g(u), u.global_position + Vector3(0, 0.6, 0), txt, FALA, 1.3)
+	Fx.letreiro(_g(u), u.global_position + Vector3(0, 0.6, 0), txt, FALA, 1.3)
 
 
 # --- Garrafa ----------------------------------------------------------------------------
@@ -131,7 +131,7 @@ static func estilhaco(g: Node, at: Vector3, r: float, forte := false, na_poca :=
 	FxProjetil.marca_chao(g, at, Color(CACHACA_ESCURA, 0.45), r * 0.7, 2.5)
 	if na_poca:
 		FxProjetil.faiscas(g, chao, Color(0.9, 1.0, 0.92), 10, 7.0, Vector3.UP, 85.0, 0.16)
-		Fx.damage_number(g, at, "ESPALHOU!", FALA, 0.8)
+		Fx.letreiro(g, at, "ESPALHOU!", FALA, 0.8)
 	Sfx.play("garrafa_quebra", at, 0.12, 0.85 if forte else 1.0, 0.0 if forte else -2.0)
 	_shake(g, at, 0.3 if forte else 0.18)
 
@@ -139,7 +139,7 @@ static func estilhaco(g: Node, at: Vector3, r: float, forte := false, na_poca :=
 ## Levou garrafada: "HIC!" e a cachaça escorrendo enquanto dura.
 static func encachacado(u: Unit) -> void:
 	var g := _g(u)
-	Fx.damage_number(g, u.global_position + Vector3(0, 0.9, 0), "HIC!", CACHACA, 0.7)
+	Fx.letreiro(g, u.global_position + Vector3(0, 0.9, 0), "HIC!", CACHACA, 0.7)
 	if not Magia.enfeite():
 		return
 	var p := FxProjetil.ps(u, Vector3(0, 1.5, 0), FxProjetil._gota(), CACHACA, 5, 0.5, {"one_shot": false, "local_pos": true,
@@ -163,12 +163,12 @@ static func arde(u: Unit) -> void:
 	u.set_meta("ardeu_ms", Sorte.ms())
 	var g := _g(u)
 	Magia.chama(g, u.global_position + Vector3(0, 0.2, 0), "brasa", 0.7, 1.8, 0.45, {"segura": 0.4})
-	Fx.damage_number(g, u.global_position + Vector3(0, 1.0, 0), "ARDEU!", Color(1.0, 0.55, 0.2), 0.8)
+	Fx.letreiro(g, u.global_position + Vector3(0, 1.0, 0), "ARDEU!", Color(1.0, 0.55, 0.2), 0.8)
 
 
 static func escorregou(o: Unit, _dono: Unit) -> void:
 	var g := _g(o)
-	Fx.damage_number(g, o.global_position + Vector3(0, 0.6, 0), "ESCORREGOU!", CACHACA, 0.8)
+	Fx.letreiro(g, o.global_position + Vector3(0, 0.6, 0), "ESCORREGOU!", CACHACA, 0.8)
 	FxProjetil.ps(g, o.global_position + Vector3(0, 0.1, 0), FxProjetil._gota(), CACHACA, 6, 0.45, {"dir": Vector3.UP, "spread": 60.0,
 			"v0": 1.5, "v1": 3.0, "g": Vector3(0, -12, 0), "s0": 0.7, "s1": 1.0})
 	Sfx.play("poca_splash", o.global_position, 0.15, 1.3, -6.0)
@@ -277,7 +277,7 @@ static func poca_acesa(pai: Node3D, raio: float, t: float) -> Node3D:
 	Magia.aura_brasas(no, Color(1.0, 0.62, 0.22), t, 12, raio * 0.7)
 	Magia.onda(g, c + Vector3(0, 0.1, 0), "brasa", raio * 1.25, 0.4)
 	Magia.clarao(g, c, Color(1.0, 0.6, 0.25), raio * 4.0, t, 2.0)
-	Fx.damage_number(g, c + Vector3(0, 0.6, 0), "PEGOU FOGO!", Color(1.0, 0.6, 0.25), 1.0)
+	Fx.letreiro(g, c + Vector3(0, 0.6, 0), "PEGOU FOGO!", Color(1.0, 0.6, 0.25), 1.0)
 	Sfx.play("poca_fogo", c, 0.1)
 	return no
 

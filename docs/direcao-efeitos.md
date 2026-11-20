@@ -17,8 +17,8 @@ Impacto e reação fecham a causalidade "A acertou B".
 
 Tom: **sombrio e "uau"**, dentro da direção do Ciclo 2.2 (conto sombrio
 pintado). Antes de desenhar, leia o roteiro do trailer
-(`docs/trailer/roteiro-cinema-v2.md` e `roteiro.md` no branch
-`claude/project-thread-y822xi`), que
+(`docs/trailer/roteiro-cinema-v2.md` e `roteiro.md`, que só existem no branch
+`claude/project-thread-y822xi`, não na main), que
 descreve a sensação que o Julio quer.
 
 ## 2. Orçamento por frequência (pedido do Julio)
@@ -56,7 +56,7 @@ então meça com `--perf` antes e depois.
 - **Reação do alvo** (B9 = B): a marca do elemento no corpo por ~1 s (brasa,
   tinta escorrendo, brilho), **só visual**, sem mudar o dano.
 - **Som** (B11): ao lançar, ao acertar e com volume pela distância. Sem
-  zumbido contínuo. Sons gerados por código (`tools/gerar_sons.py`).
+  zumbido contínuo. Sons pela skill `efeitos-sonoros` (biblioteca Kenney, IA ou síntese).
 
 ## 4. Outras aplicações (C1 = A, E, F)
 

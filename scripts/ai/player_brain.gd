@@ -21,7 +21,9 @@ func tick(_delta: float) -> void:
 	unit.aim_point = aim_point
 	# Clicou em cima de um inimigo? O tiro vai nele, em qualquer altura.
 	unit.aim_unit = game.camera.mira_unidade
-	unit.wants_attack = Input.is_action_pressed("attack")
+	# Clique curto com FPS baixo (caça 2026-11-19, NU-02): a 10 FPS o botão entra e
+	# sai no mesmo quadro, "pressed" já é falso e o golpe não saía.
+	unit.wants_attack = Input.is_action_pressed("attack") or Input.is_action_just_pressed("attack")
 	# Enfeite do cursor sai antes do corpo gastar o poder/recarga.
 	if game.mira:
 		if Input.is_action_just_pressed("attack"):
