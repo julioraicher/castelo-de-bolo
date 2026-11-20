@@ -64,25 +64,12 @@ func setup(game: Game, p_team: int, pos: Vector3) -> void:
 	_montar_selo()
 	_casa = _montar_torre()
 	add_child(_casa)
-	_label = Label3D.new()
-	_label.font = Estilo.LETREIRO
-	_label.font_size = 40
-	_label.pixel_size = 0.011
-	_label.outline_size = 10
-	_label.outline_modulate = Estilo.TINTA
-	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_label = Estilo.letreiro_3d("", 40, {"contorno": 10})
 	_label.position.y = ALT_LABEL
 	_label.add_to_group("letreiro_perto")  # some de longe (Game._letreiros_perto)
 	add_child(_label)
-	_titulo = Label3D.new()
-	_titulo.font = Estilo.TITULO
-	_titulo.font_size = 60
-	_titulo.pixel_size = 0.011
-	_titulo.outline_size = 14
-	_titulo.outline_modulate = Estilo.TINTA
-	_titulo.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_titulo = Estilo.letreiro_3d("TORRETA", 60, {"fonte": Estilo.TITULO, "contorno": 14})
 	_titulo.position.y = ALT_TITULO
-	_titulo.text = "TORRETA"
 	add_child(_titulo)
 	_montar_emblema()
 	_zerar()

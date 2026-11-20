@@ -37,17 +37,9 @@ func _ready() -> void:
 	_icone.render_priority = 10
 	_icone.shaded = false
 	add_child(_icone)
-	_texto = Label3D.new()
-	_texto.font = Estilo.NUMERO
-	_texto.font_size = 64
-	_texto.outline_size = 18
-	_texto.outline_modulate = Estilo.TINTA
-	_texto.pixel_size = 0.009
-	_texto.position = Vector3(0.3, 0.36, 0)
-	_texto.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_texto.no_depth_test = true
-	_texto.render_priority = 11
+	_texto = Estilo.letreiro_3d("", 64, {"fonte": Estilo.NUMERO, "contorno": 18, "pixel": 0.009, "frente": true, "prioridade": 11})
 	_texto.outline_render_priority = 10
+	_texto.position = Vector3(0.3, 0.36, 0)
 	add_child(_texto)
 	_fundo = _quad(Vector2(LARG + 0.1, 0.26), COR_FUNDO, 10)
 	_barra = _quad(Vector2(LARG, 0.16), COR_OK, 11)

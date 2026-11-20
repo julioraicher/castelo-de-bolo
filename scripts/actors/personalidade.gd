@@ -325,18 +325,9 @@ static func golpe(u: Unit, c: Unit) -> void:
 static func _letreiro(u: Unit, c: Unit) -> void:
 	var g := u.game
 	var perto := u.is_player or c.is_player
-	var l := Label3D.new()
-	l.text = verbo(u) + "!"
-	l.font = Estilo.TITULO
-	l.font_size = 58 if perto else 40  # menor que o nome do poder: o golpe é que tem de aparecer
-	l.pixel_size = 0.011
-	l.outline_size = 16 if perto else 12
-	l.outline_modulate = Estilo.TINTA
-	l.modulate = Assinatura.cor(u).lightened(0.15)
-	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	l.no_depth_test = true
-	l.render_priority = 3
-	l.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animado por tween
+	# Menor que o nome do poder: o golpe é que tem de aparecer.
+	var l := Estilo.letreiro_3d(verbo(u) + "!", 58 if perto else 40, {"fonte": Estilo.TITULO, "contorno": 16 if perto else 12,
+			"cor": Assinatura.cor(u).lightened(0.15), "frente": true, "prioridade": 3, "solto": true})
 	g.add_child(l)
 	l.global_position = c.global_position + Vector3(0, 3.0, 0)
 	l.scale = Vector3.ONE * 0.35

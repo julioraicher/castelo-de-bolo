@@ -18,7 +18,6 @@ var _value := 5.0
 var _duration := 3.0
 var _t := 0.0
 var _pulse_t := 0.0
-var _parts: Array[MeshInstance3D] = []
 var _mat: StandardMaterial3D
 
 
@@ -92,11 +91,6 @@ func _color() -> Color:
 
 func _physics_process(delta: float) -> void:
 	_t += delta
-	for i in _parts.size():
-		var p := _parts[i]
-		if _kind == "coluna_fogo":
-			p.scale = Vector3(1.0 + 0.2 * sin(_t * 14.0 + i), 1.0 + 0.15 * sin(_t * 9.0 + i * 2.0), 1.0 + 0.2 * sin(_t * 14.0 + i))
-			p.rotation.y += delta * 3.0
 	if _kind == "selo":
 		if _t > 1.0:
 			queue_free()
@@ -151,12 +145,7 @@ func _apply_seal() -> void:
 
 
 func _part(mesh: Mesh, pos: Vector3, mat: Material) -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	mi.material_override = mat
+	var mi := FxBase.malha(self, mesh, mat)
 	mi.position = pos
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mi)
-	_parts.append(mi)
 	return mi
 

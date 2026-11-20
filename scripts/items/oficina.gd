@@ -119,14 +119,7 @@ func setup(game: Game, p_team: int, pos: Vector3, p_base: ClassStats) -> void:
 	game.hat_pads.append(pad_base)
 	for i in mini(caminhos().size(), 2):
 		_fantasmas.append(_montar_fantasma(i))
-	_label = Label3D.new()
-	_label.font = Estilo.LETREIRO
-	_label.font_size = 42
-	_label.pixel_size = 0.011
-	_label.line_spacing = -6
-	_label.outline_size = 12
-	_label.outline_modulate = Estilo.TINTA
-	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_label = Estilo.letreiro_3d("", 42, {"contorno": 12, "linhas": -6})
 	_label.position = CASA + Vector3(0, 4.4, 0)
 	_label.add_to_group("letreiro_perto")  # some de longe (Game._letreiros_perto)
 	add_child(_label)

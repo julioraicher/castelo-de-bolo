@@ -127,7 +127,21 @@ supers próprios em `Herois.super_proprio`), voo em `voo_heroi.gd`, bots em
   `tools/vitrine.sh SAIDA [classes]`.
 - Texto flutuante: `Fx.damage_number` só para números de dano/cura (respeita a
   opção "números de dano"); aviso de regra ("CONTRA!", "ESQUIVA!") = `Fx.letreiro`,
-  sempre visível.
+  sempre visível. Todo `Label3D` nasce em `Estilo.letreiro_3d(texto, tam, o)`
+  (fonte, contorno de tinta, billboard; revisão 3c).
+- Base comum do kit (revisão 3c): `FxBase` (`scripts/fx/fx_base.gd`) = cache de
+  recurso por chave (prefixo do kit: "magia/", "fx/", "projetil/", "poder/"),
+  `no`/`malha`, `g`/`tremer` (efeito de boneco e tremor), `enfeite`/`qtd` (portão
+  da qualidade Mínima). Kit novo usa isso, não escreve o seu.
+- Malha pintada (cor por vértice no `pintura.gdshader`: COLOR.a = oclusão, UV.x =
+  vento, UV.y = desenho): `MalhaPintada` (`material(g)`, `vertice`, `tri`, `tubo`,
+  `bola`, `corda`, `caixa`, `placa`, `aro`, `circulo`, `novo`/`fim`). Juntar peças
+  soltas numa malha = `MalhaUnica.pecas([[malha, xf]])` (ou `[malha, xf, cor]`
+  para cor por vértice sem normal); cena inteira parada = `MalhaUnica.juntar`.
+- Variantes de shader são arquivos: o corpo mora em `.gdshaderinc` com `#ifdef`
+  e a variante só faz `#define` (`magia_energia_atras`, `assinatura_selo_frente`).
+  Shader ou variante nova entra no `Fx.prewarm` (o navegador compila no 1º uso e
+  travava o primeiro poder).
 - Peças pequenas do chão (Ciclo 2.32): espírito (`Cake`), itens (`Pickup`) e
   armadilhas (`Trap`) desenham pelo kit `FxItens` (`scripts/fx/fx_itens.gd`):
   objeto = ArrayMesh com cor por vértice no material pintado, energia = shader

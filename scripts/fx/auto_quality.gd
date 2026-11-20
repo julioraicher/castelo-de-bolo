@@ -30,7 +30,9 @@ static func degrau(quality: int, ajuste: int) -> Vector2i:
 func _process(delta: float) -> void:
 	if not Settings.auto_quality or get_tree().paused:
 		return
-	_t += delta
+	# Tempo real: na câmera lenta o delta vem escalado e o FPS medido saía
+	# inflado (os quadros são reais; revisão 3c, FX-40, como a câmera faz).
+	_t += delta / maxf(Engine.time_scale, 0.05)
 	if _t < WARMUP:
 		return
 	_frames += 1

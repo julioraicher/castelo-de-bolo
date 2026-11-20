@@ -179,8 +179,8 @@ static func saideira(u: Unit) -> bool:
 	u.set_meta("saideira_pts", pts)
 	u._saideira_centro = centro
 	u._saideira_n = 0
-	u._saideira_tick = FxObra.SAIDEIRA_VOO
-	u._saideira_t = FxObra.SAIDEIRA_VOO + cfg.herois.saideira_cada * cfg.herois.saideira_n + 0.2
+	u._saideira_tick = cfg.herois.saideira_voo
+	u._saideira_t = cfg.herois.saideira_voo + cfg.herois.saideira_cada * cfg.herois.saideira_n + 0.2
 	u._play_upper("Throw", 1.2)
 	u._mola(4.0, 6.0)
 	FxObra.saideira(u, centro, pts, cfg.herois.saideira_cada)

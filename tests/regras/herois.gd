@@ -896,7 +896,7 @@ func _predero() -> void:
 		n._physics_process(0.6)
 	hp0 = b.hp
 	_check(HeroisObra.saideira(a), "Predero: Saideira sai")
-	HeroisObra.tick(a, FxObra.SAIDEIRA_VOO + cfg.herois.saideira_cada * cfg.herois.saideira_n + 0.1)
+	HeroisObra.tick(a, cfg.herois.saideira_voo + cfg.herois.saideira_cada * cfg.herois.saideira_n + 0.1)
 	_check(a._saideira_n == cfg.herois.saideira_n and b.hp < hp0, "Predero: Saideira derruba %d garrafas e fere (caíram %d)" % [cfg.herois.saideira_n, a._saideira_n])
 	var acesas := 0
 	var pequenas := 0

@@ -134,16 +134,8 @@ func _anel(raiz: Node3D, raio: float, altura: float) -> MeshInstance3D:
 
 ## Letreiro sobre o corpo ("CAÍDO", "FINALIZE [F]", a porcentagem do canal).
 func _placa(raiz: Node3D, texto: String, cor: Color) -> Label3D:
-	var placa := Label3D.new()
-	placa.text = texto
-	placa.font = Estilo.LETREIRO
-	placa.font_size = 44
-	placa.outline_size = 14
-	placa.pixel_size = 0.006
-	placa.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	placa.no_depth_test = true
-	placa.modulate = cor
-	placa.outline_modulate = Color(0.05, 0.04, 0.08, 0.9)
+	var placa := Estilo.letreiro_3d(texto, 44, {"contorno": 14, "pixel": 0.006, "frente": true, "cor": cor,
+			"cor_contorno": Color(0.05, 0.04, 0.08, 0.9)})
 	placa.position = Vector3(0, 2.05, 0)
 	placa.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	raiz.add_child(placa)

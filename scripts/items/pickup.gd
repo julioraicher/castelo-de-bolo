@@ -36,7 +36,7 @@ func setup(p_kind: String, pos: Vector3) -> void:
 	_visual.add_child(_objeto)
 	var mi := MeshInstance3D.new()
 	mi.mesh = FxItens.malha_item(kind)
-	mi.material_override = FxItens.mat_objeto(get_parent())
+	mi.material_override = MalhaPintada.material(get_parent())
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	_objeto.add_child(mi)
 	FxItens.energia_item(_objeto, kind)

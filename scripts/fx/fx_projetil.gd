@@ -26,23 +26,18 @@ const ELEMENTO_MAGIA := {"fogo": "raposa_rosa", "chi": "luz", "magia": "sombra",
 	"fio": "seda", "fios": "seda", "onibi": "fantasma", "caidos": "fantasma", "mordida": "festa",
 	"semente": "bosque", "raiz": "bosque", "trovao": "raio", "descarga": "raio", "relampago": "raio", "tambor": "raio", "para_raios": "raio"}
 
-static var _cache := {}
-
-
 static func rastro_ligado() -> bool:
-	return Settings.quality > 0
+	return FxBase.enfeite()
 
 
 static func _qtd(n: int) -> int:
-	return n if Settings.quality > 0 else maxi(1, n / 2)
+	return FxBase.qtd(n)
 
 
 # --- Recursos em cache ----------------------------------------------------------
 
 static func _c(key: String, maker: Callable) -> Variant:
-	if not _cache.has(key):
-		_cache[key] = maker.call()
-	return _cache[key]
+	return FxBase.cache("projetil/" + key, maker)
 
 
 ## Brilho redondo: centro cheio, borda some (gaussiana aproximada em 3 paradas).
@@ -150,7 +145,7 @@ static func mat_sprite(tex: Texture2D, nome: String, aditivo := false, billboard
 		return m)
 
 
-## Material sólido com cor no vértice (projéteis montados por _combinar).
+## Material sólido com cor no vértice (projéteis montados por MalhaUnica.pecas com cor).
 static func mat_solido() -> StandardMaterial3D:
 	return _c("mat_solido", func() -> StandardMaterial3D:
 		var m := StandardMaterial3D.new()
@@ -318,25 +313,6 @@ static func marca_chao(g: Node, pos: Vector3, cor: Color, raio: float, vida := 2
 
 # --- Projéteis: forma --------------------------------------------------------------
 
-## Junta malhas simples numa só, com cor por vértice: 1 draw call por projétil.
-static func _combinar(partes: Array) -> ArrayMesh:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for parte in partes:
-		var mesh: Mesh = parte[0]
-		var xf: Transform3D = parte[1]
-		var cor: Color = parte[2]
-		var arr := mesh.surface_get_arrays(0)
-		var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
-		var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
-		if idx.is_empty():
-			idx = PackedInt32Array(range(verts.size()))
-		for i in idx:
-			st.set_color(cor)
-			st.add_vertex(xf * verts[i])
-	return st.commit()
-
-
 static func malha_flecha(cor_pena: Color) -> ArrayMesh:
 	return _c("flecha" + cor_pena.to_html(), func() -> ArrayMesh:
 		var haste := BoxMesh.new()
@@ -346,7 +322,7 @@ static func malha_flecha(cor_pena: Color) -> ArrayMesh:
 		var pena := BoxMesh.new()
 		pena.size = Vector3(0.2, 0.01, 0.22)
 		var frente := Basis(Vector3.RIGHT, -PI / 2)  # prisma aponta em +y; deita para -z
-		return _combinar([
+		return MalhaUnica.pecas([
 			[haste, Transform3D(Basis(), Vector3(0, 0, 0.05)), Color(0.42, 0.27, 0.14)],
 			[ponta, Transform3D(frente, Vector3(0, 0, -0.55)), Color(0.8, 0.85, 0.9)],
 			[ponta, Transform3D(frente * Basis(Vector3.UP, PI / 2), Vector3(0, 0, -0.55)), Color(0.6, 0.65, 0.7)],
@@ -442,6 +418,11 @@ static func malha_bola(cor: Color, r: float) -> SphereMesh:
 		m.albedo_color = cor
 		s.material = m
 		return s)
+
+
+## Todos os tipos que montar() conhece (o prewarm desenha cada um uma vez).
+const TIPOS := ["flecha", "shuriken", "bomba", "fogo", "chi", "magia", "vento", "nota", "talisma", "grou",
+		"fio", "semente", "trovao", "garrafa"]
 
 
 ## Monta a aparência do projétil no nó p (Projectile). Devolve o nó que gira.
@@ -892,7 +873,7 @@ static func cravar(parent: Node3D, at: Vector3, dir: Vector3, kind: String, vida
 ## Esquenta os materiais daqui (no navegador cada shader novo compila na
 ## primeira vez que aparece e travava o primeiro tiro de cada tipo).
 static func prewarm(parent: Node, pos: Vector3) -> void:
-	for kind in ["flecha", "shuriken", "bomba", "fogo", "chi", "magia"]:
+	for kind in TIPOS:
 		var n := Node3D.new()
 		parent.add_child(n)
 		n.global_position = pos
